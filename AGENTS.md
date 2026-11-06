@@ -102,6 +102,12 @@ folder is ignored by git: this repo sets no config there, so don't commit one.
 Tasks live in GitHub Issues (`bwold001/pdp-datathon--uncf`), managed with the `gh` CLI. See
 [docs/agents/issue-tracker.md](docs/agents/issue-tracker.md).
 
+- Always pass `--repo bwold001/pdp-datathon--uncf` to `gh issue` and `gh pr` commands. Without it,
+  `gh` can pick the upstream starter (`devcolor/pdp-datathon-starter`) and post there.
+- Every new issue goes on the squad's project board (`https://github.com/users/bwold001/projects/5`)
+  in the **To Do** column of the kanban view. Add it with `gh project item-add 5 --owner bwold001
+  --url <issue url>`, then set its Status to To Do.
+
 ### Triage labels
 
 `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. All five exist.
