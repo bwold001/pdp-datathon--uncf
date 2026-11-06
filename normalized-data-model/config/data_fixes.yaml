@@ -1,0 +1,151 @@
+# Fixes for known bugs in the mock data: what we change in the data, and why, in one place.
+# The Fixer (src/fixer/) applies them to the mapped tables in data/staging/<run id>/mapped/, before
+# the validator checks them, and writes fixed/. The source files are never changed.
+# How a particular file writes its values (codes for "no value" and "unknown", date formats) is NOT
+# here: that's the file's mapping config. What a valid stored value is: config/destination_schema.yaml.
+#
+# Each fix has:
+#   name       a short name; the validation report counts the rows each fix changed under it.
+#   bug        a link to the bug in the Mock data bugs doc.
+#   decision   a link to the decision behind the fix, or why there's none yet.
+#   enabled    true or false. Switch a fix off when the mock data is fixed or real files arrive.
+#   table, column   the stored value it changes, whichever source file it came from.
+# and one kind of change:
+#   replace    {old value: new value}. Any other value is left as it is.
+#   number_format   for a code a spreadsheet wrote as a number: {match: a pattern, format: a Python
+#              format}. A value the pattern matches in full is read as a number and written with
+#              format, which puts back the zeros it lost. Any other value is left as it is.
+#   blank_after_cutoff   for credit years that hadn't happened by the cutoff: a 0 there becomes blank, and
+#              column (here credit_years_observed) says how many years the data can see. It takes
+#              cutoff (the last academic year the data covers), cohort_column, and years (each credit
+#              year's columns). A value other than 0 in such a year is kept, and listed in fixes.yaml.
+# A new kind needs code in src/fixer/fix.py. A team that needs different fixes copies this file
+# and names its copy in its pipeline settings (fixes:).
+
+fixes:
+  - name: race_cut_at_25_characters
+    bug: https://docs.google.com/document/d/1YoUeSA8WfbyuJDvoFGSWXpnGKxfDDakfr8J8SZKKxIs/edit?tab=t.0#heading=h.mhrl42ihewm
+    decision: none yet; the full labels are the data dictionary's
+    enabled: true
+    table: student
+    column: race
+    replace:
+      American Indian or Alaska: American Indian or Alaska Native
+      Native Hawaiian or Other: Native Hawaiian or Other Pacific Islander
+
+  - name: gateway_na_is_n
+    bug: https://docs.google.com/document/d/1YoUeSA8WfbyuJDvoFGSWXpnGKxfDDakfr8J8SZKKxIs/edit?tab=t.0#heading=h.sard8r81isgi
+    decision: https://docs.google.com/document/d/1YoUeSA8WfbyuJDvoFGSWXpnGKxfDDakfr8J8SZKKxIs/edit?disco=doco.YLrfS-QP4JQAaJ71te84tg
+    enabled: true
+    table: course_enrollment
+    column: math_or_english_gateway
+    replace:
+      NA: N   # the dictionary's code for "not a gateway course"
+
+  - name: credential_labels_are_codes
+    bug: https://docs.google.com/document/d/1YoUeSA8WfbyuJDvoFGSWXpnGKxfDDakfr8J8SZKKxIs/edit?tab=t.0#heading=h.sard8r81isgi
+    decision: https://docs.google.com/document/d/1YoUeSA8WfbyuJDvoFGSWXpnGKxfDDakfr8J8SZKKxIs/edit?disco=doco.YLrfS-QP4JQAaJ71te84tg
+    enabled: true
+    table: cohort_membership
+    column: credential_type_sought_year_1
+    # Each label to the one dictionary code it names; the letter where the dictionary gives a letter
+    # or a number. Degree Seeking(N) and Degree Seeking(Y) have no code and stay as written.
+    replace:
+      "Associate's Degree": A
+      Non Credential Program (Preparatory Coursework / Teach Certification): NC
+      Non Credential Program (Preparatory Coursework / Teacher Certification): NC
+      Less than 1-year certificate, less than Associates degree: C1
+      1-2 year certificate, less than Associates degree: C2
+      2-4 year certificate, less than Bachelors degree: C4
+      "Bachelor's Degree": B
+      Graduate/Professional Certificate: PC
+      Undergraduate Certificate or Diploma Program: "01"
+
+  - name: cip_lost_its_zeros
+    bug: https://docs.google.com/document/d/1YoUeSA8WfbyuJDvoFGSWXpnGKxfDDakfr8J8SZKKxIs/edit?tab=t.0#heading=h.mhrl42ihewm
+    decision: none yet; a CIP code is two digits, a dot and four digits, so 5.0202 is 05.0202
+    enabled: true
+    table: course_enrollment
+    column: course_cip
+    number_format:   # only the leading zero: 24.01 is also a real CIP series, and 24 could be any code in it
+      match: '[0-9]\.[0-9]{4}'
+      format: '{:07.4f}'
+
+  - name: cip_lost_its_trailing_zero
+    bug: https://docs.google.com/document/d/1YoUeSA8WfbyuJDvoFGSWXpnGKxfDDakfr8J8SZKKxIs/edit?tab=t.0#heading=h.mhrl42ihewm
+    decision: none yet; three decimals can only be a six-digit code that lost its last zero, so 13.121 is 13.1210
+    enabled: true
+    table: course_enrollment
+    column: course_cip
+    number_format: {match: '[0-9]{1,2}\.[0-9]{3}', format: '{:07.4f}'}
+
+  - name: cip_series_lost_its_zeros
+    bug: https://docs.google.com/document/d/1YoUeSA8WfbyuJDvoFGSWXpnGKxfDDakfr8J8SZKKxIs/edit?tab=t.0#heading=h.mhrl42ihewm
+    decision: none yet; a series is two digits, a dot and two digits, so 9.01 is 09.01 and 45.1 is 45.10 (either may still be a six-digit code that lost more zeros, so they keep warning)
+    enabled: true
+    table: course_enrollment
+    column: course_cip
+    number_format: {match: '[0-9]\.[0-9]{2}|[0-9]{2}\.[0-9]', format: '{:05.2f}'}
+
+  - name: cip_family_lost_its_zero
+    bug: https://docs.google.com/document/d/1YoUeSA8WfbyuJDvoFGSWXpnGKxfDDakfr8J8SZKKxIs/edit?tab=t.0#heading=h.mhrl42ihewm
+    decision: none yet; a family is two digits, so 1 is 01 (it may still be a longer code, so it keeps warning)
+    enabled: true
+    table: course_enrollment
+    column: course_cip
+    number_format: {match: '[0-9]', format: '{:02.0f}'}
+
+  - name: program_of_study_term_1_lost_its_zero
+    bug: https://docs.google.com/document/d/1YoUeSA8WfbyuJDvoFGSWXpnGKxfDDakfr8J8SZKKxIs/edit?tab=t.0#heading=h.mhrl42ihewm
+    decision: none yet; the dictionary's code is six digits, so 90702 is 090702
+    enabled: true
+    table: cohort_membership
+    column: program_of_study_term_1
+    number_format: {match: '[0-9]{5}', format: '{:06.0f}'}
+
+  - name: program_of_study_year_1_lost_its_zero
+    bug: https://docs.google.com/document/d/1YoUeSA8WfbyuJDvoFGSWXpnGKxfDDakfr8J8SZKKxIs/edit?tab=t.0#heading=h.mhrl42ihewm
+    decision: none yet; the dictionary's code is six digits, so 90702 is 090702
+    enabled: true
+    table: cohort_membership
+    column: program_of_study_year_1
+    number_format: {match: '[0-9]{5}', format: '{:06.0f}'}
+
+  - name: term_program_of_study_lost_its_zero
+    bug: https://docs.google.com/document/d/1YoUeSA8WfbyuJDvoFGSWXpnGKxfDDakfr8J8SZKKxIs/edit?tab=t.0#heading=h.mhrl42ihewm
+    decision: none yet; the dictionary's code is six digits, so 90702 is 090702
+    enabled: true
+    table: course_enrollment
+    column: term_program_of_study
+    number_format: {match: '[0-9]{5}', format: '{:06.0f}'}
+
+  - name: dev_math_completion_is_c_d
+    bug: https://docs.google.com/document/d/1YoUeSA8WfbyuJDvoFGSWXpnGKxfDDakfr8J8SZKKxIs/edit?tab=t.0#heading=h.sard8r81isgi
+    decision: Y read as completed, since only 6 students whose dev math attempt flag is N are marked Y, against 426 marked N; to confirm with Achieving the Dream, who made the mock files. The dictionary's codes are C and D
+    enabled: true
+    table: cohort_membership
+    column: completed_dev_math_y1
+    replace: {Y: C, N: D}   # C completed, D did not complete
+
+  - name: dev_english_completion_is_c_d
+    bug: https://docs.google.com/document/d/1YoUeSA8WfbyuJDvoFGSWXpnGKxfDDakfr8J8SZKKxIs/edit?tab=t.0#heading=h.sard8r81isgi
+    decision: Y read as completed, since only 17 students whose dev English attempt flag is N are marked Y, against 238 marked N; to confirm with Achieving the Dream, who made the mock files. The dictionary's codes are C and D
+    enabled: true
+    table: cohort_membership
+    column: completed_dev_english_y1
+    replace: {Y: C, N: D}   # C completed, D did not complete
+
+  - name: future_credit_years_are_blank
+    bug: https://docs.google.com/document/d/1YoUeSA8WfbyuJDvoFGSWXpnGKxfDDakfr8J8SZKKxIs/edit?tab=t.0#heading=h.wsw9z02s04i8
+    decision: https://docs.google.com/document/d/1YoUeSA8WfbyuJDvoFGSWXpnGKxfDDakfr8J8SZKKxIs/edit?disco=doco.psfDz5GalOg33FpJsqIEmg
+    enabled: true
+    table: cohort_membership
+    column: credit_years_observed
+    blank_after_cutoff:
+      cutoff: 2025-26   # a working assumption for the mock data: its course credits run to 2025-26
+      cohort_column: cohort
+      years:
+        1: [number_of_credits_attempted_yr_1, number_of_credits_earned_yr_1]
+        2: [number_of_credits_attempted_yr_2, number_of_credits_earned_yr_2]
+        3: [number_of_credits_attempted_yr_3, number_of_credits_earned_yr_3]
+        4: [number_of_credits_attempted_yr_4, number_of_credits_earned_yr_4]

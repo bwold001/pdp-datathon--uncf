@@ -1,0 +1,28 @@
+# How the commute example file writes its values, and where each column goes: an example for
+# teams, shown in the README's "Load your own enrichment files". What a valid stored value looks like
+# (types, allowed values, ranges) is NOT here: it's in config/destination_schema.yaml, the same for
+# every file that writes the column.
+#
+# Each entry: source (or value, a fixed value for every row), destination_table,
+# destination_column and on_conflict (append, replace or keep: what the loader does when the
+# destination row already holds a value).
+
+- value: commutes_over_30_minutes
+  destination_table: student_attribute
+  destination_column: attribute_key
+  on_conflict: replace
+
+- source: Student_GUID
+  destination_table: student_attribute
+  destination_column: student_id
+  on_conflict: replace
+
+- source: Commutes_Over_30_Minutes
+  destination_table: student_attribute
+  destination_column: attribute_value
+  on_conflict: replace
+
+- source: Source
+  destination_table: student_attribute
+  destination_column: source
+  on_conflict: replace

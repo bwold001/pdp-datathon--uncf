@@ -1,0 +1,167 @@
+# Toolchain and day-to-day commands for Playground.
+#   mise install      install the pinned tools below
+#   mise tasks        list every command
+#   mise run <task>   run one, e.g. `mise run db`
+
+[tools]
+bun = "1.4.3"      # client_application: package manager and script runner
+node = "24"        # client_application: runtime Next.js tooling expects alongside bun
+python = "3.14"    # server_application: matches server_application/.python-version
+uv = "0.13"        # server_application: dependencies, virtualenv, lockfile
+
+# --- Database (docker-compose.yml) ----------------------------------------------------
+
+[tasks.setup]
+description = "Create local .env from the template (safe to re-run)"
+run = "test -f .env || (cp .env.example .env && echo 'Created .env from .env.example')"
+
+[tasks."db:choose"]
+description = "Choose the database, once, early: mise run db:choose postgresql or sqlite"
+usage = 'arg "<database>" help="postgresql or sqlite"'
+run = 'python3 scripts/choose_database.py "$usage_database"'
+
+[tasks.db]
+description = "Start the database: PostgreSQL 18 + pgvector in Docker (nothing to start with SQLite)"
+depends = ["setup"]
+run = """
+url=$(cat server_application/.env.development server_application/.env.development.local 2>/dev/null | grep '^DATABASE_URL=' | tail -1 | cut -d= -f2-)
+if [ "${url#sqlite}" != "$url" ]; then
+  echo "Database: SQLite (chosen with mise run db:choose). Nothing to start."
+else
+  docker compose up -d --wait db
+  echo "Database: PostgreSQL. Setting up your organization's Playground? Choose PostgreSQL or SQLite with mise run db:choose."
+fi
+"""
+
+[tasks."db:down"]
+description = "Stop Postgres (data is kept)"
+run = "docker compose down"
+
+[tasks."db:logs"]
+description = "Follow Postgres logs"
+run = "docker compose logs -f db"
+
+[tasks."db:shell"]
+description = "Open a SQL prompt: psql in the PostgreSQL container, or sqlite3 on the SQLite file"
+run = """
+url=$(cat server_application/.env.development server_application/.env.development.local 2>/dev/null | grep '^DATABASE_URL=' | tail -1 | cut -d= -f2-)
+if [ "${url#sqlite}" != "$url" ]; then
+  sqlite3 "server_application/${url#sqlite:///./}"
+else
+  docker compose exec db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+fi
+"""
+
+[tasks."db:reset"]
+description = "Delete all data and start fresh: a new PostgreSQL volume, or a new SQLite file"
+run = """
+url=$(cat server_application/.env.development server_application/.env.development.local 2>/dev/null | grep '^DATABASE_URL=' | tail -1 | cut -d= -f2-)
+if [ "${url#sqlite}" != "$url" ]; then
+  rm -f "server_application/${url#sqlite:///./}"
+  echo "Database: SQLite file deleted. mise run api:dev creates a fresh one."
+else
+  docker compose down -v
+  docker compose up -d --wait db
+fi
+"""
+
+# --- server_application ----------------------------------------------------------------
+
+[tasks."api:install"]
+description = "Install backend dependencies with uv"
+dir = "server_application"
+run = "uv sync"
+
+[tasks."api:dev"]
+# Applies pending migrations first so a fresh checkout just works. Local development only:
+# staging and production run migrations as a deliberate deploy step.
+# Turn off with AUTO_MIGRATE=false (see "Database migrations" in server_application/README.md).
+description = "Apply pending migrations, then run the API with auto-reload on http://localhost:8000"
+dir = "server_application"
+run = """
+if [ "${AUTO_MIGRATE:-true}" = "true" ]; then
+  uv run alembic upgrade head
+else
+  echo "AUTO_MIGRATE=false: skipping migrations"
+fi
+uv run fastapi dev app/main.py
+"""
+
+[tasks."api:migrate"]
+description = "Apply all pending migrations"
+dir = "server_application"
+run = "uv run alembic upgrade head"
+
+[tasks."api:migrate-down"]
+description = "Roll back the most recent migration"
+dir = "server_application"
+run = "uv run alembic downgrade -1"
+
+[tasks."api:migration"]
+description = "Autogenerate a migration from model changes: mise run api:migration \"add documents table\""
+dir = "server_application"
+usage = 'arg "<message>" help="Short description of the schema change"'
+run = 'uv run alembic revision --autogenerate -m "$usage_message"'
+
+[tasks."api:test"]
+description = "Run backend tests"
+dir = "server_application"
+run = "uv run pytest"
+
+[tasks."api:test-sqlite"]
+description = "Run backend tests on SQLite, whichever database is chosen"
+dir = "server_application"
+env = { TEST_ON_SQLITE = "true" }
+run = "uv run pytest"
+
+[tasks."api:lint"]
+description = "Lint and check formatting of backend code"
+dir = "server_application"
+run = ["uv run ruff check .", "uv run ruff format --check ."]
+
+[tasks."api:format"]
+description = "Auto-fix lint issues and format backend code"
+dir = "server_application"
+run = ["uv run ruff check --fix .", "uv run ruff format ."]
+
+# --- client_application ---------------------------------------------------------------
+
+[tasks."web:install"]
+description = "Install frontend dependencies with bun"
+dir = "client_application"
+run = "bun install"
+
+[tasks."web:dev"]
+description = "Run the web app with hot reload on http://localhost:3000"
+dir = "client_application"
+run = "bun run dev"
+
+[tasks."web:build"]
+description = "Production build (use web:build-staging for staging)"
+dir = "client_application"
+run = "bun run build"
+
+[tasks."web:build-staging"]
+description = "Staging build (NEXT_PUBLIC_APP_ENV=staging)"
+dir = "client_application"
+run = "bun run build:staging"
+
+[tasks."web:start"]
+description = "Serve the last build on http://localhost:3000"
+dir = "client_application"
+run = "bun run start"
+
+[tasks."web:lint"]
+description = "Lint and type-check frontend code"
+dir = "client_application"
+run = ["bun run lint", "bun run typecheck"]
+
+[tasks."web:storybook"]
+description = "Run Storybook on http://localhost:6006 (no API or database needed)"
+dir = "client_application"
+run = "bun run storybook"
+
+[tasks."web:test-storybook"]
+description = "Install Chromium and its system dependencies, then run every story's play function"
+dir = "client_application"
+run = ["bunx playwright install --with-deps chromium", "bun run test-storybook"]

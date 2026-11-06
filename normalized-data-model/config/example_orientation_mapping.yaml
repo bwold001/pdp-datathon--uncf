@@ -1,0 +1,40 @@
+# How the orientation example file writes its values, and where each column goes: an example for
+# teams, shown in the README's "Load your own enrichment files". What a valid stored value looks like
+# (types, allowed values, ranges) is NOT here: it's in config/destination_schema.yaml, the same for
+# every file that writes the column.
+#
+# Each entry: source (or value, a fixed value for every row), destination_table,
+# destination_column and on_conflict (append, replace or keep: what the loader does when the
+# destination row already holds a value).
+
+- value: 1
+  destination_table: institution_event
+  destination_column: institution_id
+  on_conflict: replace
+
+- source: Event_Type
+  destination_table: institution_event
+  destination_column: event_type
+  on_conflict: replace
+
+- source: Event_Name
+  destination_table: institution_event
+  destination_column: name
+  on_conflict: replace
+
+- source: Start_Date
+  destination_table: institution_event
+  destination_column: start_date
+  format: '%Y%m%d'
+  on_conflict: replace
+
+- source: End_Date
+  destination_table: institution_event
+  destination_column: end_date
+  format: '%Y%m%d'
+  on_conflict: replace
+
+- source: Source
+  destination_table: institution_event
+  destination_column: source
+  on_conflict: replace

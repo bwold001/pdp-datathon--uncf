@@ -1,0 +1,66 @@
+# Source spec for a candidate supplementary dataset, written once per dataset before it is
+# vetted and loaded, per proposal #19 ("On-demand ETL joins: bring in new datasets with
+# provenance and quality checks"). This is NOT a destination mapping (see
+# config/*_mapping.yaml in the normalized data model for that): it is the vetting metadata
+# #19 asks for, so a number built on this source can say how far to trust it.
+#
+# This file and its sample CSV are a worked example for #19's own scope item: "two synthetic
+# datasets (registration holds, parent status)". The load command that reads a spec like this
+# one, checks match rate / duplicate keys / null rates, and lands the result in the enrichment
+# tables (student_attribute) is not built yet; that is the remaining work tracked on #19.
+
+dataset: registration_holds
+
+description: >
+  A registration hold is a flag an institution's SIS places on a student's account that blocks
+  them from registering for classes until it is resolved (for example, an unpaid balance or a
+  missing advising sign-off). PDP's Analysis-Ready Files do not carry this; institutions hold it
+  in their own student information system (Banner, Colleague, PeopleSoft, etc).
+
+owner: unassigned   # the person or squad vouching for this source once it's real, not synthetic
+trust_label: unverified   # verified or unverified; this sample is synthetic, so it stays unverified
+
+sensitivity:
+  - pii
+  - financial
+  - disciplinary
+note_on_sensitivity: >
+  hold_type values of financial, disciplinary and immunization are student-identifying risk
+  signals. Any summary of this data broken out by a group smaller than 10 students must suppress
+  the value, same as the shared success-measures rule (#9).
+
+grain: One row per student, per hold, per term it applied to. A student can have more than one
+  open hold in the same term; each is its own row.
+
+key_mapping:
+  file_key: Student_GUID
+  joins_to: student.student_id   # normalized-data-model/config/destination_schema.yaml
+
+as_of_date: 2026-10-30   # the date this snapshot of hold statuses reflects
+
+file: registration_holds.csv
+
+columns:
+  - name: Student_GUID
+    description: Join key back to the cohort/course files and the normalized student table.
+  - name: academic_year
+    description: Matches the cohort file's Cohort format, for example 2024-25.
+  - name: academic_term
+    description: FALL, SPRING or SUMMER, matching Cohort_Term.
+  - name: hold_type
+    description: Category of hold.
+    allowed_values: [financial, advising, immunization, disciplinary, sap]
+  - name: hold_status
+    description: Whether the hold was still blocking registration as of as_of_date.
+    allowed_values: [active, resolved, waived]
+  - name: placed_date
+    description: Date the hold was placed, YYYYMMDD.
+  - name: resolved_date
+    description: Date the hold was lifted, YYYYMMDD, or blank if hold_status is active.
+  - name: source
+    description: Office or system of record this row came from.
+
+known_quality_notes:
+  - All values below are made up for this proposal; no real registrar data was used or seen.
+  - One student (9DB91682631346B0E05349C8C70A535B) appears twice in the cohort sample, once per
+    cohort term, so holds for that student are given in both terms to exercise that join.

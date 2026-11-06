@@ -1,0 +1,13 @@
+Student_GUID,academic_year,academic_term,hold_type,hold_status,placed_date,resolved_date,source
+006F3FF4E1F908EFE0535964C70A009A,2024-25,SPRING,financial,active,20250110,,example: made up for proposal #19
+0110949EC5F26B13E0531B64C70A9D19,2022-23,SPRING,advising,resolved,20221001,20221015,example: made up for proposal #19
+01F160D873EE37A2E0634F0F210ABB0B,2022-23,SPRING,immunization,active,20221105,,example: made up for proposal #19
+1009F9D5EC88516FE063630F210A58BC,2023-24,SPRING,sap,waived,20240201,20240203,example: made up for proposal #19
+32C0776F4C49F685E0634F0F210A158C,2023-24,SPRING,financial,resolved,20231220,20240105,example: made up for proposal #19
+75DEDB8941015AE6E0534AC8C70A211E,2021-22,SPRING,disciplinary,active,20220301,,example: made up for proposal #19
+9DB91682631346B0E05349C8C70A535B,2022-23,SUMMER,financial,active,20220715,,example: made up for proposal #19
+9DB91682631346B0E05349C8C70A535B,2023-24,SPRING,advising,resolved,20240108,20240112,example: made up for proposal #19
+A71D980EE6A26DAEE05347C8C70AE27C,2022-23,FALL,financial,active,20220920,,example: made up for proposal #19
+A71D980EE6A26DAEE05347C8C70AE27C,2022-23,FALL,sap,active,20220920,,example: made up for proposal #19
+A9EF52D38F7C9F04E040C70A16642263,2021-22,SUMMER,advising,waived,20210801,20210802,example: made up for proposal #19
+DA713A0F403BC5B3E05349C8C70AD493,2021-22,SPRING,immunization,resolved,20210815,20210901,example: made up for proposal #19

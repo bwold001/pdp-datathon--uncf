@@ -1,0 +1,1087 @@
+{
+  "status": "verified",
+  "access_mode": "definitions",
+  "tools": [
+    {
+      "name": "describe_table",
+      "description": "Describe one table of the normalized model: its columns with types and nullability, its primary key, its foreign keys, its unique groups, and the tables that point at it. From the model's schema.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "table": {
+            "description": "A table name from list_tables, such as cohort_membership.",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Table",
+            "type": "string"
+          }
+        },
+        "required": [
+          "table"
+        ],
+        "title": "describe_tableArguments"
+      },
+      "outputSchema": {
+        "$defs": {
+          "ColumnInfo": {
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "title": "Name",
+                "type": "string"
+              },
+              "data_type": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "The type a database declares, such as TEXT or BIGINT. Null in definitions mode: the tables come from the model's schema, which has no engine types. Use model_type.",
+                "title": "Data Type"
+              },
+              "model_type": {
+                "anyOf": [
+                  {
+                    "enum": [
+                      "str",
+                      "int",
+                      "float",
+                      "bool",
+                      "date",
+                      "datetime"
+                    ],
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "The model's type for this column, the same in every engine. Blank outside the model.",
+                "title": "Model Type"
+              },
+              "nullable": {
+                "title": "Nullable",
+                "type": "boolean"
+              },
+              "primary_key": {
+                "title": "Primary Key",
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "name",
+              "data_type",
+              "model_type",
+              "nullable",
+              "primary_key"
+            ],
+            "title": "ColumnInfo",
+            "type": "object"
+          },
+          "ForeignKey": {
+            "additionalProperties": false,
+            "properties": {
+              "columns": {
+                "items": {
+                  "type": "string"
+                },
+                "title": "Columns",
+                "type": "array"
+              },
+              "references_table": {
+                "title": "References Table",
+                "type": "string"
+              },
+              "references_columns": {
+                "items": {
+                  "type": "string"
+                },
+                "title": "References Columns",
+                "type": "array"
+              }
+            },
+            "required": [
+              "columns",
+              "references_table",
+              "references_columns"
+            ],
+            "title": "ForeignKey",
+            "type": "object"
+          },
+          "IncomingReference": {
+            "additionalProperties": false,
+            "properties": {
+              "table": {
+                "description": "The table whose foreign key points at this one.",
+                "title": "Table",
+                "type": "string"
+              },
+              "columns": {
+                "description": "That table's columns.",
+                "items": {
+                  "type": "string"
+                },
+                "title": "Columns",
+                "type": "array"
+              },
+              "references_columns": {
+                "description": "The columns of this table they point at.",
+                "items": {
+                  "type": "string"
+                },
+                "title": "References Columns",
+                "type": "array"
+              }
+            },
+            "required": [
+              "table",
+              "columns",
+              "references_columns"
+            ],
+            "title": "IncomingReference",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "table",
+              "view"
+            ],
+            "title": "Type",
+            "type": "string"
+          },
+          "in_model": {
+            "title": "In Model",
+            "type": "boolean"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "columns": {
+            "description": "In the table's column order.",
+            "items": {
+              "$ref": "#/$defs/ColumnInfo"
+            },
+            "title": "Columns",
+            "type": "array"
+          },
+          "primary_key": {
+            "description": "Empty if there is none, as for every view.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Primary Key",
+            "type": "array"
+          },
+          "foreign_keys": {
+            "description": "In the order of their first column in the table.",
+            "items": {
+              "$ref": "#/$defs/ForeignKey"
+            },
+            "title": "Foreign Keys",
+            "type": "array"
+          },
+          "referenced_by": {
+            "description": "Sorted by table, then columns.",
+            "items": {
+              "$ref": "#/$defs/IncomingReference"
+            },
+            "title": "Referenced By",
+            "type": "array"
+          },
+          "unique_constraints": {
+            "description": "Each group of columns that is unique together.",
+            "items": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "title": "Unique Constraints",
+            "type": "array"
+          }
+        },
+        "required": [
+          "name",
+          "type",
+          "in_model",
+          "description",
+          "columns",
+          "primary_key",
+          "foreign_keys",
+          "referenced_by",
+          "unique_constraints"
+        ],
+        "title": "DescribeTableResult",
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "get_column_definition",
+      "description": "Look up what a column means. Takes a raw file column (such as Retention or Student_GUID) or a normalized table column (such as cohort_membership.retention), and returns its data dictionary description, type, allowed codes, and where it comes from or goes to. Never invents a definition.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "column": {
+            "description": "A raw file column (Retention, Student_GUID), a dictionary name (Student ID), a normalized column (retention), or `table.column`. Matching ignores case.",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Column",
+            "type": "string"
+          },
+          "table": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Only normalized columns of this table.",
+            "title": "Table"
+          },
+          "source_file": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Only source columns of this file, such as pdp_course_data.csv.",
+            "title": "Source File"
+          }
+        },
+        "required": [
+          "column"
+        ],
+        "title": "get_column_definitionArguments"
+      },
+      "outputSchema": {
+        "$defs": {
+          "ColumnDefinitionQuery": {
+            "additionalProperties": false,
+            "properties": {
+              "column": {
+                "title": "Column",
+                "type": "string"
+              },
+              "table": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Table"
+              },
+              "source_file": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Source File"
+              }
+            },
+            "required": [
+              "column",
+              "table",
+              "source_file"
+            ],
+            "title": "ColumnDefinitionQuery",
+            "type": "object"
+          },
+          "ColumnRef": {
+            "additionalProperties": false,
+            "properties": {
+              "table": {
+                "title": "Table",
+                "type": "string"
+              },
+              "column": {
+                "title": "Column",
+                "type": "string"
+              }
+            },
+            "required": [
+              "table",
+              "column"
+            ],
+            "title": "ColumnRef",
+            "type": "object"
+          },
+          "NormalizedColumnDefinition": {
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "const": "normalized",
+                "description": "A column of a table in the normalized model.",
+                "title": "Kind",
+                "type": "string"
+              },
+              "table": {
+                "title": "Table",
+                "type": "string"
+              },
+              "column": {
+                "title": "Column",
+                "type": "string"
+              },
+              "description": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "The description of its source column, when all its sources agree. Blank otherwise: read sources[].description.",
+                "title": "Description"
+              },
+              "model_type": {
+                "enum": [
+                  "str",
+                  "int",
+                  "float",
+                  "bool",
+                  "date",
+                  "datetime"
+                ],
+                "title": "Model Type",
+                "type": "string"
+              },
+              "nullable": {
+                "title": "Nullable",
+                "type": "boolean"
+              },
+              "primary_key": {
+                "title": "Primary Key",
+                "type": "boolean"
+              },
+              "foreign_key": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "`table.column` it points at.",
+                "title": "Foreign Key"
+              },
+              "unique_group": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Columns sharing a group name are unique together.",
+                "title": "Unique Group"
+              },
+              "default_value": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Stored when the source gives no value.",
+                "title": "Default Value"
+              },
+              "unknown_value": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Stored when the source says it doesn't know.",
+                "title": "Unknown Value"
+              },
+              "allowed_values": {
+                "anyOf": [
+                  {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "The codes an `error` or `warning` rule allows, from enum or value_set rules. Blank if no rule lists them.",
+                "title": "Allowed Values"
+              },
+              "rules": {
+                "description": "The validation rules, as written in destination_schema.yaml.",
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "title": "Rules",
+                "type": "array"
+              },
+              "sources": {
+                "description": "The source columns the loader fills it from. Empty if it's generated.",
+                "items": {
+                  "$ref": "#/$defs/SourceRef"
+                },
+                "title": "Sources",
+                "type": "array"
+              }
+            },
+            "required": [
+              "kind",
+              "table",
+              "column",
+              "description",
+              "model_type",
+              "nullable",
+              "primary_key",
+              "foreign_key",
+              "unique_group",
+              "default_value",
+              "unknown_value",
+              "allowed_values",
+              "rules",
+              "sources"
+            ],
+            "title": "NormalizedColumnDefinition",
+            "type": "object"
+          },
+          "SourceColumnDefinition": {
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "const": "source",
+                "description": "A column of a raw input file.",
+                "title": "Kind",
+                "type": "string"
+              },
+              "source_file": {
+                "description": "Such as pdp_cohort_data.csv, or an enrichment file.",
+                "title": "Source File",
+                "type": "string"
+              },
+              "source_column": {
+                "description": "The column name as the file writes it.",
+                "title": "Source Column",
+                "type": "string"
+              },
+              "dictionary_name": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "The data dictionary's name for it. Blank if it has none.",
+                "title": "Dictionary Name"
+              },
+              "description": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "From data/dictionaries/column_lookup.csv. Blank if the lookup has none: never made up.",
+                "title": "Description"
+              },
+              "dictionary_file": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "The markdown dictionary with the full entry, repo-relative. Blank for enrichment files.",
+                "title": "Dictionary File"
+              },
+              "destinations": {
+                "description": "Where the loader stores it. Empty if it's dropped.",
+                "items": {
+                  "$ref": "#/$defs/ColumnRef"
+                },
+                "title": "Destinations",
+                "type": "array"
+              },
+              "missing_values": {
+                "description": "Codes the file writes for no value. A blank cell always is one.",
+                "items": {
+                  "type": "string"
+                },
+                "title": "Missing Values",
+                "type": "array"
+              },
+              "unknown_values": {
+                "description": "Codes the file writes for unknown. Stored as UNKNOWN in text columns.",
+                "items": {
+                  "type": "string"
+                },
+                "title": "Unknown Values",
+                "type": "array"
+              },
+              "value_map": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "description": "Values this file writes its own way, and what is stored instead, from its mapping config. Fixes for known mock-data bugs aren't here: they're in config/data_fixes.yaml.",
+                "title": "Value Map",
+                "type": "object"
+              }
+            },
+            "required": [
+              "kind",
+              "source_file",
+              "source_column",
+              "dictionary_name",
+              "description",
+              "dictionary_file",
+              "destinations",
+              "missing_values",
+              "unknown_values",
+              "value_map"
+            ],
+            "title": "SourceColumnDefinition",
+            "type": "object"
+          },
+          "SourceRef": {
+            "additionalProperties": false,
+            "properties": {
+              "source_file": {
+                "title": "Source File",
+                "type": "string"
+              },
+              "source_column": {
+                "title": "Source Column",
+                "type": "string"
+              },
+              "dictionary_name": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Dictionary Name"
+              },
+              "description": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Description"
+              }
+            },
+            "required": [
+              "source_file",
+              "source_column",
+              "dictionary_name",
+              "description"
+            ],
+            "title": "SourceRef",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "properties": {
+          "query": {
+            "$ref": "#/$defs/ColumnDefinitionQuery",
+            "description": "The arguments, echoed back."
+          },
+          "matches": {
+            "description": "Every match, source columns first. Never empty: no match is a not_found error.",
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "normalized": "#/$defs/NormalizedColumnDefinition",
+                  "source": "#/$defs/SourceColumnDefinition"
+                },
+                "propertyName": "kind"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/SourceColumnDefinition"
+                },
+                {
+                  "$ref": "#/$defs/NormalizedColumnDefinition"
+                }
+              ]
+            },
+            "title": "Matches",
+            "type": "array"
+          }
+        },
+        "required": [
+          "query",
+          "matches"
+        ],
+        "title": "ColumnDefinitionResult",
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "get_database_info",
+      "description": "Say what this server exposes and whether it's healthy: the access mode, its tools, the metadata files it reads, and, if one is configured, whether the database is reachable. Never returns credentials.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "title": "get_database_infoArguments"
+      },
+      "outputSchema": {
+        "$defs": {
+          "DatabaseStatus": {
+            "additionalProperties": false,
+            "properties": {
+              "engine": {
+                "enum": [
+                  "sqlite",
+                  "postgres"
+                ],
+                "title": "Engine",
+                "type": "string"
+              },
+              "healthy": {
+                "description": "True if the database answered a query just now.",
+                "title": "Healthy",
+                "type": "boolean"
+              },
+              "error": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/ErrorInfo"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Why it isn't healthy. Blank when healthy."
+              },
+              "server_version": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Server Version"
+              },
+              "database": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "The SQLite file name or the PostgreSQL database name. Never a path, host, user or password.",
+                "title": "Database"
+              },
+              "database_schema": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Database Schema"
+              },
+              "model_tables": {
+                "$ref": "#/$defs/ModelTables"
+              },
+              "table_count": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Table Count"
+              },
+              "view_count": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "View Count"
+              }
+            },
+            "required": [
+              "engine",
+              "healthy",
+              "error",
+              "server_version",
+              "database",
+              "database_schema",
+              "model_tables",
+              "table_count",
+              "view_count"
+            ],
+            "title": "DatabaseStatus",
+            "type": "object"
+          },
+          "ErrorInfo": {
+            "additionalProperties": false,
+            "properties": {
+              "code": {
+                "description": "What kind of failure. Stable: callers can branch on it.",
+                "enum": [
+                  "invalid_argument",
+                  "not_found",
+                  "query_rejected",
+                  "query_failed",
+                  "timeout",
+                  "database_unavailable",
+                  "internal_error"
+                ],
+                "title": "Code",
+                "type": "string"
+              },
+              "message": {
+                "description": "What went wrong, for a person or a model to read. Never holds credentials.",
+                "title": "Message",
+                "type": "string"
+              },
+              "details": {
+                "anyOf": [
+                  {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Extra facts for this code, such as `suggestions` for not_found.",
+                "title": "Details"
+              }
+            },
+            "required": [
+              "code",
+              "message"
+            ],
+            "title": "ErrorInfo",
+            "type": "object"
+          },
+          "MetadataFile": {
+            "additionalProperties": false,
+            "properties": {
+              "path": {
+                "description": "Repo-relative.",
+                "title": "Path",
+                "type": "string"
+              },
+              "sha256": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Its SHA-256, so two consumers can tell they read the same file. Blank if it can't be read.",
+                "title": "Sha256"
+              }
+            },
+            "required": [
+              "path",
+              "sha256"
+            ],
+            "title": "MetadataFile",
+            "type": "object"
+          },
+          "MetadataStatus": {
+            "additionalProperties": false,
+            "properties": {
+              "healthy": {
+                "description": "True if every metadata file was read and parsed.",
+                "title": "Healthy",
+                "type": "boolean"
+              },
+              "error": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/ErrorInfo"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Why not. Blank when healthy."
+              },
+              "files": {
+                "description": "The repo files the metadata tools read.",
+                "items": {
+                  "$ref": "#/$defs/MetadataFile"
+                },
+                "title": "Files",
+                "type": "array"
+              },
+              "table_count": {
+                "description": "Tables in the model's schema.",
+                "title": "Table Count",
+                "type": "integer"
+              }
+            },
+            "required": [
+              "healthy",
+              "error",
+              "files",
+              "table_count"
+            ],
+            "title": "MetadataStatus",
+            "type": "object"
+          },
+          "ModelTables": {
+            "additionalProperties": false,
+            "properties": {
+              "expected": {
+                "description": "The tables in destination_schema.yaml.",
+                "items": {
+                  "type": "string"
+                },
+                "title": "Expected",
+                "type": "array"
+              },
+              "missing": {
+                "description": "Expected tables the database doesn't have.",
+                "items": {
+                  "type": "string"
+                },
+                "title": "Missing",
+                "type": "array"
+              }
+            },
+            "required": [
+              "expected",
+              "missing"
+            ],
+            "title": "ModelTables",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "properties": {
+          "access_mode": {
+            "const": "definitions",
+            "description": "What this server may expose, set by trusted configuration at startup. `definitions`: metadata only, no data-query tools, no student-level values.",
+            "title": "Access Mode",
+            "type": "string"
+          },
+          "capabilities": {
+            "description": "The tools this server registered for its access mode.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Capabilities",
+            "type": "array"
+          },
+          "read_only": {
+            "const": true,
+            "description": "Always true: the server never writes.",
+            "title": "Read Only",
+            "type": "boolean"
+          },
+          "metadata": {
+            "$ref": "#/$defs/MetadataStatus"
+          },
+          "database": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/DatabaseStatus"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The database named by PDP_MCP_BACKEND, if one is set. No tool in definitions mode reads it: this only reports whether it's reachable. Null when none is configured."
+          },
+          "warnings": {
+            "description": "Problems worth knowing, such as a PostgreSQL role that can write.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "access_mode",
+          "capabilities",
+          "read_only",
+          "metadata",
+          "database",
+          "warnings"
+        ],
+        "title": "DatabaseInfoResult",
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "list_tables",
+      "description": "List the tables of the normalized PDP data model, with what one row of each is. Start here. Read from the model's schema, not a database: no student data.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "title": "list_tablesArguments"
+      },
+      "outputSchema": {
+        "$defs": {
+          "TableSummary": {
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "title": "Name",
+                "type": "string"
+              },
+              "type": {
+                "enum": [
+                  "table",
+                  "view"
+                ],
+                "title": "Type",
+                "type": "string"
+              },
+              "in_model": {
+                "description": "True if the table is in the normalized model (destination_schema.yaml).",
+                "title": "In Model",
+                "type": "boolean"
+              },
+              "description": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "What one row is, from the model's README. Blank for tables and views outside the model.",
+                "title": "Description"
+              }
+            },
+            "required": [
+              "name",
+              "type",
+              "in_model",
+              "description"
+            ],
+            "title": "TableSummary",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "properties": {
+          "source": {
+            "description": "The repo file the tables come from: the model's destination_schema.yaml. Tables a database adds outside the model, and views, aren't listed.",
+            "title": "Source",
+            "type": "string"
+          },
+          "tables": {
+            "description": "Tables first, then views, each sorted by name.",
+            "items": {
+              "$ref": "#/$defs/TableSummary"
+            },
+            "title": "Tables",
+            "type": "array"
+          }
+        },
+        "required": [
+          "source",
+          "tables"
+        ],
+        "title": "ListTablesResult",
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    }
+  ]
+}

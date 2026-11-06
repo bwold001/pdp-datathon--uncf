@@ -1,0 +1,71 @@
+[project]
+name = "server-application"
+version = "0.1.0"
+description = "FastAPI backend for Playground"
+authors = [
+    { name = "Kisha Mavryck Richardson", email = "kisha@mavryck.co" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "aiosqlite>=0.22.1",
+    "alembic>=1.20.0",
+    "anthropic>=2.3.0", # sandbox chat: the LLM that follows the metadata-advisor skill and calls the metadata tools
+    "asyncpg>=0.32.0",
+    "bcrypt>=5.0.0",
+    "fastapi[standard]>=0.146.0",
+    "pandas>=3.0.6",
+    "pdp-normalized-data-model[postgres]",
+    "pgvector>=0.5.1",
+    "polars>=2.0.0",
+    "pyarrow>=26.0.0",
+    "pydantic-settings>=2.16.0",
+    "pyjwt>=2.15.1",
+    "pyyaml>=6.0.3", # sandbox chat: pdp_mcp.metadata reads the data model's YAML configs
+    "sqlalchemy[asyncio]>=2.1.5",
+]
+
+# The data model's loader, used in place: editable, because it reads its configs from its own folder.
+[tool.uv.sources]
+pdp-normalized-data-model = { path = "../../normalized-data-model", editable = true }
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "ruff>=0.17.1",
+]
+
+
+[tool.alembic]
+script_location = "%(here)s/alembic"
+# Date-prefixed filenames so migrations sort chronologically in the editor.
+file_template = "%%(year)d_%%(month).2d_%%(day).2d_%%(hour).2d%%(minute).2d-%%(rev)s_%%(slug)s"
+prepend_sys_path = ["."]
+truncate_slug_length = 40
+
+# Format and lint every newly generated migration.
+[[tool.alembic.post_write_hooks]]
+name = "ruff_format"
+type = "module"
+module = "ruff"
+options = "format REVISION_SCRIPT_FILENAME"
+
+[[tool.alembic.post_write_hooks]]
+name = "ruff_check"
+type = "module"
+module = "ruff"
+options = "check --fix REVISION_SCRIPT_FILENAME"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py314"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "ASYNC"]
+
+[tool.ruff.lint.per-file-ignores]
+# Migration template imports op/sa/pgvector up front so hand-written migrations can use them.
+"alembic/versions/*" = ["F401"]

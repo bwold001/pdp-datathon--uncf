@@ -1,0 +1,138 @@
+# Tasks for the normalized data model. Run them from this folder.
+#   task --list   every task and what it does
+#   task setup    once: a virtual environment with the packages the tests need
+#   task check    everything CI runs, with the PostgreSQL tests run, not skipped
+#   task check:fast   the same without the tests marked slow, for while you work
+# Needs Task (https://taskfile.dev) and, for the PostgreSQL tasks, Docker.
+# The playground keeps its own tasks, in playground/mise.toml.
+version: '3'
+
+vars:
+  VENV: '{{.ROOT_DIR}}/../.venv'
+  # The virtual environment's Python from `task setup` when it exists, else python3 on PATH.
+  PYTHON:
+    sh: test -x "{{.ROOT_DIR}}/../.venv/bin/python3" && echo "{{.ROOT_DIR}}/../.venv/bin/python3" || echo python3
+  POSTGRES_URL: postgresql://pdp:pdp@localhost:5434/pdp   # the database in docker-compose.yml
+
+tasks:
+  setup:
+    desc: Create ../.venv and install the repository's requirements.txt into it (safe to re-run)
+    cmds:
+      - test -d "{{.VENV}}" || python3 -m venv "{{.VENV}}"
+      - '"{{.VENV}}/bin/python3" -m pip install --quiet -r ../requirements.txt'
+
+  db:up:
+    desc: Start PostgreSQL 18 in Docker on port 5434, and wait until it's ready
+    preconditions:
+      - sh: docker info > /dev/null 2>&1
+        msg: Docker isn't running. Start Docker Desktop, then run this again.
+    cmds:
+      - docker compose up --detach --wait
+
+  db:down:
+    desc: Stop PostgreSQL; its data is kept
+    preconditions:
+      - sh: docker info > /dev/null 2>&1
+        msg: Docker isn't running. Start Docker Desktop, then run this again.
+    cmds:
+      - docker compose down
+
+  db:reset:
+    desc: Delete PostgreSQL's data and start it again, empty
+    preconditions:
+      - sh: docker info > /dev/null 2>&1
+        msg: Docker isn't running. Start Docker Desktop, then run this again.
+    cmds:
+      - docker compose down --volumes
+      - task: db:up
+
+  test:
+    desc: Every test, with SQLite only; the PostgreSQL tests skip
+    cmds:
+      # Unset, so an exported value can't turn this into a PostgreSQL run.
+      - 'unset PDP_TEST_POSTGRES_URL PDP_REQUIRE_POSTGRES; {{.PYTHON}} -m pytest -q {{.CLI_ARGS}}'
+
+  test:postgres:
+    desc: Start PostgreSQL and run the PostgreSQL tests; a test that skips fails
+    deps: [db:up]
+    env:
+      PDP_TEST_POSTGRES_URL: '{{.POSTGRES_URL}}'
+      PDP_REQUIRE_POSTGRES: '1'
+    cmds:
+      - '{{.PYTHON}} -m pytest -q -m postgres {{.CLI_ARGS}}'
+
+  check:
+    desc: Start PostgreSQL and run `make check` from the repository root, as CI does
+    deps: [db:up]
+    env:
+      PDP_TEST_POSTGRES_URL: '{{.POSTGRES_URL}}'
+      PDP_REQUIRE_POSTGRES: '1'
+    cmds:
+      # make check calls python3, so put the virtual environment first on PATH for it.
+      - PATH="{{.VENV}}/bin:$PATH" make -C .. check
+
+  check:fast:
+    desc: The same as `task check`, without the tests marked slow, for while you work
+    deps: [db:up]
+    env:
+      PDP_TEST_POSTGRES_URL: '{{.POSTGRES_URL}}'
+      PDP_REQUIRE_POSTGRES: '1'
+    cmds:
+      - PATH="{{.VENV}}/bin:$PATH" make -C .. check-fast
+
+  load:sqlite:
+    desc: Map, validate and load the full mock data into SQLite (output/pdp.sqlite), through data/staging/
+    cmds:
+      - '{{.PYTHON}} -m src.pipeline.run {{.CLI_ARGS}}'
+
+  load:postgres:
+    desc: Start PostgreSQL, then map, validate and load the full mock data into it, through data/staging/
+    deps: [db:up]
+    env:
+      PDP_POSTGRES_URL: '{{.POSTGRES_URL}}'
+    cmds:
+      - '{{.PYTHON}} -m src.pipeline.run --backend postgres {{.CLI_ARGS}}'
+
+  test:config:
+    desc: The configs, the schema, the rule format and the ER diagram
+    cmds: ['PATH="{{.VENV}}/bin:$PATH" ./scripts/test_config.sh {{.CLI_ARGS}}']
+
+  test:rules:
+    desc: The rules module
+    cmds: ['PATH="{{.VENV}}/bin:$PATH" ./scripts/test_rules.sh {{.CLI_ARGS}}']
+
+  test:validator:
+    desc: The validator, including the full mock data
+    cmds: ['PATH="{{.VENV}}/bin:$PATH" ./scripts/test_validator.sh {{.CLI_ARGS}}']
+
+  test:sample:
+    desc: The sample builder and the samples
+    cmds: ['PATH="{{.VENV}}/bin:$PATH" ./scripts/test_sample.sh {{.CLI_ARGS}}']
+
+  test:dictionary:
+    desc: The column dictionary builder, and that config/column_dictionary.yaml is current
+    cmds: ['PATH="{{.VENV}}/bin:$PATH" ./scripts/test_dictionary.sh {{.CLI_ARGS}}']
+
+  test:generator:
+    desc: The on-campus housing generator
+    cmds: ['PATH="{{.VENV}}/bin:$PATH" ./scripts/test_generator.sh {{.CLI_ARGS}}']
+
+  test:tables:
+    desc: Writing and reading table files, CSV and Parquet
+    cmds: ['PATH="{{.VENV}}/bin:$PATH" ./scripts/test_tables.sh {{.CLI_ARGS}}']
+
+  test:mapper:
+    desc: The Mapper and what it writes to the staging area
+    cmds: ['PATH="{{.VENV}}/bin:$PATH" ./scripts/test_mapper.sh {{.CLI_ARGS}}']
+
+  test:fixer:
+    desc: The Fixer and the fixes file
+    cmds: ['PATH="{{.VENV}}/bin:$PATH" ./scripts/test_fixer.sh {{.CLI_ARGS}}']
+
+  test:pipeline:
+    desc: The end-to-end run, step by step through the staging area
+    cmds: ['PATH="{{.VENV}}/bin:$PATH" ./scripts/test_pipeline.sh {{.CLI_ARGS}}']
+
+  test:loader:
+    desc: The loader, including the full mock data; the PostgreSQL tests skip unless PDP_TEST_POSTGRES_URL is set
+    cmds: ['PATH="{{.VENV}}/bin:$PATH" ./scripts/test_loader.sh {{.CLI_ARGS}}']

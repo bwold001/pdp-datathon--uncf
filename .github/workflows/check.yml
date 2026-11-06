@@ -1,0 +1,101 @@
+name: check
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  # The fast and slow tests, each on its own machine with its own database.
+  tests:
+    name: tests (${{ matrix.check }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        check: [check-fast, check-slow]
+    # The data model's PostgreSQL tests run against this database, the same version as
+    # normalized-data-model/docker-compose.yml. PDP_REQUIRE_POSTGRES=1 makes a skipped one fail,
+    # so they can't quietly stop running. Locally, `task check` in normalized-data-model/ does the same.
+    services:
+      postgres:
+        image: postgres:18.4
+        env:
+          POSTGRES_USER: pdp
+          POSTGRES_PASSWORD: pdp
+          POSTGRES_DB: pdp
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -h localhost -U pdp -d pdp"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
+    env:
+      PDP_TEST_POSTGRES_URL: postgresql://pdp:pdp@localhost:5432/pdp
+      PDP_REQUIRE_POSTGRES: "1"
+      # This runner has two cores, so it gets fewer workers than the Makefile's default.
+      PYTEST_WORKERS: "2"
+      # Shows a newly slow test in the log, in case it needs the slow marker.
+      PYTEST_ARGS: --durations=5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: python -m pip install -r requirements.txt
+      # Runs scripts/check.py plus any foundation tests added to the Makefile's check target.
+      # Between them, these two run every test.
+      - run: make ${{ matrix.check }}
+
+  # main requires a check named data. It runs even if a machine failed, because a skipped
+  # required check counts as a pass.
+  data:
+    if: always()
+    needs: tests
+    runs-on: ubuntu-latest
+    steps:
+      - run: test "${{ needs.tests.result }}" = "success"
+
+  links:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      # Checks that every link to a file in this repo works, in every Markdown file.
+      # --offline skips links to outside websites, so a slow or offline site can't block a merge.
+      - uses: lycheeverse/lychee-action@v2
+        with:
+          args: >-
+            --no-progress
+            --offline
+            "./**/*.md"
+          fail: true
+
+  playground:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: playground
+    env:
+      # Same as `mise trust` locally, so mise uses playground/mise.toml.
+      MISE_TRUSTED_CONFIG_PATHS: ${{ github.workspace }}/playground
+    steps:
+      - uses: actions/checkout@v7
+      # Installs the bun, Node, Python and uv versions pinned in playground/mise.toml.
+      - uses: jdx/mise-action@v5
+        with:
+          working_directory: playground
+      - run: mise run api:lint
+      # SQLite, so there's no database to start.
+      - run: mise run api:test-sqlite
+      - run: mise run web:install
+      # Build first: it generates the Next.js types the type check needs.
+      - run: mise run web:build
+      - run: mise run web:lint
+      # Installs Chromium and runs every story's play function.
+      # a11y is 'todo' in .storybook/preview.tsx: violations are reported without failing the job.
+      - run: mise run web:test-storybook

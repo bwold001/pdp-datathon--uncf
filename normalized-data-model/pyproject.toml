@@ -1,0 +1,23 @@
+# Packaging for the normalized data model, so other projects (the Playground server) can import it.
+# Install it editable only: the loader finds config/, data/ and logs/ next to src/, so a built
+# wheel would lose them. The repo's own .venv still installs from ../requirements.txt, which pins
+# the exact versions; the bounds here only say what the code needs.
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pdp-normalized-data-model"
+version = "0.1.0"
+description = "The normalized PDP data model: configs, pipeline and loader"
+requires-python = ">=3.10"
+dependencies = [
+    "pyyaml>=6.0",
+    "pyarrow>=17",
+]
+
+[project.optional-dependencies]
+postgres = ["psycopg[binary]>=3.2"]
+
+[tool.setuptools.packages.find]
+include = ["src*", "pdp_model*"]

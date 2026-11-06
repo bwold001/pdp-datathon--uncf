@@ -1,0 +1,225 @@
+# How the course Analysis-Ready File writes its values, and where each column goes.
+# Run on every load. What a valid stored value looks like (types, allowed values, ranges) is NOT
+# here: it's in config/destination_schema.yaml, the same for every file that writes the column.
+#
+# Each entry: source (or value, a fixed value for every row), destination_table,
+# destination_column and on_conflict (append, replace or keep: what the loader does when the
+# destination row already holds a value). Where they apply:
+#   format          how a date is written, as a strptime pattern.
+#   true_values / false_values   how a true/false value is written.
+#   value_map       how this file writes a value its own way, as {its value: the stored value}. Fixes for
+#                   mock-data bugs are not here: they're in config/data_fixes.yaml.
+#   missing_values  codes this file uses for "no value". A blank cell always means no value.
+#   unknown_values  codes this file uses for "unknown".
+#   must_exist      the row must already have been written by another file in the same run.
+# A source column with no destination is marked `dropped:` with the reason.
+# Allowed values come from data/dictionaries/arf_course_data_dictionary.md in the starter repo.
+# 17,755 rows have no course record (the student was enrolled elsewhere that term, or the term is
+# unknown): course fields are blank on those rows, and course_enrollment.course_id is blank.
+
+- source: Student_GUID
+  destination_table: course_enrollment
+  destination_column: student_id
+  on_conflict: replace
+
+- source: Student_GUID
+  destination_table: student
+  destination_column: student_id
+  must_exist: true
+  on_conflict: keep         # finds the student row the cohort file wrote
+
+- source: Student_GUID
+  destination_table: cohort_membership
+  destination_column: student_id
+  must_exist: true
+  on_conflict: keep         # with Cohort, finds the cohort row the cohort file wrote
+
+- source: Student_Age
+  destination_table: student
+  destination_column: student_age
+  unknown_values: [Unknown]
+  on_conflict: keep         # always equals the cohort file's value today
+
+- source: Race
+  destination_table: student
+  destination_column: race
+  unknown_values: [Unknown, Unknown or missing]
+  on_conflict: keep
+
+- source: Ethnicity
+  destination_table: student
+  destination_column: ethnicity
+  unknown_values: [UK]
+  on_conflict: keep
+
+- source: Gender
+  destination_table: student
+  destination_column: gender
+  unknown_values: [UK]
+  on_conflict: keep
+
+- source: Cohort
+  destination_table: cohort_membership
+  destination_column: cohort
+  must_exist: true
+  on_conflict: keep         # with Student_GUID, checks the cohort row the cohort file wrote
+
+- source: Cohort
+  destination_table: course_enrollment
+  destination_column: cohort
+  on_conflict: replace      # which of the student's cohorts this row belongs to
+
+- source: Cohort_Term
+  destination_table: course_enrollment
+  destination_column: course_file_cohort_term
+  on_conflict: replace      # kept as the course file wrote it. It differs from the cohort file's Cohort_Term (cohort_membership.cohort_term) on 4,307 rows; both are kept so they can be compared
+
+- source: Academic_Year
+  destination_table: term
+  destination_column: academic_year
+  on_conflict: replace   # natural key: the row is looked up or created, never overwritten
+
+- source: Academic_Term
+  destination_table: term
+  destination_column: academic_term
+  on_conflict: replace   # natural key: the row is looked up or created, never overwritten
+
+- source: Course_Prefix
+  destination_table: course
+  destination_column: course_prefix
+  on_conflict: replace   # natural key: the row is looked up or created, never overwritten
+
+- source: Course_Number
+  destination_table: course
+  destination_column: course_number
+  on_conflict: replace   # natural key: the row is looked up or created, never overwritten
+
+- source: Section_ID
+  destination_table: course_enrollment
+  destination_column: section_id
+  unknown_values: [UK, Missing]
+  on_conflict: replace
+
+- source: Course_Name
+  destination_table: course_enrollment
+  destination_column: course_name
+  unknown_values: [UK, MISSING]
+  on_conflict: replace
+
+- source: Course_CIP
+  destination_table: course_enrollment
+  destination_column: course_cip
+  unknown_values: [MISSING]
+  on_conflict: replace
+
+- source: Course_Type
+  destination_table: course_enrollment
+  destination_column: course_type
+  on_conflict: replace
+
+- source: Math_or_English_Gateway
+  destination_table: course_enrollment
+  destination_column: math_or_english_gateway
+  on_conflict: replace
+
+- source: Co_requisite_Course
+  destination_table: course_enrollment
+  destination_column: co_requisite_course
+  on_conflict: replace
+
+- source: Course_Begin_Date
+  destination_table: course_enrollment
+  destination_column: course_begin_date
+  format: '%Y%m%d'
+  missing_values: [.]
+  on_conflict: replace
+
+- source: Course_End_Date
+  destination_table: course_enrollment
+  destination_column: course_end_date
+  format: '%Y%m%d'
+  missing_values: [.]
+  on_conflict: replace
+
+- source: Grade
+  destination_table: course_enrollment
+  destination_column: grade
+  unknown_values: [M, UK]
+  on_conflict: replace
+
+- source: Number_of_Credits_Attempted
+  destination_table: course_enrollment
+  destination_column: number_of_credits_attempted
+  missing_values: [.]
+  on_conflict: replace
+
+- source: Number_of_Credits_Earned
+  destination_table: course_enrollment
+  destination_column: number_of_credits_earned
+  missing_values: [.]
+  on_conflict: replace
+
+- source: Delivery_Method
+  destination_table: course_enrollment
+  destination_column: delivery_method
+  on_conflict: replace
+
+- source: Core_Course
+  destination_table: course_enrollment
+  destination_column: core_course
+  on_conflict: replace
+
+- source: Core_Course_Type
+  destination_table: course_enrollment
+  destination_column: core_course_type
+  on_conflict: replace
+
+- source: Core_Competency_Completed
+  destination_table: course_enrollment
+  destination_column: core_competency_completed
+  on_conflict: replace
+
+- source: Enrolled_at_Other_Institution_s_
+  destination_table: course_enrollment
+  destination_column: enrolled_at_other_institution_s
+  on_conflict: replace
+
+- source: Credential_Engine_Identifier
+  destination_table: course_enrollment
+  destination_column: credential_engine_identifier
+  on_conflict: replace
+
+- source: Course_Instructor_Employment_Sta
+  destination_table: course_enrollment
+  destination_column: course_instructor_employment_sta
+  on_conflict: replace
+
+- source: Course_Instructor_Rank
+  destination_table: course_enrollment
+  destination_column: course_instructor_rank
+  on_conflict: replace
+
+- source: S_Enrollment_Record_at_other
+  destination_table: course_enrollment
+  destination_column: s_enrollment_record_at_other
+  on_conflict: replace
+
+- source: C_Enrollment_Record_at_other
+  destination_table: course_enrollment
+  destination_column: c_enrollment_record_at_other
+  on_conflict: replace
+
+- source: L_Enrollment_Record_at_other
+  destination_table: course_enrollment
+  destination_column: l_enrollment_record_at_other
+  on_conflict: replace
+
+- source: Term_Program_of_Study
+  destination_table: course_enrollment
+  destination_column: term_program_of_study
+  on_conflict: replace
+
+- source: researchid
+  destination_table: data_provider
+  destination_column: research_id
+  on_conflict: replace   # one value per file (course2026atd), so it describes the file, not the student

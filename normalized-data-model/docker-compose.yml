@@ -1,0 +1,28 @@
+# PostgreSQL for the data model's tests and loads, on this machine only. Started by `task db:up`.
+# The user, password and database are local test values, not secrets.
+# The playground runs its own database on port 5433 (playground/docker-compose.yml), so this one uses 5434.
+name: pdp-data-model
+
+services:
+  db:
+    image: postgres:18.4
+    environment:
+      POSTGRES_USER: pdp
+      POSTGRES_PASSWORD: pdp
+      POSTGRES_DB: pdp
+    ports:
+      # Only this computer can connect: the user and password above are shared test values.
+      - "127.0.0.1:5434:5432"
+    volumes:
+      # PostgreSQL 18 images keep data under /var/lib/postgresql/<major>/, so mount the parent.
+      - db_data:/var/lib/postgresql
+    healthcheck:
+      # -h localhost checks over TCP. While the image sets up the database it runs a temporary server
+      # that only listens on a local socket, and the socket check would call that one ready.
+      test: ["CMD-SHELL", "pg_isready -h localhost -U pdp -d pdp"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+volumes:
+  db_data:

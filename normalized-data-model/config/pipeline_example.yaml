@@ -1,0 +1,70 @@
+# An example for teams: config/pipeline.yaml with two example enrichment files added at the end, as the
+# README's "Load your own enrichment files" shows. Load with: python -m src.pipeline.run --config config/pipeline_example.yaml
+#
+# How a run goes: which source files it starts from, and which database it writes.
+# The source files are the Mapper's input, not the loader's: the loader reads only the run's validated/ tables.
+# What the tables are and where each column goes is NOT here: that's destination_schema.yaml and
+# the *_mapping.yaml files next to this one.
+#
+# Relative paths are from normalized-data-model/. Command-line flags override some settings;
+# see `python -m src.loader.load --help`.
+
+mode: full_refresh   # the only mode: every load drops and rebuilds the model's tables, in one transaction
+backend: sqlite      # sqlite or postgres (--backend)
+
+sqlite:
+  path: output/example.sqlite   # its own database, so the example doesn't replace output/pdp.sqlite
+
+tables:
+  path: output/example_tables   # its own table files, so the example doesn't replace output/tables/
+
+postgres:
+  # The NAME of the environment variable that holds the connection URL, never the URL itself, for example
+  #   export PDP_POSTGRES_URL=postgresql://user:password@localhost:5432/pdp
+  url_env: PDP_POSTGRES_URL
+
+# What happens to a row that breaks an `error` rule (see logs/validation_report/ after a load):
+#   skip  hold the row back, write it to logs/failed_records/, and load the rest
+#   fail  stop before touching the database
+on_error_rows: skip
+
+batch_size: 5000     # rows per insert batch
+logs_dir: logs       # validation and load reports go here
+staging_dir: data/staging   # each run's mapped, fixed and validated tables (data/staging/<run id>/)
+fixes: config/data_fixes.yaml   # the fixes for known mock-data bugs; a team can name its own copy
+
+# The source files a run starts from, in this order. path is each file as it came in, which the Mapper
+# reads. It can't name the validator's output, because data/staging/<run id>/ doesn't exist until the run
+# starts. The loader finds each source's tables at validated/<the path's file name>/. To load a run that's
+# already validated, use `python -m src.loader.load --config config/pipeline_example.yaml --staging
+# data/staging/<run id>`: the files themselves aren't read then.
+# kind is cohort, course or enrichment: the cohort and course files are
+# validated together, so the course file's students and cohorts must be in the cohort file.
+# provider is stored as data_provider.name. order_by (optional) names a column, compared as a year or a
+# number, so that for a value `replace` writes, the later row by that column wins over the row read last.
+sources:
+  - kind: cohort
+    path: ../data/raw/pdp_cohort_data.csv           # --cohort
+    config: cohort_mapping.yaml
+    provider: Achieving the Dream
+    order_by: cohort_membership.cohort   # a student in two cohorts: the later cohort's values win, whatever the row order
+  - kind: course
+    path: ../data/raw/pdp_course_data.csv           # --course
+    config: course_mapping.yaml
+    provider: Achieving the Dream
+  - kind: enrichment
+    path: data/input/enrichment/on_campus_housing.csv
+    config: on_campus_housing_mapping.yaml
+    provider: 'synthetic: on-campus housing generator'
+  - kind: enrichment
+    path: data/input/enrichment/institution_events.csv
+    config: institution_events_mapping.yaml
+    provider: 'public: institution events'
+  - kind: enrichment
+    path: data/input/enrichment/example_commute.csv
+    config: example_commute_mapping.yaml
+    provider: 'example: commute survey'
+  - kind: enrichment
+    path: data/input/enrichment/example_orientation.csv
+    config: example_orientation_mapping.yaml
+    provider: 'example: orientation calendar'

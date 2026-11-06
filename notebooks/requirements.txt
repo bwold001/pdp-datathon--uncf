@@ -1,0 +1,4 @@
+# Packages the notebooks need on top of the shared ones. CI doesn't install these.
+# Install: python -m pip install -r notebooks/requirements.txt  (inside a virtual environment)
+-r ../requirements.txt
+matplotlib==3.10.7   # #12 data quality: the deep-dive notebook's charts

@@ -1,0 +1,35 @@
+# Shared value lists.
+#
+# A rule in config/destination_schema.yaml can check a value against a list here by name:
+#     rules:
+#       - {value_set: yes_no, severity: error}
+# The rule passes if the stored value is in the list. Use a list here instead of writing it into
+# the rule (`enum: [...]`) when more than one column uses it, or when squads should be able to
+# add values without editing the schema.
+#
+# What the rule's severity does with a value that isn't in the list:
+#   error    the row is held back and written to logs/failed_records/.
+#   warning  the row loads, and the run's report lists the value. Use it for an open list.
+# Rules check stored values only: blanks and unknowns (UNKNOWN) are never checked against a list.
+# `ignore_case: true` and `ignore_spaces: true` on the rule relax the comparison.
+#
+# Editing a list changes what's valid for every column that uses it. When the configs load, an
+# empty list, or a rule naming a list that isn't here, stops the run before any data is read.
+
+# Closed lists: the codes the data dictionaries define. Change them only if a dictionary changes.
+
+academic_term: [Fall, Winter, Spring, Summer]   # term.academic_term, cohort_membership.cohort_term (ignore_case: the files write FALL)
+yes_no: [Y, N]                                  # Pell status, disability status, the year-1 gateway attempt flags and four course flags
+yes_no_na: [Y, N, NA]                           # the year-1 developmental course attempt flags (NA: not applicable)
+placement: [C, N]                               # math, English and reading placement (C: college ready)
+gateway_status: [R, N]                          # gateway math and English status (R: required)
+completed_c_d_na: [C, D, NA]                    # gateway and developmental courses completed in year 1
+count_0_to_7: [0, 1, 2, 3, 4, 5, 6, 7]          # the 18 year-index columns, such as years to a credential (0: none)
+locale: [Urban, Suburb, Town/Rural]             # locale of another institution, in the cohort and course files
+
+# Open lists: values squads have agreed on so far. A value that isn't listed still loads, with a
+# warning, so a squad can bring a new one without changing the schema. Add it here once it's agreed.
+
+# institution_event.event_type. A type must also be lower-case words joined by underscores, such as
+# community_gathering; that rule is an error, so `Pow Wow` or a blank type is held back.
+event_type: [closure, ceremony, powwow]

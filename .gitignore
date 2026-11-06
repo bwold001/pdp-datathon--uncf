@@ -1,0 +1,45 @@
+.DS_Store
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+node_modules/
+.ipynb_checkpoints/
+
+# Compound Engineering local scratch and per-person config
+.context/compound-engineering/
+.compound-engineering/
+
+# Matt Pocock's skills local scratch
+.scratch/
+
+# Foundation tests
+.pytest_cache/
+
+# Data model validation runs: local audit records, not committed
+normalized-data-model/logs/*
+!normalized-data-model/logs/.gitkeep
+
+# Data model staging area: each run's mapped, fixed and validated tables, local records, not committed
+normalized-data-model/data/staging/
+
+# Data model loader: the SQLite database it writes (default output/pdp.sqlite), not committed
+normalized-data-model/output/
+
+# Files uploaded through the Playground's pipeline page, and the build record of the editable install
+normalized-data-model/data/uploads/
+*.egg-info/
+*.sqlite
+*.sqlite3
+.vscode/mcp.json
+
+# Success measures: the saved results database, not committed
+measures/output/
+
+# Equity gap finder: the CSVs it writes, not committed
+gap_finder/output/
+
+
+
+
