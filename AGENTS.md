@@ -7,7 +7,17 @@ and Benedict College, built on the starter's shared data and foundations. See
 [README.md](README.md) for the goal and data and [CONTRIBUTING.md](CONTRIBUTING.md) for how
 changes get in. Priorities: Core (Explorer), Stretch 1 (insight cards), Stretch 2 (chat agent).
 Never push to `main`, and never commit, push, or open a pull request without the user's explicit
-yes. Put UNCF code in its own folder, and keep per-school differences in config, not forks.
+yes. Keep per-school differences in config, not forks.
+
+**New code goes in `uncf` folders.** Don't edit the starter's Sandbox examples or shared
+foundations to build our features. Copy their pattern into our own folders instead:
+- Python (definitions, precompute, response models, API router): the top-level `uncf/` folder.
+  Mount its router in the Playground server with one line.
+- Client pages: `playground/client_application/src/app/(app)/uncf/`
+- Client components: `playground/client_application/src/components/uncf/`
+
+This keeps upstream fixes easy to merge and our changes easy to review. If a shared file must
+change, say so in the pull request.
 
 ## Before prompting
 
