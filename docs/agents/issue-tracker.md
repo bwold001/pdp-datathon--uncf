@@ -1,6 +1,6 @@
 # Issue tracker: GitHub
 
-Issues and PRDs for this repo live as GitHub issues in `devcolor/pdp-datathon-starter`. Use the `gh` CLI for all operations.
+Issues and PRDs for this repo live as GitHub issues in `bwold001/pdp-datathon--uncf`. Use the `gh` CLI for all operations.
 
 ## Conventions
 
@@ -15,9 +15,8 @@ Infer the repo from `git remote -v` — `gh` does this automatically when run in
 
 ## Repo-specific conventions
 
-- Squad proposals use the `proposal` label, plus `funded` / `not-funded`, `squad:*`, and `feedback_given`. These belong to the proposal process — don't add or remove them as part of triage.
-- Pull requests link their issue with `Closes #N`, or `Refs #N` if more pull requests are coming. See [CONTRIBUTING.md](../../CONTRIBUTING.md).
-- Tickets broken out of a funded proposal put `Refs #<proposal>` in the body. A pull request that finishes a ticket still writes `Closes #<proposal>` (or `Refs #<proposal>` if more are coming), never `Closes #<ticket>`, so the Reviewer's checklist and the proposal issue keep working.
+- Tasks use the `.github/ISSUE_TEMPLATE/task.md` template: one owner, one reviewer, acceptance criteria, validation, and a priority (Core / Stretch 1 / Stretch 2).
+- Pull requests link their task with `Closes #N`, or `Refs #N` if more pull requests are coming. See [CONTRIBUTING.md](../../CONTRIBUTING.md).
 
 ## When a skill says "publish to the issue tracker"
 
