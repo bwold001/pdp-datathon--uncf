@@ -36,6 +36,43 @@ make check-fast                  # no make on Windows? see Checks below
 
 Reinstall whenever `requirements.txt` changes.
 
+### Run the project
+
+From the repo root, with `.venv` active:
+
+```bash
+python -m uncf
+```
+
+`python -m uncf` is the one entry point for everything we build in `uncf/`. Today it runs the precompute; the API and later pieces will start from here too. It loads the data if `normalized-data-model/output/pdp.sqlite` is missing (about 75 seconds), then
+runs retention, gateway math and gateway English for every cohort and group, and writes the rows to
+`measures/output/success_measures.sqlite` (about 10 seconds). It doesn't need the Playground. Test it
+with `python -m pytest uncf`.
+
+#### How the precompute works
+
+- **Runs standalone.** It runs from the root env and needs no Playground. `measures/` uses only the
+  standard library, so it imports from the repo root. The API will read `success_measures.sqlite`
+  with `sqlite3` and never call `run_measure`.
+- **Two databases.** The loader writes `normalized-data-model/output/pdp.sqlite` (the source). The
+  precompute writes `measures/output/success_measures.sqlite` (the results). The Playground's own
+  database (PostgreSQL by default) is a third, separate one and is not used here.
+- **One save per measure.** A save replaces earlier rows for the same measure and cohort, so
+  `precompute()` passes every cohort and group in one `run_measure` call per measure. Splitting
+  groups across calls would wipe the first ones.
+- **What is saved.** Retention, gateway math and gateway English, for 2021-22 to 2024-25, by every
+  single dimension and every pair except first-gen: 36 groups, 7,080 rows.
+- **Timestamp.** There is no separate timestamp table. Each row's `data_loaded_at` is when
+  `pdp.sqlite` was built, not when the precompute ran, so a restart never makes old data look new. The API's `loaded_at` is `MAX(data_loaded_at)`.
+- **When data changes.** Every start recomputes (about 10 seconds), so new data shows up after a
+  reload of `pdp.sqlite` and a restart, with a newer `data_loaded_at`. The loader only runs when
+  `pdp.sqlite` is missing: to pick up new source files, delete it or run the loader yourself.
+- **Small groups.** Hidden groups (under 10 students) have blank numbers, never 0. Saving every pair
+  gives more ways to subtract a hidden group from totals (starter issue #87, not fixed).
+- **Where the API runs.** The API is a standalone FastAPI app from `uncf/`. It needs only
+  `success_measures.sqlite` to exist. The Playground is not required.
+- **Columns.** The `success_measures` columns are defined in `measures/save_results.py`.
+
 ## Data
 
 Mock data from [Achieving the Dream](https://achievingthedream.org/), in the shape of PDP's

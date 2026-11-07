@@ -32,6 +32,8 @@ change, say so in the pull request.
 
 - **Define the check first.** Before building, write down how you'll know it works: a command, a
   test, or an expected number.
+- **Every feature gets tests.** Add a pytest test with each feature, in a `tests/` folder next to
+  the code (for `uncf/`, `uncf/tests/`). A pull request without tests for its new behavior isn't done.
 - **Cap every retry loop.** Give each fix-and-retry loop a maximum number of tries (3 is a good
   default). At the cap, stop and ask a person. Don't keep trying.
 - **Use the README's skill for each phase.** When two installed skills do the same job (for
