@@ -1,38 +1,34 @@
 # Contributing
 
-Six squads build on this repo. These rules keep every pull request reviewed the same way.
+How the UNCF squad (Beza, Daryl, Fuad, Stella) gets changes into `main`. Nobody pushes to `main`;
+branch protection requires a pull request, one approval, and passing checks.
 
 ## Before you start
 
-Work here starts from a funded proposal. If you don't have one yet, see
-[Submit a proposal](README.md#submit-a-proposal). The proposal's DRI builds it, and its Reviewer
-(from a different squad) tests it.
+1. Look at the project board.
+2. Pull the latest `main`.
+3. Claim a task and name a reviewer on the board. Confirm its acceptance criteria.
+4. If your change touches a shared file or the result contract, tell the squad **before** you
+   build it.
 
 ## Build and open a pull request
 
-1. Branch from `main`. Use one pull request per proposal when you can. A bigger proposal can land
-   as several smaller pull requests.
-2. Open a pull request. The template fills in automatically.
-3. Link the pull request to its proposal in the description:
-   - **One pull request, or the last of several:** write `Closes #<proposal issue>`. This closes
-     the issue when it merges.
-   - **An earlier pull request of several:** write `Refs #<proposal issue>`. This links it
-     without closing the issue.
-4. Ask the proposal's Reviewer to review.
+1. Branch from `main` with a short-lived branch, such as `daryl/retention-measure`.
+2. Make focused commits. Open a draft pull request early. The template fills in.
+3. Link the task: `Closes #N`, or `Refs #N` if more pull requests are coming.
+4. Run the checks from the README's [Checks](README.md#checks) section. Foundations and the
+   Playground are checked separately.
+5. Ask a teammate to review. Merge after approval and passing checks.
+6. Keep `main` runnable. Unfinished stretch work stays disabled or on a branch.
 
-## What the Reviewer checks
+## What the reviewer checks
 
-The Reviewer works through the checklist in the pull request template:
+- The acceptance criteria in the task are met, and the validation steps were run.
+- Numbers match the shared measures; small-group suppression still holds.
+- Anything others use is explained in a README.
+- Changes to shared files or the result contract were announced.
 
-- The description says `Closes #<proposal issue>`, or `Refs #<proposal issue>` if more pull
-  requests are coming for that proposal.
-- The Reviewer ran the proposal's completion test, and it passed.
-- If this adds something other squads will use, the README explains how to use it.
+## Check-out note
 
-When every box is checked, the Reviewer approves. A pull request needs one approval before it can
-merge into `main`.
-
-## If it grows
-
-If the work needs more hours or more scope than the Leads approved, stop and ask the Leads in the
-proposal issue before spending more.
+At the end of a session, post: task or PR · working now · remaining · checks run · blocker or
+decision needed · next action and owner.

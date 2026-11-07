@@ -2,9 +2,22 @@
 
 Instructions for AI coding agents working in this repo. People can read it too.
 
-This repo holds shared data and foundations for the 2026 /dev/color datathon. Six squads build on
-it, so a change here affects everyone. See [README.md](README.md) for the data and
-[CONTRIBUTING.md](CONTRIBUTING.md) for how changes get in.
+This is the UNCF squad's repo for the 2026 /dev/color datathon: a Student Success Explorer for FMU
+and Benedict College, built on the starter's shared data and foundations. See
+[README.md](README.md) for the goal and data and [CONTRIBUTING.md](CONTRIBUTING.md) for how
+changes get in. Priorities: Core (Explorer), Stretch 1 (insight cards), Stretch 2 (chat agent).
+Never push to `main`, and never commit, push, or open a pull request without the user's explicit
+yes. Keep per-school differences in config, not forks.
+
+**New code goes in `uncf` folders.** Don't edit the starter's Sandbox examples or shared
+foundations to build our features. Copy their pattern into our own folders instead:
+- Python (definitions, precompute, response models, API router): the top-level `uncf/` folder.
+  Mount its router in the Playground server with one line.
+- Client pages: `playground/client_application/src/app/(app)/uncf/`
+- Client components: `playground/client_application/src/components/uncf/`
+
+This keeps upstream fixes easy to merge and our changes easy to review. If a shared file must
+change, say so in the pull request.
 
 ## Before prompting
 
@@ -84,7 +97,7 @@ it, so a change here affects everyone. See [README.md](README.md) for the data a
   pull request.
 - **Follow [CONTRIBUTING.md](CONTRIBUTING.md) and the pull request template.** Before you open a
   pull request:
-  - Link the proposal with `Closes #N`, or `Refs #N` if more pull requests are coming for it.
+  - Link the task with `Closes #N`, or `Refs #N` if more pull requests are coming for it.
   - Make sure `make check` passes.
   - If you add something other squads will use, explain it in the README.
 
@@ -96,9 +109,14 @@ folder is ignored by git: this repo sets no config there, so don't commit one.
 
 ### Issue tracker
 
-Issues and proposals live in GitHub Issues (`devcolor/pdp-datathon-starter`), managed with the
-`gh` CLI. See [docs/agents/issue-tracker.md](docs/agents/issue-tracker.md), including how
-tickets link back to their proposal.
+Tasks live in GitHub Issues (`bwold001/pdp-datathon--uncf`), managed with the `gh` CLI. See
+[docs/agents/issue-tracker.md](docs/agents/issue-tracker.md).
+
+- Always pass `--repo bwold001/pdp-datathon--uncf` to `gh issue` and `gh pr` commands. Without it,
+  `gh` can pick the upstream starter (`devcolor/pdp-datathon-starter`) and post there.
+- Every new issue goes on the squad's project board (`https://github.com/users/bwold001/projects/5`)
+  in the **To Do** column of the kanban view. Add it with `gh project item-add 5 --owner bwold001
+  --url <issue url>`, then set its Status to To Do.
 
 ### Triage labels
 
