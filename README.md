@@ -87,6 +87,12 @@ python -m uncf.explorer_fixture  # writes playground/client_application/public/u
 The fixture is git-ignored (it's a generated output). When #5 lands, `loadResults` in
 `playground/client_application/src/app/(app)/uncf/data.ts` calls the API instead and this step goes away.
 
+The fixture also holds **mock** year-2 paths (`uncf/paths_mock.py`) for the "Where were they in year 2?"
+chart, which is labeled "Mock data" on screen and in the CSV. No endpoint serves paths yet; the shape in
+`data.ts` (`PathsResponse`) is a proposal for whoever builds it. The Explorer also has trend lines across
+entering classes, a "Download CSV" button (every outcome and the paths for the view, with the shared
+result contract's columns), and "Create insight card", which opens `/uncf/card?cohort=…&group_by=…&measure=…`.
+
 ## Data
 
 Mock data from [Achieving the Dream](https://achievingthedream.org/), in the shape of PDP's

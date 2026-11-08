@@ -9,6 +9,7 @@ import sqlite3
 from pathlib import Path
 
 from measures.save_results import RESULTS_DATABASE
+from uncf.paths_mock import build_paths
 
 # Served as a static file by the client. Git-ignored: it is a generated output (see AGENTS.md).
 FIXTURE = Path(__file__).parent.parent / "playground/client_application/public/uncf/explorer-fixture.json"
@@ -52,6 +53,8 @@ def build_fixture(database: Path = RESULTS_DATABASE) -> dict:
 def main() -> None:
     """Write the fixture where the Explorer page loads it from."""
     fixture = build_fixture()
+    # MOCK: year-2 paths have no endpoint or owner yet. The Explorer labels this chart as mock data.
+    fixture["paths"] = build_paths()
     FIXTURE.parent.mkdir(parents=True, exist_ok=True)
     FIXTURE.write_text(json.dumps(fixture, separators=(",", ":")) + "\n", encoding="utf-8")
     print(f"wrote {FIXTURE} ({FIXTURE.stat().st_size:,} bytes)")

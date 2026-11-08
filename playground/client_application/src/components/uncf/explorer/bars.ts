@@ -1,4 +1,4 @@
-import type { Dimension, ResultRow, ResultsResponse } from "@/app/(app)/uncf/data";
+import { cohorts, type Cohort, type Dimension, type ResultRow, type ResultsResponse } from "@/app/(app)/uncf/data";
 
 import { dimensionInfo, measureNames, valueLabel, valueOrder } from "./labels";
 
@@ -10,6 +10,8 @@ export type BarState = "ok" | "hidden" | "not_yet" | "not_reported";
 
 export type Bar = {
   key: string;
+  /** The row's group values, so the same group can be found in another class's results. */
+  group: ResultRow["group"];
   label: string;
   state: BarState;
   /** The rate shown, in percent with one decimal, worked out from numerator and denominator. */
@@ -59,6 +61,7 @@ export function toBar(row: ResultRow, groupBy: Dimension[]): Bar {
   const shown = state === "ok" && row.numerator !== null && row.denominator !== null;
   return {
     key: groupBy.map((dimension) => row.group[dimension] ?? "").join("|") || "all",
+    group: row.group,
     label: labelOf(row, groupBy),
     state,
     percent: shown ? percentOf(row.numerator as number, row.denominator as number) : null,
@@ -140,4 +143,38 @@ export function comparisonSentence(response: ResultsResponse, everyone: Bar | nu
 export function chartTitle(response: ResultsResponse): string {
   const groupings = response.meta.group_by.map((dimension) => dimensionInfo[dimension].phrase);
   return `${measureNames[response.meta.measure]} by ${groupings.join(" and ")}`;
+}
+
+/** One point on a trend line: the same group's rate in one entering class. */
+export type TrendPoint = { cohort: Cohort; percent: number | null; provisional: boolean };
+
+/** The same group's shown rate in every class, oldest first. A hidden or missing rate is a gap, never 0. */
+export function trendFor(group: ResultRow["group"], byCohort: Partial<Record<Cohort, ResultsResponse | null>>): TrendPoint[] {
+  const wanted = Object.entries(group);
+  return cohorts.map((cohort) => {
+    const response = byCohort[cohort];
+    const row = response?.rows.find(
+      (candidate) => Object.keys(candidate.group).length === wanted.length && wanted.every(([dimension, value]) => candidate.group[dimension as Dimension] === value),
+    );
+    const shown = row && stateOf(row) === "ok";
+    return {
+      cohort,
+      percent: shown ? percentOf(row.numerator as number, row.denominator as number) : null,
+      provisional: Boolean(response?.meta.provisional),
+    };
+  });
+}
+
+/** One scale for every trend line in a chart, padded, and at least 12 points tall so small wiggles stay small. */
+export function trendScale(lines: TrendPoint[][]): [number, number] {
+  const values = lines.flat().flatMap((point) => (point.percent === null ? [] : [point.percent]));
+  if (values.length === 0) return [0, 100];
+  let low = Math.min(...values) - 3;
+  let high = Math.max(...values) + 3;
+  if (high - low < 12) {
+    const middle = (high + low) / 2;
+    low = middle - 6;
+    high = middle + 6;
+  }
+  return [Math.max(0, low), Math.min(100, high)];
 }

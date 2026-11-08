@@ -54,6 +54,8 @@ export type ResultsMeta = {
   source: string;
   /** When the source data was loaded, not when the precompute ran. */
   loaded_at: string;
+  /** True when the class's year 2 is only partly in the files, so a year-2 rate can still change. */
+  provisional?: boolean;
 };
 
 export type ResultsResponse = { meta: ResultsMeta; rows: ResultRow[] };
@@ -102,9 +104,20 @@ const interimDefinitions: Record<Measure, MeasureDefinition> = {
 
 const FIXTURE_URL = "/uncf/explorer-fixture.json";
 
+// Until #5 sends `provisional`: the course file covers only part of 2024-25's year 2 (2025-26).
+const PROVISIONAL_UNTIL_API: Cohort[] = ["2024-25"];
+const YEAR_TWO_MEASURES: Measure[] = ["retention"];
+
 /** [values joined by " x ", numerator, denominator, status, n_excluded], as written by uncf/explorer_fixture.py. */
 type FixtureRow = [string, number | null, number | null, Exclude<ResultStatus, "not_reported">, number | null];
-type Fixture = { loaded_at: string; rows: Record<string, Record<string, Record<string, FixtureRow[]>>> };
+/** [values, students, here, moved, none, 4-year, 2-year, not on record, status], as written by uncf/paths_mock.py. */
+type Count = number | null;
+type FixturePathsRow = [string, Count, Count, Count, Count, Count, Count, Count, ResultStatus];
+type Fixture = {
+  loaded_at: string;
+  rows: Record<string, Record<string, Record<string, FixtureRow[]>>>;
+  paths?: Record<string, Record<string, FixturePathsRow[]>>;
+};
 
 let fixturePromise: Promise<Fixture> | null = null;
 
@@ -167,6 +180,7 @@ export async function loadResults(query: ResultsQuery): Promise<ResultsResponse>
       definition: interimDefinitions[query.measure],
       source: "PDP analysis-ready cohort and course files (synthetic sample)",
       loaded_at: fixture.loaded_at,
+      provisional: YEAR_TWO_MEASURES.includes(query.measure) && PROVISIONAL_UNTIL_API.includes(query.cohort),
     },
     rows: rows.map((row) => toResultRow(row, savedDimensions)),
   };
@@ -175,4 +189,82 @@ export async function loadResults(query: ResultsQuery): Promise<ResultsResponse>
 /** A loader for one query, stable enough to pass to useApiResource. */
 export function resultsLoader(query: ResultsQuery): () => Promise<ResultsResponse> {
   return () => loadResults(query);
+}
+
+/** The same query for every class, for trend lines. A class that isn't saved comes back as null. */
+export async function loadAllCohorts(query: ResultsQuery, load = loadResults): Promise<Record<Cohort, ResultsResponse | null>> {
+  const responses = await Promise.all(cohorts.map((cohort) => load({ ...query, cohort }).catch(() => null)));
+  return Object.fromEntries(cohorts.map((cohort, index) => [cohort, responses[index]])) as Record<Cohort, ResultsResponse | null>;
+}
+
+// ---------------------------------------------------------------------------------------------------
+// PROPOSED contract for a year-2 paths endpoint. Nobody owns it yet (see the design's asks), so the
+// Explorer reads MOCK rows from the fixture and labels the chart as mock data.
+
+export type CollegeTypeSplit = { four_year: number; two_year: number; not_on_record: number };
+
+export type PathsRow = {
+  group: Partial<Record<Dimension, string>>;
+  students: number | null;
+  /** Enrolled or earned a credential here in year 2 (the retention flag). */
+  returned_here: number | null;
+  /** At another college instead (persistence without retention). */
+  moved: number | null;
+  /** No enrollment found here or in the Clearinghouse match. */
+  no_enrollment: number | null;
+  /** Students who moved, by their most recent other college. Null when fewer than 10 moved. */
+  college_type: CollegeTypeSplit | null;
+  status: ResultStatus;
+};
+
+export type PathsResponse = {
+  meta: { cohort: Cohort; group_by: Dimension[]; source: string; loaded_at: string; provisional: boolean; mock: boolean };
+  rows: PathsRow[];
+};
+
+export type PathsQuery = { cohort: Cohort; groupBy: Dimension[] };
+
+/** Turn one mock paths row into an API-shaped row. */
+function toPathsRow(row: FixturePathsRow, savedDimensions: Dimension[]): PathsRow {
+  const [values, students, here, moved, none, four, two, notOnRecord, status] = row;
+  const group: Partial<Record<Dimension, string>> = {};
+  if (values !== "all") {
+    values.split(" x ").forEach((value, index) => {
+      group[savedDimensions[index]] = value;
+    });
+  }
+  return {
+    group,
+    students,
+    returned_here: here,
+    moved,
+    no_enrollment: none,
+    college_type: four === null || two === null || notOnRecord === null ? null : { four_year: four, two_year: two, not_on_record: notOnRecord },
+    status,
+  };
+}
+
+/** MOCK: year-2 paths for one class and grouping, plus everyone. Swap for the real endpoint once it exists. */
+export async function loadPaths(query: PathsQuery): Promise<PathsResponse> {
+  const fixture = await loadFixture();
+  const byGrouping = fixture.paths?.[query.cohort];
+  const key = groupingKey(query.groupBy);
+  const saved = byGrouping?.[key];
+  const everyone = byGrouping?.all;
+  if (!saved || !everyone) {
+    throw new NotSavedError("Year-2 paths aren't in the sample results. Rebuild them with `python -m uncf.explorer_fixture`.");
+  }
+  const savedDimensions = key === "all" ? [] : (key.split(" x ") as Dimension[]);
+  const rows = key === "all" ? saved : [...everyone, ...saved];
+  return {
+    meta: {
+      cohort: query.cohort,
+      group_by: query.groupBy,
+      source: "PDP cohort file: retention and persistence flags, most recent other college (synthetic sample)",
+      loaded_at: fixture.loaded_at,
+      provisional: PROVISIONAL_UNTIL_API.includes(query.cohort),
+      mock: true,
+    },
+    rows: rows.map((row) => toPathsRow(row, savedDimensions)),
+  };
 }

@@ -16,4 +16,5 @@ export const routes = {
   sandboxApiRequests: "/sandbox/api-requests",
   sandboxAddASandboxPage: "/sandbox/add-a-sandbox-page",
   uncfExplorer: "/uncf/explorer",
+  uncfCard: "/uncf/card",
 } as const;

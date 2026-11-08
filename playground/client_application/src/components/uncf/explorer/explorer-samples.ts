@@ -1,4 +1,4 @@
-import type { Dimension, MeasureDefinition, ResultRow, ResultsQuery, ResultsResponse, ResultStatus } from "@/app/(app)/uncf/data";
+import type { Dimension, MeasureDefinition, PathsQuery, PathsResponse, PathsRow, ResultRow, ResultsQuery, ResultsResponse, ResultStatus } from "@/app/(app)/uncf/data";
 
 /** Small, hand-written responses for stories and tests, in the #5 API's shape. Synthetic numbers. */
 
@@ -98,5 +98,49 @@ export async function loadSample(query: ResultsQuery): Promise<ResultsResponse> 
   };
   const found = samples[key];
   if (!found) throw new Error("This combination isn't saved yet.");
+  return { ...found, meta: { ...found.meta, cohort: query.cohort } };
+}
+
+/** One paths row; hidden groups are all blank. */
+function pathsRow(group: Partial<Record<Dimension, string>>, counts: [number, number, number] | null, split: [number, number, number] | null = null): PathsRow {
+  if (!counts) return { group, students: null, returned_here: null, moved: null, no_enrollment: null, college_type: null, status: "suppressed" };
+  const [here, moved, none] = counts;
+  return {
+    group,
+    students: here + moved + none,
+    returned_here: here,
+    moved,
+    no_enrollment: none,
+    college_type: split ? { four_year: split[0], two_year: split[1], not_on_record: split[2] } : null,
+    status: "ok",
+  };
+}
+
+/** Mock year-2 paths, as the paths chart reads them. */
+function pathsResponse(groupBy: Dimension[], rows: PathsRow[]): PathsResponse {
+  return {
+    meta: { cohort: "2022-23", group_by: groupBy, source: "Synthetic sample", loaded_at: "2026-11-08T22:57:20", provisional: false, mock: true },
+    rows,
+  };
+}
+
+export const pathsByPell = pathsResponse(["pell"], [
+  pathsRow({}, [1414, 343, 860], [210, 74, 59]),
+  pathsRow({ pell: "Y" }, [514, 69, 290], [31, 29, 9]),
+  pathsRow({ pell: "N" }, [848, 227, 503], [150, 30, 47]),
+  pathsRow({ pell: "UNKNOWN" }, [52, 47, 67], [29, 15, 3]),
+]);
+
+export const pathsByGender = pathsResponse(["gender"], [
+  pathsRow({}, [1414, 343, 860], [210, 74, 59]),
+  pathsRow({ gender: "F" }, [767, 196, 447], [121, 50, 25]),
+  pathsRow({ gender: "M" }, [607, 133, 363], [80, 20, 33]),
+  pathsRow({ gender: "X" }, null),
+]);
+
+/** A paths loader that answers from the samples above. */
+export async function loadPathsSample(query: PathsQuery): Promise<PathsResponse> {
+  const found = { pell: pathsByPell, gender: pathsByGender }[query.groupBy.join("+")];
+  if (!found) throw new Error("Year-2 paths aren't in the sample results.");
   return { ...found, meta: { ...found.meta, cohort: query.cohort } };
 }

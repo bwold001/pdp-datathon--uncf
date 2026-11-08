@@ -2,12 +2,12 @@ import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { expect, userEvent, waitFor } from "storybook/test";
 
 import { Explorer } from "./explorer";
-import { loadSample } from "./explorer-samples";
+import { loadPathsSample, loadSample } from "./explorer-samples";
 
 const meta = {
   component: Explorer,
   title: "UNCF/Explorer/Explorer",
-  args: { load: loadSample },
+  args: { load: loadSample, loadYearTwo: loadPathsSample },
 } satisfies Meta<typeof Explorer>;
 export default meta;
 type Story = StoryObj<typeof Explorer>;
@@ -20,6 +20,15 @@ export const Default: Story = {
     await expect(canvas.getByText("PDP name: Retention")).toBeVisible();
     // The comparison names both groups and works the gap out from the shown rates.
     await expect(canvas.getByText(/Pell grant 58\.9%, No Pell grant 53\.7% \(5\.2 points apart\)/)).toBeVisible();
+    // Each bar has a trend across entering classes, read out as text.
+    await expect(canvas.getAllByText(/^Trend across entering classes:/).length).toBeGreaterThan(0);
+    // The year-2 paths chart is labeled as mock data.
+    await expect(await canvas.findByText("Mock data")).toBeVisible();
+    // The card link carries the view.
+    await expect(canvas.getByRole("link", { name: /Create insight card/ })).toHaveAttribute(
+      "href",
+      "/uncf/card?cohort=2022-23&group_by=pell&measure=retention",
+    );
   },
 };
 
@@ -51,6 +60,6 @@ export const NotSavedShowsAnError: Story = {
     await userEvent.selectOptions(canvas.getByRole("combobox", { name: "Group students by" }), "race");
     await expect(await canvas.findByText("These results couldn't load.")).toBeVisible();
     await expect(canvas.getByText("This combination isn't saved yet.")).toBeVisible();
-    await expect(canvas.getByRole("button", { name: /Try again/ })).toBeVisible();
+    await expect(canvas.getAllByRole("button", { name: /Try again/ }).length).toBeGreaterThan(0);
   },
 };
