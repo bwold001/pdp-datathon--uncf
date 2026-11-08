@@ -73,6 +73,20 @@ with `python -m pytest uncf`.
   `success_measures.sqlite` to exist. The Playground is not required.
 - **Columns.** The `success_measures` columns are defined in `measures/save_results.py`.
 
+#### See the Explorer
+
+The Explorer (#6) is at http://localhost:3000/uncf/explorer once the Playground web app runs
+(`mise run web:dev` from `playground/`). Until the #5 API exists, it reads a fixture of the saved
+results. Build it after the precompute:
+
+```bash
+python -m uncf                   # the precompute, if you haven't run it
+python -m uncf.explorer_fixture  # writes playground/client_application/public/uncf/explorer-fixture.json
+```
+
+The fixture is git-ignored (it's a generated output). When #5 lands, `loadResults` in
+`playground/client_application/src/app/(app)/uncf/data.ts` calls the API instead and this step goes away.
+
 ## Data
 
 Mock data from [Achieving the Dream](https://achievingthedream.org/), in the shape of PDP's
