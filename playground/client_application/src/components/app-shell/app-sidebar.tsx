@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { House, PanelsTopLeft } from "lucide-react";
+import { ChartNoAxesColumn, House, PanelsTopLeft } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -70,6 +70,21 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-sm font-semibold">UNCF</SidebarGroupLabel>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                isActive={pathname === routes.uncfExplorer}
+                tooltip="Student Success Explorer"
+                render={<Link href={routes.uncfExplorer} onClick={closeSidebarOnMobile} />}
+              >
+                <ChartNoAxesColumn />
+                <span>Student Success Explorer</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroup>
         <SidebarGroup>
           <SidebarGroupLabel className="text-sm font-semibold">Workbench</SidebarGroupLabel>
           <SidebarMenu>

@@ -43,3 +43,5 @@ gap_finder/output/
 
 
 
+# Explorer fixture written by `python -m uncf.explorer_fixture` until the #5 API exists
+playground/client_application/public/uncf/explorer-fixture.json
