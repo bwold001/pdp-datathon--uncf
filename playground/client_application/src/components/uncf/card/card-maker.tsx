@@ -19,12 +19,13 @@ import { InsightCard } from "./insight-card";
 import { checkTakeaway, MAX_TAKEAWAY } from "./takeaway-checks";
 
 // Print only the card, full size, on one Letter page. The app's sidebar and top bar stay on screen only.
+// The preview shrinks the card with Tailwind's scale-*, which sets the CSS `scale` property, so print resets both.
 const PRINT_CSS = `
 @media print {
   @page { size: letter; margin: 0; }
   body * { visibility: hidden !important; }
   .uncf-print-card, .uncf-print-card * { visibility: visible !important; }
-  .uncf-print-scale { transform: none !important; }
+  .uncf-print-scale { transform: none !important; scale: none !important; }
   .uncf-print-card { position: fixed; left: 0; top: 0; box-shadow: none !important; }
 }`;
 
