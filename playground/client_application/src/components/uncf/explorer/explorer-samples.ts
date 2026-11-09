@@ -20,6 +20,15 @@ const gatewayDefinition: MeasureDefinition = {
   limits: ["A required student with no recorded attempt counts as not passing."],
 };
 
+const persistenceDefinition: MeasureDefinition = {
+  name: "At another college",
+  pdp_name: "Persistence",
+  what: "Enrolled at another college in the second academic year, or earned a credential there.",
+  how: "At, or with a credential from, another college ÷ everyone who entered.",
+  who: "Everyone who entered that year.",
+  limits: ["In PDP, persistence means other colleges only. It is not “still enrolled anywhere.”"],
+};
+
 /** One row; a status other than "ok" gets nulls, as the API sends it. */
 function row(group: Partial<Record<Dimension, string>>, numerator: number | null, denominator: number | null, status: ResultStatus = "ok", nExcluded: number | null = 0): ResultRow {
   const shown = status === "ok" && numerator !== null && denominator !== null;
@@ -40,7 +49,7 @@ function response(query: Pick<ResultsQuery, "measure" | "groupBy">, rows: Result
       measure: query.measure,
       cohort: "2022-23",
       group_by: query.groupBy,
-      definition: query.measure === "retention" ? definition : gatewayDefinition,
+      definition: query.measure === "retention" ? definition : query.measure === "persistence" ? persistenceDefinition : gatewayDefinition,
       source: "PDP analysis-ready cohort and course files (synthetic sample)",
       loaded_at: "2026-11-08T22:57:20",
     },
@@ -61,6 +70,13 @@ export const retentionByGender = response({ measure: "retention", groupBy: ["gen
   row({ gender: "M" }, 607, 1103),
   row({ gender: "X" }, null, null, "suppressed"),
   row({ gender: "UNKNOWN" }, 39, 103),
+]);
+
+export const persistenceByPell = response({ measure: "persistence", groupBy: ["pell"] }, [
+  row({}, 370, 2617),
+  row({ pell: "Y" }, 76, 873),
+  row({ pell: "N" }, 246, 1578),
+  row({ pell: "UNKNOWN" }, 48, 166),
 ]);
 
 export const gatewayMathByPell = response({ measure: "gateway_math", groupBy: ["pell"] }, [
@@ -93,6 +109,7 @@ export async function loadSample(query: ResultsQuery): Promise<ResultsResponse> 
   const samples: Record<string, ResultsResponse> = {
     "retention:pell": retentionByPell,
     "retention:gender": retentionByGender,
+    "persistence:pell": persistenceByPell,
     "gateway_math:pell": gatewayMathByPell,
     "retention:pell+enrollment_intensity": retentionByPellAndLoad,
   };

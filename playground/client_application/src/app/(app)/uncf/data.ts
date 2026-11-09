@@ -5,8 +5,13 @@
  * (`python -m uncf && python -m uncf.explorer_fixture`). When #5 lands, only `loadResults` changes.
  */
 
-export const measures = ["retention", "gateway_math", "gateway_english"] as const;
+export const measures = ["retention", "persistence", "gateway_math", "gateway_english"] as const;
 export type Measure = (typeof measures)[number];
+
+/** Gateway outcomes count students required to take the course, not everyone who entered. */
+export function isGatewayMeasure(measure: Measure): boolean {
+  return measure === "gateway_math" || measure === "gateway_english";
+}
 
 export const cohorts = ["2021-22", "2022-23", "2023-24", "2024-25"] as const;
 export type Cohort = (typeof cohorts)[number];
@@ -78,6 +83,17 @@ const interimDefinitions: Record<Measure, MeasureDefinition> = {
       "Spring and summer starters have less time to come back, which pulls the rate down.",
     ],
   },
+  persistence: {
+    name: "At another college",
+    pdp_name: "Persistence",
+    what: "Enrolled at another college in the second academic year, or earned a credential there.",
+    how: "At, or with a credential from, another college ÷ everyone who entered.",
+    who: "Everyone who entered that year: every start term, and first-time, transfer-in and re-admitted students.",
+    limits: [
+      "In PDP, persistence means other colleges only. It is not “still enrolled anywhere.”",
+      "A student enrolled both here and at another college counts here and in Returned here. The year-2 chart's “Moved to another college” leaves them out, so it's a little lower.",
+    ],
+  },
   gateway_math: {
     name: "Gateway math",
     pdp_name: "Gateway math completion",
@@ -106,7 +122,7 @@ const FIXTURE_URL = "/uncf/explorer-fixture.json";
 
 // Until #5 sends `provisional`: the course file covers only part of 2024-25's year 2 (2025-26).
 const PROVISIONAL_UNTIL_API: Cohort[] = ["2024-25"];
-const YEAR_TWO_MEASURES: Measure[] = ["retention"];
+const YEAR_TWO_MEASURES: Measure[] = ["retention", "persistence"];
 
 /** [values joined by " x ", numerator, denominator, status, n_excluded], as written by uncf/explorer_fixture.py. */
 type FixtureRow = [string, number | null, number | null, Exclude<ResultStatus, "not_reported">, number | null];

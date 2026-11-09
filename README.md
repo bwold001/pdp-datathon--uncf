@@ -87,6 +87,9 @@ python -m uncf.explorer_fixture  # writes playground/client_application/public/u
 The fixture is git-ignored (it's a generated output). When #5 lands, `loadResults` in
 `playground/client_application/src/app/(app)/uncf/data.ts` calls the API instead and this step goes away.
 
+Outcomes the precompute doesn't save yet (persistence, today) are calculated by the fixture script with
+the same measures code, and it says so when it runs. Once the precompute saves them, its rows are used instead.
+
 The fixture also holds **mock** year-2 paths (`uncf/paths_mock.py`) for the "Where were they in year 2?"
 chart, which is labeled "Mock data" on screen and in the CSV. No endpoint serves paths yet; the shape in
 `data.ts` (`PathsResponse`) is a proposal for whoever builds it. The Explorer also has trend lines across

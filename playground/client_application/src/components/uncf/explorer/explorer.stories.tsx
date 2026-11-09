@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
-import { expect, userEvent, waitFor } from "storybook/test";
+import { expect, userEvent, waitFor, within } from "storybook/test";
 
 import { Explorer } from "./explorer";
 import { loadPathsSample, loadSample } from "./explorer-samples";
@@ -39,6 +39,19 @@ export const SwitchToGatewayMath: Story = {
     await expect(await canvas.findByRole("heading", { name: /Gateway math by Pell grant/ })).toBeVisible();
     await expect(canvas.getByText(/Read gateway rates with care/)).toBeVisible();
     await expect(canvas.getByText(/518 students with an unknown requirement or result are left out/)).toBeVisible();
+  },
+};
+
+export const SwitchToAtAnotherCollege: Story = {
+  play: async ({ canvas }) => {
+    await canvas.findByRole("heading", { name: /Returned here by Pell grant/ });
+    await userEvent.click(canvas.getByRole("button", { name: "At another college" }));
+    await expect(await canvas.findByRole("heading", { name: /At another college by Pell grant/ })).toBeVisible();
+    // Not a gateway course: counts are students, and there's no gateway caution.
+    const chart = within(canvas.getByRole("region", { name: /At another college by Pell grant/ }));
+    await expect(chart.getByText("873 students")).toBeVisible();
+    await expect(canvas.queryByText(/Read gateway rates with care/)).toBeNull();
+    await expect(canvas.getByText("PDP name: Persistence")).toBeVisible();
   },
 };
 

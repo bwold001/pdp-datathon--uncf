@@ -85,6 +85,7 @@ export const dimensionInfo: Record<
 /** Plain-language outcome names first; the PDP name comes from the definition. */
 export const measureNames: Record<Measure, string> = {
   retention: "Returned here",
+  persistence: "At another college",
   gateway_math: "Gateway math",
   gateway_english: "Gateway English",
 };
@@ -92,6 +93,7 @@ export const measureNames: Record<Measure, string> = {
 /** What a rate means in a sentence, e.g. "58.9% of Pell recipients came back or earned a credential here". */
 export const measureVerbs: Record<Measure, string> = {
   retention: "came back or earned a credential here in year 2",
+  persistence: "were at another college by year 2",
   gateway_math: "passed gateway math in year 1",
   gateway_english: "passed gateway English in year 1",
 };

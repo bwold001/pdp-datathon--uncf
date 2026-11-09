@@ -1,4 +1,4 @@
-import type { ResultsResponse } from "@/app/(app)/uncf/data";
+import { isGatewayMeasure, type ResultsResponse } from "@/app/(app)/uncf/data";
 import { buildBars, formatPercent, percentOf, SMALL_GROUP } from "@/components/uncf/explorer/bars";
 import { cohortLabel, dimensionInfo, measureNames, measureVerbs, valuePhrases, whoPhrase } from "@/components/uncf/explorer/labels";
 
@@ -33,7 +33,7 @@ export type CardContent = {
 /** Everything one card prints, from the same response the Explorer draws, so the numbers always match. */
 export function buildCard(response: ResultsResponse): CardContent {
   const { meta } = response;
-  const isGateway = meta.measure !== "retention";
+  const isGateway = isGatewayMeasure(meta.measure);
   const { everyone, sections } = buildBars(response);
   const groupBy = meta.group_by;
 
@@ -101,7 +101,7 @@ export function buildCard(response: ResultsResponse): CardContent {
 /** A takeaway built from the card's own rows, so it passes the checks. Names groups only when exactly two compare. */
 function suggestedSentence(response: ResultsResponse, rows: CardRow[]): string {
   const { meta } = response;
-  const isGateway = meta.measure !== "retention";
+  const isGateway = isGatewayMeasure(meta.measure);
   const verb = measureVerbs[meta.measure];
   const groupBy = meta.group_by;
   const everyone = rows.find((row) => row.isAll);

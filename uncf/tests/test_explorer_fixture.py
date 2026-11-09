@@ -2,7 +2,10 @@
 import sqlite3
 
 from measures.save_results import CREATE_TABLE
-from uncf.explorer_fixture import build_fixture, is_offered
+from types import SimpleNamespace
+
+from measures.models import Cohort, Group, GroupDimension, Measure, Status
+from uncf.explorer_fixture import add_missing_measures, build_fixture, is_offered
 
 INSERT = """
 INSERT INTO success_measures (measure, cohort, group_dimensions, group_values, numerator, denominator,
@@ -43,3 +46,26 @@ def test_fixture_keeps_hidden_rows_as_nulls(tmp_path) -> None:
     assert cohort["enrollment_intensity x pell"] == [["Full-time x Y", 302, 465, "ok", 0]]
     assert "ethnicity" not in cohort
     assert fixture["loaded_at"] == "2026-11-08T22:30:00"
+
+
+def test_missing_outcomes_are_calculated_and_saved_ones_kept(tmp_path) -> None:
+    """Persistence isn't saved yet, so it's calculated; retention comes from the saved rows and isn't recalculated."""
+    database = tmp_path / "results.sqlite"
+    make_database(database)
+    fixture = build_fixture(database)
+    asked = []
+
+    def fake_run(measure, cohorts, group_by):
+        asked.append(measure)
+        pell = Group.of((GroupDimension.PELL, "Y"))
+        return [
+            SimpleNamespace(group=Group(), cohort=Cohort.of("2022-23"), numerator=370.0, denominator=2617.0, status=Status.OK, n_excluded=0),
+            SimpleNamespace(group=pell, cohort=Cohort.of("2022-23"), numerator=None, denominator=None, status=Status.SUPPRESSED, n_excluded=None),
+        ]
+
+    added = add_missing_measures(fixture, run=fake_run)
+    assert Measure.RETENTION not in asked
+    assert "persistence" in added and "retention" not in added
+    persistence = fixture["rows"]["persistence"]["2022-23"]
+    assert persistence["all"] == [["all", 370, 2617, "ok", 0]]
+    assert persistence["pell"] == [["Y", None, None, "suppressed", None]]

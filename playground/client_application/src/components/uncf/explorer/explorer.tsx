@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 
 import {
+  isGatewayMeasure,
   loadAllCohorts,
   loadPaths,
   loadResults,
@@ -140,7 +141,7 @@ export function Explorer({
 function Results({ loaded, mode }: { loaded: Loaded; mode: DetailMode }) {
   const response = loaded.current;
   const { everyone, sections } = buildBars(response);
-  const isGateway = response.meta.measure !== "retention";
+  const isGateway = isGatewayMeasure(response.meta.measure);
   const leftOut = everyone?.state === "ok" ? leftOutOf(response) : null;
   const allBars = [...(everyone ? [everyone] : []), ...sections.flatMap((section) => section.bars)];
   const trends: ChartTrends = {

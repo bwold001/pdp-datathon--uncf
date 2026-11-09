@@ -1,4 +1,4 @@
-import type { Dimension, PathsResponse, ResultRow, ResultsResponse, ResultStatus } from "@/app/(app)/uncf/data";
+import { type Dimension, isGatewayMeasure, type PathsResponse, type ResultRow, type ResultsResponse, type ResultStatus } from "@/app/(app)/uncf/data";
 
 import { percentOf } from "./bars";
 import { dimensionInfo, measureNames, valueLabel } from "./labels";
@@ -66,7 +66,7 @@ export function buildCsvRows(outcomes: ResultsResponse[], paths: PathsResponse |
   const rows: CsvRow[] = [];
   for (const response of outcomes) {
     const { meta } = response;
-    const isGateway = meta.measure !== "retention";
+    const isGateway = isGatewayMeasure(meta.measure);
     for (const row of response.rows) {
       const group = groupColumns(row.group, meta.group_by);
       const status = row.status;

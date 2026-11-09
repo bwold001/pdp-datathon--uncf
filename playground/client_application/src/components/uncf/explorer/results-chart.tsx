@@ -1,4 +1,4 @@
-import type { Cohort, Measure } from "@/app/(app)/uncf/data";
+import { type Cohort, isGatewayMeasure, type Measure } from "@/app/(app)/uncf/data";
 import { cn } from "@/lib/utils";
 
 import { type Bar, type BarSection, formatPercent, SMALL_GROUP, type TrendPoint } from "./bars";
@@ -37,7 +37,7 @@ const ROW_GRID = "grid grid-cols-[minmax(0,1fr)_auto] sm:grid-cols-[minmax(8rem,
 /** Rate by group as horizontal bars, with all students on top and a marker at their rate on every bar. */
 export function ResultsChart({ measure, everyone, sections, mode, trends = null }: ResultsChartProps) {
   const reference = everyone?.state === "ok" ? everyone.percent : null;
-  const isGateway = measure !== "retention";
+  const isGateway = isGatewayMeasure(measure);
   return (
     <div className="flex flex-col gap-4">
       <div
