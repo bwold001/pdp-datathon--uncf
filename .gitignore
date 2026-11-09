@@ -9,7 +9,10 @@ node_modules/
 
 # Compound Engineering local scratch and per-person config
 .context/compound-engineering/
-.compound-engineering/
+.compound-engineering/*
+!.compound-engineering/config.yaml
+!.compound-engineering/config.example.yaml
+.compound-engineering/*.local.yaml
 
 # Matt Pocock's skills local scratch
 .scratch/

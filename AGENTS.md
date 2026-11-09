@@ -105,9 +105,10 @@ change, say so in the pull request.
 
 ## Agent skills
 
-Setup for both recommended skill sets is already done and committed. Don't run `/ce-setup` or
-`/setup-matt-pocock-skills` again; the files below are the result. The `.compound-engineering/`
-folder is ignored by git: this repo sets no config there, so don't commit one.
+Compound Engineering is configured in `.compound-engineering/config.yaml`. Commit shared
+settings and the example configuration; keep personal overrides in
+`.compound-engineering/config.local.yaml` untracked. Run `$ce-setup` when checking or updating
+the configuration. Setup for the other recommended skill set is already complete.
 
 ### Issue tracker
 
