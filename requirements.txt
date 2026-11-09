@@ -16,3 +16,6 @@ pyarrow==25.0.1   # #8 data model: Parquet table files (--format parquet); the n
 pandas==2.3.3   # #12 data quality: run_checks.py and the deep-dive notebook; pandas 3 needs Python 3.11
 mcp==2.3.0          # #11 MCP server: the official MCP Python SDK (brings pydantic)
 jsonschema==4.26.0  # #11 MCP server: checks tool outputs against their outputSchema in the tests
+fastapi==0.162.2    # UNCF #5 results API: the standalone app in uncf/api.py
+uvicorn==0.54.0     # UNCF #5 results API: runs it (python -m uncf); same version mcp already installs
+httpx==0.28.1       # UNCF #5 results API: FastAPI's TestClient in uncf/tests

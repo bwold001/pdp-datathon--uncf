@@ -41,15 +41,47 @@ Reinstall whenever `requirements.txt` changes.
 From the repo root, with `.venv` active:
 
 ```bash
-python -m uncf
+python -m uncf              # load the data if it's missing, then serve the Results API on http://localhost:8001
+python -m uncf load         # only load the data (about 75 seconds the first time)
+python -m uncf serve        # only serve the API; --port to change it
 ```
 
-`python -m uncf` is the one entry point for everything we build in `uncf/`. Today it runs the precompute; the API and later pieces will start from here too. It loads the data if `normalized-data-model/output/pdp.sqlite` is missing (about 75 seconds), then
-runs retention, gateway math and gateway English for every cohort and group, and writes the rows to
-`measures/output/success_measures.sqlite` (about 10 seconds). It doesn't need the Playground. Test it
-with `python -m pytest uncf`.
+`python -m uncf` is the one entry point for everything we build in `uncf/`. It doesn't need the
+Playground. Test it with `python -m pytest uncf`. Interactive API docs: http://localhost:8001/docs.
+
+#### How the Results API works
+
+- **Calculated per request.** Each request calls the measures package (`run_measure`), which reads
+  the normalized data in `normalized-data-model/output/pdp.sqlite`. Nothing is saved. Answers are
+  cached in memory and recalculated when `pdp.sqlite` changes, so a reload needs no restart.
+- **Contract.** The response follows the Explorer's `data.ts`
+  (`playground/client_application/src/app/(app)/uncf/data.ts`): `meta` (measure, cohort,
+  group_by, definition, source, loaded_at, provisional) and `rows` (group, numerator, denominator,
+  rate, status, n_excluded, plus n_out_of_scope and note). Models: `uncf/schemas.py`.
+- **Definitions** come from `uncf/definitions.py` (#3), one per measure.
+
+| Endpoint | What it returns |
+| --- | --- |
+| `GET /api/v1/uncf/results?measure=&cohort=&group_by=` | The everyone row, then one row per group. `group_by` is optional, up to twice (e.g. `group_by=pell&group_by=race`) |
+| `GET /api/v1/uncf/options` | The measures, classes and groupings a client can ask for |
+| `GET /api/v1/uncf/health` | Whether the data is loaded, and `loaded_at` |
+
+- **Hidden or missing numbers** are `null` with a status: `suppressed` (under 10 students),
+  `not_yet_observable`, or `not_reported` (a gateway measure the college doesn't report). Never 0.
+  Starter issue #87 (working out a hidden group by subtraction) is not fixed.
+- **`loaded_at`** is when the source data was loaded, not when a number was calculated.
+- **`provisional`** is true for retention and persistence in 2024-25, whose second year is only
+  partly in the data.
+- **Errors:** 422 for a value outside the lists, or a bad `group_by` (`invalid_group_by`); 503
+  `data_missing`. Our error bodies are `{"error": {"code", "message"}}`.
+- **Client access:** CORS allows http://localhost:3000 (change with `UNCF_CORS_ORIGINS`). To mount
+  in the Playground server instead: `app.include_router(uncf.api.router)`.
+- **Assumptions** are listed at the top of `uncf/api.py`.
 
 #### How the precompute works
+
+> **Being retired in #4:** the Results API now calculates per request, so it no longer reads
+> `success_measures.sqlite`. `python -m uncf precompute` still works until #4 removes it.
 
 - **Runs standalone.** It runs from the root env and needs no Playground. `measures/` uses only the
   standard library, so it imports from the repo root. The API will read `success_measures.sqlite`
