@@ -41,6 +41,22 @@ export const OnTheDfwTab: Story = {
   },
 };
 
+/** The design's light colors hold even when the app is in dark mode. */
+export const StaysLightInDarkMode: Story = {
+  name: "Stays light in dark mode",
+  play: async ({ canvas, canvasElement }) => {
+    const root = canvasElement.ownerDocument.documentElement;
+    root.classList.add("dark");
+    try {
+      const shell = canvas.getByRole("main").parentElement!;
+      await expect(getComputedStyle(shell).backgroundColor).toBe("rgb(244, 244, 242)");
+      await expect(getComputedStyle(canvas.getByRole("banner")).backgroundColor).toBe("rgb(255, 255, 255)");
+    } finally {
+      root.classList.remove("dark");
+    }
+  },
+};
+
 /** The tab content renders under the tabs. */
 export const RendersTheTab: Story = {
   name: "Renders the tab's page",

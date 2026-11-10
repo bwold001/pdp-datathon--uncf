@@ -1,5 +1,6 @@
 /* The Explorer's colors, from the team design (https://claude.ai/artifact/XeFCVWwP8Ct8CfjXJU9JtC).
    Use them in Tailwind as bg-(--uncf-surface), text-(--uncf-ink-2), border-(--uncf-line) and so on.
+   Light only: the Explorer keeps the design's colors even when the computer is in dark mode.
    Prefixed so they never clash with the app's own tokens. They sit on :root, not the shell, so popovers
    (rendered at the end of <body>) get them too. */
 :root {
@@ -25,31 +26,6 @@
   --uncf-track: #ececea;
   --uncf-warn-bg: #fbebd8;
   --uncf-chip: #ededea;
-}
-
-.dark {
-  --uncf-bg: #121418;
-  --uncf-surface: #1a1d22;
-  --uncf-band: #16191d;
-  --uncf-line: #2c3037;
-  --uncf-line-2: #3a3f47;
-  --uncf-ink: #ecedef;
-  --uncf-ink-2: #bcc1c8;
-  --uncf-ink-3: #8d939c;
-  --uncf-blue: #5b8de0;
-  --uncf-blue-soft: #34476a;
-  --uncf-blue-mid: #5470a0;
-  --uncf-blue-tint: #1f2a3d;
-  --uncf-orange: #e39a50;
-  --uncf-orange-ink: #f0a964;
-  --uncf-peach: #6b4a2c;
-  --uncf-grey: #7d8696;
-  --uncf-grey-soft: #3a404a;
-  --uncf-d: #b88a2e;
-  --uncf-f: #e0704a;
-  --uncf-track: #262a30;
-  --uncf-warn-bg: #33281c;
-  --uncf-chip: #262a30;
 }
 
 /* IBM Plex for the Explorer and its popovers. The font variables come from explorer-fonts.ts on the same element. */
