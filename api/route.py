@@ -156,9 +156,20 @@ def answer(bar: Bar, name: str, *extra):
         # A value the page doesn't take, such as terms=9 or group_by=housing.
         return error(422, "invalid_filter", str(invalid))
     if bar.format == "csv":
-        rows = [{"section": section, **flatten(item)} for section in CSV_SECTIONS[name] for item in body.get(section) or []]
-        return csv_response(rows, bar.query, f"uncf-{name}-{bar.query.cohort}.csv")
+        return csv_response(csv_rows(name, body), bar.query, f"uncf-{name}-{bar.query.cohort}.csv")
     return body
+
+
+def csv_rows(name: str, body: dict) -> list[dict]:
+    """One CSV row per item in each of the page's lists. A list kept by field (one DFW course's groups) names it in group."""
+    rows = []
+    for section in CSV_SECTIONS[name]:
+        items = body.get(section) or []
+        if isinstance(items, dict):
+            rows.extend({"section": section, "group": group, **flatten(item)} for group, parts in items.items() for item in parts)
+        else:
+            rows.extend({"section": section, **flatten(item)} for item in items)
+    return rows
 
 
 def flatten(item: dict, prefix: str = "") -> dict:

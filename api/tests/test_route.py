@@ -1,6 +1,9 @@
 """Checks the Explorer API's answers, errors and caching against the tiny fixture database."""
 from __future__ import annotations
 
+import csv
+import io
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -108,6 +111,22 @@ def test_page_csv_export(client):
     assert header.startswith("cohort,filters,retention_type,section,position")
     assert first.startswith("2023-24,all students,school,path,1")
     assert client.get("/api/v1/uncf/dfw", params={"format": "xml"}).status_code == 422
+
+
+def test_dfw_course_csv_export(tmp_path, monkeypatch):
+    """One course's CSV holds its terms, delivery methods and every group, each group row naming its field."""
+    students = [student(f"s{n}", pell="Y" if n < 10 else "N") for n in range(20)]
+    records = [here(f"s{n}", "2023-24", "FALL", grade="F" if n % 4 == 0 else "4", delivery="O") for n in range(20)]
+    database = make_database(tmp_path / "pdp.sqlite", students, records)
+    monkeypatch.setattr(data, "data_path", lambda: database)
+    route.clear_cache()
+    response = TestClient(create_app()).get("/api/v1/uncf/dfw/course", params={"course": "ENG 101", "format": "csv"})
+    assert response.status_code == 200
+    assert 'filename="uncf-dfw-course-2023-24.csv"' in response.headers["content-disposition"]
+    rows = list(csv.DictReader(io.StringIO(response.text)))
+    assert {row["section"] for row in rows} == {"terms", "delivery", "groups"}
+    pell = {row["value"]: row for row in rows if row["section"] == "groups" and row["group"] == "pell"}
+    assert (pell["Y"]["num"], pell["Y"]["den"], pell["N"]["num"], pell["N"]["den"]) == ("3", "10", "2", "10")
 
 
 def test_student_paths_options_are_checked(client):
