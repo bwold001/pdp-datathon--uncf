@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 from measures.models import Cohort, GroupBy, GroupDimension, Measure
 from measures.run_measures import DEFAULT_DATABASE, run_measure
 from uncf import api_route, data, metrics
-from uncf.cohort import CohortQuery, select_students
+from uncf.filters import CohortQuery, select_students
 
 COHORTS = ["2021-22", "2022-23", "2023-24", "2024-25"]
 needs_data = pytest.mark.skipif(not DEFAULT_DATABASE.exists(), reason="the normalized data isn't loaded")

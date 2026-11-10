@@ -13,7 +13,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from uncf import data, metrics
-from uncf.cohort import MIN_STUDENTS, CohortQuery, select_students, share, shown
+from uncf.filters import MIN_STUDENTS, CohortQuery, select_students, share, shown
 from uncf.metrics import SEASONS, next_main_term, retention_term, term_label
 
 MILESTONES = (12, 24, 30)

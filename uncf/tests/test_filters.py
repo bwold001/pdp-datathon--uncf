@@ -3,7 +3,8 @@ from __future__ import annotations
 
 import pytest
 
-from uncf.cohort import (
+from uncf.data import open_database
+from uncf.filters import (
     CohortQuery,
     InvalidFilter,
     cohort_options,
@@ -11,7 +12,6 @@ from uncf.cohort import (
     share,
     shown,
 )
-from uncf.data import open_database
 from uncf.tests.explorer_fixture import LOADED_AT, make_database, student
 
 

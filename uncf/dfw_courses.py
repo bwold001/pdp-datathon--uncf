@@ -11,7 +11,7 @@ from pathlib import Path
 
 from measures.models import ALLOWED_VALUES, GroupDimension
 from uncf import data, metrics
-from uncf.cohort import MIN_STUDENTS, CohortQuery, listed_value, select_students
+from uncf.filters import MIN_STUDENTS, CohortQuery, listed_value, select_students
 
 # The student groups a course can be split by, besides delivery and the term it was taken.
 GROUP_DIMENSIONS = (

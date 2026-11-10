@@ -11,7 +11,7 @@ from itertools import product
 
 from measures.models import ALLOWED_VALUES, GroupDimension
 from uncf import data, metrics
-from uncf.cohort import CohortQuery, listed_value, select_students
+from uncf.filters import CohortQuery, listed_value, select_students
 from uncf.schemas import ResultRow
 
 GATEWAY_MEASURES = {"gateway_math", "gateway_english"}

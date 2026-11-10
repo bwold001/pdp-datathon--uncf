@@ -22,7 +22,7 @@ from measures.calculations import credit_completion as completion_measure
 from measures.calculations import gateway_english, gateway_math, persistence
 from measures.calculations import retention as retention_measure
 from measures.calculations.dfw import grade_outcomes
-from uncf.cohort import FIRST_TIME, MIN_STUDENTS, share
+from uncf.filters import FIRST_TIME, MIN_STUDENTS, share
 
 # Open stakeholder questions for federal retention. Change them here only.
 FEDERAL_RETENTION = {

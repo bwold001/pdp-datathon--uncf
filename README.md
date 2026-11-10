@@ -71,7 +71,7 @@ login, data that doesn't live in git, and the data owner's sign-off.
 One place defines every metric, and everything else asks it:
 
 ```
-uncf/cohort.py      the cohort bar: cohort, 8 filters, retention type, student selection, hide under 10
+uncf/filters.py     the filters: cohort, 8 filters, retention type, student selection, hide under 10
 uncf/metrics.py     every named metric, once: retention (school or federal), DFW (D, F, W),
                     gateway outcome, credit completion. Built on the shared measures' own SQL and
                     grade rules; the tests check each one against run_measure on the real data.

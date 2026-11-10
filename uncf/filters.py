@@ -1,4 +1,4 @@
-"""One cohort bar for every page and both APIs: the cohort year, eight filters, the retention type, and the
+"""One filter set for every page and both APIs: the cohort year, eight filters, the retention type, and the
 students they pick.
 
 Filter names and values are the measures' own (measures/models.py). Values match the data the way the measures

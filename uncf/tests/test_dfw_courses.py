@@ -4,8 +4,8 @@ from __future__ import annotations
 import pytest
 
 from measures.run_measures import DEFAULT_DATABASE
-from uncf.cohort import CohortQuery
 from uncf.dfw_courses import UnknownCourse, dfw_course, dfw_courses
+from uncf.filters import CohortQuery
 from uncf.tests.explorer_fixture import here, make_database, student
 
 

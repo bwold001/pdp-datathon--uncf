@@ -19,7 +19,7 @@ from pathlib import Path
 from measures.calculations.sql_counts import normalize
 from measures.models import ALLOWED_VALUES, GroupDimension
 from uncf import data, metrics
-from uncf.cohort import (
+from uncf.filters import (
     FILTER_NAMES,
     MIN_STUDENTS,
     CohortQuery,

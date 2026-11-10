@@ -25,16 +25,16 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 
 from uncf import api_results, data
-from uncf.cohort import (
+from uncf.credit_momentum import credit_momentum
+from uncf.definitions import all_definitions, definition_for
+from uncf.dfw_courses import UnknownCourse, dfw_course, dfw_courses
+from uncf.filters import (
     DEFAULT_RETENTION_TYPE,
     FILTER_LABELS,
     CohortQuery,
     InvalidFilter,
     cohort_options,
 )
-from uncf.credit_momentum import credit_momentum
-from uncf.definitions import all_definitions, definition_for
-from uncf.dfw_courses import UnknownCourse, dfw_course, dfw_courses
 from uncf.gateway_courses import gateway_courses
 from uncf.schemas import (
     MAX_GROUP_BY,

@@ -4,7 +4,7 @@ from __future__ import annotations
 import pytest
 
 from measures.run_measures import DEFAULT_DATABASE
-from uncf.cohort import CohortQuery, InvalidFilter
+from uncf.filters import CohortQuery, InvalidFilter
 from uncf.metrics import next_main_term, term_label
 from uncf.student_paths import college_kind, student_paths
 from uncf.tests.explorer_fixture import elsewhere, here, make_database, student

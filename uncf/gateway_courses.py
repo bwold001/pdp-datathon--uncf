@@ -18,7 +18,7 @@ from itertools import combinations
 from pathlib import Path
 
 from uncf import data, metrics
-from uncf.cohort import MIN_STUDENTS, CohortQuery, select_students, shown
+from uncf.filters import MIN_STUDENTS, CohortQuery, select_students, shown
 from uncf.metrics import retention_term, term_label
 
 TOP_PAIRS = 3
