@@ -26,4 +26,3 @@ Branch from this shell and fill in your tab's `page.tsx`; each one only has its 
 
 - **Add a tab:** a page folder under `src/app/(uncf-explorer)/uncf/`, a route in `src/lib/routes.ts`,
   and a line in `explorerTabs` in `explorer-config.ts`.
-- **Export:** the header's Export button is off until it's built.

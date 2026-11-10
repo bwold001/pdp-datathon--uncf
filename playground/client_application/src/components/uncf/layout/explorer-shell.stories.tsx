@@ -21,7 +21,7 @@ export const OnTheDfwTab: Story = {
   play: async ({ canvas }) => {
     await expect(canvas.getByRole("heading", { level: 1, name: "Student Persistence and Pathway Explorer" })).toBeVisible();
     await expect(canvas.getByText("Sample data · illustrative values")).toBeVisible();
-    await expect(canvas.getByRole("button", { name: "Export PDF · PNG · CSV" })).toBeDisabled();
+    await expect(canvas.queryByRole("button")).not.toBeInTheDocument();
 
     const tabs = canvas.getAllByRole("link");
     await expect(tabs.map((tab) => tab.textContent)).toEqual(["Student paths", "DFW", "Gateway courses", "Credit momentum"]);

@@ -5,7 +5,6 @@ export const explorerHeader = {
   title: "Student Persistence and Pathway Explorer",
   source: "Source: PDP Analysis-Ready files",
   sampleBadge: "Sample data · illustrative values",
-  exportLabel: "Export PDF · PNG · CSV",
 };
 
 /** One tab: a page under the Explorer shell. */
