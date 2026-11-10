@@ -1,7 +1,9 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { expect, fn, waitFor } from "storybook/test";
-import type { AnalysisReceipt, ChatRequest, ChatResponse } from "@/services/uncf-chat";
-import { UncfChat } from "./chat";
+import type { AnalysisReceipt, ChatRequest, ChatResponse } from "@/services/student-success-chat";
+import { StudentSuccessChat } from "./chat";
+import StudentSuccessChatPage from "@/app/(uncf-explorer)/uncf/chat/page";
+import { env } from "@/lib/env";
 import { CalculationCard } from "./calculation-card";
 
 const receipt: AnalysisReceipt = {
@@ -16,12 +18,12 @@ const proposed: ChatResponse = { status: "confirmation", message: "Review the co
   proposals: [{ analysis: "retention", cohort: "2022-23" }], receipts: [], clarification: null, source: "synthetic" };
 
 const meta = {
-  component: UncfChat,
+  component: StudentSuccessChat,
   title: "UNCF/Student success chat",
   args: { request: fn<(payload: ChatRequest) => Promise<ChatResponse>>(async (payload) => payload.confirmed ? response : proposed) },
   decorators: [(Story) => <div className="mx-auto h-[44rem] max-w-3xl border"><Story /></div>],
   parameters: { layout: "padded", docs: { description: { component: "Bounded student-success questions, explicit clarification and calculation evidence. Stories use invented interface fixtures; integration tests exercise the real normalized database." } } },
-} satisfies Meta<typeof UncfChat>;
+} satisfies Meta<typeof StudentSuccessChat>;
 export default meta;
 type Story = StoryObj<typeof meta>;
 
@@ -104,5 +106,20 @@ export const LongAnswerStaysInView: Story = {
     await expect(await canvas.findByText("Program 19")).toBeInTheDocument();
     const scrollingRegion = canvas.getByRole("list", { name: "Conversation" }).parentElement!;
     await waitFor(() => expect(scrollingRegion.scrollTop).toBeGreaterThan(0));
+  },
+};
+
+
+export const ProviderFreeDeployment: Story = {
+  beforeEach: () => {
+    const descriptor = Object.getOwnPropertyDescriptor(env, "studentSuccessChatEnabled")!;
+    Object.defineProperty(env, "studentSuccessChatEnabled", { ...descriptor, value: false });
+    return () => { Object.defineProperty(env, "studentSuccessChatEnabled", descriptor); };
+  },
+  render: () => <StudentSuccessChatPage />,
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText(/Chat is not enabled on this site/)).toBeVisible();
+    await expect(canvas.queryByRole("textbox", { name: "Your question" })).not.toBeInTheDocument();
+    await expect(canvas.queryByRole("button", { name: "Confirm scope and calculate" })).not.toBeInTheDocument();
   },
 };

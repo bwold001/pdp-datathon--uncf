@@ -1,4 +1,4 @@
-import type { AnalysisReceipt, CalculationRow } from "@/services/uncf-chat";
+import type { AnalysisReceipt, CalculationRow } from "@/services/student-success-chat";
 
 const statuses: Record<CalculationRow["status"], string> = {
   ok: "Available", provisional: "Provisional", suppressed: "Suppressed",

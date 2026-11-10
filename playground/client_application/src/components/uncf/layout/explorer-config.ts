@@ -16,4 +16,5 @@ export const explorerTabs: ExplorerTab[] = [
   { label: "DFW", href: routes.uncfDfw },
   { label: "Gateway courses", href: routes.uncfGateway },
   { label: "Credit momentum", href: routes.uncfCreditMomentum },
+  { label: "Chat", href: routes.uncfChat },
 ];

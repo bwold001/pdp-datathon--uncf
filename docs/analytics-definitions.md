@@ -12,7 +12,7 @@ The chat is a synthetic-data demonstration. Its numbers are not findings about r
 | Retention | Retained students / students with known retention outcomes, overall and by first-term major | Uses the existing PDP retained flag: enrolled again in the next academic year or a credential earned by then. Unknown outcomes are excluded; unknown programs remain a labeled group. The starter's 2024-25 cohort is provisional. |
 | Enrollment | Distinct student IDs within academic year, term program and ethnicity | Latest two declared complete years, across entry cohorts. Actual course enrollments only. Students changing programs can appear in multiple programs; program totals overlap. Ethnicity never substitutes race. |
 
-The authoritative definitions live in `uncf/analytics/definitions.py`. Each receipt includes their version, formula, population, grain, actual counts, exclusions, parameter choices, source-load timestamp, source stamp, extract cutoff and limitations. Rates use numerator / denominator, rounded to four decimal places in the data contract. Count-only enrollment has no denominator or invented rate.
+The authoritative definitions live in `analytics/definitions.py`. Each receipt includes their version, formula, population, grain, actual counts, exclusions, parameter choices, source-load timestamp, source stamp, extract cutoff and limitations. Rates use numerator / denominator, rounded to four decimal places in the data contract. Count-only enrollment has no denominator or invented rate.
 
 ## Program and credential evidence
 
@@ -20,7 +20,7 @@ Entry major uses `cohort_membership.program_of_study_term_1`, not end-of-year ma
 
 A complete six-digit CIP code is preserved; a `40.0501` representation can be normalized to `400501`. Truncated or ambiguous values remain unknown. Normalized model corrections are not repeated in this layer.
 
-Chemistry has two explicit choices: Chemistry, General (`400501`) and the curated chemistry family (`40.05`). The family catalog follows [NCES CIP 2020](https://nces.ed.gov/ipeds/cipcode/cipdetail.aspx?cipid=90775&y=56), including analytical, inorganic, organic, physical, polymer, chemical physics, environmental, forensic and other chemistry programs. Chemical engineering and enrollment in chemistry courses do not establish a chemistry major. Catalog entries and provenance are maintained in `uncf/programs.py`.
+Chemistry has two explicit choices: Chemistry, General (`400501`) and the curated chemistry family (`40.05`). The family catalog follows [NCES CIP 2020](https://nces.ed.gov/ipeds/cipcode/cipdetail.aspx?cipid=90775&y=56), including analytical, inorganic, organic, physical, polymer, chemical physics, environmental, forensic and other chemistry programs. Chemical engineering and enrollment in chemistry courses do not establish a chemistry major. Catalog entries and provenance are maintained in `analytics/programs.py`.
 
 Completion timing uses the credential-specific `first_year_to_*` field and checks it against its corresponding latest-credential field. A zero in both means no reported qualifying award through the declared extract window; a missing, contradictory or unobserved year is unknown. Bachelor, associate and certificate populations use `B`, `A` and `C`, respectively. Other or unknown credential-seeking codes are not silently mapped into those populations.
 
@@ -30,7 +30,7 @@ The final-program helper requires resolved award-semester evidence, ignores UNKN
 
 ## Certifying coverage
 
-`uncf/config/analytics.yaml` is the shared source of coverage declarations. `UNCF_ANALYTICS_CONFIG` can select another server-side configuration file. It is never a browser or model parameter.
+`analytics/config/analytics.yaml` is the shared source of coverage declarations. `UNCF_ANALYTICS_CONFIG` can select another server-side configuration file. It is never a browser or model parameter.
 
 The supplied configuration leaves complete years, cohort follow-up and cutoff unset: the mock extract does not certify these. This intentionally yields unavailable annual enrollment and completion-to-date results and uncertified four/six-year states. Retention still uses the stored outcome flags. Do not infer completeness from today's date, the maximum course year, credit-year availability or one observed graduate.
 
@@ -55,4 +55,4 @@ Before either the provider or browser sees a receipt, a conservative projection 
 
 ## Adding an analysis
 
-Keep institution-specific program logic in `uncf/analytics/`. Define a typed request and versioned definition, implement the deterministic calculation, add hand-counted tests, and dispatch through the service. Register the narrow model tool contract only after direct API and chat parity is verified. Do not expand upstream measure enums merely to accommodate a team-specific program analysis. Existing Results routes and clients keep their current contract.
+Keep institution-specific program logic in `analytics/`. Define a typed request and versioned definition, implement the deterministic calculation, add hand-counted tests, and dispatch through the service. Register the narrow model tool contract only after direct API and chat parity is verified. Do not expand upstream measure enums merely to accommodate a team-specific program analysis. Existing Results routes and clients keep their current contract.

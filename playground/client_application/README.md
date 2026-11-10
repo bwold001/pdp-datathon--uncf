@@ -74,6 +74,13 @@ The page says which part, and recovers on its own once it answers again.
 |---|---|
 | ![Landing page with the database stopped](docs/landing-degraded.png) | ![Landing page with the Server Application stopped](docs/landing-offline.png) |
 
+### Student success chat: /chat
+
+The sidebar opens the graduation, retention and enrollment assistant. Existing chat bookmarks
+redirect here. Answers show the shared calculation receipts, formulas, statuses and limitations.
+Clarification preserves the original question; reset discards late responses. The API origin is
+configured normally; the browser never receives provider credentials.
+
 ### Sandbox: http://localhost:3000/sandbox
 
 The **sandbox** endpoint series is where you create and test new features and preview how charts and

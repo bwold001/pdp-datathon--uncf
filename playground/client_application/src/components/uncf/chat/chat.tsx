@@ -3,9 +3,9 @@
 import { useState } from "react";
 import { QuestionComposer, SuggestedQuestions } from "@/components/chat/panel-chat";
 import { Button } from "@/components/ui/button";
-import { useUncfChat } from "@/hooks/use-uncf-chat";
+import { useStudentSuccessChat } from "@/hooks/use-student-success-chat";
 import { useScrollToLatest } from "@/hooks/use-scroll-to-latest";
-import { describeScope, type AnalysisRequest, sendUncfQuestion } from "@/services/uncf-chat";
+import { describeScope, type AnalysisRequest, sendStudentSuccessQuestion } from "@/services/student-success-chat";
 import { CalculationCard } from "./calculation-card";
 
 const questions = [
@@ -15,8 +15,8 @@ const questions = [
 ];
 
 /** Staff questions with explicit clarifications and inspectable calculation evidence. */
-export function UncfChat({ request = sendUncfQuestion }: { request?: typeof sendUncfQuestion }) {
-  const { messages, pending, clarification, revision, proposals, ask, select, confirm, reset } = useUncfChat(request);
+export function StudentSuccessChat({ request = sendStudentSuccessQuestion }: { request?: typeof sendStudentSuccessQuestion }) {
+  const { messages, pending, clarification, revision, proposals, ask, select, confirm, reset } = useStudentSuccessChat(request);
   const scrollRef = useScrollToLatest<HTMLDivElement>(`${messages.length}:${pending}`);
   return (
     <section aria-label="Student success chat" className="flex h-full min-h-0 min-w-0 flex-col">

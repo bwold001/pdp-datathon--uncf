@@ -1,23 +1,27 @@
 """Real normalized database to Playground chat/API transport tests."""
 
 import pytest
-from uncf.analytics.routes import get_service
-from uncf.analytics.service import AnalyticsService
-from uncf.chat.routes import get_chat_client
-from uncf.tests.analytics_fixtures import build_database, fixture_coverage
-from uncf.tests.test_chat_tools import ScriptedModel, call, finish
+from analytics.service import AnalyticsService
+from analytics.tests.analytics_fixtures import build_database, fixture_coverage
+from api.analyses import get_service
 
+from app.chat.routes import get_chat_client
 from app.core.config import settings
 from app.main import app
+from tests.test_student_success_tools import ScriptedModel, call, finish
 
 
 @pytest.fixture
 def analytics(tmp_path):
     """Use a real hand-counted fixture for this route, not a mocked calculation."""
     service = AnalyticsService(build_database(tmp_path / "analytics.sqlite"), fixture_coverage())
+    previous = app.dependency_overrides.get(get_service)
     app.dependency_overrides[get_service] = lambda: service
     yield service
-    app.dependency_overrides.pop(get_service, None)
+    if previous is None:
+        app.dependency_overrides.pop(get_service, None)
+    else:
+        app.dependency_overrides[get_service] = previous
     app.dependency_overrides.pop(get_chat_client, None)
 
 
@@ -92,7 +96,7 @@ def test_total_request_deadline_is_shorter_than_the_browser_timeout(client, anal
     """A stalled provider returns a readable timeout before the browser deadline."""
     import asyncio
 
-    from uncf.chat import routes
+    from app.chat import routes
 
     class StalledModel:
         """A provider that does not finish within the route deadline."""

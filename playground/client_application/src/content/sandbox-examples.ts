@@ -41,7 +41,7 @@ export const sandboxExamples: SandboxExample[] = [
   { label: "Measures", description: "A PDP-style example with typed filters and display-safe rates.", href: routes.sandboxMeasures, icon: ListFilter },
   { label: "API requests", description: "Live requests to the server application.", href: routes.sandboxApiRequests, icon: Send },
   { label: "KPI Examples", description: "KPI cards for percentages, splits and terms.", href: routes.sandboxKpiExamples, icon: Gauge },
-  { label: "Chat UI: LLM over data", description: "The side-panel chat, answered by an LLM from the data model's definitions and aggregate queries.", href: routes.sandboxDataChatUi, icon: Sparkles },
+  { label: "Chat UI: LLM over data", description: "Open the shared student-success chat and inspect its calculation evidence.", href: routes.sandboxDataChatUi, icon: Sparkles },
 ];
 
 /** Every example plus "Add a Sandbox Example", which stays last however many entries teams add above. */
