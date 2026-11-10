@@ -9,7 +9,7 @@ It replaces the app's left sidebar on these pages, so the pages live in their ow
 | --- | --- | --- | --- |
 | Student paths | `src/app/(uncf-explorer)/uncf/paths/page.tsx` | `/uncf/paths` | `GET /api/v1/uncf/student-paths` |
 | DFW | `src/app/(uncf-explorer)/uncf/dfw/page.tsx` | `/uncf/dfw` | `GET /api/v1/uncf/dfw`, `/dfw/course` |
-| Gateway courses | `src/app/(uncf-explorer)/uncf/gateway/page.tsx` | `/uncf/gateway` | |
+| Gateway courses | `src/app/(uncf-explorer)/uncf/gateway/page.tsx` | `/uncf/gateway` | `GET /api/v1/uncf/gateway` |
 | Credit momentum | `src/app/(uncf-explorer)/uncf/credit-momentum/page.tsx` | `/uncf/credit-momentum` | |
 | Chat | `src/app/(uncf-explorer)/uncf/chat/page.tsx` | `/uncf/chat` | |
 
