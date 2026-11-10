@@ -1,5 +1,6 @@
-// Real answers from GET /uncf/credit-momentum on the synthetic sample data (pdp.sqlite), saved for stories and tests.
-// Regenerate them with uncf/explorer_credits.py if the data or the endpoint changes; don't edit the numbers by hand.
+// Real answers from GET /uncf/credit-momentum on the synthetic sample data (pdp.sqlite), saved for stories and tests
+// before the API moved to measures/ (#36). Their tier retention is fall to fall, which is now retention_type=federal.
+// Regenerate them from the running API (measures/breakdowns/credit_momentum.py); don't edit the numbers by hand.
 import type { CreditsResponse } from "./credits-data";
 
 /** 2023-24, Fall starters: the terms have names. */
