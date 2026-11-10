@@ -23,7 +23,7 @@ export type GatewayCourse = {
 /** Two courses taken together in the first term, with next-fall retention below the cohort's. */
 export type CoursePair = { courses: [string, string]; students: number; retained: number; rate: number; gap: number };
 
-/** The answer from GET /uncf/gateway (uncf/gateway_courses.py). */
+/** The answer from GET /uncf/gateway (measures/breakdowns/gateway_courses.py). */
 export type GatewayResponse = {
   meta: ExplorerMeta & {
     /** False when the institution flags no gateway courses this year, so they're inferred. */

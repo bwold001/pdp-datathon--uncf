@@ -1,5 +1,6 @@
-// Real answers from GET /uncf/gateway on the synthetic sample data (pdp.sqlite), saved for stories and tests.
-// Regenerate them with uncf/gateway_courses.py if the data or the endpoint changes; don't edit the numbers by hand.
+// Real answers from GET /uncf/gateway on the synthetic sample data (pdp.sqlite), saved for stories and tests before
+// the API moved to measures/ (#36). Their retention is fall to fall, which is now retention_type=federal. Regenerate
+// them from the running API (measures/breakdowns/gateway_courses.py); don't edit the numbers by hand.
 import type { GatewayResponse } from "./gateway-data";
 
 /** 2023-24, every student who entered. */
