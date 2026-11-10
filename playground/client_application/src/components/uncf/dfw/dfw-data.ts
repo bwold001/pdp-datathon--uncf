@@ -24,7 +24,7 @@ export type DfwCourseSummary = DfwTally & {
   split: { DF: number; W: number; total: number };
 };
 
-/** The answer from GET /uncf/dfw (uncf/dfw_courses.py). */
+/** The answer from GET /uncf/dfw (measures/breakdowns/dfw_courses.py). */
 export type DfwList = {
   meta: ExplorerMeta;
   status: "ok" | "suppressed";

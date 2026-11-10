@@ -1,6 +1,7 @@
 // Real answers from GET /uncf/dfw and /uncf/dfw/course on the synthetic sample data (pdp.sqlite), for stories and tests.
 // The course list keeps 29 of the 310 courses (the top by DFW count and by rate) to stay small; every
-// number is as the API sent it. Regenerate with uncf/dfw_courses.py; don't edit the numbers by hand.
+// number is as the API sent it. Regenerate from the running API (measures/breakdowns/dfw_courses.py); don't edit
+// the numbers by hand.
 import type { DfwCourseDetail, DfwList } from "./dfw-data";
 
 /** 2023-24, every student who entered: the DFW list. */
