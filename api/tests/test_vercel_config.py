@@ -93,6 +93,41 @@ def test_bundle_drops_the_frontend_and_raw_data() -> None:
         assert is_excluded(path), path
 
 
-def test_provider_free_deployment_disables_chat_ui():
-    """An Explorer-only deployment must not advertise a missing chat backend."""
-    assert "NEXT_PUBLIC_STUDENT_SUCCESS_CHAT_ENABLED=false " in FRONTEND["buildCommand"]
+def test_chat_routes_precede_results_and_frontend_rewrites():
+    """Both chat URLs reach the provider-enabled service instead of Next.js or Results."""
+    assert service_for("/api/v1/chat") == "chat"
+    assert service_for("/api/v1/uncf/chat") == "chat"
+    assert service_for("/api/v1/uncf/analyses") == "backend"
+    assert service_for("/uncf/chat") == "frontend"
+
+
+def test_chat_service_build_and_bundle():
+    """Build the same mock extract and retain chat code, shared definitions and the database."""
+    chat = SERVICES["chat"]
+    assert chat["entrypoint"] == "chat_app:app"
+    assert chat["installCommand"] == "python -m pip install -r requirements-chat.txt"
+    assert chat["buildCommand"] == BACKEND["buildCommand"]
+    function = chat["functions"]["chat_app.py"]
+    assert function["maxDuration"] > 90  # Browser deadline, including calculation cleanup.
+    included = function["includeFiles"].strip("{}").split(",")
+    excluded = function["excludeFiles"].strip("{}").split(",")
+    for path in [
+        "playground/server_application/app/chat/provider.py",
+        "playground/server_application/app/services/analytics.py",
+        "analytics/config/analytics.yaml",
+        "normalized-data-model/output/pdp.sqlite",
+    ]:
+        assert any(fnmatch(path, pattern) for pattern in included), path
+        assert not any(fnmatch(path, pattern) for pattern in excluded), path
+    for path in [
+        "playground/server_application/.env.development.local",
+        "playground/server_application/.venv/lib/private.py",
+        "playground/client_application/node_modules/next/package.json",
+    ]:
+        assert any(fnmatch(path, pattern) for pattern in excluded), path
+
+
+def test_chat_frontend_is_enabled_with_an_environment_override():
+    """The deployed UI is enabled by default and can still be disabled for rollback."""
+    assert "NEXT_PUBLIC_STUDENT_SUCCESS_CHAT_ENABLED:-true" in FRONTEND["buildCommand"]
+    assert "NEXT_PUBLIC_STUDENT_SUCCESS_CHAT_ENABLED=false " not in FRONTEND["buildCommand"]

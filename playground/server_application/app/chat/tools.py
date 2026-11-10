@@ -4,7 +4,7 @@ from analytics.definitions import DEFINITIONS
 from analytics.schemas import AnalysisRequest
 from analytics.service import AnalyticsService
 
-TOOLS = [
+TOOL_DEFINITIONS = [
     {
         "name": "get_analysis_catalog",
         "description": "Get supported analyses, cohorts, program aliases and data coverage.",
@@ -33,6 +33,20 @@ TOOLS = [
         ),
         "input_schema": AnalysisRequest.model_json_schema(),
     },
+]
+
+
+# LiteLLM translates these function definitions for the selected provider.
+TOOLS = [
+    {
+        "type": "function",
+        "function": {
+            "name": tool["name"],
+            "description": tool["description"],
+            "parameters": tool["input_schema"],
+        },
+    }
+    for tool in TOOL_DEFINITIONS
 ]
 
 

@@ -176,13 +176,17 @@ There is no fallback to the standalone extract or cached result. Errors do not e
 Coverage declarations still come from `UNCF_ANALYTICS_CONFIG` or `analytics/config/analytics.yaml`.
 
 `UNCF_CHAT_ENABLED=true` enables chat independently of `SANDBOX_ENABLED`; development enables it
-in the committed environment template. Production remains opt-in. Set `ANTHROPIC_API_KEY` in an
-ignored local environment file and optionally override `UNCF_CHAT_MODEL`. Clarification can resume
+in the committed environment template. Full Playground production remains opt-in. LiteLLM connects
+`UNCF_CHAT_MODEL=anthropic/<model>` to `ANTHROPIC_API_KEY`, or `openai/<model>` to `OPENAI_API_KEY`.
+Put the matching key in an ignored local environment file or the host secret store. Unprefixed
+`claude-*` settings remain compatible. Clarification can resume
 without another provider call. Numerical text and formulas are validated and rendered from receipts.
 
 All three graduation horizons and perspectives, retention-by-entry-major and annual enrollment
 by ethnicity/program are retained. No new coverage or award-semester facts are inferred by moving
 code. The root provider-free Results deployment is a separate existing compatibility surface.
+The [dedicated Vercel chat service](../../docs/chat-deployment.md) uses the same adapter with a
+build-generated mock extract and mounts only chat routes, without Workbench, uploads or Sandbox.
 
 Run `mise run api:test-sqlite` and API lint. Configured-database parity tests compare direct
 service results and chat receipts, check reloads, missing data, and read-only connections.

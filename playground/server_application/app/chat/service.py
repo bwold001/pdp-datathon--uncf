@@ -93,14 +93,14 @@ async def answer(
             )
         return confirmation([*payload.proposals, request])
     if client is None:
-        raise ChatFailed("UNCF chat needs ANTHROPIC_API_KEY in the server environment.")
+        raise ChatFailed(
+            "Chat needs the selected model provider API key in the server environment."
+        )
     messages = [{"role": "user", "content": payload.prompt}]
     proposals = []
     for _ in range(MAX_TOOL_ROUNDS):
-        response = await client.messages.create(
-            model=model, max_tokens=1500, system=RULES, tools=TOOLS, messages=messages
-        )
-        uses = [b for b in response.content if b.type == "tool_use"]
+        response = await client.complete(model=model, system=RULES, tools=TOOLS, messages=messages)
+        uses = response.calls
         if not uses:
             if proposals:
                 return confirmation(proposals)
@@ -113,13 +113,13 @@ async def answer(
             )
         if len(uses) > MAX_TOOLS_PER_ROUND:
             raise ChatFailed("The assistant requested too many tools in one round.")
-        messages.append({"role": "assistant", "content": list(response.content)})
+        messages.append(response.message)
         outputs = []
         clarification = None
         additional_analyses = set()
         for use in uses:
             try:
-                result = await run_sync(dispatch, service, use.name, dict(use.input or {}))
+                result = await run_sync(dispatch, service, use.name, use.arguments)
                 if isinstance(result, AnalysisRequest):
                     unresolved = await run_sync(service.clarify, result)
                     if unresolved:
@@ -135,15 +135,13 @@ async def answer(
                             "confirmation_required": True,
                             "proposal": result.model_dump(mode="json"),
                         }
-                error = False
             except ValueError, TypeError:
-                result, error = {"error": "Unsupported tool or scope parameters."}, True
+                result = {"error": "Unsupported tool or scope parameters."}
             outputs.append(
                 {
-                    "type": "tool_result",
-                    "tool_use_id": use.id,
+                    "role": "tool",
+                    "tool_call_id": use.id,
                     "content": json.dumps(result),
-                    "is_error": error,
                 }
             )
         if clarification:
@@ -157,5 +155,5 @@ async def answer(
                 clarification=clarification,
                 proposals=proposals,
             )
-        messages.append({"role": "user", "content": outputs})
+        messages.extend(outputs)
     raise ChatFailed("The assistant reached its tool-round limit. Try one supported question.")

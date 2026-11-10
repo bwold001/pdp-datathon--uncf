@@ -1,0 +1,10 @@
+# Dedicated Vercel chat service; the Results service keeps its provider-free entrypoint.
+-e .
+litellm==1.108.4          # Chat: shared asynchronous OpenAI/Anthropic tool interface
+pydantic-settings==2.16.0 # Chat: reuse Playground's server-side settings
+sqlalchemy==2.1.5         # Chat: parse configured SQLite/PostgreSQL database URLs
+psycopg[binary]==3.3.6     # Chat: the existing configured PostgreSQL snapshot adapter
+fastapi==0.162.2          # Chat: same HTTP runtime as the Results API
+uvicorn==0.54.0           # Chat: local smoke tests and ASGI runtime
+pyyaml==6.0.3             # Chat: same shared coverage definitions as the Results API
+pyarrow==25.0.1           # Chat: same build-time mock-data loader as the Results API

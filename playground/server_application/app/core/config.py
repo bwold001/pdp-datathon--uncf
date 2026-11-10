@@ -64,11 +64,22 @@ class Settings(BaseSettings):
     # Mock-data endpoints behind the client's example charts. Off in production.
     SANDBOX_ENABLED: bool = True
 
-    # Student success chat uses a server-side key in .env.<APP_ENV>.local.
+    # Provider keys stay server-side in .env.<APP_ENV>.local or the host secret store.
     ANTHROPIC_API_KEY: str | None = None
+    OPENAI_API_KEY: str | None = None
     # Explicitly enabled for the local synthetic demo; independent of Sandbox.
     UNCF_CHAT_ENABLED: bool = False
-    UNCF_CHAT_MODEL: str = "claude-sonnet-5-5"
+    UNCF_CHAT_MODEL: str = "anthropic/claude-sonnet-5-5"
+
+    @property
+    def chat_model(self) -> str:
+        """Preserve old Claude settings while requiring an explicit supported provider."""
+        model = self.UNCF_CHAT_MODEL
+        if model.startswith("claude-"):
+            model = f"anthropic/{model}"
+        if not model.startswith(("openai/", "anthropic/")) or not model.split("/", 1)[1]:
+            raise ValueError("UNCF_CHAT_MODEL must use openai/<model> or anthropic/<model>.")
+        return model
 
     @property
     def is_development(self) -> bool:
