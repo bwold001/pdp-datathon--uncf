@@ -13,7 +13,7 @@ export default function CreditMomentumPage() {
       <ViewIntro
         title="Credit Momentum"
         whatThisShows="How quickly the selected cohort builds credits during the first year."
-        howToRead="Longer bars = more students reaching each milestone. The tier table compares next-fall retention by credits earned."
+        howToRead="Longer bars = more students reaching each milestone. The tier table compares retention by credits earned."
         keyTerms="Credit completion ratio: credits earned ÷ credits attempted. 30 credits in year 1: on pace for a 4-year degree."
       >
         First-year credits attempted and earned, and progress toward the 12, 24 and 30-credit milestones.

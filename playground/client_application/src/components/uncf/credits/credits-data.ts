@@ -1,9 +1,9 @@
-import type { ExplorerMeta } from "@/components/uncf/layout/explorer-api";
+import type { ExplorerMeta, RetentionBlock } from "@/components/uncf/layout/explorer-api";
 
 /** The answer from GET /uncf/credit-momentum (measures/breakdowns/credit_momentum.py). Hidden numbers (under 10 students) are null. */
 export type CreditsResponse = {
   meta: ExplorerMeta & {
-    /** The fall term retention is measured in, e.g. Fall 2024. */
+    /** When retention is measured: a fall term for federal (Fall 2024), "next academic year" for school. */
     retention_term: string;
   };
   status: "ok" | "suppressed";
@@ -17,8 +17,11 @@ export type CreditsResponse = {
     avg_earned: number | null;
   } | null;
   /** The shared credit completion measure: the average of each student's earned ÷ attempted. */
-  completion: { counted: number | null; ratio: number | null } | null;
-  milestones: { credits: number; students: number; share: number | null }[];
+  completion: { counted: number | null; ratio: number | null; status: string } | null;
+  /** The cohort's retention, in the measure meta.retention_type names. */
+  retention: RetentionBlock | null;
+  /** Students who earned at least this many credits; null (and no share) when 1 to 9. */
+  milestones: { credits: number; students: number | null; share: number | null }[];
   /** The starting term and the next fall or spring term. */
   terms: { label: string; enrolled: number | null; avg_attempted: number | null; avg_earned: number | null }[];
   tiers: { key: string; label: string; students: number | null; share: number | null; retained: number | null; rate: number | null }[];

@@ -90,13 +90,16 @@ def credit_momentum(cohort: str, filters: Group = EVERYONE, retention_measure: M
         },
         "completion": {"counted": completion.denominator, "ratio": completion.metric_rate, "status": completion.status.value},
         "retention": retention(retention_measure, cohort, filters, database),
-        "milestones": [
-            {"credits": credits, "students": (n := sum(1 for _, earned in known.values() if earned >= credits)), "share": share(n, len(known))}
-            for credits in MILESTONES
-        ],
+        "milestones": [milestone(credits, known) for credits in MILESTONES],
         "terms": first_terms(cohort, students, per_term),
         "tiers": tiers(known, answers),
     }
+
+
+def milestone(credits: int, known: dict) -> dict:
+    """Students who earned at least this many credits in year 1, out of those with known credits. 1 to 9 is hidden."""
+    reached = shown(sum(1 for _, earned in known.values() if earned >= credits))
+    return {"credits": credits, "students": reached, "share": share(reached, len(known))}
 
 
 def first_terms(cohort: str, students: dict, per_term: dict) -> list[dict]:

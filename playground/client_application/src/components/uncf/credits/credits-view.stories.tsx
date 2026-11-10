@@ -3,7 +3,7 @@ import { expect, within } from "storybook/test";
 
 import { ExplorerStoryFrame } from "@/components/uncf/layout/explorer-story-frame";
 
-import { credits2023, credits2024, creditsFall2023, creditsTooFew } from "./credits-fixtures";
+import { credits2023, credits2024, creditsFall2023, creditsFederalFall2023, creditsSmallGroup, creditsTooFew } from "./credits-fixtures";
 import { CreditsView } from "./credits-view";
 
 const meta = {
@@ -42,10 +42,38 @@ export const FallStarters: Story = {
     await expect(canvas.getByRole("img", { name: "Fall 2023: 10.3 attempted, 7.3 earned. Spring 2024: 10.6 attempted, 8.4 earned" })).toBeInTheDocument();
 
     const table = within(canvas.getByRole("table"));
-    await expect(table.getByRole("columnheader", { name: "Retained to Fall 2024" })).toBeVisible();
+    // The API's default retention is the PDP flag, and the table names it.
+    await expect(table.getByRole("columnheader", { name: "Returned here" })).toBeVisible();
+    await expect(table.getByRole("row", { name: /^Under 15 929/ })).toHaveTextContent("41%");
+    await expect(table.getByRole("row", { name: /^30 or more 140/ })).toHaveTextContent("94%");
+    await expect(canvas.getByText(/47 students with blank credits are left out/)).toBeVisible();
+    await expect(canvas.queryByText(/next-fall/i)).not.toBeInTheDocument();
+  },
+};
+
+/** Retention set to Back next fall: the tiers use fall to fall retention, and the labels say so. */
+export const FederalRetention: Story = {
+  name: "Back next fall",
+  args: { data: creditsFederalFall2023 },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole("heading", { name: "Credit tiers and retention (back next fall)" })).toBeVisible();
+    const table = within(canvas.getByRole("table"));
+    await expect(table.getByRole("columnheader", { name: "Back next fall" })).toBeVisible();
     await expect(table.getByRole("row", { name: /^Under 15 929/ })).toHaveTextContent("29%");
     await expect(table.getByRole("row", { name: /^30 or more 140/ })).toHaveTextContent("74%");
-    await expect(canvas.getByText(/47 students with blank credits are left out/)).toBeVisible();
+    await expect(canvas.getByText(/took a course here in Fall 2024, the fall after year 1/)).toBeVisible();
+  },
+};
+
+/** A small group: a milestone 1 to 9 students reached shows "Under 10", never the count or its share. */
+export const SmallGroup: Story = {
+  name: "Small group",
+  args: { data: creditsSmallGroup },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText("43 · 65%")).toBeVisible();
+    await expect(canvas.getByText("15 · 23%")).toBeVisible();
+    await expect(canvas.getByRole("img", { name: "30 credits · on pace to graduate on time: Under 10 students" })).toBeInTheDocument();
+    await expect(canvas.queryByText(/^6 · /)).not.toBeInTheDocument();
   },
 };
 
@@ -59,12 +87,12 @@ export const AllStartingTerms: Story = {
   },
 };
 
-/** The 2024-25 class: next fall is only partly in the data, and the page says so first. */
+/** The 2024-25 class: its second year is only partly in the data, and the page says so first. */
 export const ProvisionalClass: Story = {
-  name: "Next fall still arriving",
+  name: "Second year still arriving",
   args: { data: credits2024 },
   play: async ({ canvas }) => {
-    await expect(canvas.getByRole("note")).toHaveTextContent("Fall 2025 is only partly in the data.");
+    await expect(canvas.getByRole("note")).toHaveTextContent("The 2024-25 class’s second year is only partly in the data.");
   },
 };
 

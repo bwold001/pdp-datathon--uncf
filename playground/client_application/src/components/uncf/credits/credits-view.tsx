@@ -11,6 +11,7 @@ import {
   TwoColumns,
   formatCount,
   formatShare,
+  retentionWords,
   tableClasses,
 } from "@/components/uncf/layout/explorer-parts";
 import { cn } from "@/lib/utils";
@@ -32,8 +33,9 @@ export function CreditsView({ data }: { data: CreditsResponse }) {
   return (
     <>
       {data.meta.provisional && (
-        <Notice title={`${data.meta.retention_term} is only partly in the data.`}>
-          Next-fall retention for the {data.meta.cohort} class will rise as the rest of that term arrives.
+        <Notice title={`The ${data.meta.cohort} class’s second year is only partly in the data.`}>
+          {retentionWords(data.meta.retention_type, data.meta.retention_term).name} for this class will rise as the rest of
+          that year arrives.
         </Notice>
       )}
       <KpiGrid columns={3}>
@@ -65,14 +67,15 @@ function MilestonesCard({ data }: { data: CreditsResponse }) {
             <div className="flex justify-between gap-3">
               <span>{milestoneLabel[milestone.credits]}</span>
               <span className="uncf-num">
-                {fmt(milestone.students)} · {formatShare(milestone.share)}
+                {formatCount(milestone.students)}
+                {milestone.share !== null && ` · ${formatShare(milestone.share)}`}
               </span>
             </div>
             <TrackBar
               share={milestone.share}
               color="var(--uncf-blue)"
               height={24}
-              label={`${milestoneLabel[milestone.credits]}: ${fmt(milestone.students)} students`}
+              label={`${milestoneLabel[milestone.credits]}: ${formatCount(milestone.students)} students`}
             />
           </div>
         ))}
@@ -132,13 +135,14 @@ function TermsCard({ data }: { data: CreditsResponse }) {
   );
 }
 
-/** Students grouped by credits earned in year 1, and how many of each group came back next fall. */
+/** Students grouped by credits earned in year 1, and how many of each group were retained. */
 function TiersCard({ data }: { data: CreditsResponse }) {
   const shownTiers = data.tiers.filter((tier) => tier.share !== null);
+  const words = retentionWords(data.meta.retention_type, data.meta.retention_term);
   return (
     <Card>
       <CardHead
-        title="Credit tiers and next-fall retention"
+        title={`Credit tiers and retention (${words.lower})`}
         subtitle="Students grouped by credits earned in year 1. Students who earn more credits come back at higher rates."
       />
       <div className="mt-5 mb-6.5 flex h-12.5 overflow-hidden rounded font-semibold" role="img" aria-label={shownTiers.map((t) => `${t.label}: ${formatShare(t.share)}`).join(", ")}>
@@ -161,7 +165,7 @@ function TiersCard({ data }: { data: CreditsResponse }) {
             <tr>
               <th className={tableClasses.th}>Credits earned, year 1</th>
               <th className={cn(tableClasses.th, tableClasses.right, "pr-8")}>Students</th>
-              <th className={tableClasses.th}>Retained to {data.meta.retention_term}</th>
+              <th className={tableClasses.th}>{words.name}</th>
               <th className={tableClasses.th} />
             </tr>
           </thead>
@@ -182,8 +186,8 @@ function TiersCard({ data }: { data: CreditsResponse }) {
       <Counted>
         credits are the cohort file’s year-1 credits attempted and earned: every term of the student’s first academic year
         {data.credits!.left_out ? `; ${fmt(data.credits!.left_out)} students with blank credits are left out` : ""}. The
-        by-term columns use the course file’s credits for the starting term and the next fall or spring term. Retained to{" "}
-        {data.meta.retention_term}: took a course here that term. The credit completion ratio counts first-time and
+        by-term columns use the course file’s credits for the starting term and the next fall or spring term.{" "}
+        {words.name}: {words.how}. The credit completion ratio counts first-time and
         transfer-in students who attempted at least one credit. Tiers with fewer than 10 students are hidden.
       </Counted>
     </Card>
