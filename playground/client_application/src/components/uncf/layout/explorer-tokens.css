@@ -42,3 +42,9 @@
     outline-offset: 2px;
   }
 }
+
+/* Numbers: monospaced, with digits that line up in columns. */
+.uncf-num {
+  font-family: var(--uncf-mono);
+  font-variant-numeric: tabular-nums;
+}

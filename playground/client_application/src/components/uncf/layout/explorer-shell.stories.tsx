@@ -20,8 +20,10 @@ export const OnTheDfwTab: Story = {
   name: "On the DFW tab",
   play: async ({ canvas }) => {
     await expect(canvas.getByRole("heading", { level: 1, name: "Student Persistence and Pathway Explorer" })).toBeVisible();
-    await expect(canvas.getByText("Sample data · illustrative values")).toBeVisible();
-    await expect(canvas.queryByRole("button")).not.toBeInTheDocument();
+    await expect(canvas.getByText("Synthetic sample data")).toBeVisible();
+    await expect(canvas.getByText("Synthetic sample data. Nothing here describes real students or institutions.")).toBeVisible();
+    await expect(canvas.queryByRole("button", { name: /Export/ })).not.toBeInTheDocument();
+    await expect(canvas.getByRole("region", { name: "Cohort filters" })).toBeVisible();
 
     const tabs = canvas.getAllByRole("link");
     await expect(tabs.map((tab) => tab.textContent)).toEqual(["Student paths", "DFW", "Gateway courses", "Credit momentum"]);
@@ -38,6 +40,16 @@ export const OnTheDfwTab: Story = {
     const boxes = tabs.map((tab) => tab.getBoundingClientRect());
     await expect(new Set(boxes.map((box) => Math.round(box.top))).size).toBe(1);
     await expect(boxes.every((box, i) => i === 0 || box.left > boxes[i - 1].left)).toBe(true);
+  },
+};
+
+/** The cohort filters travel with the tab links, but a tab's own query values (a sort order) don't. */
+export const KeepsFiltersAcrossTabs: Story = {
+  name: "Keeps filters across tabs",
+  parameters: { nextjs: { appDirectory: true, navigation: { pathname: "/uncf/paths", query: { pell: "Y", sort: "rate" } } } },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole("link", { name: "DFW" })).toHaveAttribute("href", "/uncf/dfw?pell=Y");
+    await expect(canvas.getByRole("button", { name: /^Pell \(year 1\)/ })).toHaveTextContent("Pell recipient");
   },
 };
 
