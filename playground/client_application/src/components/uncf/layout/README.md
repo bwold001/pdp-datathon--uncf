@@ -8,7 +8,7 @@ It replaces the app's left sidebar on these pages, so the pages live in their ow
 | Tab | Page | URL | API |
 | --- | --- | --- | --- |
 | Student paths | `src/app/(uncf-explorer)/uncf/paths/page.tsx` | `/uncf/paths` | `GET /api/v1/uncf/student-paths` |
-| DFW | `src/app/(uncf-explorer)/uncf/dfw/page.tsx` | `/uncf/dfw` | |
+| DFW | `src/app/(uncf-explorer)/uncf/dfw/page.tsx` | `/uncf/dfw` | `GET /api/v1/uncf/dfw`, `/dfw/course` |
 | Gateway courses | `src/app/(uncf-explorer)/uncf/gateway/page.tsx` | `/uncf/gateway` | |
 | Credit momentum | `src/app/(uncf-explorer)/uncf/credit-momentum/page.tsx` | `/uncf/credit-momentum` | |
 | Chat | `src/app/(uncf-explorer)/uncf/chat/page.tsx` | `/uncf/chat` | |
@@ -38,7 +38,8 @@ Copy the Student paths tab (`components/uncf/paths/`): a page with a `ViewIntro`
   `text-(--uncf-ink-2)`, `border-(--uncf-line)`. IBM Plex Sans is already on; put `uncf-num` on numbers for IBM Plex
   Mono with aligned digits. The Explorer is always light; avoid the app's `ui/` components, which follow dark mode.
 - **Stories.** Save a real answer from your endpoint as a fixture (see `paths/paths-fixtures.ts`) and wrap the story in
-  `ExplorerStoryFrame`.
+  `ExplorerStoryFrame`. To test a whole tab with its loading, answer `fetch` from the fixtures (see
+  `dfw/dfw-page.stories.tsx`).
 
 ## Changing the shell
 
