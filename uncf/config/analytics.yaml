@@ -1,0 +1,8 @@
+# No complete-year or cohort-follow-up certification is supplied with the mock files.
+# Declare these only after checking the extract with its provider. See docs/analytics-definitions.md.
+complete_academic_years: []
+cohort_followup_years: {}
+cutoff: null
+provenance: "Synthetic starter extract; completeness and exact award semesters are unverified."
+suppression_threshold: 10
+provisional_retention_cohorts: ["2024-25"]

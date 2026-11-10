@@ -18,11 +18,12 @@ from __future__ import annotations
 import os
 from typing import Annotated, get_args
 
-from fastapi import APIRouter, FastAPI, Query
+from fastapi import APIRouter, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from uncf import results
+from uncf.analytics.routes import router as analytics_router
 from uncf.definitions import definition_for
 from uncf.schemas import (
     DIMENSION_LABELS,
@@ -115,10 +116,17 @@ def create_app() -> FastAPI:
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[origin.strip() for origin in origins if origin.strip()],
-        allow_methods=["GET"],
+        allow_methods=["GET", "POST"],
         allow_headers=["*"],
     )
+    @app.exception_handler(HTTPException)
+    async def analysis_error(_request, error: HTTPException):
+        """Keep additive analytics errors in the existing standalone error envelope."""
+        code = "invalid_analysis" if error.status_code == 422 else "analytics_unavailable"
+        return _error(error.status_code, code, str(error.detail))
+
     app.include_router(router)
+    app.include_router(analytics_router)
     return app
 
 
