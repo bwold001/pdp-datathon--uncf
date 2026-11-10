@@ -2,7 +2,9 @@
 
 import { useMemo } from "react";
 
+import { type CohortFilters, filterValueLabel } from "@/components/uncf/layout/cohort-filters";
 import { explorerLoader } from "@/components/uncf/layout/explorer-api";
+import { cohortFilters } from "@/components/uncf/layout/explorer-config";
 import { useShowStudentCount } from "@/components/uncf/layout/explorer-context";
 import { LoadingBlock, MessageCard } from "@/components/uncf/layout/explorer-parts";
 import { useCohortFilters } from "@/components/uncf/layout/use-cohort-filters";
@@ -13,7 +15,8 @@ import { GatewayView } from "./gateway-view";
 
 /** The Gateway courses tab: loads the cohort bar's students' gateway outcomes and draws them. */
 export function GatewayTab() {
-  const { apiQuery } = useCohortFilters();
+  const { apiQuery, filters } = useCohortFilters();
+  const groupLabel = useMemo(() => describeGroup(filters), [filters]);
   const load = useMemo(() => explorerLoader<GatewayResponse>("/uncf/gateway", apiQuery), [apiQuery]);
   const { resource, retry } = useApiResource(load);
   useShowStudentCount(resource.status !== "success" ? null : resource.data.status === "suppressed" ? "under 10" : resource.data.students);
@@ -26,7 +29,15 @@ export function GatewayTab() {
       </MessageCard>
     );
   }
-  return <GatewayView data={resource.data} />;
+  return <GatewayView data={resource.data} groupLabel={groupLabel} />;
+}
+
+/** The filters (other than the cohort year) as a group name, e.g. "Pell (year 1): Pell recipient"; null when none. */
+export function describeGroup(filters: CohortFilters): string | null {
+  const parts = cohortFilters
+    .filter((definition) => definition.id !== "cohort" && filters[definition.id] != null)
+    .map((definition) => `${definition.label}: ${filterValueLabel(definition, filters[definition.id])}`);
+  return parts.length ? parts.join(" + ") : null;
 }
 
 /** Grey blocks in the shape of the tab while its numbers load. */
