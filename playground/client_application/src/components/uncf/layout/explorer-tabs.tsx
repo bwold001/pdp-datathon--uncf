@@ -5,15 +5,15 @@ import { usePathname, useSearchParams } from "next/navigation";
 
 import { cn } from "@/lib/utils";
 
-import { cohortFiltersToUrl, readCohortFilters } from "./cohort-filters";
+import { carriedFilterQuery } from "./cohort-filters";
 import { explorerTabs } from "./explorer-config";
 import { explorerWrap } from "./explorer-styles";
 
 /** The horizontal tab row. Each link keeps the cohort filters, so switching tabs doesn't reset them. */
 export function ExplorerTabs() {
   const searchParams = useSearchParams();
-  // Only the cohort filters travel between tabs; a tab's own query values stay on that tab.
-  const query = cohortFiltersToUrl(readCohortFilters(searchParams)).toString();
+  // Only the cohort filters someone set travel between tabs; a tab's own query values stay on that tab.
+  const query = carriedFilterQuery(searchParams).toString();
   return <TabLinks query={query} />;
 }
 
