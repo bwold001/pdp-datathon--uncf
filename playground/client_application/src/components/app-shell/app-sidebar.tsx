@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { House, PanelsTopLeft } from "lucide-react";
+import { ChartNoAxesColumn, House, PanelsTopLeft } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -19,6 +19,7 @@ import {
   SidebarRail,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { explorerTabs } from "@/components/uncf/layout/explorer-config";
 import { brand } from "@/content/brand";
 import { SANDBOX_EXAMPLES_HEADING, sandboxNavItems } from "@/content/sandbox-examples";
 import { useHealthMonitor } from "@/hooks/use-health-monitor";
@@ -71,12 +72,29 @@ export function AppSidebar() {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>UNCF</SidebarGroupLabel>
-          <SidebarMenu><SidebarMenuItem><SidebarMenuButton
-            isActive={pathname === routes.uncfChat}
-            tooltip="Student success chat"
-            render={<Link href={routes.uncfChat} onClick={closeSidebarOnMobile} />}
-          ><PanelsTopLeft /><span>Student success chat</span></SidebarMenuButton></SidebarMenuItem></SidebarMenu>
+          <SidebarGroupLabel className="text-sm font-semibold">UNCF</SidebarGroupLabel>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                isActive={explorerTabs.some((tab) => pathname === tab.href || pathname.startsWith(`${tab.href}/`))}
+                tooltip="Pathway Explorer"
+                render={<Link href={explorerTabs[0].href} onClick={closeSidebarOnMobile} />}
+              >
+                <ChartNoAxesColumn />
+                <span>Pathway Explorer</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                isActive={pathname === routes.uncfChat}
+                tooltip="Student success chat"
+                render={<Link href={routes.uncfChat} onClick={closeSidebarOnMobile} />}
+              >
+                <PanelsTopLeft />
+                <span>Student success chat</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
         </SidebarGroup>
         <SidebarGroup>
           <SidebarGroupLabel className="text-sm font-semibold">Workbench</SidebarGroupLabel>
