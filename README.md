@@ -49,6 +49,23 @@ python -m uncf serve        # only serve the API; --port to change it
 `python -m uncf` is the one entry point for everything we build in `uncf/`. It doesn't need the
 Playground. Test it with `python -m pytest uncf`. Interactive API docs: http://localhost:8001/docs.
 
+#### Hosting on Vercel
+
+[`vercel.json`](vercel.json) deploys only the Explorer, as one Vercel project with two
+[services](https://vercel.com/docs/services):
+
+- **frontend:** the Next.js app in `playground/client_application`. `/` redirects to `/uncf/paths`.
+- **backend:** the Results API (`uncf.api:app`) as a Python function. Its build runs
+  `python -m uncf load`, so every deploy builds `pdp.sqlite` from the mock CSVs in `data/raw/`.
+
+Both sit on one site: `/api/v1/uncf/*` goes to the API and everything else goes to the pages. The
+client is built with `NEXT_PUBLIC_API_BASE_URL=/api/v1`, so a preview calls its own API and needs
+no CORS. Call it from client components: a relative URL doesn't work in a server-side `fetch`.
+`uncf/tests/test_vercel_config.py` checks the wiring.
+
+The data is mock data and the site is public. Before real student data goes here, it needs a
+login, data that doesn't live in git, and the data owner's sign-off.
+
 #### How the Results API works
 
 - **Calculated per request.** Each request calls the measures package (`run_measure`), which reads
