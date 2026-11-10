@@ -71,6 +71,14 @@ export function AppSidebar() {
 
       <SidebarContent>
         <SidebarGroup>
+          <SidebarGroupLabel>UNCF</SidebarGroupLabel>
+          <SidebarMenu><SidebarMenuItem><SidebarMenuButton
+            isActive={pathname === routes.uncfChat}
+            tooltip="Student success chat"
+            render={<Link href={routes.uncfChat} onClick={closeSidebarOnMobile} />}
+          ><PanelsTopLeft /><span>Student success chat</span></SidebarMenuButton></SidebarMenuItem></SidebarMenu>
+        </SidebarGroup>
+        <SidebarGroup>
           <SidebarGroupLabel className="text-sm font-semibold">Workbench</SidebarGroupLabel>
           <SidebarMenu>
             <SidebarMenuItem>

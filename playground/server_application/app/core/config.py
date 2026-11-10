@@ -67,6 +67,7 @@ class Settings(BaseSettings):
     # Sandbox chat. Put the key in .env.<APP_ENV>.local; without it the chat endpoint answers 503.
     ANTHROPIC_API_KEY: str | None = None
     SANDBOX_CHAT_MODEL: str = "claude-sonnet-5-5"
+    UNCF_CHAT_MODEL: str = "claude-sonnet-5-5"
 
     @property
     def is_development(self) -> bool:
