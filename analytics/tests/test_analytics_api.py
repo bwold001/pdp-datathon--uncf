@@ -5,7 +5,7 @@ import pytest
 
 from fastapi.testclient import TestClient
 
-from api.app import create_app
+from api.route import create_app
 from analytics.service import AnalyticsService
 from api.analyses import get_service
 from analytics.tests.analytics_fixtures import build_database, fixture_coverage

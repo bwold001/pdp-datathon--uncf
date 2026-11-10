@@ -9,11 +9,18 @@ changes get in. Priorities: Core (Explorer), Stretch 1 (insight cards), Stretch 
 Never push to `main`, and never commit, push, or open a pull request without the user's explicit
 yes. Keep per-school differences in config, not forks.
 
-**Put code with its owner.** Shared deterministic domain analyses, program attribution and
-coverage belong in `analytics/`. Foundational measures and their definitions belong in `measures/`.
-Provider orchestration belongs in `playground/server_application/app/chat/`; configured database
-access belongs in `app/services/analytics.py`. Provider-free HTTP compatibility belongs in `api/`.
-Client chat lives under `src/components/uncf/chat/` and its Explorer page is `/uncf/chat`.
+**Put code with its owner.** Don't edit the starter's Sandbox examples or shared foundations to
+build our features; copy their pattern into our own folders:
+- Every Explorer and Results API number (measures, filters on them, page breakdowns) and their
+  staff facing definitions: `measures/`.
+- The chat's deterministic analyses (graduation, retention by major, enrollment), program
+  attribution, coverage and receipts: `analytics/`.
+- HTTP only (request checks, response models, one router under `/api/v1/uncf`): `api/`. No
+  calculations here. The Playground server mounts its router with one line.
+- Chat provider calls and validated tools: `playground/server_application/app/chat/`; its database
+  access: `app/services/analytics.py`.
+- Client pages: `playground/client_application/src/app/(uncf-explorer)/uncf/`; client components:
+  `playground/client_application/src/components/uncf/` (chat in `uncf/chat/`, page `/uncf/chat`).
 
 Preserve the deployed Results API and Vercel routing when moving files. All numerical product
 answers must use validated deterministic receipts, not arbitrary SQL or generated numerical prose.
@@ -33,7 +40,8 @@ Document changes to shared files in the review description.
 - **Define the check first.** Before building, write down how you'll know it works: a command, a
   test, or an expected number.
 - **Every feature gets tests.** Add a pytest test with each feature, in a `tests/` folder next to
-  the code (for `analytics/`, `analytics/tests/`). A pull request without tests for its new behavior isn't done.
+  the code (for `api/`, `measures/` and `analytics/`, each has its own `tests/`). A pull request
+  without tests for its new behavior isn't done.
 - **Cap every retry loop.** Give each fix-and-retry loop a maximum number of tries (3 is a good
   default). At the cap, stop and ask a person. Don't keep trying.
 - **Run the checks.** Use `make check-fast` while you work and `make check` before opening a pull

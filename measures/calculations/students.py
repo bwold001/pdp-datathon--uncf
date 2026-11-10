@@ -40,13 +40,15 @@ def rows_sql(
     achieved: str,
     in_scope: str = "1",
     exclusion_reason: ExclusionReason | str = ExclusionReason.UNKNOWN_OUTCOME,
+    joins: str = "",
 ) -> str:
     """The query for one row per student per cohort: group columns, in_scope, has_answer, achieved and why.
 
     in_scope is 0 for a student the measure doesn't apply to. Those students are counted apart from the rest.
     achieved is 1 or 0, or a ratio from 0 to 1 for a measure that averages student ratios.
     exclusion_reason says why a row with no answer is left out of the count. It is one ExclusionReason, or a
-    query expression (a string) when the reason differs by student.
+    query expression (a string) when the reason differs by student. joins adds tables the answer needs, joined
+    to cm (cohort_membership) and s (student).
     """
     reason = f"'{exclusion_reason.value}'" if isinstance(exclusion_reason, ExclusionReason) else exclusion_reason
     return f"""
@@ -66,5 +68,5 @@ SELECT cm.student_id AS student_id,
        cm.enrollment_intensity_first_term AS enrollment_intensity,
        cm.cohort_term AS cohort_term
 FROM cohort_membership cm
-JOIN student s ON s.student_id = cm.student_id
+JOIN student s ON s.student_id = cm.student_id{joins}
 """

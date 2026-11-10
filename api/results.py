@@ -1,94 +1,67 @@
-"""Calculates results per request with the measures package. Nothing is saved.
+"""The Results API's answers: one measure for one class, for everyone and each group, from run_measure.
 
-The API calls get_results(); the measures package reads the normalized data (pdp.sqlite) and does the counting.
-Answers are cached in memory, keyed on the data file's modification time, so a reload is picked up on the
-next request without a restart.
+Every number is run_measure's row, with the cohort bar's filters applied, so the Results API, the Explorer pages,
+CSV export and chat agree. This module only turns the rows into the response shape. Answers are cached in memory,
+keyed on the data file's modification time, so a reload is picked up without a restart.
 """
 from __future__ import annotations
 
-import sqlite3
 from functools import lru_cache
-from pathlib import Path
 
-from measures.models import Cohort, GroupBy, GroupDimension, Measure, MeasureResult
-from measures.run_measures import DEFAULT_DATABASE, run_measure
-
+from api import data
+from api.filters import CohortQuery
 from api.schemas import ResultRow
+from measures.models import Cohort, GroupBy, GroupDimension, Measure, MeasureResult
+from measures.run_measures import run_measure
 
 GATEWAY_MEASURES = {"gateway_math", "gateway_english"}
 YEAR_TWO_MEASURES = {"retention", "persistence"}
-# Classes whose second academic year is only partly in the course file. Matches the Explorer's own list;
-# move it to config if a school's data needs a different one.
-PROVISIONAL_COHORTS = {"2024-25"}
-
-
-class DataMissing(Exception):
-    """The normalized data isn't loaded yet: run `python -m api load`."""
-
-
-def data_path() -> Path:
-    """The normalized data file to read. A function, so tests can point it somewhere else."""
-    return DEFAULT_DATABASE
-
-
-def _data_stamp() -> float:
-    """The data file's modification time, or raise DataMissing."""
-    path = data_path()
-    if not path.exists():
-        raise DataMissing(f"{path} does not exist. Run: python -m api load")
-    return path.stat().st_mtime
-
-
-def loaded_at() -> str:
-    """When the source data was loaded: the latest load time of the files in it."""
-    _data_stamp()
-    connection = sqlite3.connect(f"file:{data_path()}?mode=ro", uri=True)
-    try:
-        (value,) = connection.execute("SELECT MAX(loaded_at) FROM data_provider").fetchone()
-    finally:
-        connection.close()
-    return value or "unknown"
 
 
 def is_provisional(measure: str, cohort: str) -> bool:
-    """True when a year-2 measure's class doesn't have its full second year in the data yet."""
-    return measure in YEAR_TWO_MEASURES and cohort in PROVISIONAL_COHORTS
+    """True when a year 2 measure's class doesn't have its full second year in the data yet."""
+    return measure in YEAR_TWO_MEASURES and data.is_provisional(cohort)
 
 
-def _status(measure: str, result: MeasureResult) -> str:
-    """The row's status. A gateway measure with no answers means the college doesn't report the requirement."""
-    status = result.status.value
-    if measure in GATEWAY_MEASURES and status == "not_yet_observable":
+def measure_for(measure: str, query: CohortQuery) -> Measure:
+    """The measure to run: retention follows the query's retention type (school or federal)."""
+    return query.retention_measure if measure == "retention" else Measure(measure)
+
+
+def status_of(measure: str, row: MeasureResult) -> str:
+    """A gateway measure with no answers means the college doesn't report the requirement."""
+    if measure in GATEWAY_MEASURES and row.status.value == "not_yet_observable":
         return "not_reported"
-    return status
+    return row.status.value
 
 
-def _to_row(measure: str, result: MeasureResult) -> ResultRow:
-    """Turn one measures-package result into an API row."""
-    parts = sorted(result.group.parts, key=lambda part: part.dimension.value)
+def to_row(measure: str, row: MeasureResult) -> ResultRow:
+    """One run_measure row as a response row."""
     return ResultRow(
-        group={part.dimension.value: part.value for part in parts},
-        numerator=result.numerator,
-        denominator=result.denominator,
-        rate=result.metric_rate,
-        status=_status(measure, result),
-        n_excluded=result.n_excluded,
-        n_out_of_scope=result.n_out_of_scope,
-        note=result.note,
+        group={part.dimension.value: part.value for part in sorted(row.group.parts, key=lambda p: p.dimension.value)},
+        numerator=row.numerator,
+        denominator=row.denominator,
+        rate=row.metric_rate,
+        status=status_of(measure, row),
+        n_excluded=row.n_excluded,
+        n_out_of_scope=row.n_out_of_scope,
+        note=row.note,
+        split=row.split,
     )
 
 
 @lru_cache(maxsize=1024)
-def _calculate(measure: str, cohort: str, dimensions: tuple[str, ...], stamp: float) -> tuple[ResultRow, ...]:
-    """Run one measure for one class and grouping. stamp is only part of the cache key."""
+def _calculate(measure: str, query: CohortQuery, dimensions: tuple[str, ...], stamp: float) -> tuple[tuple[ResultRow, ...], str]:
+    """One measure for one class, its filters and grouping. stamp is only part of the cache key."""
     group_by = [GroupBy.of(*(GroupDimension(d) for d in dimensions))] if dimensions else None
-    results = run_measure(Measure(measure), [Cohort.of(cohort)], group_by, database=data_path())
-    return tuple(_to_row(measure, result) for result in results)
+    rows = run_measure(measure_for(measure, query), [Cohort.of(query.cohort)], group_by, database=data.data_path(), filters=query.as_group())
+    return tuple(to_row(measure, row) for row in rows), data.loaded_at()
 
 
-def get_results(measure: str, cohort: str, dimensions: list[str]) -> list[ResultRow]:
-    """The everyone row, then one row per group. Dimension order doesn't matter."""
-    return list(_calculate(measure, cohort, tuple(sorted(dimensions)), _data_stamp()))
+def get_results(measure: str, query: CohortQuery, dimensions: list[str]) -> tuple[list[ResultRow], str]:
+    """The everyone row, then one row per group, and when the data was loaded. Dimension order doesn't matter."""
+    rows, loaded = _calculate(measure, query, tuple(sorted(dimensions)), data.data_stamp())
+    return list(rows), loaded
 
 
 def clear_cache() -> None:
