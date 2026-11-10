@@ -15,12 +15,12 @@ def serve(host: str, port: int) -> None:
     """Start the Results API with uvicorn."""
     import uvicorn
 
-    uvicorn.run("uncf.api:app", host=host, port=port)
+    uvicorn.run("uncf.api_route:app", host=host, port=port)
 
 
 def main(argv: list[str] | None = None) -> None:
     """Run the command named on the command line."""
-    from uncf.api import DEFAULT_PORT
+    from uncf.api_route import DEFAULT_PORT
 
     parser = argparse.ArgumentParser(prog="python -m uncf")
     parser.add_argument("command", nargs="?", choices=["load", "serve", "precompute"])

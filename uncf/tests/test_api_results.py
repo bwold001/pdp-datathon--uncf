@@ -1,92 +1,41 @@
-"""Checks the Results API (#5) with a fake measures call, plus known answers on the real data when it's loaded."""
+"""Checks the Results API (#5): the contract on a fixture database, and known answers on the real data when loaded."""
 from __future__ import annotations
 
+import os
 import sqlite3
-from pathlib import Path
 from typing import get_args
 
 import pytest
 from fastapi.testclient import TestClient
 
-from measures.models import Cohort, Group, GroupDimension, Measure, MeasureResult, Status
+from measures.models import GroupDimension
 from measures.run_measures import DEFAULT_DATABASE
 from uncf import __main__ as entry
-from uncf import results
-from uncf.api import create_app
+from uncf import api_results, api_route, data
+from uncf.api_route import create_app
 from uncf.definitions import DEFINITIONS
 from uncf.schemas import Dimension
 from uncf.schemas import Measure as ApiMeasure
+from uncf.tests.explorer_fixture import LOADED_AT, here, make_database, student
 
 URL = "/api/v1/uncf/results"
-LOADED = "2026-11-06T18:40:02"
-VALUES = {GroupDimension.PELL: ["N", "Y", "UNKNOWN"], GroupDimension.RACE: ["Asian"]}
 
 
-def result(measure: Measure, cohort: str, group: Group, counts: tuple | None, status: Status = Status.OK) -> MeasureResult:
-    """A measures-package row: counts (numerator, denominator) when shown, None when hidden."""
-    shown = counts is not None
-    return MeasureResult(
-        measure=measure,
-        cohort=Cohort.of(cohort),
-        group=group,
-        numerator=counts[0] if shown else None,
-        denominator=counts[1] if shown else None,
-        metric_rate=round(counts[0] / counts[1], 4) if shown else None,
-        status=status if not shown else Status.OK,
-        n_excluded=0 if shown else None,
-        n_out_of_scope=0 if shown else None,
-        exclusion_reason=None,
-        note="A note.",
+@pytest.fixture
+def data_file(tmp_path, monkeypatch):
+    """2022-23: 20 Pell students (12 retained), 10 non-Pell (5 retained), 3 unknown Pell; 15 back in Fall 2023."""
+    students = (
+        [student(f"y{n}", "2022-23", pell="Y", retention=int(n < 12)) for n in range(20)]
+        + [student(f"n{n}", "2022-23", pell="N", retention=int(n < 5)) for n in range(10)]
+        + [student(f"u{n}", "2022-23", pell="", retention=1) for n in range(3)]
     )
-
-
-class FakeMeasures:
-    """Stands in for run_measure: everyone shown, Pell UNKNOWN hidden, and records each call."""
-
-    def __init__(self, everyone_status: Status = Status.OK) -> None:
-        self.calls: list[tuple] = []
-        self.everyone_status = everyone_status
-
-    def __call__(self, measure, cohorts, group_by=None, database=None):
-        """Return the everyone row, then a row for each combination of the asked dimensions."""
-        cohort = next(iter(cohorts[0].years))
-        dimensions = sorted(next(iter(group_by)).dimensions, key=lambda d: d.value) if group_by else []
-        self.calls.append((measure.value, cohort, tuple(d.value for d in dimensions)))
-        if self.everyone_status != Status.OK:
-            return [result(measure, cohort, Group(), None, self.everyone_status)]
-        rows = [result(measure, cohort, Group(), (100, 200))]
-        if not dimensions:
-            return rows
-        combos = [[]]
-        for dimension in dimensions:
-            combos = [c + [(dimension, v)] for c in combos for v in VALUES[dimension]]
-        for combo in combos:
-            hidden = any(value == "UNKNOWN" for _, value in combo)
-            rows.append(result(measure, cohort, Group.of(*combo), None if hidden else (40, 80), Status.SUPPRESSED))
-        return rows
-
-
-@pytest.fixture
-def data_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
-    """A tiny stand-in for pdp.sqlite: only the data_provider table the load time comes from."""
-    path = tmp_path / "pdp.sqlite"
-    connection = sqlite3.connect(path)
-    connection.execute("CREATE TABLE data_provider (provider_id INTEGER, loaded_at TEXT)")
-    connection.executemany("INSERT INTO data_provider VALUES (?, ?)", [(1, "2026-11-01T10:00:00"), (2, LOADED)])
-    connection.commit()
-    connection.close()
-    monkeypatch.setattr(results, "data_path", lambda: path)
-    results.clear_cache()
+    back = [f"y{n}" for n in range(10)] + [f"n{n}" for n in range(5)]
+    records = [here(sid, "2023-24", "FALL", cohort="2022-23", grade="3.0") for sid in back]
+    path = make_database(tmp_path / "pdp.sqlite", students, records)
+    monkeypatch.setattr(data, "data_path", lambda: path)
+    api_route.clear_cache()
     yield path
-    results.clear_cache()
-
-
-@pytest.fixture
-def fake(data_file, monkeypatch: pytest.MonkeyPatch) -> FakeMeasures:
-    """Replace the measures call with FakeMeasures."""
-    fake = FakeMeasures()
-    monkeypatch.setattr(results, "run_measure", fake)
-    return fake
+    api_route.clear_cache()
 
 
 @pytest.fixture
@@ -100,7 +49,7 @@ def get(client: TestClient, **params):
     return client.get(URL, params=params)
 
 
-def test_retention_by_pell_matches_the_explorer_contract(fake, client) -> None:
+def test_retention_by_pell_matches_the_explorer_contract(data_file, client) -> None:
     """#5's done criterion: rows, the definition and the load time, in the Explorer's shape."""
     response = get(client, measure="retention", cohort="2022-23", group_by="pell")
     assert response.status_code == 200
@@ -109,20 +58,21 @@ def test_retention_by_pell_matches_the_explorer_contract(fake, client) -> None:
         "measure": "retention",
         "cohort": "2022-23",
         "group_by": ["pell"],
+        "filters": {},
+        "retention_type": "school",
         "definition": DEFINITIONS["retention"],
         "source": "PDP analysis-ready cohort and course files (synthetic sample)",
-        "loaded_at": LOADED,
+        "loaded_at": LOADED_AT,
         "provisional": False,
     }
-    assert [row["group"] for row in body["rows"]] == [{}, {"pell": "N"}, {"pell": "Y"}, {"pell": "UNKNOWN"}]
+    assert [row["group"] for row in body["rows"]] == [{}, {"pell": "N"}, {"pell": "UNKNOWN"}, {"pell": "Y"}]
     assert body["rows"][0] | {"note": None} == {
-        "group": {}, "numerator": 100, "denominator": 200, "rate": 0.5, "status": "ok",
-        "n_excluded": 0, "n_out_of_scope": 0, "note": None,
+        "group": {}, "numerator": 20, "denominator": 33, "rate": 0.6061, "status": "ok",
+        "n_excluded": 0, "n_out_of_scope": 0, "note": None, "split": None,
     }
-    assert fake.calls == [("retention", "2022-23", ("pell",))]
 
 
-def test_hidden_group_is_null_with_its_status_never_zero(fake, client) -> None:
+def test_hidden_group_is_null_with_its_status_never_zero(data_file, client) -> None:
     """A suppressed group keeps null numbers and its status."""
     rows = get(client, measure="retention", cohort="2022-23", group_by="pell").json()["rows"]
     hidden = next(row for row in rows if row["group"] == {"pell": "UNKNOWN"})
@@ -130,39 +80,67 @@ def test_hidden_group_is_null_with_its_status_never_zero(fake, client) -> None:
     assert hidden["numerator"] is None and hidden["denominator"] is None and hidden["rate"] is None
 
 
-def test_no_group_by_returns_only_everyone(fake, client) -> None:
+def test_federal_retention_is_fall_to_fall(data_file, client) -> None:
+    """retention_type=federal counts students back here the fall after year 1, with its own definition."""
+    body = get(client, measure="retention", cohort="2022-23", group_by="pell", retention_type="federal").json()
+    counts = {tuple(row["group"].values()): (row["numerator"], row["denominator"]) for row in body["rows"]}
+    assert counts[()] == (15, 33)
+    assert counts[("Y",)] == (10, 20)
+    assert body["meta"]["retention_type"] == "federal"
+    assert body["meta"]["definition"] == DEFINITIONS["federal_retention"]
+
+
+def test_filters_narrow_every_row(data_file, client) -> None:
+    """The cohort bar's filters pick the students before grouping, like on the Explorer pages."""
+    body = get(client, measure="retention", cohort="2022-23", pell="Y").json()
+    assert body["meta"]["filters"] == {"pell": "Y"}
+    assert (body["rows"][0]["numerator"], body["rows"][0]["denominator"]) == (12, 20)
+
+
+def test_dfw_rate_rows_split_d_f_and_w(tmp_path, monkeypatch, client) -> None:
+    """dfw_rate counts final grades, with D, F and W apart."""
+    students = [student(f"s{n}", "2022-23") for n in range(12)]
+    grades = ["3.0"] * 6 + ["1.5", "0.5", "F", "W", "W", "I"]
+    records = [here(f"s{n}", "2022-23", "FALL", cohort="2022-23", grade=grade) for n, grade in enumerate(grades)]
+    path = make_database(tmp_path / "dfw.sqlite", students, records)
+    monkeypatch.setattr(data, "data_path", lambda: path)
+    api_route.clear_cache()
+    row = get(client, measure="dfw_rate", cohort="2022-23").json()["rows"][0]
+    assert row["status"] == "ok"
+    assert (row["numerator"], row["denominator"], row["n_excluded"]) == (5, 11, 1)
+    assert row["split"] == {"D": 1, "F": 2, "W": 2}
+
+
+def test_no_group_by_returns_only_everyone(data_file, client) -> None:
     """Without group_by, the response is the everyone row alone."""
     body = get(client, measure="persistence", cohort="2022-23").json()
     assert body["meta"]["group_by"] == []
     assert [row["group"] for row in body["rows"]] == [{}]
 
 
-def test_pair_order_does_not_matter_and_is_cached(fake, client) -> None:
+def test_pair_order_does_not_matter_and_is_cached(data_file, client) -> None:
     """pell,race and race,pell return the same rows from one calculation."""
     first = client.get(URL, params={"measure": "retention", "cohort": "2022-23", "group_by": ["pell", "race"]})
     second = client.get(URL, params={"measure": "retention", "cohort": "2022-23", "group_by": ["race", "pell"]})
     assert first.json()["rows"] == second.json()["rows"]
-    assert first.json()["rows"][1]["group"] == {"pell": "N", "race": "Asian"}
-    assert len(fake.calls) == 1
+    assert first.json()["rows"][1]["group"] == {"pell": "N", "race": "American Indian or Alaska Native"}
+    assert api_results._calculate.cache_info().misses == 1
 
 
-def test_new_data_clears_the_cache(fake, client, data_file) -> None:
+def test_new_data_clears_the_cache(data_file, client) -> None:
     """A reloaded data file is recalculated on the next request, without a restart."""
     get(client, measure="retention", cohort="2022-23", group_by="pell")
     stamp = data_file.stat().st_mtime + 10
-    import os
-
     os.utime(data_file, (stamp, stamp))
     get(client, measure="retention", cohort="2022-23", group_by="pell")
-    assert len(fake.calls) == 2
+    assert api_results._calculate.cache_info().misses == 2
 
 
-def test_gateway_with_no_answers_is_not_reported(data_file, monkeypatch, client) -> None:
-    """A gateway class with no answers means the requirement isn't reported; retention stays too new."""
-    monkeypatch.setattr(results, "run_measure", FakeMeasures(everyone_status=Status.NOT_YET_OBSERVABLE))
+def test_gateway_with_no_answers_is_not_reported(data_file, client) -> None:
+    """A gateway class with no answers means the requirement isn't reported; retention for a later class is too new."""
     gateway = get(client, measure="gateway_math", cohort="2022-23").json()["rows"][0]
-    retention = get(client, measure="retention", cohort="2022-23").json()["rows"][0]
     assert gateway["status"] == "not_reported" and gateway["rate"] is None
+    retention = get(client, measure="retention", cohort="2023-24", retention_type="federal").json()["rows"][0]
     assert retention["status"] == "not_yet_observable"
 
 
@@ -170,37 +148,49 @@ def test_gateway_with_no_answers_is_not_reported(data_file, monkeypatch, client)
     ("measure", "cohort", "expected"),
     [("retention", "2024-25", True), ("persistence", "2024-25", True), ("gateway_math", "2024-25", False), ("retention", "2023-24", False)],
 )
-def test_provisional_for_year_two_measures_of_the_newest_class(fake, client, measure, cohort, expected) -> None:
-    """Only year-2 measures for a class missing part of its second year are provisional."""
+def test_provisional_for_year_two_measures_of_the_newest_class(data_file, client, measure, cohort, expected) -> None:
+    """Only year 2 measures for a class missing part of its second year are provisional."""
     assert get(client, measure=measure, cohort=cohort).json()["meta"]["provisional"] is expected
 
 
 @pytest.mark.parametrize(
     "params",
     [
-        {"measure": "dfw_rate", "cohort": "2022-23"},
+        {"measure": "graduation", "cohort": "2022-23"},
         {"measure": "retention", "cohort": "2019-20"},
         {"measure": "retention", "cohort": "2022-23", "group_by": "first_gen"},
+        {"measure": "retention", "cohort": "2022-23", "retention_type": "ipeds"},
+        {"measure": "retention", "cohort": "2022-23", "pell": "Maybe"},
         {"cohort": "2022-23"},
     ],
 )
-def test_values_outside_the_lists_are_422(fake, client, params) -> None:
+def test_values_outside_the_lists_are_422(data_file, client, params) -> None:
     """Values the API doesn't offer are refused before anything is calculated."""
     assert client.get(URL, params=params).status_code == 422
-    assert fake.calls == []
+    assert api_results._calculate.cache_info().misses == 0
 
 
 @pytest.mark.parametrize("group_by", [["pell", "race", "gender"], ["pell", "pell"]])
-def test_bad_group_by_is_422_with_our_error_body(fake, client, group_by) -> None:
+def test_bad_group_by_is_422_with_our_error_body(data_file, client, group_by) -> None:
     """More than two dimensions, or the same one twice, gets a clear error."""
     response = client.get(URL, params={"measure": "retention", "cohort": "2022-23", "group_by": group_by})
     assert response.status_code == 422
     assert response.json()["error"]["code"] == "invalid_group_by"
 
 
+def test_csv_export(data_file, client) -> None:
+    """format=csv returns the same rows as a download, labelled with the cohort, filters and retention type."""
+    response = get(client, measure="retention", cohort="2022-23", group_by="pell", format="csv")
+    assert response.headers["content-type"].startswith("text/csv")
+    lines = response.text.splitlines()
+    assert lines[0].startswith("cohort,filters,retention_type,pell,numerator,denominator")
+    assert lines[1].startswith("2022-23,all students,school,All,20,33")
+
+
 def test_missing_data_is_503(tmp_path, monkeypatch, client) -> None:
     """Without the normalized data, the API says how to load it."""
-    monkeypatch.setattr(results, "data_path", lambda: tmp_path / "missing.sqlite")
+    monkeypatch.setattr(data, "data_path", lambda: tmp_path / "missing.sqlite")
+    api_route.clear_cache()
     response = get(client, measure="retention", cohort="2022-23", group_by="pell")
     assert response.status_code == 503
     assert response.json()["error"]["code"] == "data_missing"
@@ -209,7 +199,7 @@ def test_missing_data_is_503(tmp_path, monkeypatch, client) -> None:
 
 def test_health_reports_the_load_time(data_file, client) -> None:
     """Health says the data is loaded, and when."""
-    assert client.get("/api/v1/uncf/health").json() == {"status": "ok", "data_available": True, "loaded_at": LOADED}
+    assert client.get("/api/v1/uncf/health").json() == {"status": "ok", "data_available": True, "loaded_at": LOADED_AT}
 
 
 def test_options_offer_only_defined_measures(client) -> None:
@@ -221,7 +211,7 @@ def test_options_offer_only_defined_measures(client) -> None:
     assert body["max_group_by"] == 2
 
 
-def test_cors_allows_the_playground_client(fake, client) -> None:
+def test_cors_allows_the_playground_client(data_file, client) -> None:
     """The Explorer on localhost:3000 can call the API from the browser."""
     response = client.get(URL, params={"measure": "retention", "cohort": "2022-23"}, headers={"Origin": "http://localhost:3000"})
     assert response.headers["access-control-allow-origin"] == "http://localhost:3000"
@@ -247,7 +237,7 @@ needs_data = pytest.mark.skipif(not DEFAULT_DATABASE.exists(), reason="run `pyth
 @needs_data
 def test_known_answer_on_the_real_data(client) -> None:
     """Retention for 2022-23 by Pell matches the measures package on the synthetic data."""
-    results.clear_cache()
+    api_route.clear_cache()
     rows = get(client, measure="retention", cohort="2022-23", group_by="pell").json()["rows"]
     counts = {tuple(row["group"].values()): (row["numerator"], row["denominator"], row["rate"]) for row in rows}
     assert counts[()] == (1414, 2617, 0.5403)
@@ -319,12 +309,12 @@ def test_api_matches_an_independent_recount_of_the_normalized_data(client) -> No
     """Every measure, class, single grouping and pair: the API's numbers equal plain SQL on pdp.sqlite."""
     from itertools import combinations
 
-    results.clear_cache()
+    api_route.clear_cache()
     connection = sqlite3.connect(f"file:{DEFAULT_DATABASE}?mode=ro", uri=True)
     groupings = [[]] + [[d] for d in get_args(Dimension)] + [sorted(p) for p in combinations(get_args(Dimension), 2)]
     checked = 0
     try:
-        for measure in get_args(ApiMeasure):
+        for measure in RECOUNT_RULES:
             for cohort in ["2021-22", "2022-23", "2023-24", "2024-25"]:
                 for dimensions in groupings:
                     expected = recount(connection, measure, cohort, dimensions)
@@ -351,7 +341,7 @@ def test_api_matches_an_independent_recount_of_the_normalized_data(client) -> No
 @needs_data
 def test_every_class_measure_and_grouping_answers_on_the_real_data(client) -> None:
     """Every offered measure, class and single grouping returns 200, and hidden rows have no numbers."""
-    results.clear_cache()
+    api_route.clear_cache()
     for measure in get_args(ApiMeasure):
         for cohort in ["2021-22", "2022-23", "2023-24", "2024-25"]:
             for dimension in get_args(Dimension):

@@ -9,6 +9,7 @@ from app.core.config import settings
 from app.core.errors import register_exception_handlers
 from app.db.session import engine
 from app.sandbox.router import sandbox_router
+from app.uncf import uncf_router
 
 
 @asynccontextmanager
@@ -44,6 +45,8 @@ def create_app() -> FastAPI:
     app.include_router(api_router, prefix=settings.API_V1_PREFIX)
     if settings.SANDBOX_ENABLED:
         app.include_router(sandbox_router, prefix=settings.API_V1_PREFIX)
+    if (uncf := uncf_router()) is not None:
+        app.include_router(uncf, prefix=settings.API_V1_PREFIX)
     return app
 
 

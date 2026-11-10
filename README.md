@@ -55,7 +55,7 @@ Playground. Test it with `python -m pytest uncf`. Interactive API docs: http://l
 [services](https://vercel.com/docs/services):
 
 - **frontend:** the Next.js app in `playground/client_application`. `/` redirects to `/uncf/paths`.
-- **backend:** the Results API (`uncf.api:app`) as a Python function. Its build runs
+- **backend:** the UNCF API (`uncf.api_route:app`) as a Python function. Its build runs
   `python -m uncf load`, so every deploy builds `pdp.sqlite` from the mock CSVs in `data/raw/`.
 
 Both sit on one site: `/api/v1/uncf/*` goes to the API and everything else goes to the pages. The
@@ -66,34 +66,62 @@ no CORS. Call it from client components: a relative URL doesn't work in a server
 The data is mock data and the site is public. Before real student data goes here, it needs a
 login, data that doesn't live in git, and the data owner's sign-off.
 
-#### How the Results API works
+#### How the numbers are calculated
 
-- **Calculated per request.** Each request calls the measures package (`run_measure`), which reads
-  the normalized data in `normalized-data-model/output/pdp.sqlite`. Nothing is saved. Answers are
-  cached in memory and recalculated when `pdp.sqlite` changes, so a reload needs no restart.
-- **Contract.** The response follows the Explorer's `data.ts`
-  (`playground/client_application/src/app/(app)/uncf/data.ts`): `meta` (measure, cohort,
-  group_by, definition, source, loaded_at, provisional) and `rows` (group, numerator, denominator,
-  rate, status, n_excluded, plus n_out_of_scope and note). Models: `uncf/schemas.py`.
-- **Definitions** come from `uncf/definitions.py` (#3), one per measure.
+One place defines every metric, and everything else asks it:
+
+```
+uncf/cohort.py      the cohort bar: cohort, 8 filters, retention type, student selection, hide under 10
+uncf/metrics.py     every named metric, once: retention (school or federal), DFW (D, F, W),
+                    gateway outcome, credit completion. Built on the shared measures' own SQL and
+                    grade rules; the tests check each one against run_measure on the real data.
+uncf/api_results.py the Results API's rows from the metrics
+uncf/student_paths.py, dfw_courses.py, gateway_courses.py, credit_momentum.py
+                    the Explorer pages: break the metrics down by term, course, flow or tier
+uncf/api_route.py   one router for all of it, under /api/v1/uncf (Vercel entrypoint uncf.api_route:app)
+uncf/data.py        where the data lives, load time, provisional cohorts
+```
+
+- **Calculated per request** from `normalized-data-model/output/pdp.sqlite`. Nothing is saved.
+  Answers are cached in memory and recalculated when `pdp.sqlite` changes.
+- **Pages don't calculate.** The UI fetches and draws. Shares, gaps, totals and hiding all come
+  from the API.
+- **Retention type** on every route: `school` (default, the PDP retention flag) or `federal`
+  (fall to fall: took a course here the fall after year 1). The federal rules still open with
+  stakeholders (first time students only, credentials) are in `metrics.FEDERAL_RETENTION`.
+- **DFW** is split into D (0.7 to under 2.0), F (an F or under 0.7) and W. D + F + W is the
+  `dfw_rate` measure.
+- **Definitions** come from `uncf/definitions.py`. A school's own metric names go in
+  `LOCAL_NAMES`, picked with `UNCF_SCHOOL=fmu` or `benedict`.
+
+Every page route and `/results` take the same query values: `cohort`, the 8 filters
+(`cohort_term`, `enrollment_intensity`, `enrollment_type`, `pell`, `gender`, `race`, `ethnicity`,
+`age_band`, with the measures' values), `retention_type=school|federal` and `format=json|csv`.
 
 | Endpoint | What it returns |
 | --- | --- |
-| `GET /api/v1/uncf/results?measure=&cohort=&group_by=` | The everyone row, then one row per group. `group_by` is optional, up to twice (e.g. `group_by=pell&group_by=race`) |
+| `GET /api/v1/uncf/results?measure=&cohort=&group_by=` | One measure: the everyone row, then one row per group. `group_by` up to twice. `dfw_rate` rows carry the D, F, W split |
 | `GET /api/v1/uncf/options` | The measures, classes and groupings a client can ask for |
 | `GET /api/v1/uncf/health` | Whether the data is loaded, and `loaded_at` |
+| `GET /api/v1/uncf/cohort-options?cohort=` | Students per cohort year, and per filter value in the chosen cohort |
+| `GET /api/v1/uncf/definitions` | Every plain-language definition |
+| `GET /api/v1/uncf/student-paths?…&terms=&group_by=` | Each student's status term by term (here, credential, elsewhere, stopped) with shares, moves, transfers, retention, and per group paths |
+| `GET /api/v1/uncf/dfw?…` | Everyone's DFW rate with D, F, W, then each course with 10 or more students |
+| `GET /api/v1/uncf/dfw/course?course=ENG%20101&…` | One course by term, delivery and group, each with `rest_rate` and `gap` against everyone else |
+| `GET /api/v1/uncf/gateway?…` | Gateway first attempts in year 1 (passed, D, F, W, shares), retention by outcome, riskiest first term pairs |
+| `GET /api/v1/uncf/credit-momentum?…` | Year 1 credits, completion ratio, 12/24/30 milestones, first two terms, credit tiers with retention |
 
 - **Hidden or missing numbers** are `null` with a status: `suppressed` (under 10 students),
   `not_yet_observable`, or `not_reported` (a gateway measure the college doesn't report). Never 0.
   Starter issue #87 (working out a hidden group by subtraction) is not fixed.
-- **`loaded_at`** is when the source data was loaded, not when a number was calculated.
-- **`provisional`** is true for retention and persistence in 2024-25, whose second year is only
-  partly in the data.
-- **Errors:** 422 for a value outside the lists, or a bad `group_by` (`invalid_group_by`); 503
-  `data_missing`. Our error bodies are `{"error": {"code", "message"}}`.
-- **Client access:** CORS allows http://localhost:3000 (change with `UNCF_CORS_ORIGINS`). To mount
-  in the Playground server instead: `app.include_router(uncf.api.router)`.
-- **Assumptions** are listed at the top of `uncf/api.py`.
+- **`provisional`** is true for the 2024-25 class, whose second year is only partly in the data.
+- **Errors:** 422 for a value the API doesn't offer (`invalid_filter`, `invalid_group_by`), 404
+  `unknown_course`, 503 `data_missing`. Bodies are `{"error": {"code", "message"}}`.
+- **Run it:** `python -m uncf` (port 8001, docs at http://localhost:8001/docs). CORS allows
+  http://localhost:3000 (change with `UNCF_CORS_ORIGINS`). The Playground server mounts the same
+  router (`playground/server_application/app/uncf.py`).
+
+How to build a tab: `playground/client_application/src/components/uncf/layout/README.md`.
 
 #### How the precompute works
 

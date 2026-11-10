@@ -9,7 +9,7 @@ from pathlib import Path
 
 from fastapi import FastAPI
 
-from uncf.api import PREFIX
+from uncf.api_route import PREFIX
 
 REPO = Path(__file__).resolve().parents[2]
 CONFIG = json.loads((REPO / "vercel.json").read_text(encoding="utf-8"))
@@ -83,7 +83,7 @@ def test_home_redirects_to_an_explorer_tab_that_exists() -> None:
 
 def test_bundle_keeps_what_the_api_reads() -> None:
     """The API's code and pdp.sqlite stay in its bundle."""
-    for path in ["normalized-data-model/output/pdp.sqlite", "uncf/api.py", "measures/run_measures.py"]:
+    for path in ["normalized-data-model/output/pdp.sqlite", "uncf/api_route.py", "measures/run_measures.py"]:
         assert not is_excluded(path), path
 
 

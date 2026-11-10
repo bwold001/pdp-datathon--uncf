@@ -1,4 +1,4 @@
-"""Response shapes for the Results API (#5).
+"""Response shapes for the Results API (#5) and the Explorer pages.
 
 They follow the Explorer's contract in playground/client_application/src/app/(app)/uncf/data.ts
 (ResultsResponse, ResultRow, ResultsMeta, MeasureDefinition). Edit both together: there is no code generation.
@@ -8,10 +8,12 @@ from __future__ import annotations
 
 from typing import Literal, Union
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 # The measures that have a definition (#3). Add one here once uncf/definitions.py has it.
-Measure = Literal["retention", "persistence", "gateway_math", "gateway_english"]
+Measure = Literal["retention", "persistence", "gateway_math", "gateway_english", "dfw_rate", "credit_completion"]
+# school: the PDP retention flag. federal: fall to fall, enrolled here the fall after year 1.
+RetentionType = Literal["school", "federal"]
 Cohort = Literal["2021-22", "2022-23", "2023-24", "2024-25"]
 # Every grouping the measures support except first_gen (unreliable in the mock data) and course (DFW only).
 Dimension = Literal[
@@ -66,6 +68,7 @@ class ResultRow(BaseModel):
     n_excluded: int | None
     n_out_of_scope: int | None
     note: str
+    split: dict[str, int] | None = None  # dfw_rate only: D, F and W counts
 
 
 class ResultsMeta(BaseModel):
@@ -74,6 +77,8 @@ class ResultsMeta(BaseModel):
     measure: Measure
     cohort: Cohort
     group_by: list[Dimension]
+    filters: dict[str, str]
+    retention_type: RetentionType
     definition: MeasureDefinition
     source: str
     loaded_at: str  # when the source data was loaded, not when the numbers were calculated
@@ -85,6 +90,102 @@ class ResultsResponse(BaseModel):
 
     meta: ResultsMeta
     rows: list[ResultRow]
+
+
+class ExplorerMeta(BaseModel):
+    """What every Explorer page answer says about its question. Pages add their own fields."""
+
+    model_config = ConfigDict(extra="allow")
+
+    cohort: Cohort
+    filters: dict[str, str]
+    retention_type: RetentionType
+    provisional: bool
+    min_students: int
+    source: str
+    loaded_at: str
+
+
+class Retention(BaseModel):
+    """Retention for some students, by one type. Hidden numbers are null with their status, never 0."""
+
+    type: RetentionType
+    status: Status
+    retained: Number | None
+    students: int | None
+    numerator: Number | None
+    denominator: int | None
+    rate: float | None
+    n_excluded: int | None
+    n_out_of_scope: int | None
+
+
+class DfwSplit(BaseModel):
+    """D, F and W apart, their sum D or F (DF), every final grade (total), and each share of the total."""
+
+    D: int
+    F: int
+    W: int
+    DF: int
+    total: int
+    shares: dict[str, float | None]
+
+
+class DfwTally(BaseModel):
+    """A DFW rate. Every number is null when under 10 students."""
+
+    model_config = ConfigDict(extra="allow")
+
+    students: int | None
+    num: int | None
+    den: int | None
+    rate: float | None
+    split: DfwSplit | None
+
+
+class PageResponse(BaseModel):
+    """An Explorer page's answer: the meta and status every page has, plus the page's own fields."""
+
+    model_config = ConfigDict(extra="allow")
+
+    meta: ExplorerMeta
+    status: Literal["ok", "suppressed"]
+
+
+class StudentPathsResponse(PageResponse):
+    """GET /student-paths."""
+
+    students: int | None
+    retention: Retention | None
+
+
+class DfwResponse(PageResponse):
+    """GET /dfw."""
+
+    everyone: DfwTally
+    courses: list[DfwTally]
+    hidden_courses: int
+
+
+class DfwCourseResponse(DfwTally):
+    """GET /dfw/course: one course, then each term, delivery method and group next to everyone else."""
+
+    meta: ExplorerMeta
+    course: str
+
+
+class GatewayResponse(PageResponse):
+    """GET /gateway."""
+
+    students: int | None
+    cohort_retention: Retention | None
+
+
+class CreditMomentumResponse(PageResponse):
+    """GET /credit-momentum."""
+
+    students: int | None
+    retention: Retention | None
 
 
 class Option(BaseModel):
