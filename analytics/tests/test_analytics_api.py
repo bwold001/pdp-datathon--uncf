@@ -25,7 +25,7 @@ def test_real_database_api_and_calculation_text_match(tmp_path):
         assert (row['numerator'], row['denominator'], row['rate']) == (1, 2, .5)
         assert row['calculation'] == '1 / 2 = 50.00%'
         assert receipt['loaded_at'] == '2026-06-30T12:00:00'
-        assert '/api/v1/uncf/results' in client.get('/openapi.json').json()['paths']
+        assert '/api/v1/uncf/measures/{measure}' in client.get('/openapi.json').json()['paths']
         assert client.post('/api/v1/uncf/analyses', json={'analysis': 'retention', 'sql': 'select *'}).status_code == 422
         assert client.post('/api/v1/uncf/analyses', json={'analysis': 'retention', 'cohort': '2099-00'}).status_code == 422
     old = receipt['source_stamp']

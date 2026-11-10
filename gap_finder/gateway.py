@@ -1,13 +1,15 @@
-"""The Gateway page's comparisons, done by the gap finder on top of the counts measures/breakdowns returns.
+"""The Gateway page's comparisons, on top of the counts measures/breakdowns/gateway_courses.py returns.
 
-measures is the bottom layer and gap_finder builds on it, so the breakdown only counts and this module compares:
+measures is the bottom layer and the gap finder builds on it, so the breakdown only counts and this module compares
+with compare() below; api/ only calls it:
 - each course: the filtered students' first-try pass rate against everyone else who took it;
 - each course pair: its retention against everyone else in the filtered cohort, the three furthest behind kept.
 """
 from __future__ import annotations
 
-from gap_finder.compare import CountRow, compare
 from measures.models import SUPPRESSION_THRESHOLD
+
+from .compare import CountRow, compare
 
 TOP_PAIRS = 3
 
@@ -16,7 +18,7 @@ def count_row(measure: str, cohort: str, value: str | None, numerator: int, deno
     """A gap finder input row: everyone when value is None, else one group named value."""
     dimensions, values = ((), ()) if value is None else (("group",), (value,))
     status = "ok" if denominator >= SUPPRESSION_THRESHOLD else "suppressed"
-    return CountRow(measure, cohort, dimensions, values, numerator, denominator, status, 0, 0, None, f"Gateway page: {measure}.", "api")
+    return CountRow(measure, cohort, dimensions, values, numerator, denominator, status, 0, 0, None, f"Gateway page: {measure}.", "gateway page")
 
 
 def course_gap(cohort: str, course: dict) -> dict:

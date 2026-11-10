@@ -20,7 +20,7 @@ type PdpKeyTermsProps = {
 };
 
 /**
- * Key terms for a tab, in the shared dictionary's words: the same definitions the Results API sends, so every page
+ * Key terms for a tab, in the shared dictionary's words: the same definitions /definitions sends, so every page
  * says the same thing. Edit the wording in measures/definitions.py, not here.
  */
 export function PdpKeyTerms({ terms, children }: PdpKeyTermsProps) {

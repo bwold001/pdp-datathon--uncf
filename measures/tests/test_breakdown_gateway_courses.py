@@ -145,6 +145,8 @@ def test_real_data_known_answers():
     assert page["context"]["flagged"] is True
     retention = page["cohort_retention"]
     assert (retention["students"], retention["retained"], retention["rate"]) == (2580, 1074, 0.4163)
+    school = gateway_courses(**ask("2023-24"))["cohort_retention"]
+    assert (school["students"], school["retained"]) == (2580, 1345)  # the PDP flag, as on /measures/retention
     eng = next(c for c in page["courses"] if c["course"] == "ENG 101")
     steps = [eng["path"][step] or 0 for step in ("first", "retook_passed", "retook_not", "no_retake")]
     assert eng["path"]["first"] == eng["first_pass"]

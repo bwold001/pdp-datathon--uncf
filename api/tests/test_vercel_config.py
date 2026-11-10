@@ -38,7 +38,7 @@ def is_excluded(path: str) -> bool:
     return any(fnmatch(path, pattern) for pattern in excluded_patterns())
 
 
-def test_backend_entrypoint_is_the_results_api() -> None:
+def test_backend_entrypoint_is_the_uncf_api() -> None:
     """The backend service serves our FastAPI app."""
     module_name, attribute = BACKEND["entrypoint"].split(":")
     app = getattr(importlib.import_module(module_name), attribute)
@@ -52,7 +52,8 @@ def test_backend_function_key_is_the_entrypoint_file() -> None:
 
 
 def test_api_paths_go_to_the_backend() -> None:
-    """Results API paths reach FastAPI, not Next.js."""
+    """API paths, the old /results URL included, reach FastAPI, not Next.js."""
+    assert service_for(f"{PREFIX}/measures/retention") == "backend"
     assert service_for(f"{PREFIX}/results") == "backend"
     assert service_for(f"{PREFIX}/health") == "backend"
 
@@ -89,7 +90,7 @@ def test_bundle_keeps_what_the_api_reads() -> None:
 
 def test_bundle_drops_the_frontend_and_raw_data() -> None:
     """Big files the API never reads stay out of its bundle."""
-    for path in ["playground/client_application/node_modules/next/package.json", "data/raw/pdp_cohort_data.csv", "api/tests/test_results.py"]:
+    for path in ["playground/client_application/node_modules/next/package.json", "data/raw/pdp_cohort_data.csv", "api/tests/test_measure_by_group.py"]:
         assert is_excluded(path), path
 
 

@@ -13,8 +13,8 @@ Each student's path through a course: passed on the first try, failed and passed
 again, or failed and didn't retake (all within year 1).
 
 This module only counts. The comparisons (the filtered students against everyone else who took a course, and each
-course pair against everyone else) are the gap finder's job, which sits on top of measures: api/gateway_gaps.py runs
-these counts through gap_finder.compare. Groups under 10 students are hidden.
+course pair against everyone else) are the gap finder's job, which sits on top of measures: gap_finder/gateway.py
+runs these counts through gap_finder.compare, and the API calls it. Groups under 10 students are hidden.
 """
 from __future__ import annotations
 

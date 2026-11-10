@@ -1,7 +1,7 @@
-"""Checks the Gateway page's comparisons: the breakdown's counts, compared by the gap finder in the API layer."""
+"""Checks the Gateway page's comparisons: the breakdown's counts, compared by the gap finder."""
 from __future__ import annotations
 
-from api.gateway_gaps import add_gateway_gaps
+from gap_finder.gateway import add_gateway_gaps
 from measures.breakdowns.gateway_courses import gateway_courses
 from measures.tests.explorer_fixture import ask
 from measures.tests.test_breakdown_gateway_courses import build, pairs_database, takers

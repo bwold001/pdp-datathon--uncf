@@ -197,6 +197,14 @@ They cover #26's completion test: the table and CSV with a note on every row (1)
 2-point gaps (2, 3), hiding under 10 (4), no group under 30 in the gap-size order (5), and the Black or
 African American retention gap reproduced by hand from the raw cohort file (6).
 
+## The Explorer's Gateway page
+
+[gateway.py](gateway.py) does the Gateway courses page's comparisons with `compare()`, on top of the counts from
+`measures/breakdowns/gateway_courses.py`; the API only calls it. `add_gateway_gaps(page)` adds, for each course,
+the filtered students' first-try pass rate against everyone else who took it (`group`), and keeps the three course
+pairs furthest behind everyone else on retention (`pairs`). Both carry `likely_noise`. Each course is its own
+comparison, so its q-value is just its p-value; the pairs are corrected together.
+
 ## Next
 
 A Playground page for the table, as a follow-up.

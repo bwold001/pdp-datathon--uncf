@@ -1,7 +1,7 @@
 """DFW: which courses an entering class doesn't pass, and which students that hits hardest.
 
 Every rate comes from run_measure's dfw_rate (the course, term, delivery and student group splits included), so
-the page, the Results API and the chat agree. This module adds what isn't a rate: each course's catalog names and
+the page, /measures/dfw_rate and the chat agree. This module adds what isn't a rate: each course's catalog names and
 gateway flags, which values exist, and each group next to everyone else in the course. Fewer than 10 students
 is hidden.
 """
