@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 
+import { PdpKeyTerms } from "@/components/uncf/layout/pdp-key-terms";
 import { ViewIntro } from "@/components/uncf/layout/view-intro";
 import { PathsLoading, StudentPaths } from "@/components/uncf/paths/student-paths";
 
@@ -14,7 +15,12 @@ export default function StudentPathsPage() {
         title="Student Paths"
         whatThisShows="Every first-time student in the selected entering cohort, followed through their next two fall or spring terms."
         howToRead="Band width = number of students. Bands split where students leave or transfer, and rejoin when they return."
-        keyTerms="Retention: enrolled at this institution. Persistence: enrolled anywhere. Stopped out: not enrolled anywhere."
+        keyTerms={
+          // Retention and persistence in the shared dictionary's words (uncf/definitions.py), as the Results API says them.
+          <PdpKeyTerms terms={["retention", "persistence"]}>
+            <b className="font-semibold">Stopped out:</b> no record here or at another college that term.
+          </PdpKeyTerms>
+        }
       >
         Term-by-term enrollment outcomes for the entering cohort: retained, transferred out or stopped out.
       </ViewIntro>

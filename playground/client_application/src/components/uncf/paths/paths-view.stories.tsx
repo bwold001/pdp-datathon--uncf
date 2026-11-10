@@ -33,8 +33,10 @@ export const FallStarters: Story = {
   play: async ({ canvas, canvasElement }) => {
     await expect(tile(canvas, "Entering cohort")).toHaveTextContent("1,114");
     await expect(tile(canvas, "Entering cohort")).toHaveTextContent("First-time, Fall 2023");
-    await expect(tile(canvas, "Retention · still here in Fall 2024")).toHaveTextContent("47%");
-    await expect(tile(canvas, "Persistence · enrolled anywhere")).toHaveTextContent("53%");
+    await expect(tile(canvas, "Still here · Fall 2024")).toHaveTextContent("47%");
+    await expect(tile(canvas, "Enrolled anywhere · Fall 2024")).toHaveTextContent("53%");
+    // Those tiles count one term, so they don't borrow the PDP names, which mean the year-2 flags.
+    await expect(canvas.queryByText(/^Retention|^Persistence/)).not.toBeInTheDocument();
     await expect(tile(canvas, "Stopped out by Fall 2024")).toHaveTextContent("47%96 students returned after a term away");
 
     await expect(canvas.getByRole("img", { name: /^Flow of 1,114 first-time students/ })).toBeInTheDocument();
@@ -61,7 +63,7 @@ export const AllStartingTerms: Story = {
   args: { data: allStarters2023 },
   play: async ({ canvas }) => {
     await expect(tile(canvas, "Entering cohort")).toHaveTextContent("First-time, 2023-24");
-    await expect(canvas.getByText("Retention · still here in year 2")).toBeVisible();
+    await expect(canvas.getByText("Still here · year 2")).toBeVisible();
     await expect(canvas.getByText("Entered")).toBeInTheDocument();
     await expect(canvas.getByRole("row", { name: /^Entering term/ })).toBeVisible();
     await expect(canvas.getByRole("row", { name: /^The next term/ })).toBeVisible();

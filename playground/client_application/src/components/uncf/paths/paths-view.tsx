@@ -48,14 +48,16 @@ export function PathsView({ data }: { data: PathsResponse }) {
           value={total.toLocaleString("en-US")}
           note={`First-time, ${names.entered ?? data.meta.cohort}`}
         />
+        {/* These two count one term from course records, not PDP retention or persistence (year-2 flags, defined in
+            Key terms), so they name what they count. */}
         <Kpi
-          label={`Retention · still here in ${names.year2Short}`}
+          label={`Still here · ${names.year2Short}`}
           value={formatShare(shareOf(year2.here, total))}
           tone="blue"
           note={`${formatCount(year2.here)} took a course here that term`}
         />
         <Kpi
-          label="Persistence · enrolled anywhere"
+          label={`Enrolled anywhere · ${names.year2Short}`}
           value={formatShare(shareOf(year2.anywhere, total))}
           note={`Here or at another college in ${names.year2Short}`}
         />
