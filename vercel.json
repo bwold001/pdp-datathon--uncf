@@ -1,0 +1,29 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "services": {
+    "frontend": {
+      "root": "playground/client_application/",
+      "framework": "nextjs",
+      "installCommand": "bun install --frozen-lockfile",
+      "buildCommand": "NEXT_PUBLIC_API_BASE_URL=/api/v1 bun run build"
+    },
+    "backend": {
+      "root": "./",
+      "framework": "fastapi",
+      "entrypoint": "uncf.api:app",
+      "buildCommand": "python -m uncf load",
+      "functions": {
+        "uncf/api.py": {
+          "excludeFiles": "{playground/**,notebooks/**,docs/**,mcp/**,gap_finder/**,data/**,**/tests/**,normalized-data-model/data/**,normalized-data-model/logs/**,normalized-data-model/output/tables/**}"
+        }
+      }
+    }
+  },
+  "redirects": [
+    { "source": "/", "destination": "/uncf/paths", "permanent": false }
+  ],
+  "rewrites": [
+    { "source": "/api/v1/uncf/(.*)", "destination": { "service": "backend" } },
+    { "source": "/(.*)", "destination": { "service": "frontend" } }
+  ]
+}
