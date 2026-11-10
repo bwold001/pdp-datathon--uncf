@@ -15,4 +15,8 @@ export const routes = {
   sandboxChatUi: "/sandbox/chat-ui",
   sandboxApiRequests: "/sandbox/api-requests",
   sandboxAddASandboxPage: "/sandbox/add-a-sandbox-page",
+  uncfPaths: "/uncf/paths",
+  uncfDfw: "/uncf/dfw",
+  uncfGateway: "/uncf/gateway",
+  uncfCreditMomentum: "/uncf/credit-momentum",
 } as const;

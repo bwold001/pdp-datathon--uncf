@@ -1,0 +1,44 @@
+/* The Explorer's colors, from the team design (https://claude.ai/artifact/XeFCVWwP8Ct8CfjXJU9JtC).
+   Use them in Tailwind as bg-(--uncf-surface), text-(--uncf-ink-2), border-(--uncf-line) and so on.
+   Light only: the Explorer keeps the design's colors even when the computer is in dark mode.
+   Prefixed so they never clash with the app's own tokens. They sit on :root, not the shell, so popovers
+   (rendered at the end of <body>) get them too. */
+:root {
+  --uncf-bg: #f4f4f2;
+  --uncf-surface: #ffffff;
+  --uncf-band: #ededea;
+  --uncf-line: #e2e2de;
+  --uncf-line-2: #d3d3ce;
+  --uncf-ink: #1b1d21;
+  --uncf-ink-2: #464b53;
+  --uncf-ink-3: #6b717a;
+  --uncf-blue: #2456a6;
+  --uncf-blue-soft: #b7c5de;
+  --uncf-blue-mid: #8fa6cc;
+  --uncf-blue-tint: #eef2f9;
+  --uncf-orange: #df8a36;
+  --uncf-orange-ink: #a65a12;
+  --uncf-peach: #f1c9a0;
+  --uncf-grey: #8b95a5;
+  --uncf-grey-soft: #d5d9e0;
+  --uncf-d: #e2b04e;
+  --uncf-f: #c4502a;
+  --uncf-track: #ececea;
+  --uncf-warn-bg: #fbebd8;
+  --uncf-chip: #ededea;
+}
+
+/* IBM Plex for the Explorer and its popovers. The font variables come from explorer-fonts.ts on the same element. */
+.uncf-type {
+  --uncf-sans: var(--font-uncf-sans), system-ui, -apple-system, "Segoe UI", sans-serif;
+  --uncf-mono: var(--font-uncf-mono), ui-monospace, "SF Mono", Consolas, monospace;
+  font-family: var(--uncf-sans);
+}
+
+/* The design's blue focus ring. In the base layer, so a component's own focus styles still win. */
+@layer base {
+  .uncf-type :focus-visible {
+    outline: 2px solid var(--uncf-blue);
+    outline-offset: 2px;
+  }
+}
