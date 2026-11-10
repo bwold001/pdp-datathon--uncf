@@ -16,6 +16,8 @@ This is the Task 0 handoff for [issue #46](https://github.com/bwold001/pdp-datat
 
 The same diff touches filter comments, definitions, DFW/student-path documentation, a gateway test assertion comment, client path/key-term text, deployment/analytics docs, README, AGENTS.md and dependency comments. The changed calculation-related files contain terminology updates rather than new formulas. No v2 implementation was present in this checkout. Do not apply the plan's old module names mechanically.
 
+During PR submission, `main` advanced to `217d4d2bb1ce6e7c0f9b8f1a1f7cc5ef42feecb7` through PR #40. This inventory and test counts remain anchored to the inspected `8407844` checkout. Incoming work adds `measures/breakdowns/credit_progress.py` and the credit-momentum `progress` section, applies `shown()` to milestone counts, and updates Explorer filters/rendering. Before #47 and subsequent executor migration, inspect that diff and retain the new progress component's distinct populations, course-credit rules and disclosure; do not drop it because it is absent from the original eleven-entry catalog description. Full checks reported here are for this PR's baseline checkout, not a separately tested merge of PR #40.
+
 ## Existing request capabilities
 
 The HTTP cohort bar in `api/filters.py:CohortQuery` accepts `cohort_term`, `enrollment_intensity`, `enrollment_type`, `pell`, `gender`, `race`, `ethnicity`, and `age_band`. Cohorts currently offered are 2021-22 through 2024-25; default is 2023-24. `retention_type` is `school` (default) or `federal`. Input values must match the allowed list; SQL matching subsequently normalizes case/spaces and maps unlisted data values to UNKNOWN.
