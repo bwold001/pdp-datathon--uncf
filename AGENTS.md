@@ -21,8 +21,7 @@ change, say so in the pull request.
 
 ## Before prompting
 
-- **Plan first.** For anything bigger than a small fix, use a planning skill before writing code.
-  See "Recommended AI workflows" in the README.
+- **Plan first.** For anything bigger than a small fix, outline the approach before writing code.
 - **Run steps in parallel when you can.** For each step, ask whether it really needs the previous
   step's result. If it doesn't, run it in parallel.
 - **Start simple.** Build the plain version first. Split work up only after you see where it's
@@ -36,9 +35,6 @@ change, say so in the pull request.
   the code (for `uncf/`, `uncf/tests/`). A pull request without tests for its new behavior isn't done.
 - **Cap every retry loop.** Give each fix-and-retry loop a maximum number of tries (3 is a good
   default). At the cap, stop and ask a person. Don't keep trying.
-- **Use the README's skill for each phase.** When two installed skills do the same job (for
-  example `code-review` and `ce-code-review`), use the one in the README's "Which skill when"
-  table.
 - **Run the checks.** Use `make check-fast` while you work and `make check` before opening a pull
   request. If you changed `playground/`, also run the Playground's commands, because `make check`
   doesn't cover them. The README's [Checks](README.md#checks) section says what to run when, what
@@ -105,10 +101,7 @@ change, say so in the pull request.
 
 ## Agent skills
 
-Compound Engineering is configured in `.compound-engineering/config.yaml`. Commit shared
-settings and the example configuration; keep personal overrides in
-`.compound-engineering/config.local.yaml` untracked. Run `$ce-setup` when checking or updating
-the configuration. Setup for the other recommended skill set is already complete.
+Never use Compound Engineering (CE) skills unless the user explicitly requests a specific CE skill.
 
 ### Issue tracker
 
