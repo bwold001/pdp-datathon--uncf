@@ -59,6 +59,10 @@ export const env = {
   sandboxEnabled: process.env.NEXT_PUBLIC_SANDBOX_ENABLED
     ? process.env.NEXT_PUBLIC_SANDBOX_ENABLED === "true"
     : appEnv !== "production",
+  /** Enable only when this deployment has a provider-enabled Playground backend. */
+  studentSuccessChatEnabled: process.env.NEXT_PUBLIC_STUDENT_SUCCESS_CHAT_ENABLED
+    ? process.env.NEXT_PUBLIC_STUDENT_SUCCESS_CHAT_ENABLED === "true"
+    : appEnv === "development",
   /** Source repository, linked from the landing page. Copies of Playground override this. */
   repositoryUrl:
     process.env.NEXT_PUBLIC_REPOSITORY_URL || "https://github.com/devcolor/pdp-datathon-starter",

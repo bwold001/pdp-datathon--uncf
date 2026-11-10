@@ -166,3 +166,25 @@ Without `make` (Windows), run `python scripts/check.py`, `python data/quality/ru
 
 Short branch, pull request, a teammate reviews, then merge. See
 [CONTRIBUTING.md](CONTRIBUTING.md) and [AGENTS.md](AGENTS.md).
+
+## Student success chat
+
+The UNCF demonstration at `/uncf/chat` answers the agreed graduation, retention and annual enrollment questions with shared calculation receipts. See [calculation definitions and coverage requirements](docs/analytics-definitions.md).
+
+1. Install the root requirements into `.venv` and run `python -m uncf load` from the repository root.
+2. Follow [Playground setup](playground/README.md) for its Python 3.14/uv and Node 24/Bun runtimes. Root Python and the Playground provider runtime are separate environments.
+3. Set `ANTHROPIC_API_KEY` in the server's ignored `.env.development.local` or environment. `UNCF_CHAT_MODEL` selects the Anthropic model for this demo. Keep the key server-side. This provider-specific adapter does not implement a campus production hosting arrangement.
+4. Run the Playground API and client (`mise run api:dev`, `mise run web:dev`). The client uses its existing `NEXT_PUBLIC_API_BASE_URL`. Open `/uncf/chat` or use the sidebar's Student success chat link. The API demo routes use `UNCF_CHAT_ENABLED` (enabled in local development), independently of `SANDBOX_ENABLED`. Production remains opt-in.
+5. Try “What is the graduation rate for chemistry majors?”, “What is the retention rate for all majors?” and “What is enrollment ethnicity by academic program over the past 2 years?” Choose the requested cohort, credential and chemistry definition. Open “How these results were calculated” to inspect supporting evidence.
+
+The model can call only the catalog, definitions and approved analysis tools. It cannot submit SQL, student IDs or filesystem paths. A new question starts a separate analysis; only a pending typed request is carried through clarification. Reset discards late replies.
+
+The unmodified mock extract does **not** certify complete academic years, full cohort follow-up or exact award semesters. Accordingly, some answers show unavailable/unknown states. Configure only verified coverage in `uncf/config/analytics.yaml`; an earlier associate award or rounded time-to-credential must never be used to invent a bachelor's award semester. These are implementation data limits, not permission to present fixture numbers as campus findings.
+
+The standalone `python -m uncf` app also exposes deterministic `GET /api/v1/uncf/analyses/catalog` and `POST /api/v1/uncf/analyses`, without importing a model provider. Chat is served by the Playground at `POST /api/v1/uncf/chat`. Existing `/results`, `/options` and `/health` contracts are preserved.
+
+Verify with `make check` at the root; in Playground run `mise run api:lint`, `mise run api:test-sqlite`, `mise run web:build`, `mise run web:lint` and `mise run web:test-storybook`. New Python tests use small independently counted SQLite fixtures and a scripted model, with no live provider calls. Stories cover calculation details, clarification, unavailable states, errors and reset while pending.
+
+Chat first proposes the full scope and requires explicit approval before calculating. No additional filters are inferred.
+The provider-free Vercel frontend disables Chat; a provider-enabled Playground deployment can set
+`NEXT_PUBLIC_STUDENT_SUCCESS_CHAT_ENABLED=true` together with `UNCF_CHAT_ENABLED=true` on its backend.

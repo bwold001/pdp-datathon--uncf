@@ -44,6 +44,16 @@ def create_app() -> FastAPI:
     app.include_router(api_router, prefix=settings.API_V1_PREFIX)
     if settings.SANDBOX_ENABLED:
         app.include_router(sandbox_router, prefix=settings.API_V1_PREFIX)
+    if settings.UNCF_CHAT_ENABLED:
+        # Chat has its own deployment switch, independent of Sandbox examples.
+        from app.sandbox.chat.repo import import_path
+
+        import_path("")
+        from uncf.analytics.routes import router as analytics_router
+        from uncf.chat.routes import router as chat_router
+
+        app.include_router(analytics_router)
+        app.include_router(chat_router)
     return app
 
 
