@@ -16,7 +16,7 @@ export function CreditsTab() {
   const { apiQuery } = useCohortFilters();
   const load = useMemo(() => explorerLoader<CreditsResponse>("/uncf/credit-momentum", apiQuery), [apiQuery]);
   const { resource, retry } = useApiResource(load);
-  useShowStudentCount(resource.status === "success" ? resource.data.students : null);
+  useShowStudentCount(resource.status !== "success" ? null : resource.data.status === "suppressed" ? "under 10" : resource.data.students);
 
   if (resource.status === "loading") return <CreditsLoading />;
   if (resource.status === "error") {
