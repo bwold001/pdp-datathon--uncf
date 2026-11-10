@@ -38,89 +38,52 @@ Reinstall whenever `requirements.txt` changes.
 
 ### Run the project
 
-From the repo root, with `.venv` active:
+For chat, run the [Playground](playground/README.md) backend and frontend and open `/chat`.
+The original `/uncf/chat` and `/sandbox/data-chat-ui` bookmarks redirect there.
+Load the cohort and course files using Workbench. Chat and its direct analysis endpoints use
+Playground's configured `DATABASE_URL`, including newly uploaded data. SQLite and PostgreSQL
+read the same deterministic calculations in read-only snapshots, without a results cache.
+Set `ANTHROPIC_API_KEY` server-side for natural-language interpretation. `UNCF_CHAT_ENABLED`
+controls chat independently of Sandbox; local development enables it, production remains opt-in.
+
+Directory ownership:
+
+- `analytics/`: graduation, retention-by-major and enrollment calculations, receipts, coverage
+  configuration and program attribution. No provider or Playground dependency.
+- `measures/`: existing foundational calculations and their shared staff-facing definitions.
+- `playground/server_application/app/chat/`: bounded provider orchestration and validated tools.
+- `playground/server_application/app/services/analytics.py`: configured database adapter.
+- `api/`: the provider-free Results and analysis HTTP interfaces used by the existing deployment.
+
+#### Existing Results deployment
+
+The existing Results API and its public `/api/v1/uncf/results`, `/options`, `/health` and
+`/analyses` routes remain compatible. To run that standalone interface from the repository root:
 
 ```bash
-python -m uncf              # load the data if it's missing, then serve the Results API on http://localhost:8001
-python -m uncf load         # only load the data (about 75 seconds the first time)
-python -m uncf serve        # only serve the API; --port to change it
+python -m api load
+python -m api serve
 ```
 
-`python -m uncf` is the one entry point for everything we build in `uncf/`. It doesn't need the
-Playground. Test it with `python -m pytest uncf`. Interactive API docs: http://localhost:8001/docs.
+Vercel now points to `api.app:app` and builds the standalone extract with `python -m api load`.
+The frontend still uses the same-origin `/api/v1` and `/` still opens `/uncf/paths`.
+The deployed provider-free API does not host Playground chat. Tests in
+`api/tests/test_vercel_config.py` verify routing and bundle contents.
 
-#### Hosting on Vercel
+The old top-level squad package and its precompute command have been retired. The independent
+`run_measure(..., save=True)` API remains available for existing callers. No legacy result API
+or dataset has been substituted for Playground uploads.
 
-[`vercel.json`](vercel.json) deploys only the Explorer, as one Vercel project with two
-[services](https://vercel.com/docs/services):
+#### Numerical consistency
 
-- **frontend:** the Next.js app in `playground/client_application`. `/` redirects to `/uncf/paths`.
-- **backend:** the Results API (`uncf.api:app`) as a Python function. Its build runs
-  `python -m uncf load`, so every deploy builds `pdp.sqlite` from the mock CSVs in `data/raw/`.
-
-Both sit on one site: `/api/v1/uncf/*` goes to the API and everything else goes to the pages. The
-client is built with `NEXT_PUBLIC_API_BASE_URL=/api/v1`, so a preview calls its own API and needs
-no CORS. Call it from client components: a relative URL doesn't work in a server-side `fetch`.
-`uncf/tests/test_vercel_config.py` checks the wiring.
-
-The data is mock data and the site is public. Before real student data goes here, it needs a
-login, data that doesn't live in git, and the data owner's sign-off.
-
-#### How the Results API works
-
-- **Calculated per request.** Each request calls the measures package (`run_measure`), which reads
-  the normalized data in `normalized-data-model/output/pdp.sqlite`. Nothing is saved. Answers are
-  cached in memory and recalculated when `pdp.sqlite` changes, so a reload needs no restart.
-- **Contract.** The response follows the Explorer's `data.ts`
-  (`playground/client_application/src/app/(app)/uncf/data.ts`): `meta` (measure, cohort,
-  group_by, definition, source, loaded_at, provisional) and `rows` (group, numerator, denominator,
-  rate, status, n_excluded, plus n_out_of_scope and note). Models: `uncf/schemas.py`.
-- **Definitions** come from `uncf/definitions.py` (#3), one per measure.
-
-| Endpoint | What it returns |
-| --- | --- |
-| `GET /api/v1/uncf/results?measure=&cohort=&group_by=` | The everyone row, then one row per group. `group_by` is optional, up to twice (e.g. `group_by=pell&group_by=race`) |
-| `GET /api/v1/uncf/options` | The measures, classes and groupings a client can ask for |
-| `GET /api/v1/uncf/health` | Whether the data is loaded, and `loaded_at` |
-
-- **Hidden or missing numbers** are `null` with a status: `suppressed` (under 10 students),
-  `not_yet_observable`, or `not_reported` (a gateway measure the college doesn't report). Never 0.
-  Starter issue #87 (working out a hidden group by subtraction) is not fixed.
-- **`loaded_at`** is when the source data was loaded, not when a number was calculated.
-- **`provisional`** is true for retention and persistence in 2024-25, whose second year is only
-  partly in the data.
-- **Errors:** 422 for a value outside the lists, or a bad `group_by` (`invalid_group_by`); 503
-  `data_missing`. Our error bodies are `{"error": {"code", "message"}}`.
-- **Client access:** CORS allows http://localhost:3000 (change with `UNCF_CORS_ORIGINS`). To mount
-  in the Playground server instead: `app.include_router(uncf.api.router)`.
-- **Assumptions** are listed at the top of `uncf/api.py`.
-
-#### How the precompute works
-
-> **Being retired in #4:** the Results API now calculates per request, so it no longer reads
-> `success_measures.sqlite`. `python -m uncf precompute` still works until #4 removes it.
-
-- **Runs standalone.** It runs from the root env and needs no Playground. `measures/` uses only the
-  standard library, so it imports from the repo root. The API will read `success_measures.sqlite`
-  with `sqlite3` and never call `run_measure`.
-- **Two databases.** The loader writes `normalized-data-model/output/pdp.sqlite` (the source). The
-  precompute writes `measures/output/success_measures.sqlite` (the results). The Playground's own
-  database (PostgreSQL by default) is a third, separate one and is not used here.
-- **One save per measure.** A save replaces earlier rows for the same measure and cohort, so
-  `precompute()` passes every cohort and group in one `run_measure` call per measure. Splitting
-  groups across calls would wipe the first ones.
-- **What is saved.** Retention, gateway math and gateway English, for 2021-22 to 2024-25, by every
-  single dimension and every pair except first-gen: 36 groups, 7,080 rows.
-- **Timestamp.** There is no separate timestamp table. Each row's `data_loaded_at` is when
-  `pdp.sqlite` was built, not when the precompute ran, so a restart never makes old data look new. The API's `loaded_at` is `MAX(data_loaded_at)`.
-- **When data changes.** Every start recomputes (about 10 seconds), so new data shows up after a
-  reload of `pdp.sqlite` and a restart, with a newer `data_loaded_at`. The loader only runs when
-  `pdp.sqlite` is missing: to pick up new source files, delete it or run the loader yourself.
-- **Small groups.** Hidden groups (under 10 students) have blank numbers, never 0. Saving every pair
-  gives more ways to subtract a hidden group from totals (starter issue #87, not fixed).
-- **Where the API runs.** The API is a standalone FastAPI app from `uncf/`. It needs only
-  `success_measures.sqlite` to exist. The Playground is not required.
-- **Columns.** The `success_measures` columns are defined in `measures/save_results.py`.
+The model can select only approved analyses and definitions; no tool accepts arbitrary SQL.
+Missing material parameters trigger typed clarification. Displayed numbers, formulas and
+limitations come from validated receipts, never numerical model prose. Rates must match their
+numerators and denominators. Suppressed values stay absent from evidence and display text.
+All three graduation horizons, program perspectives, ethnicity handling and certified-coverage
+rules remain intact. Missing award-semester evidence stays unknown, rather than inferred from
+rounded time-to-credential. These safeguards are for synthetic demonstrations, not a universal
+production privacy guarantee.
 
 ## Data
 
@@ -169,19 +132,19 @@ Short branch, pull request, a teammate reviews, then merge. See
 
 ## Student success chat
 
-The UNCF demonstration at `/uncf/chat` answers the agreed graduation, retention and annual enrollment questions with shared calculation receipts. See [calculation definitions and coverage requirements](docs/analytics-definitions.md).
+The demonstration at `/chat` answers the agreed graduation, retention and annual enrollment questions with shared calculation receipts. See [calculation definitions and coverage requirements](docs/analytics-definitions.md).
 
-1. Install the root requirements into `.venv` and run `python -m uncf load` from the repository root.
+1. Install Playground dependencies with `uv sync` in `playground/server_application/`, then load cohort and course files in Workbench.
 2. Follow [Playground setup](playground/README.md) for its Python 3.14/uv and Node 24/Bun runtimes. Root Python and the Playground provider runtime are separate environments.
 3. Set `ANTHROPIC_API_KEY` in the server's ignored `.env.development.local` or environment. `UNCF_CHAT_MODEL` selects the Anthropic model for this demo. Keep the key server-side. This provider-specific adapter does not implement a campus production hosting arrangement.
-4. Run the Playground API and client (`mise run api:dev`, `mise run web:dev`). The client uses its existing `NEXT_PUBLIC_API_BASE_URL`. Open `/uncf/chat` or use the sidebar's Student success chat link. The API demo routes use `UNCF_CHAT_ENABLED` (enabled in local development), independently of `SANDBOX_ENABLED`. Production remains opt-in.
+4. Run the Playground API and client (`mise run api:dev`, `mise run web:dev`). The client uses its existing `NEXT_PUBLIC_API_BASE_URL`. Open `/chat` or use the sidebar's Student success chat link. The API demo routes use `UNCF_CHAT_ENABLED` (enabled in local development), independently of `SANDBOX_ENABLED`. Production remains opt-in.
 5. Try “What is the graduation rate for chemistry majors?”, “What is the retention rate for all majors?” and “What is enrollment ethnicity by academic program over the past 2 years?” Choose the requested cohort, credential and chemistry definition. Open “How these results were calculated” to inspect supporting evidence.
 
 The model can call only the catalog, definitions and approved analysis tools. It cannot submit SQL, student IDs or filesystem paths. A new question starts a separate analysis; only a pending typed request is carried through clarification. Reset discards late replies.
 
-The unmodified mock extract does **not** certify complete academic years, full cohort follow-up or exact award semesters. Accordingly, some answers show unavailable/unknown states. Configure only verified coverage in `uncf/config/analytics.yaml`; an earlier associate award or rounded time-to-credential must never be used to invent a bachelor's award semester. These are implementation data limits, not permission to present fixture numbers as campus findings.
+The unmodified mock extract does **not** certify complete academic years, full cohort follow-up or exact award semesters. Accordingly, some answers show unavailable/unknown states. Configure only verified coverage in `analytics/config/analytics.yaml`; an earlier associate award or rounded time-to-credential must never be used to invent a bachelor's award semester. These are implementation data limits, not permission to present fixture numbers as campus findings.
 
-The standalone `python -m uncf` app also exposes deterministic `GET /api/v1/uncf/analyses/catalog` and `POST /api/v1/uncf/analyses`, without importing a model provider. Chat is served by the Playground at `POST /api/v1/uncf/chat`. Existing `/results`, `/options` and `/health` contracts are preserved.
+The standalone `python -m api` app also exposes deterministic `GET /api/v1/uncf/analyses/catalog` and `POST /api/v1/uncf/analyses`, without importing a model provider. Chat is served by Playground at `POST /api/v1/chat`; `/api/v1/uncf/chat` remains an alias. Existing `/results`, `/options` and `/health` contracts are preserved.
 
 Verify with `make check` at the root; in Playground run `mise run api:lint`, `mise run api:test-sqlite`, `mise run web:build`, `mise run web:lint` and `mise run web:test-storybook`. New Python tests use small independently counted SQLite fixtures and a scripted model, with no live provider calls. Stories cover calculation details, clarification, unavailable states, errors and reset while pending.
 

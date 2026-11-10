@@ -9,23 +9,25 @@ requires-python = ">=3.14"
 dependencies = [
     "aiosqlite>=0.22.1",
     "alembic>=1.20.0",
-    "anthropic>=2.3.0", # sandbox chat: the LLM that follows the metadata-advisor skill and calls the metadata tools
+    "anthropic>=2.3.0", # chat: chooses approved analyses; deterministic receipts supply displayed numbers
     "asyncpg>=0.32.0",
     "bcrypt>=5.0.0",
     "fastapi[standard]>=0.146.0",
     "pandas>=3.0.6",
     "pdp-normalized-data-model[postgres]",
+    "pdp-student-success",
     "pgvector>=0.5.1",
     "polars>=2.0.0",
     "pyarrow>=26.0.0",
     "pydantic-settings>=2.16.0",
     "pyjwt>=2.15.1",
-    "pyyaml>=6.0.3", # sandbox chat: pdp_mcp.metadata reads the data model's YAML configs
+    "pyyaml>=6.0.3", # analytics: reads declared coverage and definitions
     "sqlalchemy[asyncio]>=2.1.5",
 ]
 
 # The data model's loader, used in place: editable, because it reads its configs from its own folder.
 [tool.uv.sources]
+pdp-student-success = { path = "../..", editable = true }
 pdp-normalized-data-model = { path = "../../normalized-data-model", editable = true }
 
 [dependency-groups]
