@@ -30,7 +30,10 @@ Copy the Student paths tab (`components/uncf/paths/`): a page with a `ViewIntro`
   then `useApiResource(load)`. The filters live in the URL (`?cohort=2022-23&pell=Y`), so a view can be shared, Back
   works, and the ones someone set carry across tabs. A tab's own query values (a sort order) stay on that tab.
 - **Retention.** Gateway and Credit momentum show a Retention filter: `school` (the PDP flag, "Returned here", the
-  API's default) or `federal` ("Back next fall").
+  API's default) or `federal` ("Back next fall"). Name the measure from the answer's `meta.retention_type` with
+  `retentionWords()` in `explorer-parts.tsx`, never a fixed "next fall".
+- **No math in the tab.** Shares, gaps, totals and hiding come from the API (`measures/`); a tab only formats and
+  draws them.
 - **Student count.** `useShowStudentCount(count)` shows "Showing 1,114 students" in the cohort bar.
 - **Parts.** `explorer-parts.tsx` has the design's `Card`, `CardHead`, `KpiGrid` and `Kpi`, `Legend`, `TrackBar`,
   `Counted` ("How it's counted"), `Notice`, `MessageCard` (too few students, or an error) and `LoadingBlock`.

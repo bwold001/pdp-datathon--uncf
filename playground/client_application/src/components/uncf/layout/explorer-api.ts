@@ -5,7 +5,7 @@ export type ExplorerMeta = {
   cohort: string;
   filters: Record<string, string>;
   /** Which retention measure the answer's retention numbers use: the PDP flag (school) or fall to fall (federal). */
-  retention_type?: RetentionType;
+  retention_type: RetentionType;
   provisional: boolean;
   min_students: number;
   source: string;
