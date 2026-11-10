@@ -18,7 +18,7 @@ from measures.models import (
     Measure,
 )
 
-# The cohort bar's filters after the cohort year, in the bar's order. The Results API groups by the same list.
+# The cohort bar's filters after the cohort year, in the bar's order. /measures/{measure} groups by the same list.
 FILTER_DIMENSIONS = STUDENT_DIMENSIONS
 FILTER_NAMES = tuple(dimension.value for dimension in FILTER_DIMENSIONS)
 FILTER_LABELS = {

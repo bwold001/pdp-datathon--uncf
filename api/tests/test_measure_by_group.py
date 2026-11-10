@@ -1,4 +1,4 @@
-"""Checks the Results API (#5): the contract on a fixture database, and known answers on the real data when loaded."""
+"""Checks GET /measures/{measure}: the contract on a fixture database, and known answers on the real data when loaded."""
 from __future__ import annotations
 
 import os
@@ -9,7 +9,8 @@ import pytest
 from fastapi.testclient import TestClient
 
 from api import __main__ as entry
-from api import data, results, route
+from api import data, route
+from api.measure_by_group import _calculate
 from api.route import create_app
 from api.schemas import Dimension
 from api.schemas import Measure as ApiMeasure
@@ -18,7 +19,7 @@ from measures.models import GroupDimension
 from measures.run_measures import DEFAULT_DATABASE
 from measures.tests.explorer_fixture import LOADED_AT, here, make_database, student
 
-URL = "/api/v1/uncf/results"
+PREFIX = "/api/v1/uncf"
 
 
 @pytest.fixture
@@ -44,9 +45,9 @@ def client() -> TestClient:
     return TestClient(create_app())
 
 
-def get(client: TestClient, **params):
-    """GET /results with the given query parameters."""
-    return client.get(URL, params=params)
+def get(client: TestClient, measure: str, **params):
+    """GET /measures/{measure} with the given query parameters."""
+    return client.get(f"{PREFIX}/measures/{measure}", params=params)
 
 
 def test_retention_by_pell_matches_the_explorer_contract(data_file, client) -> None:
@@ -120,11 +121,11 @@ def test_no_group_by_returns_only_everyone(data_file, client) -> None:
 
 def test_pair_order_does_not_matter_and_is_cached(data_file, client) -> None:
     """pell,race and race,pell return the same rows from one calculation."""
-    first = client.get(URL, params={"measure": "retention", "cohort": "2022-23", "group_by": ["pell", "race"]})
-    second = client.get(URL, params={"measure": "retention", "cohort": "2022-23", "group_by": ["race", "pell"]})
+    first = get(client, "retention", cohort="2022-23", group_by=["pell", "race"])
+    second = get(client, "retention", cohort="2022-23", group_by=["race", "pell"])
     assert first.json()["rows"] == second.json()["rows"]
     assert first.json()["rows"][1]["group"] == {"pell": "N", "race": "American Indian or Alaska Native"}
-    assert results._calculate.cache_info().misses == 1
+    assert _calculate.cache_info().misses == 1
 
 
 def test_new_data_clears_the_cache(data_file, client) -> None:
@@ -133,7 +134,7 @@ def test_new_data_clears_the_cache(data_file, client) -> None:
     stamp = data_file.stat().st_mtime + 10
     os.utime(data_file, (stamp, stamp))
     get(client, measure="retention", cohort="2022-23", group_by="pell")
-    assert results._calculate.cache_info().misses == 2
+    assert _calculate.cache_info().misses == 2
 
 
 def test_gateway_with_no_answers_is_not_reported(data_file, client) -> None:
@@ -159,19 +160,19 @@ def test_provisional_for_year_two_measures_of_the_newest_class(data_file, client
         {"measure": "retention", "cohort": "2022-23", "group_by": "first_gen"},
         {"measure": "retention", "cohort": "2022-23", "retention_type": "ipeds"},
         {"measure": "retention", "cohort": "2022-23", "pell": "Maybe"},
-        {"cohort": "2022-23"},
+        {"measure": "retention"},
     ],
 )
 def test_values_outside_the_lists_are_422(data_file, client, params) -> None:
-    """Values the API doesn't offer are refused before anything is calculated."""
-    assert client.get(URL, params=params).status_code == 422
-    assert results._calculate.cache_info().misses == 0
+    """Values the API doesn't offer, or a missing cohort, are refused before anything is calculated."""
+    assert get(client, **params).status_code == 422
+    assert _calculate.cache_info().misses == 0
 
 
 @pytest.mark.parametrize("group_by", [["pell", "race", "gender"], ["pell", "pell"]])
 def test_bad_group_by_is_422_with_our_error_body(data_file, client, group_by) -> None:
     """More than two dimensions, or the same one twice, gets a clear error."""
-    response = client.get(URL, params={"measure": "retention", "cohort": "2022-23", "group_by": group_by})
+    response = get(client, "retention", cohort="2022-23", group_by=group_by)
     assert response.status_code == 422
     assert response.json()["error"]["code"] == "invalid_group_by"
 
@@ -185,6 +186,22 @@ def test_csv_export(data_file, client) -> None:
     assert lines[1].startswith("2022-23,all students,school,All,20,33")
 
 
+def test_old_results_url_gives_the_same_answer(data_file, client) -> None:
+    """GET /results?measure=... still answers for the deployed API's callers, with the same body."""
+    params = {"cohort": "2022-23", "group_by": "pell", "pell": "Y"}
+    old = client.get(f"{PREFIX}/results", params={"measure": "retention", **params})
+    assert old.status_code == 200
+    assert old.json() == get(client, "retention", **params).json()
+    assert client.get(f"{PREFIX}/results", params={"cohort": "2022-23"}).status_code == 422
+
+
+def test_only_the_new_url_is_in_the_docs(client) -> None:
+    """The API docs list /measures/{measure}; the old /results URL works but isn't advertised."""
+    paths = client.get("/openapi.json").json()["paths"]
+    assert f"{PREFIX}/measures/{{measure}}" in paths
+    assert f"{PREFIX}/results" not in paths
+
+
 def test_missing_data_is_503(tmp_path, monkeypatch, client) -> None:
     """Without the normalized data, the API says how to load it."""
     monkeypatch.setattr(data, "data_path", lambda: tmp_path / "missing.sqlite")
@@ -192,17 +209,17 @@ def test_missing_data_is_503(tmp_path, monkeypatch, client) -> None:
     response = get(client, measure="retention", cohort="2022-23", group_by="pell")
     assert response.status_code == 503
     assert response.json()["error"]["code"] == "data_missing"
-    assert client.get("/api/v1/uncf/health").json() == {"status": "ok", "data_available": False, "loaded_at": None}
+    assert client.get(f"{PREFIX}/health").json() == {"status": "ok", "data_available": False, "loaded_at": None}
 
 
 def test_health_reports_the_load_time(data_file, client) -> None:
     """Health says the data is loaded, and when."""
-    assert client.get("/api/v1/uncf/health").json() == {"status": "ok", "data_available": True, "loaded_at": LOADED_AT}
+    assert client.get(f"{PREFIX}/health").json() == {"status": "ok", "data_available": True, "loaded_at": LOADED_AT}
 
 
 def test_options_offer_only_defined_measures(client) -> None:
     """Every measure offered has a definition, labelled with its on-screen name."""
-    body = client.get("/api/v1/uncf/options").json()
+    body = client.get(f"{PREFIX}/options").json()
     assert [m["value"] for m in body["measures"]] == list(get_args(ApiMeasure))
     assert all(m["label"] == DEFINITIONS[m["value"]]["name"] for m in body["measures"])
     assert [d["value"] for d in body["dimensions"]] == list(get_args(Dimension))
@@ -211,7 +228,7 @@ def test_options_offer_only_defined_measures(client) -> None:
 
 def test_cors_allows_the_playground_client(data_file, client) -> None:
     """The Explorer on localhost:3000 can call the API from the browser."""
-    response = client.get(URL, params={"measure": "retention", "cohort": "2022-23"}, headers={"Origin": "http://localhost:3000"})
+    response = client.get(f"{PREFIX}/measures/retention", params={"cohort": "2022-23"}, headers={"Origin": "http://localhost:3000"})
     assert response.headers["access-control-allow-origin"] == "http://localhost:3000"
 
 
@@ -314,7 +331,7 @@ def test_api_matches_an_independent_recount_of_the_normalized_data(client) -> No
             for cohort in ["2021-22", "2022-23", "2023-24", "2024-25"]:
                 for dimensions in groupings:
                     expected = recount(connection, measure, cohort, dimensions)
-                    response = client.get(URL, params={"measure": measure, "cohort": cohort, "group_by": dimensions})
+                    response = get(client, measure, cohort=cohort, group_by=dimensions)
                     assert response.status_code == 200
                     for row in response.json()["rows"]:
                         key = tuple(row["group"][d] for d in dimensions) if row["group"] else ()

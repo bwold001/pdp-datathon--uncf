@@ -122,6 +122,6 @@ def test_real_data_known_answers():
     retention = page["cohort_retention"]
     assert (retention["students"], retention["retained"], retention["rate"]) == (2580, 1074, 0.4163)
     school = gateway_courses(**ask("2023-24"))["cohort_retention"]
-    assert (school["students"], school["retained"]) == (2580, 1345)  # the PDP flag, as in the Results API
+    assert (school["students"], school["retained"]) == (2580, 1345)  # the PDP flag, as on /measures/retention
     eng = next(c for c in page["courses"] if c["course"] == "ENG 101")
     assert (eng["students"], eng["passed"], eng["df"], eng["w"]) == (380, 277, 76, 27)

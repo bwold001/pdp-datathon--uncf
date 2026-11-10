@@ -1,1 +1,1 @@
-"""Provider-free HTTP compatibility for deployed results and shared analytics."""
+"""The UNCF API: HTTP only. Numbers come from measures/ (pages, one measure by group) and analytics/ (chat analyses)."""

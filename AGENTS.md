@@ -5,13 +5,13 @@ Instructions for AI coding agents working in this repo. People can read it too.
 This is the UNCF squad's repo for the 2026 /dev/color datathon: a Student Success Explorer for FMU
 and Benedict College, built on the starter's shared data and foundations. See
 [README.md](README.md) for the goal and data and [CONTRIBUTING.md](CONTRIBUTING.md) for how
-changes get in. Priorities: Core (Explorer), Stretch 1 (insight cards), Stretch 2 (chat agent).
+changes get in. Priorities: Core (Explorer, with CSV export of every page), Stretch (chat agent).
 Never push to `main`, and never commit, push, or open a pull request without the user's explicit
 yes. Keep per-school differences in config, not forks.
 
 **Put code with its owner.** Don't edit the starter's Sandbox examples or shared foundations to
 build our features; copy their pattern into our own folders:
-- Every Explorer and Results API number (measures, filters on them, page breakdowns) and their
+- Every Explorer number (measures, filters on them, page breakdowns) and their
   staff facing definitions: `measures/`.
 - The chat's deterministic analyses (graduation, retention by major, enrollment), program
   attribution, coverage and receipts: `analytics/`.
@@ -22,10 +22,10 @@ build our features; copy their pattern into our own folders:
 - Client pages: `playground/client_application/src/app/(uncf-explorer)/uncf/`; client components:
   `playground/client_application/src/components/uncf/` (chat in `uncf/chat/`, page `/uncf/chat`).
 
-Preserve the deployed Results API and Vercel routing when moving files. All numerical product
-answers must use validated deterministic receipts, not arbitrary SQL or generated numerical prose.
-Keep coverage, inference, missing-value and suppression rules shared by direct API and chat.
-Document changes to shared files in the review description.
+Preserve the deployed API's URLs (the old `/results` URL included) and Vercel routing when moving
+files. All numerical product answers must use validated deterministic receipts, not arbitrary SQL
+or generated numerical prose. Keep coverage, inference, missing-value and suppression rules shared
+by direct API and chat. Document changes to shared files in the review description.
 
 ## Before prompting
 
