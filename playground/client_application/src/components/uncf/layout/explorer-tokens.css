@@ -21,6 +21,9 @@
   --uncf-peach: #f1c9a0;
   --uncf-grey: #8b95a5;
   --uncf-grey-soft: #d5d9e0;
+  /* Student paths' credential status; the design has none, so this pair is ours. */
+  --uncf-teal: #1f7a6b;
+  --uncf-teal-soft: #b9ddd5;
   --uncf-d: #e2b04e;
   --uncf-f: #c4502a;
   --uncf-track: #ececea;
