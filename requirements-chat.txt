@@ -1,0 +1,10 @@
+# Dedicated Vercel chat service; the Results service keeps its provider-free entrypoint.
+-e .
+openrouter==1.3.151          # Chat: official asynchronous OpenRouter SDK
+pydantic-settings==2.16.0 # Chat: reuse Playground's server-side settings
+sqlalchemy==2.1.5         # Chat: parse configured SQLite/PostgreSQL database URLs
+psycopg[binary]==3.3.6     # Chat: the existing configured PostgreSQL snapshot adapter
+fastapi==0.162.2          # Chat: same HTTP runtime as the Results API
+uvicorn==0.54.0           # Chat: local smoke tests and ASGI runtime
+pyyaml==6.0.3             # Chat: same shared coverage definitions as the Results API
+pyarrow==25.0.1           # Chat: build-only mock-data loader; removed after the Vercel extract build

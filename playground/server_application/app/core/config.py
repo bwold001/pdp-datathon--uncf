@@ -64,11 +64,19 @@ class Settings(BaseSettings):
     # Mock-data endpoints behind the client's example charts. Off in production.
     SANDBOX_ENABLED: bool = True
 
-    # Student success chat uses a server-side key in .env.<APP_ENV>.local.
-    ANTHROPIC_API_KEY: str | None = None
+    # Provider keys stay server-side in .env.<APP_ENV>.local or the host secret store.
+    OPENROUTER_API_KEY: str | None = None
     # Explicitly enabled for the local synthetic demo; independent of Sandbox.
     UNCF_CHAT_ENABLED: bool = False
-    UNCF_CHAT_MODEL: str = "claude-sonnet-5-5"
+    UNCF_CHAT_MODEL: str = "openai/gpt-4.1"
+
+    @property
+    def chat_model(self) -> str:
+        """Require a canonical OpenRouter ID without guessing legacy model mappings."""
+        model = self.UNCF_CHAT_MODEL.strip()
+        if "/" not in model or any(not part for part in model.split("/")):
+            raise ValueError("UNCF_CHAT_MODEL must be a canonical OpenRouter model ID.")
+        return model
 
     @property
     def is_development(self) -> bool:

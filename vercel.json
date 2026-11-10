@@ -5,7 +5,7 @@
       "root": "playground/client_application/",
       "framework": "nextjs",
       "installCommand": "bun install --frozen-lockfile",
-      "buildCommand": "NEXT_PUBLIC_STUDENT_SUCCESS_CHAT_ENABLED=false NEXT_PUBLIC_API_BASE_URL=/api/v1 bun run build"
+      "buildCommand": "NEXT_PUBLIC_STUDENT_SUCCESS_CHAT_ENABLED=${NEXT_PUBLIC_STUDENT_SUCCESS_CHAT_ENABLED:-true} NEXT_PUBLIC_API_BASE_URL=/api/v1 bun run build"
     },
     "backend": {
       "root": "./",
@@ -17,13 +17,53 @@
           "excludeFiles": "{playground/**,notebooks/**,docs/**,mcp/**,gap_finder/**,data/**,**/tests/**,normalized-data-model/data/**,normalized-data-model/logs/**,normalized-data-model/output/tables/**}"
         }
       }
+    },
+    "chat": {
+      "root": "./",
+      "framework": "fastapi",
+      "entrypoint": "chat_app:app",
+      "installCommand": "python -m pip install -r requirements-chat.txt",
+      "buildCommand": "python -m api load && python -m pip uninstall -y pyarrow",
+      "functions": {
+        "chat_app.py": {
+          "maxDuration": 120,
+          "includeFiles": "{playground/server_application/app/**,analytics/config/**,normalized-data-model/output/pdp.sqlite}",
+          "excludeFiles": "{playground/client*/**,**/tests/**,**/.venv/**,.venv/**,**/.env*,.env*,**/docs/**,docs/**,notebooks/**,mcp/**,gap_finder/**,data/**,normalized-data-model/data/**,normalized-data-model/logs/**,normalized-data-model/output/tables/**}"
+        }
+      }
     }
   },
   "redirects": [
-    { "source": "/", "destination": "/uncf/paths", "permanent": false }
+    {
+      "source": "/",
+      "destination": "/uncf/paths",
+      "permanent": false
+    }
   ],
   "rewrites": [
-    { "source": "/api/v1/uncf/(.*)", "destination": { "service": "backend" } },
-    { "source": "/(.*)", "destination": { "service": "frontend" } }
+    {
+      "source": "/api/v1/chat",
+      "destination": {
+        "service": "chat"
+      }
+    },
+    {
+      "source": "/api/v1/uncf/chat",
+      "destination": {
+        "service": "chat"
+      }
+    },
+    {
+      "source": "/api/v1/uncf/(.*)",
+      "destination": {
+        "service": "backend"
+      }
+    },
+    {
+      "source": "/(.*)",
+      "destination": {
+        "service": "frontend"
+      }
+    }
   ]
 }

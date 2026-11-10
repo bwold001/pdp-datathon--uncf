@@ -40,13 +40,13 @@ def test_chat_matches_direct_api(client, analytics):
     )
     assert chat.status_code == 200
     assert chat.json()["receipts"] == direct.json()["receipts"]
-    assert model.requests[0]["model"] == settings.UNCF_CHAT_MODEL
+    assert model.requests[0]["model"] == settings.chat_model
     assert "99.9" not in chat.json()["message"]
 
 
 def test_missing_key_and_invalid_body(client, analytics, monkeypatch):
     """Input validation happens before provider configuration errors."""
-    monkeypatch.setattr(settings, "ANTHROPIC_API_KEY", None)
+    monkeypatch.setattr(settings, "OPENROUTER_API_KEY", None)
     assert client.post("/api/v1/uncf/chat", json={"prompt": "Retention?"}).status_code == 503
     assert client.post("/api/v1/uncf/chat", json={"prompt": " "}).status_code == 422
 
@@ -72,20 +72,16 @@ def test_typed_clarification_without_provider(client, analytics):
 
 def test_provider_failure(client, analytics):
     """Provider errors produce a useful response without fabricated results."""
-    import anthropic
-    import httpx
+    from app.chat.provider import ProviderFailed
 
     class FailingModel:
         """A provider that fails on its first request."""
 
-        async def create(self, **kwargs):
+        async def complete(self, **kwargs):
             """Simulate a connection failure from the provider SDK."""
-            raise anthropic.APIConnectionError(
-                request=httpx.Request("POST", "https://example.test")
-            )
+            raise ProviderFailed("The model provider failed. Please try again.")
 
     model = FailingModel()
-    model.messages = model
     app.dependency_overrides[get_chat_client] = lambda: model
     response = client.post("/api/v1/uncf/chat", json={"prompt": "Retention?"})
     assert response.status_code == 502
@@ -101,7 +97,7 @@ def test_total_request_deadline_is_shorter_than_the_browser_timeout(client, anal
     class StalledModel:
         """A provider that does not finish within the route deadline."""
 
-        async def create(self, **kwargs):
+        async def complete(self, **kwargs):
             """Wait long enough for route cancellation to interrupt the request."""
             from types import SimpleNamespace
 
@@ -109,7 +105,6 @@ def test_total_request_deadline_is_shorter_than_the_browser_timeout(client, anal
             return SimpleNamespace(content=[])
 
     model = StalledModel()
-    model.messages = model
     app.dependency_overrides[get_chat_client] = lambda: model
     monkeypatch.setattr(routes, "REQUEST_TIMEOUT_SECONDS", 0.01)
     response = client.post("/api/v1/uncf/chat", json={"prompt": "Retention?"})

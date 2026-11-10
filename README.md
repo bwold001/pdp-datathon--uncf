@@ -62,19 +62,24 @@ Chat setup is in [Student success chat](#student-success-chat).
 
 #### Hosting on Vercel
 
-[`vercel.json`](vercel.json) deploys only the Explorer, as one Vercel project with two
+[`vercel.json`](vercel.json) deploys only the Explorer, as one Vercel project with three
 [services](https://vercel.com/docs/services):
 
 - **frontend:** the Next.js app in `playground/client_application`. `/` redirects to `/uncf/paths`.
-  It's built with `NEXT_PUBLIC_STUDENT_SUCCESS_CHAT_ENABLED=false`, because this deployment has no
-  model provider.
+  Chat is enabled by default; `NEXT_PUBLIC_STUDENT_SUCCESS_CHAT_ENABLED=false` disables it after
+  a rebuild.
 - **backend:** the UNCF API (`api.route:app`) as a Python function. Its build runs
   `python -m api load`, so every deploy builds `pdp.sqlite` from the mock CSVs in `data/raw/`.
-  The bundle includes `analytics/`, so `/analyses` works there too.
+  The bundle includes `analytics/`, so `/analyses` works there too. This service is provider-free.
+- **chat:** the dedicated `chat_app:app` service uses the official OpenRouter Python SDK. It builds
+  the same synthetic extract, reads it in read-only snapshots and exposes no uploads or Sandbox
+  endpoints. Build-only PyArrow is removed after loading the extract to keep the function bundle
+  within Vercel’s limit. See [deploy chat](docs/chat-deployment.md) for credentials, model selection,
+  Preview verification and rollback.
 
-Both sit on one site: `/api/v1/uncf/*` goes to the API and everything else goes to the pages. The
-client is built with `NEXT_PUBLIC_API_BASE_URL=/api/v1`, so a preview calls its own API and needs
-no CORS. Call it from client components: a relative URL doesn't work in a server side `fetch`.
+All three sit on one site: `/api/v1/chat` and `/api/v1/uncf/chat` go to chat before the
+`/api/v1/uncf/*` API catch-all; everything else goes to the pages. The client is built with
+`NEXT_PUBLIC_API_BASE_URL=/api/v1`, so a preview calls its own API and needs no CORS. Call it from client components: a relative URL doesn't work in a server side `fetch`.
 `api/tests/test_vercel_config.py` checks the wiring.
 
 The data is mock data and the site is public. Before real student data goes here, it needs a
@@ -201,13 +206,14 @@ old `/chat` and `/sandbox/data-chat-ui` bookmarks redirect there. See
    data shows up.
 2. Follow [Playground setup](playground/README.md) for its Python 3.14/uv and Node 24/Bun runtimes.
    The root Python and the Playground's provider runtime are separate environments.
-3. Set `ANTHROPIC_API_KEY` in the server's ignored `.env.development.local` or environment, and keep
-   it server side. `UNCF_CHAT_MODEL` picks the Anthropic model. This adapter is not a campus
-   production hosting arrangement.
+3. Set `OPENROUTER_API_KEY` and `UNCF_CHAT_MODEL=openai/gpt-4.1` in the server's ignored
+   `.env.development.local` or environment. Use a canonical, tool-capable OpenRouter model ID
+   available to your account. The same key supports model changes. Replace legacy OpenAI/Anthropic
+   keys and bare `claude-*` settings; no names are rewritten. Keep the key server-side.
 4. Run the Playground API and client (`mise run api:dev`, `mise run web:dev`) and open `/uncf/chat`.
-   `UNCF_CHAT_ENABLED` turns chat on independently of `SANDBOX_ENABLED`: on in local development,
-   opt in for production. A provider enabled deployment sets it together with
-   `NEXT_PUBLIC_STUDENT_SUCCESS_CHAT_ENABLED=true` on the client.
+   `UNCF_CHAT_ENABLED` controls chat independently of `SANDBOX_ENABLED`. It is enabled in local
+   development and the dedicated Vercel chat service unless explicitly disabled. Full Playground
+   production remains opt-in. The client uses its existing `NEXT_PUBLIC_API_BASE_URL`.
 5. Try "What is the graduation rate for chemistry majors?", "What is the retention rate for all
    majors?" and "What is enrollment ethnicity by academic program over the past 2 years?" Choose
    the cohort, credential and chemistry definition it asks for, then open "How these results were
@@ -237,3 +243,8 @@ rounded time to credential must never be used to invent a bachelor's award semes
 `mise run api:test-sqlite`, `mise run web:build`, `mise run web:lint` and
 `mise run web:test-storybook`. Python tests use small, independently counted SQLite fixtures and a
 scripted model, with no live provider calls.
+
+The Vercel chat service needs the OpenRouter key and model configured before deployment; without
+its key, chat returns a readable 503 configuration error.
+`NEXT_PUBLIC_STUDENT_SUCCESS_CHAT_ENABLED=false` disables the UI after a rebuild, and `UNCF_CHAT_ENABLED=false` disables backend chat routes.
+See the [deployment guide](docs/chat-deployment.md).

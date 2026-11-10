@@ -1,12 +1,13 @@
 """Scripted model tests exercise the real analytics database and receipts."""
 
 import asyncio
-from types import SimpleNamespace as Block
+import json
 
 import pytest
 from analytics.service import AnalyticsService
 from analytics.tests.analytics_fixtures import build_database, fixture_coverage
 
+from app.chat.provider import ModelReply, ToolCall
 from app.chat.schemas import ChatRequest
 from app.chat.service import MAX_TOOL_ROUNDS, ChatFailed, answer
 
@@ -18,27 +19,33 @@ class ScriptedModel:
         """Record calls and consume a finite response script."""
         self.responses = list(responses)
         self.requests = []
-        self.messages = self
 
-    async def create(self, **request):
+    async def complete(self, **request):
         """Return the next response, preserving tool result messages for assertions."""
         self.requests.append(request)
-        return Block(content=self.responses.pop(0))
+        blocks = self.responses.pop(0)
+        calls = [block for block in blocks if isinstance(block, ToolCall)]
+        message = {"role": "assistant", "content": None}
+        if calls:
+            message["tool_calls"] = [
+                {
+                    "id": call.id,
+                    "type": "function",
+                    "function": {"name": call.name, "arguments": json.dumps(call.arguments)},
+                }
+                for call in calls
+            ]
+        return ModelReply(calls, message)
 
 
 def call(analysis, **parameters):
     """A tool call requesting actual calculations."""
-    return Block(
-        type="tool_use",
-        name="run_analysis",
-        input={"analysis": analysis, **parameters},
-        id="tool_1",
-    )
+    return ToolCall("tool_1", "run_analysis", {"analysis": analysis, **parameters})
 
 
 def finish():
     """Model prose must never overwrite or replace deterministic numerical evidence."""
-    return Block(type="text", text="The rate is 99.9% and 123 students graduated.")
+    return "The rate is 99.9% and 123 students graduated."
 
 
 @pytest.mark.parametrize(
@@ -73,7 +80,7 @@ def test_three_questions_return_real_receipts(tmp_path, analysis, parameters, qu
     direct = service.analyze({"analysis": analysis, **parameters})
     assert reply.receipts == direct.receipts
     assert "99.9" not in reply.message and "123" not in reply.message
-    assert {t["name"] for t in model.requests[0]["tools"]} == {
+    assert {t["function"]["name"] for t in model.requests[0]["tools"]} == {
         "get_analysis_catalog",
         "get_analysis_definition",
         "run_analysis",
@@ -137,14 +144,7 @@ def test_ungrounded_prose_and_sql_are_not_displayed(tmp_path):
     """A provider's fluent unsupported answer is never treated as a calculation."""
     service = AnalyticsService(build_database(tmp_path / "data.sqlite"), fixture_coverage())
     model = ScriptedModel(
-        [
-            Block(
-                type="tool_use",
-                name="run_analysis",
-                id="bad",
-                input={"analysis": "retention", "sql": "SELECT *"},
-            )
-        ],
+        [ToolCall("bad", "run_analysis", {"analysis": "retention", "sql": "SELECT *"})],
         [finish()],
     )
     reply = asyncio.run(
@@ -157,15 +157,10 @@ def test_ungrounded_prose_and_sql_are_not_displayed(tmp_path):
 def test_loop_cap_and_missing_key(tmp_path):
     """Provider configuration and bounded execution fail visibly."""
     service = AnalyticsService(build_database(tmp_path / "data.sqlite"), fixture_coverage())
-    model = ScriptedModel(
-        *[
-            [Block(type="tool_use", name="unknown_tool", input={}, id="bad")]
-            for _ in range(MAX_TOOL_ROUNDS)
-        ]
-    )
+    model = ScriptedModel(*[[ToolCall("bad", "unknown_tool", {})] for _ in range(MAX_TOOL_ROUNDS)])
     with pytest.raises(ChatFailed):
         asyncio.run(answer(ChatRequest(prompt="Keep going"), model, "test", service))
-    with pytest.raises(ChatFailed, match="ANTHROPIC_API_KEY"):
+    with pytest.raises(ChatFailed, match="OPENROUTER_API_KEY"):
         asyncio.run(answer(ChatRequest(prompt="Retention?"), None, "test", service))
 
 
