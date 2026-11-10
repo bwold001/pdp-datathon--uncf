@@ -92,7 +92,7 @@ export const LongAnswerStaysInView: Story = {
     await userEvent.click(canvas.getByRole("button", { name: "What is the retention rate for all majors?" }));
     await expect(canvas.getByRole("status")).toBeVisible();
     resolve({ ...response, receipts: [{ ...receipt, rows: Array.from({ length: 20 }, (_, index) => ({ ...receipt.rows[0], label: `Program ${index}` })) }] });
-    await expect(canvas.getByText("Program 19")).toBeInTheDocument();
+    await expect(await canvas.findByText("Program 19")).toBeInTheDocument();
     const scrollingRegion = canvas.getByRole("list", { name: "Conversation" }).parentElement!;
     await waitFor(() => expect(scrollingRegion.scrollTop).toBeGreaterThan(0));
   },
