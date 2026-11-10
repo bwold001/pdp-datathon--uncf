@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { type CohortFilters, countChangedFilters, defaultCohortFilters } from "./cohort-filters";
 import { type CohortOptions, explorerLoader } from "./explorer-api";
 import { cohortFilters } from "./explorer-config";
-import { useExplorer } from "./explorer-context";
+import { type StudentCount, useExplorer } from "./explorer-context";
 import { explorerLinkButton, explorerWrap } from "./explorer-styles";
 import { FilterSelect } from "./filter-select";
 import { useCohortFilters } from "./use-cohort-filters";
@@ -35,8 +35,8 @@ type CohortBarViewProps = {
   filters: CohortFilters;
   /** The counts behind each choice; left out while they load. */
   options?: CohortOptions;
-  /** The current tab's student count, or null when it hasn't reported one. */
-  studentCount: number | null;
+  /** The current tab's student count, "under 10" when it hides its numbers, or null when it hasn't reported one. */
+  studentCount: StudentCount;
   onChange?: (id: string, value: string | null) => void;
   onReset?: () => void;
   disabled?: boolean;
@@ -76,11 +76,13 @@ export function CohortBarView({ filters, options, studentCount, onChange, onRese
 }
 
 /** "Showing 1,114 students · 2 filters set", or the whole cohort's size until the tab reports its count. */
-function showingText(filters: CohortFilters, studentCount: number | null, options?: CohortOptions): string {
+function showingText(filters: CohortFilters, studentCount: StudentCount, options?: CohortOptions): string {
   const cohort = filters.cohort ?? "";
   const cohortSize = options?.cohorts[cohort];
   let showing = `${cohort} cohort`;
-  if (studentCount !== null) showing = `Showing ${studentCount.toLocaleString("en-US")} students`;
+  // Never the cohort's size here: it would read as if that many students matched.
+  if (studentCount === "under 10") showing = "Fewer than 10 students match";
+  else if (studentCount !== null) showing = `Showing ${studentCount.toLocaleString("en-US")} students`;
   else if (cohortSize != null) showing = `${cohort} cohort: ${cohortSize.toLocaleString("en-US")} students`;
   const changed = countChangedFilters(filters);
   if (changed === 0) return showing;

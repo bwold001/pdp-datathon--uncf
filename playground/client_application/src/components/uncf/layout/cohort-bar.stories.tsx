@@ -94,3 +94,13 @@ export const SearchALongList: Story = {
     await expect(page.queryByRole("radio", { name: /^White/ })).not.toBeInTheDocument();
   },
 };
+
+/** When the tab hides its numbers for too few students, the bar says so, not the whole cohort's size. */
+export const FewerThanTen: Story = {
+  name: "Fewer than 10 match",
+  render: () => <CohortBarView filters={{ ...defaultCohortFilters(), pell: "Y", race: "Asian" }} options={cohortOptions2023} studentCount="under 10" />,
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText("Fewer than 10 students match · 2 filters set")).toBeVisible();
+    await expect(canvas.queryByText(/2,580/)).not.toBeInTheDocument();
+  },
+};
