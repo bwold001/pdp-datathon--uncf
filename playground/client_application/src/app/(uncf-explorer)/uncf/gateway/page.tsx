@@ -16,7 +16,7 @@ export default function GatewayCoursesPage() {
         howToRead="Each bar totals 100%. The gap between the two retention columns shows how much passing the course matters."
         keyTerms="Gateway course: first college-level math or English, flagged in PDP. D/F/W: a grade of D or F, or a withdrawal."
       >
-        Pass, D/F and withdrawal rates in first-year math and English, and their relationship to next-fall retention.
+        Pass, D/F and withdrawal rates in first-year math and English, and their relationship to retention.
       </ViewIntro>
       {/* The numbers depend on the cohort bar, which is in the URL; the intro above renders without it. */}
       <Suspense fallback={<GatewayLoading />}>
