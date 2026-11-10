@@ -80,7 +80,23 @@ jobs:
     defaults:
       run:
         working-directory: playground
+    services:
+      postgres:
+        image: postgres:18.4
+        env:
+          POSTGRES_USER: pdp
+          POSTGRES_PASSWORD: pdp
+          POSTGRES_DB: pdp
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -h localhost -U pdp -d pdp"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
     env:
+      PDP_TEST_POSTGRES_URL: postgresql://pdp:pdp@localhost:5432/pdp
+      PDP_REQUIRE_POSTGRES: "1"
       # Same as `mise trust` locally, so mise uses playground/mise.toml.
       MISE_TRUSTED_CONFIG_PATHS: ${{ github.workspace }}/playground
     steps:

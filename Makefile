@@ -15,6 +15,7 @@ check:
 	cd mcp && $(PYTEST)
 	cd measures && $(PYTEST)
 	cd gap_finder && $(PYTEST)
+	cd analytics && $(PYTEST)
 	cd api && $(PYTEST)
 
 # For while you work: the same commands, without the tests marked slow. Run make check before pushing.

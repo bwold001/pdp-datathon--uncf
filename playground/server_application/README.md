@@ -162,72 +162,31 @@ Worked example: [`app/sandbox/add_a_sandbox_page/`](app/sandbox/add_a_sandbox_pa
 One endpoint serves your whole page, with `?charts=` choosing what it returns, e.g. `/api/v1/sandbox/add-a-sandbox-page?charts=by-modality`.
 Check it at http://localhost:8000/docs.
 
-#### Sandbox chat
+#### Student success chat
 
-`POST /api/v1/sandbox/chat/suggest` answers a staff question such as "what should I look at?" or
-"what does this column mean?". Claude (Anthropic) answers it with:
+`POST /api/v1/chat` serves the bounded graduation, retention and enrollment assistant.
+The existing `/api/v1/uncf/chat` and `/api/v1/sandbox/chat/suggest` paths use the same handler
+and typed receipt contract. The old `/chat` and Sandbox browser pages redirect to `/uncf/chat`. The arbitrary-SQL
+Sandbox chat implementation has been removed; other Sandbox examples remain.
 
-- **System prompt:** a few chat rules, then the
-  [`metadata-advisor` skill](../../.agents/skills/metadata-advisor/SKILL.md) (frontmatter
-  stripped), read once per process. The skill tells it to pick a measure and say why and why not,
-  give a small-group caution, write an approved SQL query to run locally, and decline requests for
-  student-level records. Edit the skill and restart the server to change the advice.
-- **Definitions tools:** `list_tables`, `describe_table`, `get_column_definition`,
-  `get_database_info`: the [MCP server's](../../mcp/README.md) definitions tools, called through its
-  `pdp_mcp.metadata` library, with the same schemas as
-  [`mcp/schemas/tools.json`](../../mcp/schemas/tools.json). Plus `get_column_dictionary`: the
-  `/sandbox/dictionary` endpoint's entries, with each column's stored type and allowed codes.
-- **Query tool:** `run_aggregate_query` runs one read-only query on the data model loaded into this
-  Playground's database (load it from the Sandbox pipeline page first). It uses the MCP server's
-  read-only query path (`pdp_mcp.db`), so the database refuses writes, with a 10-second limit and
-  200 rows at most. Only aggregates come back: the result needs an `n` column (students per
-  group), groups under 10 are dropped, and results with `student_id`, `enrollment_id` or
-  `attribute_id` columns, or any student ID value, are refused. These checks catch accidental
-  student-level output; they aren't a security boundary, since SQL can transform an ID or misstate
-  `n`. That's acceptable only because the data is synthetic and the sandbox is off in production.
-  The MCP server itself still doesn't register a query tool.
+Install with `uv sync`: the repository's `pdp-student-success` package and data model are editable
+local dependencies. `app/chat/` contains only orchestration, tools and transport.
+`app/services/analytics.py` supplies read-only snapshots of `DATABASE_URL` to the shared service.
+There is no fallback to the standalone extract or cached result. Errors do not expose credentials.
+Coverage declarations still come from `UNCF_ANALYTICS_CONFIG` or `analytics/config/analytics.yaml`.
 
-The model never sees student records. The data is synthetic. Code:
-[`app/sandbox/chat/`](app/sandbox/chat/). Page: http://localhost:3000/sandbox/data-chat-ui.
+`UNCF_CHAT_ENABLED=true` enables chat independently of `SANDBOX_ENABLED`; development enables it
+in the committed environment template. Production remains opt-in. Set `ANTHROPIC_API_KEY` in an
+ignored local environment file and optionally override `UNCF_CHAT_MODEL`. Clarification can resume
+without another provider call. Numerical text and formulas are validated and rendered from receipts.
 
-**Run it locally:**
+All three graduation horizons and perspectives, retention-by-entry-major and annual enrollment
+by ethnicity/program are retained. No new coverage or award-semester facts are inferred by moving
+code. The root provider-free Results deployment is a separate existing compatibility surface.
 
-1. Put your key in `.env.development.local` (git-ignored, never the committed `.env.development`):
-
-   ```bash
-   ANTHROPIC_API_KEY=sk-ant-...
-   # Optional. Defaults to claude-sonnet-5-5.
-   SANDBOX_CHAT_MODEL=claude-sonnet-5-5
-   ```
-
-2. From the repo root: `mise run api:install` (once, for `anthropic` and `pyyaml`), then
-   `mise run api:dev` and, in a second terminal, `mise run web:dev`.
-3. Open http://localhost:3000/sandbox/data-chat-ui and try:
-   - "What's the first-year retention rate by first-term enrollment intensity?" With the data
-     loaded, it runs an aggregate query; the SQL and result show under **Query**.
-   - "How do I analyze first-year drop-off?" You get a measure, breakdowns, and a SQL query.
-   - "What's in cohort_membership?" The `describe_table` result shows under **Definitions**.
-   - "List the student IDs who dropped out." The assistant declines and gives an aggregate query.
-
-Or skip the UI:
-
-```bash
-curl -X POST http://localhost:8000/api/v1/sandbox/chat/suggest \
-  -H 'content-type: application/json' \
-  -d '{"prompt": "How do we analyze first-year student drop-off?"}'
-```
-
-**Test it without a key:** `mise run api:test-sqlite` runs
-[`tests/test_sandbox_chat.py`](tests/test_sandbox_chat.py), which replaces Anthropic with a scripted
-fake, and [`tests/test_sandbox_chat_tools.py`](tests/test_sandbox_chat_tools.py), which runs the
-dictionary and query tools against a small SQLite file. No test calls a real model.
-
-| Status | Means |
-|---|---|
-| 200 | `message` is Claude's answer. `definitions` and `query` are the last definitions and query tool results it used. |
-| 422 | The prompt is empty or longer than 2,000 characters. |
-| 502 | Anthropic failed (bad key, rate limit, outage), or the model made more than 8 rounds of tool calls. |
-| 503 | `ANTHROPIC_API_KEY` isn't set. |
+Run `mise run api:test-sqlite` and API lint. Configured-database parity tests compare direct
+service results and chat receipts, check reloads, missing data, and read-only connections.
+Optional PostgreSQL tests use `PDP_TEST_POSTGRES_URL`; `PDP_REQUIRE_POSTGRES=1` forbids skipping them.
 
 ## Libraries Included
 

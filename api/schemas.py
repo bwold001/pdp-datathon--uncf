@@ -10,7 +10,7 @@ from typing import Literal, Union
 
 from pydantic import BaseModel, ConfigDict
 
-# The measures that have a definition (#3). Add one here once api/definitions.py has it.
+# The measures that have a definition (#3). Add one here once measures/definitions.py has it.
 Measure = Literal["retention", "persistence", "gateway_math", "gateway_english", "dfw_rate", "credit_completion"]
 # school: the PDP retention flag. federal: fall to fall, enrolled here the fall after year 1.
 RetentionType = Literal["school", "federal"]
@@ -47,7 +47,7 @@ Number = Union[int, float]
 
 
 class MeasureDefinition(BaseModel):
-    """What a measure means, from api/definitions.py."""
+    """What a measure means, from measures/definitions.py."""
 
     name: str
     pdp_name: str

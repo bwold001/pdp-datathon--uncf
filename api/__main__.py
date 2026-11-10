@@ -1,18 +1,17 @@
-"""Entry point: `python -m api [load|serve|precompute]`.
+"""Entry point: `python -m api [load|serve]`.
 
-No argument loads the data if it's missing, then serves the Results API. `precompute` still saves results
-the old way (#4); the API no longer needs it.
+No argument loads missing data and serves the API (api/route.py).
 """
 from __future__ import annotations
 
 import argparse
 import logging
 
-from api import precompute
+from api.load import ensure_data_loaded
 
 
 def serve(host: str, port: int) -> None:
-    """Start the Results API with uvicorn."""
+    """Start the API with uvicorn."""
     import uvicorn
 
     uvicorn.run("api.route:app", host=host, port=port)
@@ -23,17 +22,14 @@ def main(argv: list[str] | None = None) -> None:
     from api.route import DEFAULT_PORT
 
     parser = argparse.ArgumentParser(prog="python -m api")
-    parser.add_argument("command", nargs="?", choices=["load", "serve", "precompute"])
+    parser.add_argument("command", nargs="?", choices=["load", "serve"])
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=DEFAULT_PORT)
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO)
 
-    if args.command == "precompute":
-        precompute.main()
-        return
     if args.command in (None, "load"):
-        precompute.ensure_data_loaded()
+        ensure_data_loaded()
     if args.command in (None, "serve"):
         serve(args.host, args.port)
 

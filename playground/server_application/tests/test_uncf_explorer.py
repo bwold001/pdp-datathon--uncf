@@ -2,7 +2,7 @@
 
 import pytest
 
-# app.uncf put the repository root on the import path when the app was built (see conftest.py).
+# The Playground installs the repo root (pdp-student-success), so api and measures import directly.
 from api import data, route
 from measures.tests.explorer_fixture import here, make_database, student
 

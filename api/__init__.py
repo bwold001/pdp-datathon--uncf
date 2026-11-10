@@ -1,1 +1,1 @@
-"""UNCF squad code: precompute, definitions and the results API."""
+"""Provider-free HTTP compatibility for deployed results and shared analytics."""

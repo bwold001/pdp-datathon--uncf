@@ -5,7 +5,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from api import data, route
-from api.definitions import DEFINITIONS
+from measures.definitions import DEFINITIONS
 from api.route import create_app
 from measures.tests.explorer_fixture import here, make_database, student
 

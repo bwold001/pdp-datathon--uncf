@@ -38,16 +38,27 @@ Reinstall whenever `requirements.txt` changes.
 
 ### Run the project
 
+Four folders hold our code. Each number has one owner:
+
+| Folder | What it holds |
+| --- | --- |
+| `measures/` | Every Explorer and Results API number: `run_measure`, one file per measure, the page breakdowns, and the staff facing definitions (`measures/definitions.py`) |
+| `analytics/` | The chat's deterministic analyses: graduation, retention by major, annual enrollment, program attribution, coverage rules and receipts. No model provider or Playground needed |
+| `api/` | HTTP only: request checks, response shapes and one router under `/api/v1/uncf`. No calculations |
+| `playground/server_application/app/chat/` | The bounded chat: provider calls and validated tools. Database access is in `app/services/analytics.py` |
+
 From the repo root, with `.venv` active:
 
 ```bash
-python -m api              # load the data if it's missing, then serve the Results API on http://localhost:8001
+python -m api              # load the data if it's missing, then serve the API on http://localhost:8001
 python -m api load         # only load the data (about 75 seconds the first time)
 python -m api serve        # only serve the API; --port to change it
 ```
 
-`python -m api` is the one entry point for everything we build in `api/`. It doesn't need the
-Playground. Test it with `python -m pytest api`. Interactive API docs: http://localhost:8001/docs.
+`python -m api` doesn't need the Playground. Test it with `python -m pytest api`. Interactive API
+docs: http://localhost:8001/docs. For the pages and chat, run the [Playground](playground/README.md)
+backend and frontend: it mounts the same router (`playground/server_application/app/uncf.py`).
+Chat setup is in [Student success chat](#student-success-chat).
 
 #### Hosting on Vercel
 
@@ -55,20 +66,23 @@ Playground. Test it with `python -m pytest api`. Interactive API docs: http://lo
 [services](https://vercel.com/docs/services):
 
 - **frontend:** the Next.js app in `playground/client_application`. `/` redirects to `/uncf/paths`.
+  It's built with `NEXT_PUBLIC_STUDENT_SUCCESS_CHAT_ENABLED=false`, because this deployment has no
+  model provider.
 - **backend:** the UNCF API (`api.route:app`) as a Python function. Its build runs
   `python -m api load`, so every deploy builds `pdp.sqlite` from the mock CSVs in `data/raw/`.
+  The bundle includes `analytics/`, so `/analyses` works there too.
 
 Both sit on one site: `/api/v1/uncf/*` goes to the API and everything else goes to the pages. The
 client is built with `NEXT_PUBLIC_API_BASE_URL=/api/v1`, so a preview calls its own API and needs
-no CORS. Call it from client components: a relative URL doesn't work in a server-side `fetch`.
+no CORS. Call it from client components: a relative URL doesn't work in a server side `fetch`.
 `api/tests/test_vercel_config.py` checks the wiring.
 
 The data is mock data and the site is public. Before real student data goes here, it needs a
-login, data that doesn't live in git, and the data owner's sign-off.
+login, data that doesn't live in git, and the data owner's sign off.
 
 #### How the numbers are calculated
 
-Every number comes from `measures/`. The API only checks the request and shapes the answer:
+Every Explorer number comes from `measures/`. The API only checks the request and shapes the answer:
 
 ```
 measures/run_measures.py   run_measure: every rate (retention, federal retention, persistence,
@@ -77,10 +91,13 @@ measures/run_measures.py   run_measure: every rate (retention, federal retention
 measures/calculations/     one file per measure, including federal_retention.py
 measures/breakdowns/       the Explorer pages: Student paths, DFW courses, gateway courses,
                            credit momentum. Rates from run_measure, split by term, course, flow or tier
+measures/definitions.py    every plain language definition
 api/filters.py             the cohort bar: checks cohort, 8 filters and retention type
 api/results.py             the Results API's rows from run_measure
-api/route.py               one router, under /api/v1/uncf (Vercel entrypoint api.route:app)
+api/analyses.py            the chat's analyses over HTTP, from analytics/
+api/route.py               one app under /api/v1/uncf (Vercel entrypoint api.route:app)
 api/data.py                where the data lives, load time, provisional cohorts
+api/load.py                builds pdp.sqlite when it's missing
 ```
 
 - **Calculated per request** from `normalized-data-model/output/pdp.sqlite`. Nothing is saved.
@@ -93,7 +110,7 @@ api/data.py                where the data lives, load time, provisional cohorts
   are settings in `measures/calculations/federal_retention.py`.
 - **DFW** rows carry `split`: D (0.7 to under 2.0), F (an F or under 0.7) and W, adding up to the
   numerator. DFW can also be grouped or filtered by `course`, `term` and `delivery`.
-- **Definitions** come from `api/definitions.py`. A school's own metric names go in
+- **Definitions** come from `measures/definitions.py`. A school's own metric names go in
   `LOCAL_NAMES`, picked with `UNCF_SCHOOL=fmu` or `benedict`.
 
 Every page route and `/results` take the same query values: `cohort`, the 8 filters
@@ -106,51 +123,25 @@ Every page route and `/results` take the same query values: `cohort`, the 8 filt
 | `GET /api/v1/uncf/options` | The measures, classes and groupings a client can ask for |
 | `GET /api/v1/uncf/health` | Whether the data is loaded, and `loaded_at` |
 | `GET /api/v1/uncf/cohort-options?cohort=` | Students per cohort year, and per filter value in the chosen cohort |
-| `GET /api/v1/uncf/definitions` | Every plain-language definition |
+| `GET /api/v1/uncf/definitions` | Every plain language definition |
 | `GET /api/v1/uncf/student-paths?…&terms=&group_by=` | Each student's status term by term (here, credential, elsewhere, stopped) with shares, moves, transfers, retention, and per group paths |
 | `GET /api/v1/uncf/dfw?…` | Everyone's DFW rate with D, F, W, then each course with 10 or more students |
 | `GET /api/v1/uncf/dfw/course?course=ENG%20101&…` | One course by term, delivery and group, each with `rest_rate` and `gap` against everyone else |
 | `GET /api/v1/uncf/gateway?…` | Gateway first attempts in year 1 (passed, D, F, W, shares), retention by outcome, riskiest first term pairs |
 | `GET /api/v1/uncf/credit-momentum?…` | Year 1 credits, completion ratio, 12/24/30 milestones, first two terms, credit tiers with retention |
+| `GET /api/v1/uncf/analyses/catalog` | The chat's approved analyses, their choices and declared data coverage |
+| `POST /api/v1/uncf/analyses` | One approved analysis with its receipt, or a clarification when a needed choice is missing |
 
 - **Hidden or missing numbers** are `null` with a status: `suppressed` (under 10 students),
   `not_yet_observable`, or `not_reported` (a gateway measure the college doesn't report). Never 0.
   Starter issue #87 (working out a hidden group by subtraction) is not fixed.
 - **`provisional`** is true for the 2024-25 class, whose second year is only partly in the data.
-- **Errors:** 422 for a value the API doesn't offer (`invalid_filter`, `invalid_group_by`), 404
-  `unknown_course`, 503 `data_missing`. Bodies are `{"error": {"code", "message"}}`.
-- **Run it:** `python -m api` (port 8001, docs at http://localhost:8001/docs). CORS allows
-  http://localhost:3000 (change with `UNCF_CORS_ORIGINS`). The Playground server mounts the same
-  router (`playground/server_application/app/uncf.py`).
+- **Errors:** 422 for a value the API doesn't offer (`invalid_filter`, `invalid_group_by`,
+  `invalid_analysis`), 404 `unknown_course`, 503 `data_missing` or `analytics_unavailable`. Bodies
+  are `{"error": {"code", "message"}}`.
+- **CORS** allows http://localhost:3000 (change with `UNCF_CORS_ORIGINS`).
 
 How to build a tab: `playground/client_application/src/components/uncf/layout/README.md`.
-
-#### How the precompute works
-
-> **Being retired in #4:** the Results API now calculates per request, so it no longer reads
-> `success_measures.sqlite`. `python -m api precompute` still works until #4 removes it.
-
-- **Runs standalone.** It runs from the root env and needs no Playground. `measures/` uses only the
-  standard library, so it imports from the repo root. The API will read `success_measures.sqlite`
-  with `sqlite3` and never call `run_measure`.
-- **Two databases.** The loader writes `normalized-data-model/output/pdp.sqlite` (the source). The
-  precompute writes `measures/output/success_measures.sqlite` (the results). The Playground's own
-  database (PostgreSQL by default) is a third, separate one and is not used here.
-- **One save per measure.** A save replaces earlier rows for the same measure and cohort, so
-  `precompute()` passes every cohort and group in one `run_measure` call per measure. Splitting
-  groups across calls would wipe the first ones.
-- **What is saved.** Retention, gateway math and gateway English, for 2021-22 to 2024-25, by every
-  single dimension and every pair except first-gen: 36 groups, 7,080 rows.
-- **Timestamp.** There is no separate timestamp table. Each row's `data_loaded_at` is when
-  `pdp.sqlite` was built, not when the precompute ran, so a restart never makes old data look new. The API's `loaded_at` is `MAX(data_loaded_at)`.
-- **When data changes.** Every start recomputes (about 10 seconds), so new data shows up after a
-  reload of `pdp.sqlite` and a restart, with a newer `data_loaded_at`. The loader only runs when
-  `pdp.sqlite` is missing: to pick up new source files, delete it or run the loader yourself.
-- **Small groups.** Hidden groups (under 10 students) have blank numbers, never 0. Saving every pair
-  gives more ways to subtract a hidden group from totals (starter issue #87, not fixed).
-- **Where the API runs.** The API is a standalone FastAPI app from `api/`. It needs only
-  `success_measures.sqlite` to exist. The Playground is not required.
-- **Columns.** The `success_measures` columns are defined in `measures/save_results.py`.
 
 ## Data
 
@@ -172,7 +163,7 @@ columns: [pdp-data skill](.agents/skills/pdp-data/SKILL.md#known-data-facts). Ne
 | Piece | Use |
 | --- | --- |
 | [Normalized data model](normalized-data-model/README.md) | Tables, keys, loader into SQLite or PostgreSQL |
-| [Success measures](measures/README.md) | Retention, persistence, gateway completion |
+| [Success measures](measures/README.md) | Retention, persistence, gateway completion; we added federal retention, DFW, credit completion, filters and the page breakdowns |
 | [Playground](playground/README.md) | Next.js + FastAPI app shell and chart examples |
 | [Data quality log](data/quality/README.md) | Known mock-data issues, such as first-generation status |
 | [PDP MCP server](mcp/README.md) | Definitions only, for development support |
@@ -196,3 +187,53 @@ Without `make` (Windows), run `python scripts/check.py`, `python data/quality/ru
 
 Short branch, pull request, a teammate reviews, then merge. See
 [CONTRIBUTING.md](CONTRIBUTING.md) and [AGENTS.md](AGENTS.md).
+
+## Student success chat
+
+The demonstration at `/uncf/chat` (the Explorer's Chat tab) answers the agreed graduation,
+retention and annual enrollment questions with shared calculation receipts from `analytics/`. The
+old `/chat` and `/sandbox/data-chat-ui` bookmarks redirect there. See
+[calculation definitions and coverage requirements](docs/analytics-definitions.md).
+
+1. Install the Playground's dependencies with `uv sync` in `playground/server_application/`, then
+   load the cohort and course files in Workbench. Chat and `/analyses` read the Playground's
+   `DATABASE_URL` (SQLite or PostgreSQL, read only snapshots, no results cache), so newly uploaded
+   data shows up.
+2. Follow [Playground setup](playground/README.md) for its Python 3.14/uv and Node 24/Bun runtimes.
+   The root Python and the Playground's provider runtime are separate environments.
+3. Set `ANTHROPIC_API_KEY` in the server's ignored `.env.development.local` or environment, and keep
+   it server side. `UNCF_CHAT_MODEL` picks the Anthropic model. This adapter is not a campus
+   production hosting arrangement.
+4. Run the Playground API and client (`mise run api:dev`, `mise run web:dev`) and open `/uncf/chat`.
+   `UNCF_CHAT_ENABLED` turns chat on independently of `SANDBOX_ENABLED`: on in local development,
+   opt in for production. A provider enabled deployment sets it together with
+   `NEXT_PUBLIC_STUDENT_SUCCESS_CHAT_ENABLED=true` on the client.
+5. Try "What is the graduation rate for chemistry majors?", "What is the retention rate for all
+   majors?" and "What is enrollment ethnicity by academic program over the past 2 years?" Choose
+   the cohort, credential and chemistry definition it asks for, then open "How these results were
+   calculated" to see the evidence.
+
+Chat is served by the Playground at `POST /api/v1/chat` (`/api/v1/uncf/chat` is an alias). It
+uses the same `/api/v1/uncf/analyses` routes the standalone API offers.
+
+**Safeguards.** The model can call only the catalog, definitions and approved analysis tools. No
+tool accepts SQL, student IDs or file paths. Chat proposes the full scope and needs explicit
+approval before calculating, and infers no extra filters. A missing choice gets a typed
+clarification. A new question starts a separate analysis; only a pending typed request carries
+through clarification, and reset discards late replies. Displayed numbers, formulas and
+limitations come from validated receipts, never from the model's prose. Rates must match their
+numerators and denominators, and suppressed values stay out of evidence and display text. All
+three graduation horizons, program perspectives, ethnicity handling and certified coverage rules
+stay in place. Calculation deadlines cancel SQLite work and counting loops; timeouts wait for
+transaction cleanup, and PostgreSQL statements use the remaining request budget. These
+safeguards are for synthetic demonstrations, not a production privacy guarantee.
+
+**Data limits.** The unmodified mock extract does **not** certify complete academic years, full
+cohort follow up or exact award semesters, so some answers show unavailable or unknown. Configure
+only verified coverage in `analytics/config/analytics.yaml`. An earlier associate award or a
+rounded time to credential must never be used to invent a bachelor's award semester.
+
+**Checks.** `make check` at the root covers `analytics/`. In the Playground run `mise run api:lint`,
+`mise run api:test-sqlite`, `mise run web:build`, `mise run web:lint` and
+`mise run web:test-storybook`. Python tests use small, independently counted SQLite fixtures and a
+scripted model, with no live provider calls.

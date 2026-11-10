@@ -12,6 +12,11 @@ the app's left sidebar on these pages, so the pages live in their own route grou
 | Gateway courses | `src/app/(uncf-explorer)/uncf/gateway/page.tsx` | `/uncf/gateway` |
 | Credit momentum | `src/app/(uncf-explorer)/uncf/credit-momentum/page.tsx` | `/uncf/credit-momentum` |
 
+| Chat | `src/app/(uncf-explorer)/uncf/chat/page.tsx` | `/uncf/chat` |
+
+Chat components and stories live in `src/components/uncf/chat/`, alongside the other Explorer features.
+The old `/chat` and `/sandbox/data-chat-ui` pages redirect to `/uncf/chat`.
+
 ## Building a tab
 
 Branch from this shell and fill in your tab's `page.tsx`; each one only has its title for now.

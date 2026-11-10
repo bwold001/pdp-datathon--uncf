@@ -1,6 +1,6 @@
 """The UNCF API: the Results API (#5) and the Explorer pages, on one router under /api/v1/uncf.
 
-Every number comes from api.metrics, so the pages, the Results API, CSV export, insight card and chat agree.
+Every number comes from the measures package (run_measure and measures/breakdowns/), so the pages, the Results API, CSV export, insight card and chat agree.
 
 Every page route and /results take the same cohort bar: cohort, the eight filters (cohort_term,
 enrollment_intensity, enrollment_type, pell, gender, race, ethnicity, age_band) with the measures' value names,
@@ -19,12 +19,13 @@ import os
 from functools import lru_cache
 from typing import Annotated, get_args
 
-from fastapi import APIRouter, Depends, FastAPI, Query
+from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 
 from api import data, results
-from api.definitions import all_definitions, definition_for
+from api.analyses import router as analytics_router
+from measures.definitions import all_definitions, definition_for
 from api.filters import (
     DEFAULT_RETENTION_TYPE,
     FILTER_LABELS,
@@ -324,10 +325,18 @@ def create_app() -> FastAPI:
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[origin.strip() for origin in origins if origin.strip()],
-        allow_methods=["GET"],
+        allow_methods=["GET", "POST"],
         allow_headers=["*"],
     )
+
+    @app.exception_handler(HTTPException)
+    async def analysis_error(_request, exception: HTTPException):
+        """Keep the analytics routes' errors in the same error body as every other route."""
+        codes = {404: "not_found", 422: "invalid_analysis", 503: "analytics_unavailable"}
+        return error(exception.status_code, codes.get(exception.status_code, "http_error"), str(exception.detail))
+
     app.include_router(router, prefix="/api/v1")
+    app.include_router(analytics_router)
     return app
 
 

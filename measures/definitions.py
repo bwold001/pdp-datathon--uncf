@@ -1,9 +1,4 @@
-"""Plain-language definitions for each measure (#3). The Results API (#5) attaches one to every response.
-
-Written for campus staff, not engineers. The shape matches the Explorer's MeasureDefinition in
-playground/client_application/src/app/(app)/uncf/data.ts: name, pdp_name, what, how, who, limits.
-Change the wording here only, so the Explorer, CSV export, insight card and chat all say the same thing.
-"""
+"""Staff-facing definitions shared by the Results API and measure consumers."""
 from __future__ import annotations
 
 import os

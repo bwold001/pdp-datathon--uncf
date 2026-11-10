@@ -10,10 +10,10 @@ from fastapi.testclient import TestClient
 
 from api import __main__ as entry
 from api import data, results, route
-from api.definitions import DEFINITIONS
 from api.route import create_app
 from api.schemas import Dimension
 from api.schemas import Measure as ApiMeasure
+from measures.definitions import DEFINITIONS
 from measures.models import GroupDimension
 from measures.run_measures import DEFAULT_DATABASE
 from measures.tests.explorer_fixture import LOADED_AT, here, make_database, student
@@ -218,14 +218,12 @@ def test_cors_allows_the_playground_client(data_file, client) -> None:
 def test_entry_point_commands(monkeypatch) -> None:
     """No argument loads then serves; each subcommand runs only itself."""
     calls: list[str] = []
-    monkeypatch.setattr(entry.precompute, "ensure_data_loaded", lambda: calls.append("load"))
-    monkeypatch.setattr(entry.precompute, "main", lambda: calls.append("precompute"))
+    monkeypatch.setattr(entry, "ensure_data_loaded", lambda: calls.append("load"))
     monkeypatch.setattr(entry, "serve", lambda host, port: calls.append(f"serve {port}"))
     entry.main([])
     entry.main(["load"])
     entry.main(["serve", "--port", "9000"])
-    entry.main(["precompute"])
-    assert calls == ["load", "serve 8001", "load", "serve 9000", "precompute"]
+    assert calls == ["load", "serve 8001", "load", "serve 9000"]
 
 
 needs_data = pytest.mark.skipif(not DEFAULT_DATABASE.exists(), reason="run `python -m api load` first")

@@ -9,22 +9,27 @@ changes get in. Priorities: Core (Explorer), Stretch 1 (insight cards), Stretch 
 Never push to `main`, and never commit, push, or open a pull request without the user's explicit
 yes. Keep per-school differences in config, not forks.
 
-**New code goes in our own folders.** Don't edit the starter's Sandbox examples or shared
-foundations to build our features. Copy their pattern into our own folders instead:
-- Calculations (measures, filters on them, page breakdowns): `measures/`. Every number the API
-  returns comes from here.
-- API (request checks, definitions, response models, router): the top-level `api/` folder.
-  Mount its router in the Playground server with one line.
-- Client pages: `playground/client_application/src/app/(app)/uncf/`
-- Client components: `playground/client_application/src/components/uncf/`
+**Put code with its owner.** Don't edit the starter's Sandbox examples or shared foundations to
+build our features; copy their pattern into our own folders:
+- Every Explorer and Results API number (measures, filters on them, page breakdowns) and their
+  staff facing definitions: `measures/`.
+- The chat's deterministic analyses (graduation, retention by major, enrollment), program
+  attribution, coverage and receipts: `analytics/`.
+- HTTP only (request checks, response models, one router under `/api/v1/uncf`): `api/`. No
+  calculations here. The Playground server mounts its router with one line.
+- Chat provider calls and validated tools: `playground/server_application/app/chat/`; its database
+  access: `app/services/analytics.py`.
+- Client pages: `playground/client_application/src/app/(uncf-explorer)/uncf/`; client components:
+  `playground/client_application/src/components/uncf/` (chat in `uncf/chat/`, page `/uncf/chat`).
 
-This keeps upstream fixes easy to merge and our changes easy to review. If a shared file must
-change, say so in the pull request.
+Preserve the deployed Results API and Vercel routing when moving files. All numerical product
+answers must use validated deterministic receipts, not arbitrary SQL or generated numerical prose.
+Keep coverage, inference, missing-value and suppression rules shared by direct API and chat.
+Document changes to shared files in the review description.
 
 ## Before prompting
 
-- **Plan first.** For anything bigger than a small fix, use a planning skill before writing code.
-  See "Recommended AI workflows" in the README.
+- **Plan first.** For anything bigger than a small fix, outline the approach before writing code.
 - **Run steps in parallel when you can.** For each step, ask whether it really needs the previous
   step's result. If it doesn't, run it in parallel.
 - **Start simple.** Build the plain version first. Split work up only after you see where it's
@@ -35,12 +40,10 @@ change, say so in the pull request.
 - **Define the check first.** Before building, write down how you'll know it works: a command, a
   test, or an expected number.
 - **Every feature gets tests.** Add a pytest test with each feature, in a `tests/` folder next to
-  the code (for `api/`, `api/tests/`). A pull request without tests for its new behavior isn't done.
+  the code (for `api/`, `measures/` and `analytics/`, each has its own `tests/`). A pull request
+  without tests for its new behavior isn't done.
 - **Cap every retry loop.** Give each fix-and-retry loop a maximum number of tries (3 is a good
   default). At the cap, stop and ask a person. Don't keep trying.
-- **Use the README's skill for each phase.** When two installed skills do the same job (for
-  example `code-review` and `ce-code-review`), use the one in the README's "Which skill when"
-  table.
 - **Run the checks.** Use `make check-fast` while you work and `make check` before opening a pull
   request. If you changed `playground/`, also run the Playground's commands, because `make check`
   doesn't cover them. The README's [Checks](README.md#checks) section says what to run when, what
@@ -107,10 +110,7 @@ change, say so in the pull request.
 
 ## Agent skills
 
-Compound Engineering is configured in `.compound-engineering/config.yaml`. Commit shared
-settings and the example configuration; keep personal overrides in
-`.compound-engineering/config.local.yaml` untracked. Run `$ce-setup` when checking or updating
-the configuration. Setup for the other recommended skill set is already complete.
+Never use Compound Engineering (CE) skills unless the user explicitly requests a specific CE skill.
 
 ### Issue tracker
 

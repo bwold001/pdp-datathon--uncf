@@ -83,7 +83,7 @@ def test_home_redirects_to_an_explorer_tab_that_exists() -> None:
 
 def test_bundle_keeps_what_the_api_reads() -> None:
     """The API's code and pdp.sqlite stay in its bundle."""
-    for path in ["normalized-data-model/output/pdp.sqlite", "api/route.py", "measures/run_measures.py"]:
+    for path in ["normalized-data-model/output/pdp.sqlite", "api/route.py", "measures/run_measures.py", "analytics/service.py", "analytics/config/analytics.yaml"]:
         assert not is_excluded(path), path
 
 
@@ -91,3 +91,8 @@ def test_bundle_drops_the_frontend_and_raw_data() -> None:
     """Big files the API never reads stay out of its bundle."""
     for path in ["playground/client_application/node_modules/next/package.json", "data/raw/pdp_cohort_data.csv", "api/tests/test_results.py"]:
         assert is_excluded(path), path
+
+
+def test_provider_free_deployment_disables_chat_ui():
+    """An Explorer-only deployment must not advertise a missing chat backend."""
+    assert "NEXT_PUBLIC_STUDENT_SUCCESS_CHAT_ENABLED=false " in FRONTEND["buildCommand"]

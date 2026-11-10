@@ -64,9 +64,11 @@ class Settings(BaseSettings):
     # Mock-data endpoints behind the client's example charts. Off in production.
     SANDBOX_ENABLED: bool = True
 
-    # Sandbox chat. Put the key in .env.<APP_ENV>.local; without it the chat endpoint answers 503.
+    # Student success chat uses a server-side key in .env.<APP_ENV>.local.
     ANTHROPIC_API_KEY: str | None = None
-    SANDBOX_CHAT_MODEL: str = "claude-sonnet-5-5"
+    # Explicitly enabled for the local synthetic demo; independent of Sandbox.
+    UNCF_CHAT_ENABLED: bool = False
+    UNCF_CHAT_MODEL: str = "claude-sonnet-5-5"
 
     @property
     def is_development(self) -> bool:

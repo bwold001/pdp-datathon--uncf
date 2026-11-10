@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from api.definitions import DEFINITIONS, FINDINGS, definition_for
+from measures.definitions import DEFINITIONS, FINDINGS, definition_for
 from measures.models import Measure
 
 FINDINGS_CSV = Path(__file__).parents[2] / "data" / "quality" / "findings.csv"
@@ -69,7 +69,7 @@ def test_definition_for_unknown_measure_raises() -> None:
 
 def test_a_school_can_use_its_own_name(monkeypatch) -> None:
     """With UNCF_SCHOOL set, a school's own name replaces the label and the PDP name stays."""
-    from api import definitions
+    from measures import definitions
 
     monkeypatch.setitem(definitions.LOCAL_NAMES, "fmu", {"retention": "Returned to FMU"})
     monkeypatch.setenv("UNCF_SCHOOL", "fmu")

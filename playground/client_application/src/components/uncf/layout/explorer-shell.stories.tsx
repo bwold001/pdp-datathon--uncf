@@ -15,7 +15,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** The header, then the four tabs in one row with the current one marked. */
+/** The header, then the five tabs in one row with the current one marked. */
 export const OnTheDfwTab: Story = {
   name: "On the DFW tab",
   play: async ({ canvas }) => {
@@ -24,12 +24,13 @@ export const OnTheDfwTab: Story = {
     await expect(canvas.queryByRole("button")).not.toBeInTheDocument();
 
     const tabs = canvas.getAllByRole("link");
-    await expect(tabs.map((tab) => tab.textContent)).toEqual(["Student paths", "DFW", "Gateway courses", "Credit momentum"]);
+    await expect(tabs.map((tab) => tab.textContent)).toEqual(["Student paths", "DFW", "Gateway courses", "Credit momentum", "Chat"]);
     await expect(tabs.map((tab) => tab.getAttribute("href"))).toEqual([
       "/uncf/paths",
       "/uncf/dfw",
       "/uncf/gateway",
       "/uncf/credit-momentum",
+      "/uncf/chat",
     ]);
     await expect(canvas.getByRole("link", { name: "DFW" })).toHaveAttribute("aria-current", "page");
     await expect(canvas.getByRole("link", { name: "Student paths" })).not.toHaveAttribute("aria-current");
