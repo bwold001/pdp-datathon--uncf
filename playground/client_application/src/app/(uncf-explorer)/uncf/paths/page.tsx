@@ -16,7 +16,7 @@ export default function StudentPathsPage() {
         whatThisShows="Every first-time student in the selected entering cohort, followed through their next two fall or spring terms."
         howToRead="Band width = number of students. Bands split where students leave or transfer, and rejoin when they return."
         keyTerms={
-          // Retention and persistence in the shared dictionary's words (uncf/definitions.py), as the Results API says them.
+          // Retention and persistence in the shared dictionary's words (measures/definitions.py), as the Results API says them.
           <PdpKeyTerms terms={["retention", "persistence"]}>
             <b className="font-semibold">Stopped out:</b> no record here or at another college that term.
           </PdpKeyTerms>

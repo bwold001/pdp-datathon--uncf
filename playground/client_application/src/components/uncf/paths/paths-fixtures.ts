@@ -1,5 +1,6 @@
-// Real answers from GET /uncf/student-paths on the synthetic sample data (pdp.sqlite), saved for stories and tests.
-// Regenerate them with uncf/student_paths.py if the data or the endpoint changes; don't edit the numbers by hand.
+// Real answers from GET /uncf/student-paths on the synthetic sample data (pdp.sqlite), saved for stories and tests
+// before the API moved to measures/ (#36): first-time students only, without the fields #36 added. Regenerate them
+// from the running API (measures/breakdowns/student_paths.py); don't edit the numbers by hand.
 import type { CohortOptions } from "@/components/uncf/layout/explorer-api";
 
 import type { PathsResponse } from "./paths-data";

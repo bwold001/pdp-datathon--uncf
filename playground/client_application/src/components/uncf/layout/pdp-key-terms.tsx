@@ -6,7 +6,7 @@ import { useApiResource } from "@/hooks/use-api-resource";
 
 import { explorerLoader } from "./explorer-api";
 
-/** One measure's definition from the shared dictionary (uncf/definitions.py). */
+/** One measure's definition from the shared dictionary (measures/definitions.py). */
 export type PdpDefinition = { name: string; pdp_name: string; what: string; how: string; who: string; limits: string[] };
 
 /** The answer from GET /uncf/definitions. */
@@ -21,7 +21,7 @@ type PdpKeyTermsProps = {
 
 /**
  * Key terms for a tab, in the shared dictionary's words: the same definitions the Results API sends, so every page
- * says the same thing. Edit the wording in uncf/definitions.py, not here.
+ * says the same thing. Edit the wording in measures/definitions.py, not here.
  */
 export function PdpKeyTerms({ terms, children }: PdpKeyTermsProps) {
   const load = useMemo(() => explorerLoader<DefinitionsResponse>("/uncf/definitions", ""), []);

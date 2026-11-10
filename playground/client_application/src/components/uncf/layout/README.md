@@ -13,8 +13,9 @@ It replaces the app's left sidebar on these pages, so the pages live in their ow
 | Credit momentum | `src/app/(uncf-explorer)/uncf/credit-momentum/page.tsx` | `/uncf/credit-momentum` | |
 | Chat | `src/app/(uncf-explorer)/uncf/chat/page.tsx` | `/uncf/chat` | |
 
-The numbers come from the Python in the repo's `uncf/` folder (`uncf/explorer_api.py`), mounted in the Playground
-server under `/api/v1`. They're calculated from the synthetic sample data, never typed in.
+The numbers come from the shared API (`api/route.py`), which takes every number from `measures/` and is mounted in
+the Playground server under `/api/v1`. The tabs do no counting. The numbers are calculated from the synthetic sample
+data, never typed in.
 
 Chat components and stories live in `src/components/uncf/chat/`, alongside the other Explorer features.
 The old `/chat` and `/sandbox/data-chat-ui` pages redirect to `/uncf/chat`.
@@ -43,5 +44,5 @@ Copy the Student paths tab (`components/uncf/paths/`): a page with a `ViewIntro`
 
 - **Add a tab:** a page folder under `src/app/(uncf-explorer)/uncf/`, a route in `src/lib/routes.ts`,
   and a line in `explorerTabs` in `explorer-config.ts`.
-- **Add a filter:** an entry in `cohortFilters` in `explorer-config.ts` and in `FILTER_DIMENSIONS` in
-  `uncf/explorer_filters.py`, with the measures' dimension name and values. Every tab gets it.
+- **Add a filter:** an entry in `cohortFilters` in `explorer-config.ts`, with the measures' dimension name and
+  values (`STUDENT_DIMENSIONS` in `measures/breakdowns/common.py`, values in `measures/models.py`). Every tab gets it.

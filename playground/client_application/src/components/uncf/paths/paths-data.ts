@@ -13,7 +13,7 @@ export type TermCounts = {
   not_observed: number | null;
 };
 
-/** The answer from GET /uncf/student-paths (uncf/student_paths.py). */
+/** The answer from GET /uncf/student-paths (measures/breakdowns/student_paths.py). */
 export type PathsResponse = {
   meta: ExplorerMeta & {
     /** The three terms' names when every student started in the same term; null when start terms are mixed. */
