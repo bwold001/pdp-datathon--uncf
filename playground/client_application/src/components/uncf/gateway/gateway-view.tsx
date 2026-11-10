@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { Card, CardHead, Counted, Legend, MessageCard, Notice, formatShare, tableClasses } from "@/components/uncf/layout/explorer-parts";
+import { Card, CardHead, Counted, Legend, MessageCard, Notice, formatShare, retentionWords, tableClasses } from "@/components/uncf/layout/explorer-parts";
 import { explorerButton } from "@/components/uncf/layout/explorer-styles";
 import { cn } from "@/lib/utils";
 
@@ -29,8 +29,9 @@ export function GatewayView({ data }: { data: GatewayResponse }) {
         </Notice>
       )}
       {data.meta.provisional && (
-        <Notice title={`${data.meta.retention_term} is only partly in the data.`}>
-          Next-fall retention for the {data.meta.cohort} class will rise as the rest of that term arrives.
+        <Notice title={`The ${data.meta.cohort} class’s second year is only partly in the data.`}>
+          {retentionWords(data.meta.retention_type, data.meta.retention_term).name} for this class will rise as the rest of
+          that year arrives.
         </Notice>
       )}
       <OutcomesCard data={data} />
@@ -39,12 +40,12 @@ export function GatewayView({ data }: { data: GatewayResponse }) {
   );
 }
 
-/** The gateway outcomes table: students, the outcome bar, and next-fall retention for passed and not passed. */
+/** The gateway outcomes table: students, the outcome bar, and retention for passed and not passed. */
 function OutcomesCard({ data }: { data: GatewayResponse }) {
   const [showAll, setShowAll] = useState(false);
   const first = (["E", "M"] as const).flatMap((subject) => data.courses.filter((c) => c.subject === subject).slice(0, FIRST_PER_SUBJECT));
   const courses = showAll ? data.courses : first;
-  const leftOut = data.courses.reduce((total, course) => total + (course.other ?? 0), 0);
+  const words = retentionWords(data.meta.retention_type, data.meta.retention_term);
 
   return (
     <Card>
@@ -63,7 +64,7 @@ function OutcomesCard({ data }: { data: GatewayResponse }) {
                 <th className={tableClasses.th}>Course</th>
                 <th className={cn(tableClasses.th, tableClasses.right, "pr-8")}>Students</th>
                 <th className={tableClasses.th}>Outcome</th>
-                <th className={cn(tableClasses.th, tableClasses.right, "pl-4")}>Next-fall retention if passed</th>
+                <th className={cn(tableClasses.th, tableClasses.right, "pl-4")}>{words.name} if passed</th>
                 <th className={cn(tableClasses.th, tableClasses.right, "pl-4")}>if not passed</th>
               </tr>
             </thead>
@@ -101,8 +102,7 @@ function OutcomesCard({ data }: { data: GatewayResponse }) {
       <Counted>
         each student’s first attempt at each gateway course in year 1. Passed: a grade of 2.0 (a C) or better, or a pass. D
         or F: under 2.0, or an F. Withdrew: a W. Each bar is the share of students with one of those grades
-        {leftOut > 0 ? `; ${fmt(leftOut)} with an incomplete, audit or missing grade are left out` : ""}. Next-fall
-        retention: took a course here in {data.meta.retention_term}. Gateway courses are the ones{" "}
+        {leftOutNote(data.left_out)}. {words.name}: {words.how}. Gateway courses are the ones{" "}
         {data.meta.flagged
           ? "the institution flags as gateway math or English in the PDP course file"
           : "inferred from year-1 college-level courses with a math or English prefix"}
@@ -113,9 +113,16 @@ function OutcomesCard({ data }: { data: GatewayResponse }) {
   );
 }
 
+/** The note on first attempts with no final grade, across every gateway course (hidden ones too). */
+function leftOutNote(leftOut: number | null): string {
+  if (leftOut === 0) return "";
+  const count = leftOut === null ? "under 10" : fmt(leftOut);
+  return `; ${count} first attempts with an incomplete, audit or missing grade are left out`;
+}
+
 /** One course's outcomes as a bar that totals 100%, with the share in each part when there's room. */
 function OutcomeBar({ course }: { course: GatewayCourse }) {
-  const parts = outcomeStyle.map((outcome) => ({ ...outcome, share: course[outcome.key] / course.students }));
+  const parts = outcomeStyle.map((outcome) => ({ ...outcome, share: outcome.share(course) }));
   const label = parts.map((part) => `${Math.round(part.share * 100)}% ${part.label.toLowerCase()}`).join(", ");
   return (
     <div className="uncf-num flex h-6.5 overflow-hidden rounded-[3px] text-[13px]" role="img" aria-label={label}>
@@ -134,29 +141,30 @@ function OutcomeBar({ course }: { course: GatewayCourse }) {
   );
 }
 
-/** Course pairs from the first term whose next-fall retention is below the cohort's. */
+/** Course pairs from the first term whose retention is below the cohort's. */
 function PairsCard({ data }: { data: GatewayResponse }) {
   const when = data.meta.first_term ? `in ${data.meta.first_term}` : "in their first term";
+  const words = retentionWords(data.meta.retention_type, data.meta.retention_term);
   return (
     <Card>
       <CardHead
         title="High-risk course pairs"
         subtitle={
           <span className="block max-w-[70ch]">
-            Courses taken in the same first term where next-fall retention falls below the cohort’s. This shows a pattern
-            worth looking into, not the cause.
+            Courses taken in the same first term where retention ({words.lower}) falls below the cohort’s. This shows a
+            pattern worth looking into, not the cause.
           </span>
         }
         aside={
           <div className="self-end text-(--uncf-ink-2)">
-            Cohort retention: <b className="uncf-num">{formatShare(data.cohort_retention!.rate)}</b>
+            Cohort, {words.lower}: <b className="uncf-num">{formatShare(data.cohort_retention!.rate)}</b>
           </div>
         }
       />
       {data.pairs.length === 0 ? (
         <p className="text-(--uncf-ink-3)">
-          No pair of first-term courses taken by {data.meta.min_pair_students} or more students has next-fall retention
-          below the cohort’s.
+          No pair of first-term courses taken by {data.meta.min_pair_students} or more students has retention (
+          {words.lower}) below the cohort’s.
         </p>
       ) : (
         <div className="grid gap-4 min-[961px]:grid-cols-3">
@@ -178,8 +186,7 @@ function PairsCard({ data }: { data: GatewayResponse }) {
       )}
       <p className="mt-4 text-[13px] text-(--uncf-ink-3)">
         Pairs taken together by {data.meta.min_pair_students} or more students: {fmt(data.pairs_considered)}. Showing the{" "}
-        {data.pairs.length === 1 ? "one" : data.pairs.length} furthest below the cohort’s next-fall retention (
-        {data.meta.retention_term}).
+        {data.pairs.length === 1 ? "one" : data.pairs.length} furthest below the cohort’s retention ({words.lower}).
       </p>
     </Card>
   );

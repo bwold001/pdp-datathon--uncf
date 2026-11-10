@@ -1,7 +1,9 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
 import { useMemo } from "react";
 
+import { carriedFilterQuery, filterValueLabel } from "@/components/uncf/layout/cohort-filters";
 import { explorerLoader } from "@/components/uncf/layout/explorer-api";
 import { useShowStudentCount } from "@/components/uncf/layout/explorer-context";
 import { LoadingBlock, MessageCard } from "@/components/uncf/layout/explorer-parts";
@@ -9,39 +11,50 @@ import { useCohortFilters } from "@/components/uncf/layout/use-cohort-filters";
 import { useApiResource } from "@/hooks/use-api-resource";
 
 import type { CreditsResponse } from "./credits-data";
-import { CreditsView } from "./credits-view";
+import { CreditsView, ProgressIntro } from "./credits-view";
 
-/** The Credit momentum tab: loads the cohort bar's students' credits and draws them. */
+/** The Credit momentum tab: loads the cohort bar's students' progress and draws it. */
 export function CreditsTab() {
-  const { apiQuery } = useCohortFilters();
+  const { apiQuery, definitions, filters, reset } = useCohortFilters();
+  const searchParams = useSearchParams();
   const load = useMemo(() => explorerLoader<CreditsResponse>("/uncf/credit-momentum", apiQuery), [apiQuery]);
   const { resource, retry } = useApiResource(load);
   useShowStudentCount(resource.status !== "success" ? null : resource.data.status === "suppressed" ? "under 10" : resource.data.students);
 
+  // The student filters someone set, in words. The cohort year and retention measure aren't filters on who's counted.
+  const picked = definitions.filter((definition) => !definition.required && (filters[definition.id] ?? null) !== (definition.defaultValue ?? null));
+  const filterText = picked.map((definition) => filterValueLabel(definition, filters[definition.id] ?? null)).join(" · ");
+
   if (resource.status === "loading") return <CreditsLoading />;
   if (resource.status === "error") {
     return (
-      <MessageCard title="The credit numbers couldn’t load." onRetry={retry}>
-        {resource.message}
-      </MessageCard>
+      <>
+        <ProgressIntro />
+        <MessageCard title="The credit numbers couldn’t load." onRetry={retry}>
+          {resource.message}
+        </MessageCard>
+      </>
     );
   }
-  return <CreditsView data={resource.data} />;
+  return (
+    <CreditsView
+      data={resource.data}
+      filters={picked.length ? { text: filterText, onClear: reset } : undefined}
+      linkQuery={carriedFilterQuery(searchParams).toString()}
+    />
+  );
 }
 
-/** Grey blocks in the shape of the tab while its numbers load. */
+/** The heading, then grey blocks in the shape of the tab while its numbers load. */
 export function CreditsLoading() {
   return (
-    <div className="flex flex-col gap-7" aria-busy="true" aria-label="Loading credit momentum">
-      <div className="grid gap-5 min-[961px]:grid-cols-3">
-        {[0, 1, 2].map((n) => (
-          <LoadingBlock key={n} className="h-38" />
-        ))}
-      </div>
+    <div className="flex flex-col gap-6" aria-busy="true" aria-label="Loading credit momentum">
+      <ProgressIntro />
       <div className="grid gap-5 min-[961px]:grid-cols-2">
-        <LoadingBlock className="h-90" />
-        <LoadingBlock className="h-90" />
+        <LoadingBlock className="h-64" />
+        <LoadingBlock className="h-64" />
       </div>
+      <LoadingBlock className="h-90" />
     </div>
   );
 }
