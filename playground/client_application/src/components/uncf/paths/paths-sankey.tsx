@@ -1,4 +1,6 @@
-import { type PathStatus, type PathsResponse, pathStatuses, statusStyle, termNames } from "./paths-data";
+import { formatShare } from "@/components/uncf/layout/explorer-parts";
+
+import { type PathStatus, type PathsResponse, type TermCounts, pathStatuses, statusStyle, studentsLabel, termNames } from "./paths-data";
 
 // The drawing's grid, in viewBox units: three columns, bars this wide, and this much room for the column titles.
 const COLUMN_X = [0, 440, 860];
@@ -8,8 +10,8 @@ const COHORT_HEIGHT = 260;
 const NODE_GAP = 14;
 const WIDTH = 1040;
 
-type Node = { status: PathStatus; count: number; top: number; height: number };
-type Band = { title: string; fill: string; opacity: number; from: [number, number, number]; to: [number, number, number] };
+type Node = { status: PathStatus; count: number; share: number | null; top: number; height: number };
+type Band = { key: string; title: string; fill: string; opacity: number; from: [number, number, number]; to: [number, number, number] };
 
 /** The student flow from the design: everyone who entered, then each status in the next two terms. */
 export function PathsSankey({ data }: { data: PathsResponse }) {
@@ -25,6 +27,7 @@ export function PathsSankey({ data }: { data: PathsResponse }) {
   let cohortTop = 0;
   for (const node of next) {
     bands.push({
+      key: `entered-${node.status}`,
       title: `${firstMovePhrase(node.status, names.next)} · ${node.count.toLocaleString("en-US")}`,
       fill: statusStyle[node.status].band,
       opacity: 0.75,
@@ -47,6 +50,7 @@ export function PathsSankey({ data }: { data: PathsResponse }) {
       const to = arriving.get(after)!;
       const returned = before === "stopped" && after === "here";
       bands.push({
+        key: `${before}-${after}`,
         title: `${secondMovePhrase(before, after, names.next, names.year2)} · ${count.toLocaleString("en-US")}`,
         fill: returned ? "var(--uncf-blue-mid)" : statusStyle[after].band,
         opacity: returned ? 0.9 : 0.75,
@@ -75,7 +79,7 @@ export function PathsSankey({ data }: { data: PathsResponse }) {
       ))}
       {bands.map((band) => (
         <path
-          key={band.title}
+          key={band.key}
           d={ribbon(band)}
           fill={band.fill}
           fillOpacity={band.opacity}
@@ -107,7 +111,7 @@ export function PathsSankey({ data }: { data: PathsResponse }) {
           className={index === 0 ? labelClass : `${labelClass} text-[14px]! font-medium!`}
         >
           {statusStyle[node.status].short} · {node.count.toLocaleString("en-US")}
-          {index === 0 ? ` (${Math.round((node.count / total) * 100)}%)` : ""}
+          {index === 0 && node.share !== null ? ` (${formatShare(node.share)})` : ""}
         </text>
       ))}
       {spread(year2, 42).map(({ node, y }) => (
@@ -116,7 +120,8 @@ export function PathsSankey({ data }: { data: PathsResponse }) {
             {statusStyle[node.status].short === "Transferred" ? "Transferred out" : statusStyle[node.status].short}
           </text>
           <text x={COLUMN_X[2] + NODE_WIDTH + 14} y={TOP + y + 19} className="uncf-num fill-(--uncf-ink-3) text-[14px]">
-            {node.count.toLocaleString("en-US")} · {Math.round((node.count / total) * 100)}%
+            {node.count.toLocaleString("en-US")}
+            {node.share !== null ? ` · ${formatShare(node.share)}` : ""}
           </text>
         </g>
       ))}
@@ -129,14 +134,14 @@ const labelClass =
   "fill-(--uncf-ink) text-[15px] font-semibold [paint-order:stroke] stroke-(--uncf-surface) [stroke-width:4px] [stroke-linejoin:round]";
 
 /** A column's bars, top to bottom in status order. Hidden counts (under 10) and empty ones get no bar. */
-function stack(counts: Record<PathStatus, number | null>, scale: number): Node[] {
+function stack(counts: TermCounts, scale: number): Node[] {
   const nodes: Node[] = [];
   let top = 0;
   for (const status of pathStatuses) {
     const count = counts[status];
     if (!count) continue;
     const height = count * scale;
-    nodes.push({ status, count, top, height });
+    nodes.push({ status, count, share: counts.shares[status], top, height });
     top += height + NODE_GAP;
   }
   return nodes;
@@ -178,6 +183,7 @@ function ribbon({ from, to }: Band): string {
 /** The hover text for a band from the entering class into the second term. */
 function firstMovePhrase(status: PathStatus, next: string): string {
   if (status === "here") return `Enrolled in ${next}`;
+  if (status === "credential") return `Earned a credential by ${next}`;
   if (status === "elsewhere") return `Transferred out by ${next}`;
   return `Stopped out by ${next}`;
 }
@@ -192,6 +198,13 @@ function secondMovePhrase(before: PathStatus, after: PathStatus, next: string, y
   if (before === "elsewhere" && after === "stopped") return `Transferred out in ${next}, no record in ${year2}`;
   if (before === "stopped" && after === "here") return "Returned after a term away";
   if (before === "stopped" && after === "elsewhere") return `No record in ${next}, at another college in ${year2}`;
+  if (before === "here" && after === "credential") return `Enrolled in ${next}, earned a credential by ${year2}`;
+  if (before === "elsewhere" && after === "credential") return `Transferred out in ${next}, earned a credential here by ${year2}`;
+  if (before === "stopped" && after === "credential") return `No record in ${next}, earned a credential by ${year2}`;
+  if (before === "credential" && after === "credential") return "Still holds a credential";
+  if (before === "credential" && after === "here") return `Earned a credential, took a course here in ${year2}`;
+  if (before === "credential" && after === "elsewhere") return `Earned a credential, at another college in ${year2}`;
+  if (before === "credential") return `Earned a credential, no record in ${year2}`;
   return "Still stopped out";
 }
 
@@ -200,7 +213,7 @@ function summary(data: PathsResponse): string {
   const names = termNames(data);
   const year2 = data.columns!.year2;
   const part = (count: number | null, words: string) => `${count === null ? "under 10" : count.toLocaleString("en-US")} ${words}`;
-  return `Flow of ${data.students!.toLocaleString("en-US")} first-time students through ${names.next} and ${names.year2}: ${part(year2.here, "enrolled here")}, ${part(year2.elsewhere, "transferred out")}, ${part(year2.stopped, "stopped out")} by ${names.year2}.`;
+  return `Flow of ${data.students!.toLocaleString("en-US")} students (${studentsLabel(data)}) through ${names.next} and ${names.year2}: ${part(year2.here, "enrolled here")}, ${part(year2.credential, "with a credential")}, ${part(year2.elsewhere, "transferred out")}, ${part(year2.stopped, "stopped out")} by ${names.year2}.`;
 }
 
 /** The text with its first letter in capitals. */

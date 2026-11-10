@@ -32,10 +32,11 @@ export function GatewayTab() {
   return <GatewayView data={resource.data} groupLabel={groupLabel} />;
 }
 
-/** The filters (other than the cohort year) as a group name, e.g. "Pell (year 1): Pell recipient"; null when none. */
+/** The student filters as a group name, e.g. "Pell (year 1): Pell recipient"; null when none is set. */
 export function describeGroup(filters: CohortFilters): string | null {
+  // Required filters (the cohort year, the retention measure) always have a value, so they don't pick a group.
   const parts = cohortFilters
-    .filter((definition) => definition.id !== "cohort" && filters[definition.id] != null)
+    .filter((definition) => !definition.required && filters[definition.id] != null)
     .map((definition) => `${definition.label}: ${filterValueLabel(definition, filters[definition.id])}`);
   return parts.length ? parts.join(" + ") : null;
 }

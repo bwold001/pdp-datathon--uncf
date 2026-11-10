@@ -46,6 +46,17 @@ def test_tiles_milestones_and_tiers(tmp_path):
     assert (page["retention"]["type"], page["retention"]["retained"], page["retention"]["students"]) == ("federal", 20, 32)
 
 
+def test_milestones_under_10_are_hidden(tmp_path):
+    """A milestone 1 to 9 students reached is hidden (None, with no share), never shown; 0 stays 0."""
+    database = build(tmp_path, group("low", 12, attempted=12, earned=12), group("high", 6, attempted=30, earned=30))
+    page = credit_momentum(**ask("2023-24"), database=database)
+    assert [(m["credits"], m["students"], m["share"]) for m in page["milestones"]] == [(12, 18, 1.0), (24, None, None), (30, None, None)]
+    (tmp_path / "none").mkdir()
+    nobody = build(tmp_path / "none", group("low", 12, attempted=12, earned=6))
+    # Nobody reached any milestone: 0 is shown as 0, since it reveals no small group.
+    assert [(m["students"], m["share"]) for m in credit_momentum(**ask("2023-24"), database=nobody)["milestones"]] == [(0, 0.0)] * 3
+
+
 def test_tiers_follow_the_retention_type(tmp_path):
     """School retention (the PDP flag) is the default, so tiers can differ from who came back next fall."""
     database = build(tmp_path, group("low", 10, attempted=12, earned=6, back=True, retention=0), group("mid", 10, attempted=24, earned=24, retention=1))

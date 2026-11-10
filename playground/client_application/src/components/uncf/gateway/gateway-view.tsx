@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { Card, CardHead, MessageCard, Notice, formatShare } from "@/components/uncf/layout/explorer-parts";
+import { Card, CardHead, MessageCard, Notice, formatShare, retentionWords } from "@/components/uncf/layout/explorer-parts";
 import { explorerButton } from "@/components/uncf/layout/explorer-styles";
 import { cn } from "@/lib/utils";
 
@@ -119,8 +119,9 @@ function CourseList({ data, courses, total, sort, groupLabel, selected, onSelect
       />
       <p className="mb-1.5 text-[13px] text-(--uncf-ink-3)">
         <b className="font-semibold text-(--uncf-ink-2)">First try / In the end:</b> share who passed on the first try / on
-        any try in year 1. <b className="font-semibold text-(--uncf-ink-2)">Retention if passed / if not passed:</b> share
-        who came back the next year, among students who passed vs. never passed.{" "}
+        any try in year 1. <b className="font-semibold text-(--uncf-ink-2)">Retention if passed / if not passed:</b> share{" "}
+        {retentionWords(data.meta.retention_type, data.meta.retention_term).lower}, among students who passed vs. never
+        passed.{" "}
         <b className="font-semibold text-(--uncf-ink-2)">Group gap:</b> your filtered group’s first-try pass rate minus
         everyone else’s.
       </p>
@@ -332,19 +333,20 @@ function GroupCompare({ course, compared, groupLabel }: CourseDetailProps) {
 /** Gateway courses taken with another course in the first term, where fewer students came back than everyone else. */
 function PairsCard({ data }: { data: GatewayResponse }) {
   const when = data.meta.first_term ? `in ${data.meta.first_term}` : "in their first term";
+  const words = retentionWords(data.meta.retention_type, data.meta.retention_term);
   return (
     <Card>
       <CardHead
         title="Course pairs with lower retention"
         subtitle={
           <span className="block max-w-[70ch]">
-            A gateway course and another course taken together in a student’s first term, where fewer students came back
-            the next year than everyone else. Biggest effect first. This shows a pattern worth looking into, not the cause.
+            A gateway course and another course taken together in a student’s first term, where fewer students were{" "}
+            {words.lower} than everyone else. Biggest effect first. This shows a pattern worth looking into, not the cause.
           </span>
         }
         aside={
           <div className="self-end text-(--uncf-ink-2)">
-            Retention for these students: <b className="uncf-num">{formatShare(data.cohort_retention!.rate)}</b>
+            {words.name}, these students: <b className="uncf-num">{formatShare(data.cohort_retention!.rate)}</b>
           </div>
         }
       />
@@ -353,7 +355,7 @@ function PairsCard({ data }: { data: GatewayResponse }) {
       ) : (
         <div className="grid gap-4 min-[961px]:grid-cols-3">
           {data.pairs.map((pair) => (
-            <PairCard key={pair.courses.join("+")} pair={pair} when={when} />
+            <PairCard key={pair.courses.join("+")} pair={pair} when={when} outcome={words.lower} />
           ))}
         </div>
       )}
@@ -366,7 +368,7 @@ function PairsCard({ data }: { data: GatewayResponse }) {
 }
 
 /** One course pair: its retention, the gap to everyone else, and how many took both. */
-function PairCard({ pair, when }: { pair: CoursePair; when: string }) {
+function PairCard({ pair, when, outcome }: { pair: CoursePair; when: string; outcome: string }) {
   const chip = "uncf-num inline-block rounded-[5px] bg-(--uncf-chip) px-2.5 py-0.75 font-semibold";
   return (
     <div className="rounded-[10px] border border-(--uncf-line) px-5.5 py-5">
@@ -378,7 +380,7 @@ function PairCard({ pair, when }: { pair: CoursePair; when: string }) {
         <span className="ml-2 font-semibold text-(--uncf-orange-ink)">{signedPoints(pair.gap)} pts vs. everyone else</span>
       </div>
       <div className="text-(--uncf-ink-3)">
-        {fmt(pair.retained)} of {fmt(pair.students)} students who took both {when} came back
+        {fmt(pair.retained)} of {fmt(pair.students)} students who took both {when}: {outcome}
         {pair.likely_noise ? " · could be chance" : ""}
       </div>
     </div>
@@ -392,9 +394,9 @@ function GatewayCounted({ data }: { data: GatewayResponse }) {
       <b className="font-semibold text-(--uncf-ink)">What the numbers mean:</b> every number counts students, once per course,
       in their first year ({data.meta.year_one}), the same window as the PDP’s gateway measure. Only grades the school marked
       as gateway math or English count. Passed: a grade of 1.0 or higher, or a Pass; the DFW page uses 2.0. A try is a
-      term, and the first try is the earliest. “Came back” follows the retention type chosen above
-      {data.meta.retention_term === "next academic year" ? " (the PDP flag: enrolled again the next year, or earned a credential)" : ` (enrolled in ${data.meta.retention_term})`}
-      . Everyone else is all other students who took the same course. A gap shows a difference, not its cause. Courses and
+      term, and the first try is the earliest. Retention follows the Retention filter above: “
+      {retentionWords(data.meta.retention_type, data.meta.retention_term).name}” means{" "}
+      {retentionWords(data.meta.retention_type, data.meta.retention_term).how}. Everyone else is all other students who took the same course. A gap shows a difference, not its cause. Courses and
       groups with fewer than 10 students are hidden to protect privacy
       {data.hidden_courses ? ` (${fmt(data.hidden_courses)} courses)` : ""}. The data is synthetic: it doesn’t describe real
       students.

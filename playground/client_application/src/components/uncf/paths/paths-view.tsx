@@ -16,7 +16,7 @@ import {
 } from "@/components/uncf/layout/explorer-parts";
 import { cn } from "@/lib/utils";
 
-import { type PathsResponse, pathStatuses, statusStyle, termNames } from "./paths-data";
+import { type PathsResponse, pathStatuses, statusStyle, studentsLabel, termNames } from "./paths-data";
 import { PathsSankey } from "./paths-sankey";
 
 /** The Student paths tab drawn from the API's answer: tiles, the student flow, transfers and the term table. */
@@ -46,24 +46,24 @@ export function PathsView({ data }: { data: PathsResponse }) {
         <Kpi
           label="Entering cohort"
           value={total.toLocaleString("en-US")}
-          note={`First-time, ${names.entered ?? data.meta.cohort}`}
+          note={`${studentsLabel(data)}, ${names.entered ?? data.meta.cohort}`}
         />
         {/* These two count one term from course records, not PDP retention or persistence (year-2 flags, defined in
             Key terms), so they name what they count. */}
         <Kpi
           label={`Still here · ${names.year2Short}`}
-          value={formatShare(shareOf(year2.here, total))}
+          value={formatShare(year2.shares.here)}
           tone="blue"
           note={`${formatCount(year2.here)} took a course here that term`}
         />
         <Kpi
           label={`Enrolled anywhere · ${names.year2Short}`}
-          value={formatShare(shareOf(year2.anywhere, total))}
+          value={formatShare(year2.shares.anywhere)}
           note={`Here or at another college in ${names.year2Short}`}
         />
         <Kpi
           label={`Stopped out by ${names.year2Short}`}
-          value={formatShare(shareOf(year2.stopped, total))}
+          value={formatShare(year2.shares.stopped)}
           tone="warn"
           note={returnedNote(returned)}
         />
@@ -83,10 +83,11 @@ export function PathsView({ data }: { data: PathsResponse }) {
           </p>
         ) : null}
         <Counted>
-          first-time students in the entering cohort, by their record each term in the PDP course file. Enrolled here:
-          took a course here that term. Transferred out: no course here, but the file records enrollment at another
-          college that term. Stopped out: no record that term. These come from term records, so they can differ from the
-          cohort file’s retention and persistence flags. Hover a band to see its count.
+          the entering cohort’s students the cohort bar picks (first-time unless Enrollment type says otherwise), by their
+          record each term in the PDP course file. Enrolled here: took a course here that term. Earned a credential: no
+          course here, but earned a credential here in an earlier year. Transferred out: neither, but the file records
+          enrollment at another college that term. Stopped out: no record that term. These come from term records, so
+          they can differ from the cohort file’s retention and persistence flags. Hover a band to see its count.
         </Counted>
       </Card>
 
@@ -157,9 +158,17 @@ function TermTableCard({ data }: { data: PathsResponse }) {
   const names = termNames(data);
   const columns = data.columns!;
   const rows = [
-    { term: names.entered ?? "Entering term", here: formatCount(data.students), elsewhere: "–", stopped: "–" },
-    { term: capitalize(names.next), here: formatCount(columns.next.here), elsewhere: formatCount(columns.next.elsewhere), stopped: formatCount(columns.next.stopped) },
-    { term: capitalize(names.year2), here: formatCount(columns.year2.here), elsewhere: formatCount(columns.year2.elsewhere), stopped: formatCount(columns.year2.stopped) },
+    { term: names.entered ?? "Entering term", here: formatCount(data.students), credential: "–", elsewhere: "–", stopped: "–" },
+    ...[
+      { term: names.next, counts: columns.next },
+      { term: names.year2, counts: columns.year2 },
+    ].map(({ term, counts }) => ({
+      term: capitalize(term),
+      here: formatCount(counts.here),
+      credential: formatCount(counts.credential),
+      elsewhere: formatCount(counts.elsewhere),
+      stopped: formatCount(counts.stopped),
+    })),
   ];
 
   return (
@@ -171,6 +180,7 @@ function TermTableCard({ data }: { data: PathsResponse }) {
             <tr>
               <th className={tableClasses.th}>Term</th>
               <th className={cn(tableClasses.th, tableClasses.right)}>Enrolled</th>
+              <th className={cn(tableClasses.th, tableClasses.right)}>Credential</th>
               <th className={cn(tableClasses.th, tableClasses.right)}>Transferred</th>
               <th className={cn(tableClasses.th, tableClasses.right)}>Stopped out</th>
             </tr>
@@ -180,6 +190,7 @@ function TermTableCard({ data }: { data: PathsResponse }) {
               <tr key={row.term}>
                 <td className={tableClasses.td}>{row.term}</td>
                 <td className={cn(tableClasses.td, tableClasses.right, "uncf-num")}>{row.here}</td>
+                <td className={cn(tableClasses.td, tableClasses.right, "uncf-num")}>{row.credential}</td>
                 <td className={cn(tableClasses.td, tableClasses.right, "uncf-num")}>{row.elsewhere}</td>
                 <td className={cn(tableClasses.td, tableClasses.right, "uncf-num")}>{row.stopped}</td>
               </tr>

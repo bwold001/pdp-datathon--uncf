@@ -56,8 +56,6 @@ export type CoursePair = {
 /** The answer from GET /uncf/gateway (measures/breakdowns/gateway_courses.py). */
 export type GatewayResponse = {
   meta: ExplorerMeta & {
-    /** school (the PDP flag, the default) or federal (fall to fall). */
-    retention_type?: string;
     /** False when the institution flags no gateway grades in year 1, so no course is listed. */
     flagged: boolean;
     /** The academic year counted: the cohort's first. */

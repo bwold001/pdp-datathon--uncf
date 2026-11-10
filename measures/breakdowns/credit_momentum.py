@@ -7,6 +7,8 @@ The numbers come from the measures:
 
 This module only breaks them down: credit milestones, the first two terms (from the course file, averaged over the
 students who took a course here that term) and credit tiers. Groups under 10 students are hidden.
+
+progress is the Credit momentum design's page (meaningful progress toward a degree), from credit_progress.py.
 """
 from __future__ import annotations
 
@@ -14,6 +16,7 @@ from pathlib import Path
 
 from ..models import EVERYONE, Cohort, Group, Measure
 from ..run_measures import read_answers, run_measure
+from .credit_progress import credit_progress
 from .common import (
     MIN_STUDENTS,
     SEASONS,
@@ -65,16 +68,17 @@ def credit_momentum(cohort: str, filters: Group = EVERYONE, retention_measure: M
         students = select_students(connection, cohort, filters)
         year_one = year_one_credits(connection, cohort)
         per_term = term_credits(connection, cohort)
+        answers, _ = read_answers(retention_measure, cohort, database)
+        progress = credit_progress(connection, cohort, students, answers) if len(students) >= MIN_STUDENTS else None
     finally:
         connection.close()
-    answers, _ = read_answers(retention_measure, cohort, database)
 
     known = {sid: year_one[sid] for sid in students if sid in year_one}
     context = {
         "retention_term": term_label(retention_term(cohort)) if retention_measure == Measure.FEDERAL_RETENTION else "next academic year",
     }
     if len(students) < MIN_STUDENTS or len(known) < MIN_STUDENTS:
-        return {"context": context, "status": "suppressed", "students": None, "credits": None, "completion": None, "retention": None, "milestones": [], "terms": [], "tiers": []}
+        return {"context": context, "status": "suppressed", "students": None, "credits": None, "completion": None, "retention": None, "milestones": [], "terms": [], "tiers": [], "progress": None}
 
     # The completion ratio is the credit_completion measure's row for these students.
     (completion,) = run_measure(Measure.CREDIT_COMPLETION, [Cohort.of(cohort)], database=database, filters=filters)
@@ -90,13 +94,17 @@ def credit_momentum(cohort: str, filters: Group = EVERYONE, retention_measure: M
         },
         "completion": {"counted": completion.denominator, "ratio": completion.metric_rate, "status": completion.status.value},
         "retention": retention(retention_measure, cohort, filters, database),
-        "milestones": [
-            {"credits": credits, "students": (n := sum(1 for _, earned in known.values() if earned >= credits)), "share": share(n, len(known))}
-            for credits in MILESTONES
-        ],
+        "milestones": [milestone(credits, known) for credits in MILESTONES],
         "terms": first_terms(cohort, students, per_term),
         "tiers": tiers(known, answers),
+        "progress": progress,
     }
+
+
+def milestone(credits: int, known: dict) -> dict:
+    """Students who earned at least this many credits in year 1, out of those with known credits. 1 to 9 is hidden."""
+    reached = shown(sum(1 for _, earned in known.values() if earned >= credits))
+    return {"credits": credits, "students": reached, "share": share(reached, len(known))}
 
 
 def first_terms(cohort: str, students: dict, per_term: dict) -> list[dict]:

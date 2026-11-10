@@ -28,7 +28,12 @@ Copy the Student paths tab (`components/uncf/paths/`): a page with a `ViewIntro`
 - **Filters.** `useCohortFilters()` gives `filters` (each value, `null` for "All") and `apiQuery`, the same as query
   values for your endpoint. Load with `explorerLoader<YourResponse>("/uncf/your-page", apiQuery)` inside `useMemo`,
   then `useApiResource(load)`. The filters live in the URL (`?cohort=2022-23&pell=Y`), so a view can be shared, Back
-  works, and they carry across tabs. A tab's own query values (a sort order) stay on that tab.
+  works, and the ones someone set carry across tabs. A tab's own query values (a sort order) stay on that tab.
+- **Retention.** Gateway and Credit momentum show a Retention filter: `school` (the PDP flag, "Returned here", the
+  API's default) or `federal` ("Back next fall"). Name the measure from the answer's `meta.retention_type` with
+  `retentionWords()` in `explorer-parts.tsx`, never a fixed "next fall".
+- **No math in the tab.** Shares, gaps, totals and hiding come from the API (`measures/`); a tab only formats and
+  draws them.
 - **Student count.** `useShowStudentCount(count)` shows "Showing 1,114 students" in the cohort bar.
 - **Parts.** `explorer-parts.tsx` has the design's `Card`, `CardHead`, `KpiGrid` and `Kpi`, `Legend`, `TrackBar`,
   `Counted` ("How it's counted"), `Notice`, `MessageCard` (too few students, or an error) and `LoadingBlock`.
@@ -46,4 +51,7 @@ Copy the Student paths tab (`components/uncf/paths/`): a page with a `ViewIntro`
 - **Add a tab:** a page folder under `src/app/(uncf-explorer)/uncf/`, a route in `src/lib/routes.ts`,
   and a line in `explorerTabs` in `explorer-config.ts`.
 - **Add a filter:** an entry in `cohortFilters` in `explorer-config.ts`, with the measures' dimension name and
-  values (`STUDENT_DIMENSIONS` in `measures/breakdowns/common.py`, values in `measures/models.py`). Every tab gets it.
+  values (`STUDENT_DIMENSIONS` in `measures/breakdowns/common.py`, values in `measures/models.py`). Every tab gets it,
+  unless you list the tabs that show it in `tabs`.
+- **Start a filter somewhere else on one tab:** a line in `tabFilterDefaults` (Student paths starts Enrollment type at
+  First-time, as in the design). "All" is then `all` in the URL.

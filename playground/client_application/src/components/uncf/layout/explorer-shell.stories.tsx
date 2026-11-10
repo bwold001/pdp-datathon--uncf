@@ -54,6 +54,19 @@ export const KeepsFiltersAcrossTabs: Story = {
   },
 };
 
+/** Only filters someone set travel: Student paths' own first-time start stays on that tab. */
+export const CarriesOnlyFiltersSomeoneSet: Story = {
+  name: "Carries only filters someone set",
+  parameters: { nextjs: { appDirectory: true, navigation: { pathname: "/uncf/gateway", query: { retention_type: "federal" } } } },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole("link", { name: "Student paths" })).toHaveAttribute("href", "/uncf/paths?retention_type=federal");
+    await expect(canvas.getByRole("link", { name: "Credit momentum" })).toHaveAttribute(
+      "href",
+      "/uncf/credit-momentum?retention_type=federal",
+    );
+  },
+};
+
 /** The design's light colors hold even when the app is in dark mode. */
 export const StaysLightInDarkMode: Story = {
   name: "Stays light in dark mode",

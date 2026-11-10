@@ -3,7 +3,7 @@ import { expect, within } from "storybook/test";
 
 import { ExplorerStoryFrame } from "@/components/uncf/layout/explorer-story-frame";
 
-import { gateway2023, gateway2024, gatewayPell2023, gatewayTooFew } from "./gateway-fixtures";
+import { gateway2023, gateway2024, gatewayFederal2023, gatewayPell2023, gatewayTooFew } from "./gateway-fixtures";
 import { GatewayView } from "./gateway-view";
 
 const meta = {
@@ -53,9 +53,20 @@ export const RealCourses: Story = {
     await expect(canvas.getAllByRole("listitem")[0]).toHaveTextContent("MAT 162");
 
     // Pairs are compared with everyone else, and say when a gap could be chance.
-    await expect(canvas.getByText(/Retention for these students:/)).toHaveTextContent("52%");
-    await expect(canvas.getByText("6 of 13 students who took both in their first term came back · could be chance")).toBeVisible();
+    await expect(canvas.getByText(/Returned here, these students:/)).toHaveTextContent("52%");
+    await expect(canvas.getByText("6 of 13 students who took both in their first term: returned here · could be chance")).toBeVisible();
     await expect(canvas.getByText(/^35 pairs have 10 or more students/)).toBeVisible();
+  },
+};
+
+/** Fall to fall retention: the page names the measure the Retention filter picked. */
+export const BackNextFall: Story = {
+  name: "Back next fall",
+  args: { data: gatewayFederal2023 },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText(/Back next fall, these students:/)).toHaveTextContent("42%");
+    await expect(canvas.getByText("1 of 13 students who took both in their first term: back next fall")).toBeVisible();
+    await expect(canvas.getByText(/took a course here in Fall 2024, the fall after year 1/)).toBeVisible();
   },
 };
 
