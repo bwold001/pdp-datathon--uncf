@@ -23,7 +23,7 @@
       "framework": "fastapi",
       "entrypoint": "chat_app:app",
       "installCommand": "python -m pip install -r requirements-chat.txt",
-      "buildCommand": "python -m api load",
+      "buildCommand": "python -m api load && python -m pip uninstall -y pyarrow",
       "functions": {
         "chat_app.py": {
           "maxDuration": 120,

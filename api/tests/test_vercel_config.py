@@ -106,7 +106,7 @@ def test_chat_service_build_and_bundle():
     chat = SERVICES["chat"]
     assert chat["entrypoint"] == "chat_app:app"
     assert chat["installCommand"] == "python -m pip install -r requirements-chat.txt"
-    assert chat["buildCommand"] == BACKEND["buildCommand"]
+    assert chat["buildCommand"] == BACKEND["buildCommand"] + " && python -m pip uninstall -y pyarrow"
     function = chat["functions"]["chat_app.py"]
     assert function["maxDuration"] > 90  # Browser deadline, including calculation cleanup.
     included = function["includeFiles"].strip("{}").split(",")

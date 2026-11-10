@@ -7,4 +7,4 @@ psycopg[binary]==3.3.6     # Chat: the existing configured PostgreSQL snapshot a
 fastapi==0.162.2          # Chat: same HTTP runtime as the Results API
 uvicorn==0.54.0           # Chat: local smoke tests and ASGI runtime
 pyyaml==6.0.3             # Chat: same shared coverage definitions as the Results API
-pyarrow==25.0.1           # Chat: same build-time mock-data loader as the Results API
+pyarrow==25.0.1           # Chat: build-only mock-data loader; removed after the Vercel extract build

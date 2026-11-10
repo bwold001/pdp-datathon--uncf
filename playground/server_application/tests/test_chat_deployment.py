@@ -74,6 +74,7 @@ def test_vercel_entrypoint_imports_without_playground_startup():
             "'enabled':settings.UNCF_CHAT_ENABLED, 'environment':settings.APP_ENV, "
             "'sandbox': 'app.sandbox.router' in sys.modules, "
             "'sessions': 'app.db.session' in sys.modules, "
+            "'pyarrow': 'pyarrow' in sys.modules, "
             "'routes':list(chat_app.app.openapi()['paths'])}))",
         ],
         cwd=root,
@@ -86,5 +87,5 @@ def test_vercel_entrypoint_imports_without_playground_startup():
     assert state["environment"] == "production"
     assert state["enabled"]
     assert state["database"] == f"sqlite:///{root / 'normalized-data-model/output/pdp.sqlite'}"
-    assert not state["sandbox"] and not state["sessions"]
+    assert not state["sandbox"] and not state["sessions"] and not state["pyarrow"]
     assert set(state["routes"]) == {"/api/v1/chat"}

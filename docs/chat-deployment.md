@@ -10,7 +10,9 @@ by the root `.python-version`.
 The Results and chat services both build `normalized-data-model/output/pdp.sqlite` using
 `python -m api load` from the same committed synthetic inputs. Chat defaults to that bundled
 extract through `DATABASE_URL`; reads are read-only and calculations are not cached. No database
-is generated or modified during a request. Separate builds can have different load timestamps;
+is generated or modified during a request. After loading the extract, the chat build uninstalls
+PyArrow, a build-only dependency unused by chat and deterministic calculations. This keeps the
+function below Vercel’s bundle limit without changing the Results service or Playground dependencies. Separate builds can have different load timestamps;
 compare parameters, definitions and calculated values, not build timestamps or opaque source stamps.
 
 `chat_app.py` gives only this dedicated service production defaults and a bundled SQLite URL.
@@ -90,7 +92,8 @@ The browser deadline remains 90 seconds. Calculation cancellation waits for data
    builds and record the commit and Preview URL. The earlier deployment
    `dpl_7W9MhUNYG48ew5Nd4BXvRELkVWk2` failed with `LAMBDA_SIZE_EXCEEDED`: its chat bundle
    was 420.67 MB against a 225 MB limit. The logs showed LiteLLM and its dependency tree in the
-   custom install. Verify the replacement bundle fits; changing SDKs alone is not proof.
+   custom install. The first OpenRouter build shrank the bundle to 240.39 MB, still over the limit. The chat build
+   now removes build-only PyArrow after loading the extract; verify the deployed bundle fits.
 2. Open `/uncf/chat`. Ask “What is the retention rate for all majors?” Select a cohort when asked.
 3. Check that the full proposed scope appears before any calculation. Confirm it and inspect
    the receipt. This is synthetic demonstration data, not a finding about a campus.
@@ -128,7 +131,8 @@ uv run ruff format --check .
 ```
 
 To smoke-test the hosted entrypoint from the repository root, in a separate Python 3.14 virtual
-environment, install `requirements-chat.txt`, run `python -m api load`, and then
+environment, install `requirements-chat.txt`, run `python -m api load`, remove build-only PyArrow with
+`python -m pip uninstall -y pyarrow`, and then
 `python -m uvicorn chat_app:app --port 8002`. Configure the model and key in that process's
 environment. The hosted entrypoint does not read the local development secret file.
 
