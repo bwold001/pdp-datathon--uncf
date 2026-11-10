@@ -46,8 +46,7 @@ def test_chat_matches_direct_api(client, analytics):
 
 def test_missing_key_and_invalid_body(client, analytics, monkeypatch):
     """Input validation happens before provider configuration errors."""
-    monkeypatch.setattr(settings, "ANTHROPIC_API_KEY", None)
-    monkeypatch.setattr(settings, "OPENAI_API_KEY", None)
+    monkeypatch.setattr(settings, "OPENROUTER_API_KEY", None)
     assert client.post("/api/v1/uncf/chat", json={"prompt": "Retention?"}).status_code == 503
     assert client.post("/api/v1/uncf/chat", json={"prompt": " "}).status_code == 422
 

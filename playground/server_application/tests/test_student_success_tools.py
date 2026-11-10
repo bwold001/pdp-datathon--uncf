@@ -160,7 +160,7 @@ def test_loop_cap_and_missing_key(tmp_path):
     model = ScriptedModel(*[[ToolCall("bad", "unknown_tool", {})] for _ in range(MAX_TOOL_ROUNDS)])
     with pytest.raises(ChatFailed):
         asyncio.run(answer(ChatRequest(prompt="Keep going"), model, "test", service))
-    with pytest.raises(ChatFailed, match="provider API key"):
+    with pytest.raises(ChatFailed, match="OPENROUTER_API_KEY"):
         asyncio.run(answer(ChatRequest(prompt="Retention?"), None, "test", service))
 
 

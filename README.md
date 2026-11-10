@@ -43,9 +43,9 @@ The original `/chat` and `/sandbox/data-chat-ui` bookmarks redirect there.
 Load the cohort and course files using Workbench. Chat and its direct analysis endpoints use
 Playground's configured `DATABASE_URL`, including newly uploaded data. SQLite and PostgreSQL
 read the same deterministic calculations in read-only snapshots, without a results cache.
-LiteLLM supplies natural-language interpretation using `UNCF_CHAT_MODEL` and the matching
-server-side `ANTHROPIC_API_KEY` or `OPENAI_API_KEY`. `UNCF_CHAT_ENABLED` controls chat independently
-of Sandbox. Local development enables it; the dedicated Vercel chat service also enables it
+The official OpenRouter Python SDK supplies natural-language interpretation using
+`UNCF_CHAT_MODEL` and the server-side `OPENROUTER_API_KEY`. `UNCF_CHAT_ENABLED` controls chat
+independently of Sandbox. Local development enables it; the dedicated Vercel chat service also enables it
 unless explicitly disabled. The full Playground production app remains opt-in.
 
 Directory ownership:
@@ -141,7 +141,7 @@ The demonstration at `/uncf/chat` answers the agreed graduation, retention and a
 
 1. Install Playground dependencies with `uv sync` in `playground/server_application/`, then load cohort and course files in Workbench.
 2. Follow [Playground setup](playground/README.md) for its Python 3.14/uv and Node 24/Bun runtimes. Root Python and the Playground provider runtime are separate environments.
-3. Set `UNCF_CHAT_MODEL=anthropic/claude-sonnet-5-5` with `ANTHROPIC_API_KEY`, or `UNCF_CHAT_MODEL=openai/gpt-4.1` with `OPENAI_API_KEY`, in the server's ignored `.env.development.local` or environment. LiteLLM handles provider translation. Use a tool-capable model available to your account and keep keys server-side. Existing unprefixed `claude-*` settings remain compatible.
+3. Set `OPENROUTER_API_KEY` and `UNCF_CHAT_MODEL=openai/gpt-4.1` in the server's ignored `.env.development.local` or environment. Use a canonical, tool-capable model ID from the OpenRouter catalog that your account can access. The same OpenRouter key supports model changes. Existing OpenAI/Anthropic keys and bare `claude-*` settings must be replaced; no legacy names are rewritten. Keep the key server-side.
 4. Run the Playground API and client (`mise run api:dev`, `mise run web:dev`). The client uses its existing `NEXT_PUBLIC_API_BASE_URL`. Open `/uncf/chat` or use the Explorer’s Chat tab. The API demo routes use `UNCF_CHAT_ENABLED` (enabled in local development), independently of `SANDBOX_ENABLED`. Production remains opt-in.
 5. Try “What is the graduation rate for chemistry majors?”, “What is the retention rate for all majors?” and “What is enrollment ethnicity by academic program over the past 2 years?” Choose the requested cohort, credential and chemistry definition. Open “How these results were calculated” to inspect supporting evidence.
 
@@ -155,7 +155,7 @@ Verify with `make check` at the root; in Playground run `mise run api:lint`, `mi
 
 Chat first proposes the full scope and requires explicit approval before calculating. No additional filters are inferred.
 The Vercel frontend now enables Chat and routes requests to the dedicated chat service. Set the
-matching provider key and model in Vercel before deployment; without a key, chat returns a readable
+OpenRouter key and model in Vercel before deployment; without a key, chat returns a readable
 503 configuration error. `NEXT_PUBLIC_STUDENT_SUCCESS_CHAT_ENABLED=false` disables the UI after a
 rebuild, and `UNCF_CHAT_ENABLED=false` disables backend chat routes. See the
 [deployment guide](docs/chat-deployment.md).

@@ -3,8 +3,9 @@
 import json
 from dataclasses import dataclass
 
-import litellm
-from openai import OpenAIError
+import httpx
+from openrouter import OpenRouter
+from openrouter.errors import NoResponseError, OpenRouterError
 
 
 class ProviderFailed(Exception):
@@ -28,24 +29,24 @@ class ModelReply:
     message: dict
 
 
-class LiteLLMClient:
-    """Call supported providers through LiteLLM's asynchronous chat interface."""
+class OpenRouterClient:
+    """Normalize OpenRouter chat completions for the bounded analysis workflow."""
 
-    def __init__(self, api_key: str):
-        """Keep the selected provider's credential on this server-side client."""
-        self.api_key = api_key
+    def __init__(self, sdk: OpenRouter):
+        """Use the request-scoped SDK owned and closed by the route dependency."""
+        self.sdk = sdk
 
     async def complete(self, *, model: str, system: str, tools: list, messages: list):
-        """Normalize tool calls while preserving the application's tool-loop limits."""
+        """Preserve assistant fields and tool IDs across asynchronous model rounds."""
         try:
-            response = await litellm.acompletion(
+            response = await self.sdk.chat.send_async(
                 model=model,
-                api_key=self.api_key,
                 messages=[{"role": "system", "content": system}, *messages],
                 tools=tools,
-                max_tokens=1500,
-                timeout=45,
-                num_retries=0,
+                stream=False,
+                max_completion_tokens=1500,
+                timeout_ms=45000,
+                retries=None,
             )
             message = response.choices[0].message
             calls = []
@@ -53,11 +54,17 @@ class LiteLLMClient:
                 arguments = json.loads(call.function.arguments)
                 if not isinstance(arguments, dict):
                     raise ValueError("Tool arguments must be an object")
+                if not call.id or not call.function.name:
+                    raise ValueError("Tool calls need an ID and function name")
                 calls.append(ToolCall(call.id, call.function.name, arguments))
-            return ModelReply(calls, message.model_dump(exclude_none=True))
+            assistant = message.model_dump(mode="json", by_alias=True, exclude_unset=True)
+            if not calls and not assistant.get("content") and not assistant.get("refusal"):
+                raise ValueError("The model returned an empty message")
+            return ModelReply(calls, assistant)
         except (
-            OpenAIError,
-            litellm.exceptions.OpenAIError,
+            OpenRouterError,
+            NoResponseError,
+            httpx.HTTPError,
             ValueError,
             TypeError,
             IndexError,

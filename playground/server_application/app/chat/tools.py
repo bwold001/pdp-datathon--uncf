@@ -36,7 +36,7 @@ TOOL_DEFINITIONS = [
 ]
 
 
-# LiteLLM translates these function definitions for the selected provider.
+# OpenRouter receives these function definitions for the configured model.
 TOOLS = [
     {
         "type": "function",

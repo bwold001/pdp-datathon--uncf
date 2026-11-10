@@ -93,9 +93,7 @@ async def answer(
             )
         return confirmation([*payload.proposals, request])
     if client is None:
-        raise ChatFailed(
-            "Chat needs the selected model provider API key in the server environment."
-        )
+        raise ChatFailed("Chat needs OPENROUTER_API_KEY in the server environment.")
     messages = [{"role": "user", "content": payload.prompt}]
     proposals = []
     for _ in range(MAX_TOOL_ROUNDS):

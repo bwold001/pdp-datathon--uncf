@@ -52,12 +52,11 @@ def test_deployment_switch_and_missing_key(monkeypatch):
     with TestClient(create_app()) as client:
         assert client.post("/api/v1/chat", json={"prompt": "hello"}).status_code == 404
     monkeypatch.setattr(settings, "UNCF_CHAT_ENABLED", True)
-    monkeypatch.setattr(settings, "OPENAI_API_KEY", None)
-    monkeypatch.setattr(settings, "ANTHROPIC_API_KEY", None)
+    monkeypatch.setattr(settings, "OPENROUTER_API_KEY", None)
     with TestClient(create_app()) as client:
         reply = client.post("/api/v1/chat", json={"prompt": "Retention?"})
         assert reply.status_code == 503
-        assert "provider API key" in reply.json()["error"]["message"]
+        assert "OPENROUTER_API_KEY" in reply.json()["error"]["message"]
 
 
 def test_vercel_entrypoint_imports_without_playground_startup():

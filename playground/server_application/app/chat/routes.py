@@ -1,15 +1,15 @@
 """Provider-enabled demonstration route, mounted only by the Playground runtime."""
 
 import asyncio
-from functools import cache
 from typing import Annotated
 
 from analytics.execution import CalculationCancelled, execution_scope
 from analytics.service import AnalyticsService
 from api.analyses import get_service
 from fastapi import APIRouter, Depends, HTTPException
+from openrouter import OpenRouter
 
-from app.chat.provider import LiteLLMClient, ProviderFailed
+from app.chat.provider import OpenRouterClient, ProviderFailed
 from app.chat.schemas import ChatRequest, ChatResponse
 from app.chat.service import ChatFailed, answer
 
@@ -18,22 +18,19 @@ REQUEST_TIMEOUT_SECONDS = 75
 router = APIRouter(tags=["chat"])
 
 
-@cache
-def provider_client(key: str):
-    """Reuse a server-side LiteLLM adapter for the configured credential."""
-    return LiteLLMClient(key)
-
-
-def get_chat_client():
-    """Choose a server-side key based on the model's explicit provider prefix."""
+async def get_chat_client():
+    """Close the server-side OpenRouter SDK after every request, including failures."""
     from app.core.config import settings
 
     try:
-        provider = settings.chat_model.split("/", 1)[0]
+        _ = settings.chat_model
     except ValueError as error:
         raise HTTPException(503, str(error)) from error
-    key = {"openai": settings.OPENAI_API_KEY, "anthropic": settings.ANTHROPIC_API_KEY}.get(provider)
-    return provider_client(key) if key else None
+    if not settings.OPENROUTER_API_KEY:
+        yield None
+        return
+    async with OpenRouter(api_key=settings.OPENROUTER_API_KEY) as sdk:
+        yield OpenRouterClient(sdk)
 
 
 @router.post("/chat", response_model=ChatResponse)

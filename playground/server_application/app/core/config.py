@@ -65,20 +65,17 @@ class Settings(BaseSettings):
     SANDBOX_ENABLED: bool = True
 
     # Provider keys stay server-side in .env.<APP_ENV>.local or the host secret store.
-    ANTHROPIC_API_KEY: str | None = None
-    OPENAI_API_KEY: str | None = None
+    OPENROUTER_API_KEY: str | None = None
     # Explicitly enabled for the local synthetic demo; independent of Sandbox.
     UNCF_CHAT_ENABLED: bool = False
-    UNCF_CHAT_MODEL: str = "anthropic/claude-sonnet-5-5"
+    UNCF_CHAT_MODEL: str = "openai/gpt-4.1"
 
     @property
     def chat_model(self) -> str:
-        """Preserve old Claude settings while requiring an explicit supported provider."""
-        model = self.UNCF_CHAT_MODEL
-        if model.startswith("claude-"):
-            model = f"anthropic/{model}"
-        if not model.startswith(("openai/", "anthropic/")) or not model.split("/", 1)[1]:
-            raise ValueError("UNCF_CHAT_MODEL must use openai/<model> or anthropic/<model>.")
+        """Require a canonical OpenRouter ID without guessing legacy model mappings."""
+        model = self.UNCF_CHAT_MODEL.strip()
+        if "/" not in model or any(not part for part in model.split("/")):
+            raise ValueError("UNCF_CHAT_MODEL must be a canonical OpenRouter model ID.")
         return model
 
     @property

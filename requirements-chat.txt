@@ -1,6 +1,6 @@
 # Dedicated Vercel chat service; the Results service keeps its provider-free entrypoint.
 -e .
-litellm==1.108.4          # Chat: shared asynchronous OpenAI/Anthropic tool interface
+openrouter==1.3.151          # Chat: official asynchronous OpenRouter SDK
 pydantic-settings==2.16.0 # Chat: reuse Playground's server-side settings
 sqlalchemy==2.1.5         # Chat: parse configured SQLite/PostgreSQL database URLs
 psycopg[binary]==3.3.6     # Chat: the existing configured PostgreSQL snapshot adapter

@@ -176,11 +176,13 @@ There is no fallback to the standalone extract or cached result. Errors do not e
 Coverage declarations still come from `UNCF_ANALYTICS_CONFIG` or `analytics/config/analytics.yaml`.
 
 `UNCF_CHAT_ENABLED=true` enables chat independently of `SANDBOX_ENABLED`; development enables it
-in the committed environment template. Full Playground production remains opt-in. LiteLLM connects
-`UNCF_CHAT_MODEL=anthropic/<model>` to `ANTHROPIC_API_KEY`, or `openai/<model>` to `OPENAI_API_KEY`.
-Put the matching key in an ignored local environment file or the host secret store. Unprefixed
-`claude-*` settings remain compatible. Clarification can resume
-without another provider call. Numerical text and formulas are validated and rendered from receipts.
+in the committed environment template. Full Playground production remains opt-in. The official
+OpenRouter SDK uses
+`OPENROUTER_API_KEY` with a canonical `UNCF_CHAT_MODEL` such as `openai/gpt-4.1`.
+Set both in the ignored `.env.development.local` or server environment. Replace the previous
+OpenAI/Anthropic keys and bare `claude-*` names; model IDs are never rewritten. Verify model
+availability and tool support using [the deployment guide](../../docs/chat-deployment.md).
+Clarification can resume without another provider call. Numerical text and formulas are validated and rendered from receipts.
 
 All three graduation horizons and perspectives, retention-by-entry-major and annual enrollment
 by ethnicity/program are retained. No new coverage or award-semester facts are inferred by moving
