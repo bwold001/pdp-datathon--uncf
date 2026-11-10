@@ -55,4 +55,4 @@ Before either the provider or browser sees a receipt, a conservative projection 
 
 ## Adding an analysis
 
-Keep institution-specific program logic in `analytics/`. Define a typed request and versioned definition, implement the deterministic calculation, add hand-counted tests, and dispatch through the service. Register the narrow model tool contract only after direct API and chat parity is verified. Do not expand upstream measure enums merely to accommodate a team-specific program analysis. Existing Results routes and clients keep their current contract.
+Keep institution-specific program logic in `analytics/`. Define a typed request and versioned definition, implement the deterministic calculation, add hand-counted tests, and dispatch through the service. Register the narrow model tool contract only after direct API and chat parity is verified. Do not expand upstream measure enums merely to accommodate a team-specific program analysis. The Explorer routes (`/measures/{measure}` and the page routes) and their clients keep their current contract.

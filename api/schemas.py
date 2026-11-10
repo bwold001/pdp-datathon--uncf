@@ -1,8 +1,6 @@
-"""Response shapes for the Results API (#5) and the Explorer pages.
+"""Response shapes for GET /measures/{measure} and the Explorer pages.
 
-They follow the Explorer's contract in playground/client_application/src/app/(app)/uncf/data.ts
-(ResultsResponse, ResultRow, ResultsMeta, MeasureDefinition). Edit both together: there is no code generation.
-Rows also carry n_out_of_scope and note, which the client can ignore.
+The client has no generated types: when a shape here changes, update the client code that reads it.
 """
 from __future__ import annotations
 
@@ -57,7 +55,7 @@ class MeasureDefinition(BaseModel):
     limits: list[str]
 
 
-class ResultRow(BaseModel):
+class GroupRow(BaseModel):
     """One group's result. A hidden or missing number is null with its status, never 0."""
 
     group: dict[str, str]  # {} is everyone; {"pell": "Y"}; {"pell": "Y", "race": "Asian"}
@@ -71,7 +69,7 @@ class ResultRow(BaseModel):
     split: dict[str, int] | None = None  # dfw_rate only: D, F and W counts
 
 
-class ResultsMeta(BaseModel):
+class MeasureByGroupMeta(BaseModel):
     """What the rows are, what they mean and where they came from."""
 
     measure: Measure
@@ -85,11 +83,11 @@ class ResultsMeta(BaseModel):
     provisional: bool  # the class's second year is only partly in the data, so a year-2 rate can still change
 
 
-class ResultsResponse(BaseModel):
-    """GET /results: the everyone row first, then one row per group."""
+class MeasureByGroupResponse(BaseModel):
+    """GET /measures/{measure}: the everyone row first, then one row per group."""
 
-    meta: ResultsMeta
-    rows: list[ResultRow]
+    meta: MeasureByGroupMeta
+    rows: list[GroupRow]
 
 
 class ExplorerMeta(BaseModel):

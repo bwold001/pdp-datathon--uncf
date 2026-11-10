@@ -19,7 +19,7 @@ compare parameters, definitions and calculated values, not build timestamps or o
 It does not start the full Playground app, migrations, Workbench, document endpoints or uploads.
 The full local Playground continues to use its configured database, including Workbench uploads.
 Do not set a project-wide `DATABASE_URL` for this mock deployment: it would override chat's
-bundled extract while the Results API still reads its own bundled extract. A shared external
+bundled extract while the Explorer API (`api/`) still reads its own bundled extract. A shared external
 database for the whole Explorer requires a separate coordinated change.
 
 The first matching rewrite wins:

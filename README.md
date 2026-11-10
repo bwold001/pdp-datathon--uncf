@@ -14,11 +14,10 @@ commit `cef57aa` (the starter's latest commit when this repo was created, 2026-1
 
 | Priority | What | Done when |
 | --- | --- | --- |
-| **Core** | Student Success Explorer: pick a cohort and two group filters, see retention and gateway math/English completion, with definitions, denominators and limitations. CSV export. | Answers the two agreed demo questions; charts and CSV match |
-| **Stretch 1** | Shareable insight card with a print/PDF layout | At least one card whose numbers match the Explorer |
-| **Stretch 2** | Bounded chat agent over the same aggregate results | Agreed questions get verified answers; unsupported ones are declined |
+| **Core** | Student Success Explorer: pick a cohort and filters, see each page's measures with definitions, denominators and limitations. Each page exports everything it shows as CSV. | Answers the agreed demo questions; charts and CSV match |
+| **Stretch** | Bounded chat agent over the same aggregate results | Agreed questions get verified answers; unsupported ones are declined |
 
-Every screen, card and chat answer uses one result contract: measure, filters, numerator,
+Every page, export and chat answer uses one result contract: measure, filters, numerator,
 denominator, rate, suppression status, limitations, definition, source and load time. "Unavailable"
 is never shown as zero. Small groups are suppressed everywhere, including exports and chat.
 
@@ -42,7 +41,7 @@ Four folders hold our code. Each number has one owner:
 
 | Folder | What it holds |
 | --- | --- |
-| `measures/` | Every Explorer and Results API number: `run_measure`, one file per measure, the page breakdowns, and the staff facing definitions (`measures/definitions.py`) |
+| `measures/` | Every Explorer number: `run_measure`, one file per measure, the page breakdowns, and the staff facing definitions (`measures/definitions.py`) |
 | `analytics/` | The chat's deterministic analyses: graduation, retention by major, annual enrollment, program attribution, coverage rules and receipts. No model provider or Playground needed |
 | `api/` | HTTP only: request checks, response shapes and one router under `/api/v1/uncf`. No calculations |
 | `playground/server_application/app/chat/` | The bounded chat: provider calls and validated tools. Database access is in `app/services/analytics.py` |
@@ -98,7 +97,7 @@ measures/breakdowns/       the Explorer pages: Student paths, DFW courses, gatew
                            credit momentum. Rates from run_measure, split by term, course, flow or tier
 measures/definitions.py    every plain language definition
 api/filters.py             the cohort bar: checks cohort, 8 filters and retention type
-api/results.py             the Results API's rows from run_measure
+api/measure_by_group.py    one measure split by group, for /measures/{measure}, from run_measure
 api/analyses.py            the chat's analyses over HTTP, from analytics/
 api/route.py               one app under /api/v1/uncf (Vercel entrypoint api.route:app)
 api/data.py                where the data lives, load time, provisional cohorts
@@ -118,14 +117,14 @@ api/load.py                builds pdp.sqlite when it's missing
 - **Definitions** come from `measures/definitions.py`. A school's own metric names go in
   `LOCAL_NAMES`, picked with `UNCF_SCHOOL=fmu` or `benedict`.
 
-Every page route and `/results` take the same query values: `cohort`, the 8 filters
+Every page route and `/measures/{measure}` take the same query values: `cohort`, the 8 filters
 (`cohort_term`, `enrollment_intensity`, `enrollment_type`, `pell`, `gender`, `race`, `ethnicity`,
 `age_band`, with the measures' values), `retention_type=school|federal` and `format=json|csv`.
 
 | Endpoint | What it returns |
 | --- | --- |
-| `GET /api/v1/uncf/results?measure=&cohort=&group_by=` | One measure: the everyone row, then one row per group. `group_by` up to twice. `dfw_rate` rows carry the D, F, W split |
-| `GET /api/v1/uncf/options` | The measures, classes and groupings a client can ask for |
+| `GET /api/v1/uncf/measures/{measure}?cohort=&group_by=` | One measure split by group: the everyone row, then one row per group. `group_by` up to twice. `dfw_rate` rows carry the D, F, W split. No page calls it; it's for chat questions a page doesn't answer, such as a rate by race. The old `GET /results?measure=` URL still answers, hidden from the docs |
+| `GET /api/v1/uncf/options` | The measures, classes and groupings `/measures/{measure}` takes |
 | `GET /api/v1/uncf/health` | Whether the data is loaded, and `loaded_at` |
 | `GET /api/v1/uncf/cohort-options?cohort=` | Students per cohort year, and per filter value in the chosen cohort |
 | `GET /api/v1/uncf/definitions` | Every plain language definition |

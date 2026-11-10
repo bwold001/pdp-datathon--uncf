@@ -1,4 +1,4 @@
-"""Staff-facing definitions shared by the Results API and measure consumers."""
+"""Staff-facing definitions shared by every API route, the Explorer pages and the chat."""
 from __future__ import annotations
 
 import os

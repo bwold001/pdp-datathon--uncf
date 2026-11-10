@@ -1,8 +1,9 @@
-"""The UNCF API: the Results API (#5) and the Explorer pages, on one router under /api/v1/uncf.
+"""The UNCF API: the Explorer pages and one measure by group, on one router under /api/v1/uncf.
 
-Every number comes from the measures package (run_measure and measures/breakdowns/), so the pages, the Results API, CSV export, insight card and chat agree.
+Every number comes from the measures package (run_measure and measures/breakdowns/), so the pages, CSV export
+and chat agree.
 
-Every page route and /results take the same cohort bar: cohort, the eight filters (cohort_term,
+Every page route and /measures/{measure} take the same cohort bar: cohort, the eight filters (cohort_term,
 enrollment_intensity, enrollment_type, pell, gender, race, ethnicity, age_band) with the measures' value names,
 retention_type (school, the default, or federal), and format (json, the default, or csv).
 e.g. /api/v1/uncf/gateway?cohort=2022-23&pell=Y&retention_type=federal&format=csv
@@ -23,8 +24,10 @@ from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 
-from api import data, results
+from api import data
 from api.analyses import router as analytics_router
+from api.measure_by_group import clear_cache as clear_measure_cache
+from api.measure_by_group import is_provisional, measure_by_group
 from measures.definitions import all_definitions, definition_for
 from api.filters import (
     DEFAULT_RETENTION_TYPE,
@@ -44,11 +47,11 @@ from api.schemas import (
     GatewayResponse,
     HealthResponse,
     Measure,
+    MeasureByGroupMeta,
+    MeasureByGroupResponse,
     MeasureDefinition,
     Option,
     OptionsResponse,
-    ResultsMeta,
-    ResultsResponse,
     StudentPathsResponse,
 )
 from measures.breakdowns.credit_momentum import credit_momentum
@@ -209,7 +212,7 @@ def get_health() -> HealthResponse:
 
 @router.get("/definitions")
 def get_definitions():
-    """Every plain-language definition (api/definitions.py), so every page and the chat use the same words."""
+    """Every plain-language definition (measures/definitions.py), so every page and the chat use the same words."""
     return {"definitions": all_definitions()}
 
 
@@ -224,18 +227,25 @@ def get_cohort_options(cohort: str = data.DEFAULT_COHORT):
         return error(503, "data_missing", str(missing))
 
 
-# Results API ---------------------------------------------------------------------------------------------------
+# One measure by group ------------------------------------------------------------------------------------------
+
+GroupByQuery = Annotated[list[Dimension] | None, Query()]
 
 
-@router.get("/results", response_model=ResultsResponse, responses=ERRORS)
-def get_results(
-    measure: Measure,
-    cohort: Cohort,
-    bar: Annotated[Bar, Depends()],
-    group_by: Annotated[list[Dimension] | None, Query()] = None,
-):
-    """One measure for one class, its filters and retention type, for everyone and each group, with its definition."""
-    dimensions = group_by or []
+@router.get("/measures/{measure}", response_model=MeasureByGroupResponse, responses=ERRORS)
+def get_measure(measure: Measure, cohort: Cohort, bar: Annotated[Bar, Depends()], group_by: GroupByQuery = None):
+    """One measure for one cohort, its filters and retention type: the everyone row, then one row per group."""
+    return measure_answer(measure, cohort, bar, group_by or [])
+
+
+@router.get("/results", response_model=MeasureByGroupResponse, responses=ERRORS, include_in_schema=False)
+def get_results(measure: Measure, cohort: Cohort, bar: Annotated[Bar, Depends()], group_by: GroupByQuery = None):
+    """The old URL for /measures/{measure} (measure as a query value), kept for the deployed API's callers."""
+    return measure_answer(measure, cohort, bar, group_by or [])
+
+
+def measure_answer(measure: str, cohort: str, bar: Bar, dimensions: list[str]):
+    """One measure by group as JSON or CSV, with its definition. A bad group_by is a 422, missing data a 503."""
     if len(dimensions) > MAX_GROUP_BY:
         return error(422, "invalid_group_by", f"Pass group_by at most {MAX_GROUP_BY} times.")
     if len(set(dimensions)) != len(dimensions):
@@ -243,7 +253,7 @@ def get_results(
     if bar.problem is not None:
         return bar.problem
     try:
-        rows, loaded_at = results.get_results(measure, bar.query, dimensions)
+        rows, loaded_at = measure_by_group(measure, bar.query, dimensions)
     except data.DataMissing as missing:
         return error(503, "data_missing", str(missing))
 
@@ -251,7 +261,7 @@ def get_results(
         table = [{**{d: row.group.get(d, "All") for d in dimensions}, **flatten(row.model_dump(exclude={"group"}))} for row in rows]
         return csv_response(table, bar.query, f"uncf-{measure}-{cohort}.csv")
     federal = measure == "retention" and bar.query.retention_type == "federal"
-    meta = ResultsMeta(
+    meta = MeasureByGroupMeta(
         measure=measure,
         cohort=cohort,
         group_by=dimensions,
@@ -260,14 +270,14 @@ def get_results(
         definition=MeasureDefinition(**definition_for("federal_retention" if federal else measure)),
         source=data.SOURCE,
         loaded_at=loaded_at,
-        provisional=results.is_provisional(measure, cohort),
+        provisional=is_provisional(measure, cohort),
     )
-    return ResultsResponse(meta=meta, rows=rows)
+    return MeasureByGroupResponse(meta=meta, rows=rows)
 
 
 @router.get("/options", response_model=OptionsResponse)
 def get_options() -> OptionsResponse:
-    """The measures, classes, groupings and filters a client can ask for."""
+    """The measures, classes, groupings and filters /measures/{measure} takes."""
     return OptionsResponse(
         measures=[Option(value=m, label=definition_for(m)["name"]) for m in get_args(Measure)],
         cohorts=list(get_args(Cohort)),
@@ -313,9 +323,9 @@ def get_credit_momentum(bar: Annotated[Bar, Depends()]):
 
 
 def clear_cache() -> None:
-    """Forget every cached answer on both APIs."""
+    """Forget every cached answer: the pages' and the measure route's."""
     cached.cache_clear()
-    results.clear_cache()
+    clear_measure_cache()
 
 
 def create_app() -> FastAPI:

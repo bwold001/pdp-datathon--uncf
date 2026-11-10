@@ -1,8 +1,8 @@
-"""The Results API's answers: one measure for one class, for everyone and each group, from run_measure.
+"""One measure split by group, for GET /measures/{measure}: the everyone row, then one row per group.
 
-Every number is run_measure's row, with the cohort bar's filters applied, so the Results API, the Explorer pages,
-CSV export and chat agree. This module only turns the rows into the response shape. Answers are cached in memory,
-keyed on the data file's modification time, so a reload is picked up without a restart.
+Every number is run_measure's row, with the cohort bar's filters applied, so this route, the Explorer pages,
+CSV export and chat agree. This module only picks the measure and turns the rows into response rows. Answers are
+cached in memory, keyed on the data file's modification time, so a reload is picked up without a restart.
 """
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from functools import lru_cache
 
 from api import data
 from api.filters import CohortQuery
-from api.schemas import ResultRow
+from api.schemas import GroupRow
 from measures.models import Cohort, GroupBy, GroupDimension, Measure, MeasureResult
 from measures.run_measures import run_measure
 
@@ -35,9 +35,9 @@ def status_of(measure: str, row: MeasureResult) -> str:
     return row.status.value
 
 
-def to_row(measure: str, row: MeasureResult) -> ResultRow:
+def to_row(measure: str, row: MeasureResult) -> GroupRow:
     """One run_measure row as a response row."""
-    return ResultRow(
+    return GroupRow(
         group={part.dimension.value: part.value for part in sorted(row.group.parts, key=lambda p: p.dimension.value)},
         numerator=row.numerator,
         denominator=row.denominator,
@@ -51,14 +51,14 @@ def to_row(measure: str, row: MeasureResult) -> ResultRow:
 
 
 @lru_cache(maxsize=1024)
-def _calculate(measure: str, query: CohortQuery, dimensions: tuple[str, ...], stamp: float) -> tuple[tuple[ResultRow, ...], str]:
+def _calculate(measure: str, query: CohortQuery, dimensions: tuple[str, ...], stamp: float) -> tuple[tuple[GroupRow, ...], str]:
     """One measure for one class, its filters and grouping. stamp is only part of the cache key."""
     group_by = [GroupBy.of(*(GroupDimension(d) for d in dimensions))] if dimensions else None
     rows = run_measure(measure_for(measure, query), [Cohort.of(query.cohort)], group_by, database=data.data_path(), filters=query.as_group())
     return tuple(to_row(measure, row) for row in rows), data.loaded_at()
 
 
-def get_results(measure: str, query: CohortQuery, dimensions: list[str]) -> tuple[list[ResultRow], str]:
+def measure_by_group(measure: str, query: CohortQuery, dimensions: list[str]) -> tuple[list[GroupRow], str]:
     """The everyone row, then one row per group, and when the data was loaded. Dimension order doesn't matter."""
     rows, loaded = _calculate(measure, query, tuple(sorted(dimensions)), data.data_stamp())
     return list(rows), loaded

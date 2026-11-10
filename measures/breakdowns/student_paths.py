@@ -8,7 +8,7 @@ five). In each term a student is:
 - elsewhere: neither, but the course file records enrollment at another college that term;
 - stopped: no record at all that term.
 
-Retention comes from run_measure (school or federal), so it matches every other page and the Results API. The
+Retention comes from run_measure (school or federal), so it matches every other page and /measures/retention. The
 statuses come from term records, so they can differ from retention. Groups under 10 students are hidden.
 """
 from __future__ import annotations
@@ -203,7 +203,7 @@ def student_paths(
             "two_year": shown(transfers["two_year"]),
             "other": shown(transfers["other"]),
         },
-        # Every selected student, placed or not, so it matches the other pages and the Results API.
+        # Every selected student, placed or not, so it matches the other pages and /measures/retention.
         "retention": retention(retention_measure, cohort, filters, database),
         "groups": groups(paths, students, group_by, cohort, filters, retention_measure, database) if group_by else [],
     }
@@ -217,7 +217,7 @@ def moves(paths: dict[str, list], before: int, after: int) -> list[dict]:
 
 def groups(paths: dict, students: dict, dimension: GroupDimension, cohort: str, filters: Group, retention_measure: Measure, database) -> list[dict]:
     """The page's numbers for each value of one dimension, so groups can be compared side by side."""
-    # Each value's retention is run_measure's row for that group, the same row the Results API returns.
+    # Each value's retention is run_measure's row for that group, the same row /measures/retention returns.
     by_value = {}
     for row in run_measure(retention_measure, [Cohort.of(cohort)], [GroupBy.of(dimension)], database=database, filters=filters)[1:]:
         (part,) = row.group.parts
