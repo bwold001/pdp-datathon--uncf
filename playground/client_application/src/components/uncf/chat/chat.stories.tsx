@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { expect, fn, waitFor } from "storybook/test";
 import type { AnalysisReceipt, ChatRequest, ChatResponse } from "@/services/student-success-chat";
 import { StudentSuccessChat } from "./chat";
-import StudentSuccessChatPage from "@/app/(app)/chat/page";
+import StudentSuccessChatPage from "@/app/(uncf-explorer)/uncf/chat/page";
 import { env } from "@/lib/env";
 import { CalculationCard } from "./calculation-card";
 

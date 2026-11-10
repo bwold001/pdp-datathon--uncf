@@ -38,8 +38,8 @@ Reinstall whenever `requirements.txt` changes.
 
 ### Run the project
 
-For chat, run the [Playground](playground/README.md) backend and frontend and open `/chat`.
-The original `/uncf/chat` and `/sandbox/data-chat-ui` bookmarks redirect there.
+For chat, run the [Playground](playground/README.md) backend and frontend and open `/uncf/chat`.
+The original `/chat` and `/sandbox/data-chat-ui` bookmarks redirect there.
 Load the cohort and course files using Workbench. Chat and its direct analysis endpoints use
 Playground's configured `DATABASE_URL`, including newly uploaded data. SQLite and PostgreSQL
 read the same deterministic calculations in read-only snapshots, without a results cache.
@@ -132,12 +132,12 @@ Short branch, pull request, a teammate reviews, then merge. See
 
 ## Student success chat
 
-The demonstration at `/chat` answers the agreed graduation, retention and annual enrollment questions with shared calculation receipts. See [calculation definitions and coverage requirements](docs/analytics-definitions.md).
+The demonstration at `/uncf/chat` answers the agreed graduation, retention and annual enrollment questions with shared calculation receipts. See [calculation definitions and coverage requirements](docs/analytics-definitions.md).
 
 1. Install Playground dependencies with `uv sync` in `playground/server_application/`, then load cohort and course files in Workbench.
 2. Follow [Playground setup](playground/README.md) for its Python 3.14/uv and Node 24/Bun runtimes. Root Python and the Playground provider runtime are separate environments.
 3. Set `ANTHROPIC_API_KEY` in the server's ignored `.env.development.local` or environment. `UNCF_CHAT_MODEL` selects the Anthropic model for this demo. Keep the key server-side. This provider-specific adapter does not implement a campus production hosting arrangement.
-4. Run the Playground API and client (`mise run api:dev`, `mise run web:dev`). The client uses its existing `NEXT_PUBLIC_API_BASE_URL`. Open `/chat` or use the sidebar's Student success chat link. The API demo routes use `UNCF_CHAT_ENABLED` (enabled in local development), independently of `SANDBOX_ENABLED`. Production remains opt-in.
+4. Run the Playground API and client (`mise run api:dev`, `mise run web:dev`). The client uses its existing `NEXT_PUBLIC_API_BASE_URL`. Open `/uncf/chat` or use the Explorer’s Chat tab. The API demo routes use `UNCF_CHAT_ENABLED` (enabled in local development), independently of `SANDBOX_ENABLED`. Production remains opt-in.
 5. Try “What is the graduation rate for chemistry majors?”, “What is the retention rate for all majors?” and “What is enrollment ethnicity by academic program over the past 2 years?” Choose the requested cohort, credential and chemistry definition. Open “How these results were calculated” to inspect supporting evidence.
 
 The model can call only the catalog, definitions and approved analysis tools. It cannot submit SQL, student IDs or filesystem paths. A new question starts a separate analysis; only a pending typed request is carried through clarification. Reset discards late replies.

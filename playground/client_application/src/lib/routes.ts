@@ -1,7 +1,7 @@
 /** Every page address the client links to, so a renamed page is changed in one place. */
 export const routes = {
   home: "/",
-  uncfChat: "/chat",
+  uncfChat: "/uncf/chat",
   workbench: "/workbench",
   workbenchUpload: "/workbench/upload",
   workbenchExplore: "/workbench/explore",

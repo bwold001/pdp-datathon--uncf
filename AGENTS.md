@@ -13,7 +13,7 @@ yes. Keep per-school differences in config, not forks.
 coverage belong in `analytics/`. Foundational measures and their definitions belong in `measures/`.
 Provider orchestration belongs in `playground/server_application/app/chat/`; configured database
 access belongs in `app/services/analytics.py`. Provider-free HTTP compatibility belongs in `api/`.
-Client chat lives under `src/components/chat/student-success/` and its page is `/chat`.
+Client chat lives under `src/components/uncf/chat/` and its Explorer page is `/uncf/chat`.
 
 Preserve the deployed Results API and Vercel routing when moving files. All numerical product
 answers must use validated deterministic receipts, not arbitrary SQL or generated numerical prose.

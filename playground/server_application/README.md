@@ -166,7 +166,7 @@ Check it at http://localhost:8000/docs.
 
 `POST /api/v1/chat` serves the bounded graduation, retention and enrollment assistant.
 The existing `/api/v1/uncf/chat` and `/api/v1/sandbox/chat/suggest` paths use the same handler
-and typed receipt contract. Both old browser pages redirect to `/chat`. The arbitrary-SQL
+and typed receipt contract. The old `/chat` and Sandbox browser pages redirect to `/uncf/chat`. The arbitrary-SQL
 Sandbox chat implementation has been removed; other Sandbox examples remain.
 
 Install with `uv sync`: the repository's `pdp-student-success` package and data model are editable
