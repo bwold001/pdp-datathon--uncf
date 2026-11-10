@@ -43,3 +43,26 @@ def test_coverage_requires_declared_complete_years():
     assert coverage.latest_two_years() == ['2022-23', '2023-24']
     assert not coverage.observable('2022-23', 6)
     assert Coverage().latest_two_years() == []
+
+
+@pytest.mark.parametrize('values', [
+    {'numerator': 2, 'denominator': 4, 'rate': .999},
+    {'numerator': -1, 'denominator': 4, 'rate': 0},
+    {'numerator': 5, 'denominator': 4, 'rate': 1},
+    {'numerator': 0, 'denominator': 0, 'rate': 0},
+])
+def test_receipts_reject_inconsistent_numbers(values):
+    """A valid-looking receipt cannot carry a rate unrelated to its actual counts."""
+    from uncf.analytics.schemas import CalculationRow
+    with pytest.raises(ValidationError):
+        CalculationRow(label='invalid', kind='rate', status='ok', **values)
+
+
+def test_calculation_text_is_owned_by_the_contract():
+    """Consumers cannot inject invented numerical explanations or hidden values."""
+    from uncf.analytics.schemas import CalculationRow
+    row = CalculationRow(label='retention', kind='rate', status='ok',
+                         numerator=1, denominator=2, rate=.5, calculation='99.9%')
+    assert row.calculation == '1 / 2 = 50.00%'
+    with pytest.raises(ValidationError):
+        CalculationRow(label='hidden', kind='rate', status='suppressed', calculation='1 / 2')

@@ -44,7 +44,8 @@ def create_app() -> FastAPI:
     app.include_router(api_router, prefix=settings.API_V1_PREFIX)
     if settings.SANDBOX_ENABLED:
         app.include_router(sandbox_router, prefix=settings.API_V1_PREFIX)
-        # Team demo routes use repository-owned code and remain off in production.
+    if settings.UNCF_CHAT_ENABLED:
+        # Chat has its own deployment switch, independent of Sandbox examples.
         from app.sandbox.chat.repo import import_path
 
         import_path("")

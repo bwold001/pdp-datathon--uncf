@@ -68,10 +68,10 @@ class CalculationRow(Contract):
     group: dict[str, str] = Field(default_factory=dict)
     horizon: Literal["four_year", "six_year", "to_date"] | None = None
     status: ResultStatus
-    numerator: int | None = None
-    denominator: int | None = None
-    count: int | None = None
-    rate: float | None = None
+    numerator: int | None = Field(default=None, ge=0)
+    denominator: int | None = Field(default=None, ge=0)
+    count: int | None = Field(default=None, ge=0)
+    rate: float | None = Field(default=None, ge=0, le=1, allow_inf_nan=False)
     exclusions: dict[str, int] = Field(default_factory=dict)
     calculation: str = ""
     note: str = ""
@@ -95,6 +95,23 @@ class CalculationRow(Contract):
             raise PydanticCustomError(
                 "invalid_parameters", "Hidden rows cannot carry numerical inputs"
             )
+        visible = self.status in ("ok", "provisional")
+        if not visible and self.calculation:
+            raise PydanticCustomError("invalid_parameters", "Hidden rows have no calculation text")
+        if any(value < 0 for value in self.exclusions.values()):
+            raise PydanticCustomError("invalid_parameters", "Exclusions cannot be negative")
+        if visible and self.kind == "count":
+            if self.count is None:
+                raise PydanticCustomError("invalid_parameters", "Visible counts need a count")
+            self.calculation = f"COUNT(DISTINCT student_id) = {self.count}"
+        elif visible:
+            if (self.numerator is None or self.denominator is None or self.denominator == 0
+                    or self.numerator > self.denominator or self.count is not None):
+                raise PydanticCustomError("invalid_parameters", "Visible rates need valid counts")
+            expected = round(self.numerator / self.denominator, 4)
+            if self.rate != expected:
+                raise PydanticCustomError("invalid_parameters", "Rate must match the returned counts")
+            self.calculation = f"{self.numerator} / {self.denominator} = {expected:.2%}"
         return self
 
 

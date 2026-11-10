@@ -17,13 +17,14 @@ export function useUncfChat(request = sendUncfQuestion) {
   const [revision, setRevision] = useState(0);
   const generation = useRef(0);
   const busy = useRef(false);
+  const question = useRef("");
 
-  const send = useCallback(async (payload: ChatRequest) => {
+  const send = useCallback(async (payload: ChatRequest, displayText = payload.prompt) => {
     if (busy.current || !payload.prompt.trim()) return;
     busy.current = true;
     const current = ++generation.current;
     setPending(true);
-    setMessages((previous) => [...previous, { id: crypto.randomUUID(), role: "user", text: payload.prompt }]);
+    setMessages((previous) => [...previous, { id: crypto.randomUUID(), role: "user", text: displayText }]);
     try {
       const answer = await request(payload);
       if (generation.current !== current) return;
@@ -41,6 +42,8 @@ export function useUncfChat(request = sendUncfQuestion) {
   }, [request]);
 
   const ask = useCallback((prompt: string) => {
+    if (busy.current) return;
+    question.current = prompt;
     setClarification(null);
     return send({ prompt });
   }, [send]);
@@ -48,12 +51,13 @@ export function useUncfChat(request = sendUncfQuestion) {
   const select = useCallback((value: string) => {
     if (!clarification) return;
     const label = clarification.choices.find((choice) => choice.value === value)?.label ?? value;
-    return send({ prompt: label, pending: clarification.pending, selection: { field: clarification.field, value } });
+    return send({ prompt: question.current, pending: clarification.pending, selection: { field: clarification.field, value } }, label);
   }, [clarification, send]);
 
   const reset = useCallback(() => {
     generation.current += 1;
     busy.current = false;
+    question.current = "";
     setPending(false);
     setClarification(null);
     setMessages([]);

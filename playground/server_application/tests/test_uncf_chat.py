@@ -102,3 +102,19 @@ def test_total_request_deadline_is_shorter_than_the_browser_timeout(client, anal
     response = client.post("/api/v1/uncf/chat", json={"prompt": "Retention?"})
     assert response.status_code == 502
     assert "timed out" in response.json()["error"]["message"]
+
+
+def test_chat_switch_is_independent_of_sandbox(monkeypatch):
+    """Disabling example endpoints does not remove the explicitly enabled chat."""
+    from fastapi.testclient import TestClient
+
+    from app.main import create_app
+
+    monkeypatch.setattr(settings, "SANDBOX_ENABLED", False)
+    monkeypatch.setattr(settings, "UNCF_CHAT_ENABLED", True)
+    with TestClient(create_app()) as client:
+        assert client.post("/api/v1/uncf/chat", json={"prompt": " "}).status_code == 422
+        assert client.get("/api/v1/sandbox/measures/by-group").status_code == 404
+    monkeypatch.setattr(settings, "UNCF_CHAT_ENABLED", False)
+    with TestClient(create_app()) as client:
+        assert client.post("/api/v1/uncf/chat", json={"prompt": "hello"}).status_code == 404

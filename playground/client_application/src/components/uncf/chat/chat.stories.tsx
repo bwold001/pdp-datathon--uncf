@@ -44,7 +44,7 @@ export const ClarifyCohort: Story = {
     await userEvent.click(canvas.getByRole("button", { name: "What is the retention rate for all majors?" }));
     await userEvent.click(canvas.getByRole("button", { name: /^2022-23$/ }));
     await expect(canvas.getByText("50.00%", { exact: true })).toBeVisible();
-    await expect(args.request).toHaveBeenLastCalledWith({ prompt: "2022-23", pending: { analysis: "retention" }, selection: { field: "cohort", value: "2022-23" } });
+    await expect(args.request).toHaveBeenLastCalledWith({ prompt: "What is the retention rate for all majors?", pending: { analysis: "retention" }, selection: { field: "cohort", value: "2022-23" } });
   },
 };
 
