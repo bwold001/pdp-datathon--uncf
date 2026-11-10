@@ -9,7 +9,7 @@ from pathlib import Path
 
 from fastapi import FastAPI
 
-from uncf.api_route import PREFIX
+from api.route import PREFIX
 
 REPO = Path(__file__).resolve().parents[2]
 CONFIG = json.loads((REPO / "vercel.json").read_text(encoding="utf-8"))
@@ -65,7 +65,7 @@ def test_pages_go_to_the_frontend() -> None:
 
 def test_backend_build_loads_the_data() -> None:
     """Each deploy builds pdp.sqlite from the CSVs in data/raw/."""
-    assert BACKEND["buildCommand"] == "python -m uncf load"
+    assert BACKEND["buildCommand"] == "python -m api load"
 
 
 def test_frontend_calls_the_api_on_the_same_site() -> None:
@@ -83,11 +83,11 @@ def test_home_redirects_to_an_explorer_tab_that_exists() -> None:
 
 def test_bundle_keeps_what_the_api_reads() -> None:
     """The API's code and pdp.sqlite stay in its bundle."""
-    for path in ["normalized-data-model/output/pdp.sqlite", "uncf/api_route.py", "measures/run_measures.py"]:
+    for path in ["normalized-data-model/output/pdp.sqlite", "api/route.py", "measures/run_measures.py"]:
         assert not is_excluded(path), path
 
 
 def test_bundle_drops_the_frontend_and_raw_data() -> None:
     """Big files the API never reads stay out of its bundle."""
-    for path in ["playground/client_application/node_modules/next/package.json", "data/raw/pdp_cohort_data.csv", "uncf/tests/test_api.py"]:
+    for path in ["playground/client_application/node_modules/next/package.json", "data/raw/pdp_cohort_data.csv", "api/tests/test_results.py"]:
         assert is_excluded(path), path

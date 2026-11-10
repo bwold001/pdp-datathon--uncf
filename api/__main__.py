@@ -1,4 +1,4 @@
-"""Entry point: `python -m uncf [load|serve|precompute]`.
+"""Entry point: `python -m api [load|serve|precompute]`.
 
 No argument loads the data if it's missing, then serves the Results API. `precompute` still saves results
 the old way (#4); the API no longer needs it.
@@ -8,21 +8,21 @@ from __future__ import annotations
 import argparse
 import logging
 
-from uncf import precompute
+from api import precompute
 
 
 def serve(host: str, port: int) -> None:
     """Start the Results API with uvicorn."""
     import uvicorn
 
-    uvicorn.run("uncf.api_route:app", host=host, port=port)
+    uvicorn.run("api.route:app", host=host, port=port)
 
 
 def main(argv: list[str] | None = None) -> None:
     """Run the command named on the command line."""
-    from uncf.api_route import DEFAULT_PORT
+    from api.route import DEFAULT_PORT
 
-    parser = argparse.ArgumentParser(prog="python -m uncf")
+    parser = argparse.ArgumentParser(prog="python -m api")
     parser.add_argument("command", nargs="?", choices=["load", "serve", "precompute"])
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=DEFAULT_PORT)

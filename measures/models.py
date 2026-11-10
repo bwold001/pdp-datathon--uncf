@@ -15,6 +15,7 @@ class Measure(str, Enum):
     """The success measures."""
 
     RETENTION = "retention"
+    FEDERAL_RETENTION = "federal_retention"  # fall to fall: took a course here the fall after year 1
     PERSISTENCE = "persistence"
     GATEWAY_MATH = "gateway_math"
     GATEWAY_ENGLISH = "gateway_english"
@@ -59,6 +60,8 @@ class GroupDimension(str, Enum):
     ENROLLMENT_INTENSITY = "enrollment_intensity"
     COHORT_TERM = "cohort_term"
     COURSE = "course"  # DFW only: the values are the courses in the data
+    TERM = "term"  # DFW only: the season the course was taken (Fall, Winter, Spring, Summer)
+    DELIVERY = "delivery"  # DFW only: how the course was taught, as the course file codes it (F, H, O or UNKNOWN)
 
 
 # The values each dimension can take: the PDP dictionary's values, plus UNKNOWN for anything blank or not listed.
@@ -85,7 +88,7 @@ ALLOWED_VALUES: dict[GroupDimension, frozenset[str]] = {
 }
 
 # Dimensions with no fixed list of values: the data says which values exist. A measure lists the ones it supports.
-OPEN_DIMENSIONS = frozenset({GroupDimension.COURSE})
+OPEN_DIMENSIONS = frozenset({GroupDimension.COURSE, GroupDimension.TERM, GroupDimension.DELIVERY})
 
 
 @dataclass(frozen=True)
@@ -189,6 +192,8 @@ class MeasureResult:
     exclusion_reason: ExclusionReason | None  # the reason with the most students (or enrollments) left out
     note: str
     exclusions: dict[ExclusionReason, int] = field(default_factory=dict)  # students (or enrollments, for DFW) left out, by reason
+    split: dict[str, int] | None = None  # DFW only: how many of the numerator were a D, an F and a W
+    n_students: int | None = None  # distinct students counted (for DFW, a student with several grades counts once)
 
     @property
     def suppressed(self) -> bool:
@@ -213,14 +218,16 @@ class MeasureResult:
 
         counts = [self.numerator, self.denominator, self.metric_rate]
         if self.suppressed:
-            if any(v is not None for v in counts + [self.n_excluded, self.n_out_of_scope]) or self.exclusions:
-                raise ValueError("a hidden group must have blank counts, metric_rate, n_excluded, n_out_of_scope and exclusions")
+            if any(v is not None for v in counts + [self.n_excluded, self.n_out_of_scope, self.n_students]) or self.exclusions or self.split:
+                raise ValueError("a hidden group must have blank counts, metric_rate, n_excluded, n_out_of_scope, exclusions and split")
         elif any(v is None for v in counts):
             raise ValueError("a shown group needs numerator, denominator and metric_rate")
         else:
             # Credit completion adds up each student's ratio (at most 1), so the numerator still can't pass the denominator.
             if self.numerator > self.denominator:
                 raise ValueError("numerator cannot be above the denominator")
+            if self.split is not None and sum(self.split.values()) != self.numerator:
+                raise ValueError("D + F + W must add up to the numerator")
             if self.metric_rate != round(self.numerator / self.denominator, 4):
                 raise ValueError("metric_rate must be numerator / denominator, rounded to 4 places")
             if sum(self.exclusions.values()) != self.n_excluded:
@@ -239,6 +246,7 @@ class Counts:
     exclusion_reason: ExclusionReason | None = None  # the reason with the most students (or enrollments) left out
     not_yet_observable: bool = False  # a year in the cohort has no answers yet
     exclusions: dict[ExclusionReason, int] = field(default_factory=dict)  # students (or enrollments, for DFW) left out, by reason
+    split: dict[str, int] | None = None  # DFW only: the numerator as D, F and W counts
 
 
 def check_unique(results: list[MeasureResult]) -> None:

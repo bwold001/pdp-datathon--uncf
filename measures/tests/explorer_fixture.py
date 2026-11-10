@@ -4,8 +4,10 @@ from __future__ import annotations
 import sqlite3
 from pathlib import Path
 
+from measures.models import Group, GroupDimension, Measure
+
 SCHEMA = """
-CREATE TABLE data_provider (provider_id INTEGER PRIMARY KEY, loaded_at TEXT);
+CREATE TABLE data_provider (provider_id INTEGER PRIMARY KEY, source_file TEXT, file_sha256 TEXT, loaded_at TEXT);
 CREATE TABLE student (student_id TEXT PRIMARY KEY, race TEXT, gender TEXT, student_age TEXT, ethnicity TEXT, first_gen TEXT);
 CREATE TABLE cohort_membership (
     student_id TEXT, cohort TEXT, cohort_term TEXT, enrollment_type TEXT, enrollment_intensity_first_term TEXT,
@@ -65,7 +67,7 @@ def make_database(path: Path, students: list[dict], records: list[dict] = ()) ->
     """Write the fixture database to path and return the path."""
     connection = sqlite3.connect(path)
     connection.executescript(SCHEMA)
-    connection.execute("INSERT INTO data_provider VALUES (1, ?)", [LOADED_AT])
+    connection.execute("INSERT INTO data_provider VALUES (1, 'fixture', 'not-a-real-hash', ?)", [LOADED_AT])
     for s in students:
         connection.execute(
             "INSERT OR IGNORE INTO student VALUES (?, ?, ?, ?, ?, NULL)",
@@ -105,3 +107,14 @@ def make_database(path: Path, students: list[dict], records: list[dict] = ()) ->
     connection.commit()
     connection.close()
     return path
+
+
+def pick(cohort: str = "2023-24", **filters: str) -> dict:
+    """A page's cohort and filters as the breakdowns take them, e.g. pick("2023-24", pell="Y")."""
+    return {"cohort": cohort, "filters": Group.of(*((GroupDimension(name), value) for name, value in filters.items()))}
+
+
+def ask(cohort: str = "2023-24", retention: str = "school", **filters: str) -> dict:
+    """pick, plus the retention measure: school (the PDP flag) or federal (fall to fall)."""
+    measure = Measure.FEDERAL_RETENTION if retention == "federal" else Measure.RETENTION
+    return {**pick(cohort, **filters), "retention_measure": measure}

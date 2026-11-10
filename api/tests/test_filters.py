@@ -1,18 +1,14 @@
-"""Checks the cohort bar shared by every page and both APIs: which values they take, which students they pick, and the bar's counts."""
+"""Checks the cohort bar shared by every page and both APIs: which values it takes, what it hands the measures,
+and its counts. Which students a filter picks is checked in measures/tests."""
 from __future__ import annotations
 
 import pytest
 
-from uncf.data import open_database
-from uncf.filters import (
-    CohortQuery,
-    InvalidFilter,
-    cohort_options,
-    select_students,
-    share,
-    shown,
-)
-from uncf.tests.explorer_fixture import LOADED_AT, make_database, student
+from api import data
+from api.filters import CohortQuery, InvalidFilter, cohort_options
+from measures.breakdowns.common import connect, select_students, share, shown
+from measures.models import Group, GroupDimension, Measure
+from measures.tests.explorer_fixture import LOADED_AT, make_database, student
 
 
 def test_query_takes_only_offered_values():
@@ -30,6 +26,14 @@ def test_query_takes_only_offered_values():
     assert CohortQuery.of("2023-24").retention_type == "school"
 
 
+def test_query_hands_the_measures_a_group_and_a_measure():
+    """Filters become a measures Group, and the retention type picks school or federal retention."""
+    query = CohortQuery.of("2023-24", "federal", pell="Y", race="Asian")
+    assert query.as_group() == Group.of((GroupDimension.PELL, "Y"), (GroupDimension.RACE, "Asian"))
+    assert query.retention_measure == Measure.FEDERAL_RETENTION
+    assert CohortQuery.of("2023-24").retention_measure == Measure.RETENTION
+
+
 def test_filters_match_raw_spellings_and_combine(tmp_path):
     """Values match ignoring case and spaces, unlisted ones count as UNKNOWN, and filters combine with AND."""
     database = make_database(
@@ -41,8 +45,8 @@ def test_filters_match_raw_spellings_and_combine(tmp_path):
             student("d", cohort="2022-23"),
         ],
     )
-    connection = open_database(database)
-    picked = lambda **filters: sorted(select_students(connection, CohortQuery.of("2023-24", **filters)))
+    connection = connect(database)
+    picked = lambda **filters: sorted(select_students(connection, "2023-24", CohortQuery.of("2023-24", **filters).as_group()))
     assert picked() == ["a", "b", "c"]
     assert picked(enrollment_intensity="Full-time") == ["a", "b"]
     assert picked(age_band="> 20-24") == ["a"]
@@ -61,12 +65,13 @@ def test_small_counts_are_hidden_never_zero():
     assert share(5, 0) is None
 
 
-def test_cohort_options_count_each_value(tmp_path):
+def test_cohort_options_count_each_value(tmp_path, monkeypatch):
     """The bar's counts: students per cohort year, and per filter value in the chosen cohort, small ones hidden."""
     students = [student(f"f{n}", pell="Y") for n in range(12)] + [student(f"s{n}", pell="N", cohort_term="SPRING") for n in range(3)]
     students += [student(f"old{n}", cohort="2022-23") for n in range(10)]
     database = make_database(tmp_path / "pdp.sqlite", students)
-    options = cohort_options("2023-24", database)
+    monkeypatch.setattr(data, "data_path", lambda: database)
+    options = cohort_options("2023-24")
     assert options["cohorts"] == {"2021-22": 0, "2022-23": 10, "2023-24": 15, "2024-25": 0}
     assert options["filters"]["pell"] == {"Y": 12, "N": None, "UNKNOWN": 0}
     assert options["filters"]["cohort_term"]["Fall"] == 12

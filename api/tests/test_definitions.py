@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
+from api.definitions import DEFINITIONS, FINDINGS, definition_for
 from measures.models import Measure
-from uncf.definitions import DEFINITIONS, FINDINGS, definition_for
 
 FINDINGS_CSV = Path(__file__).parents[2] / "data" / "quality" / "findings.csv"
 EXPLORER_MEASURES = ["retention", "persistence", "gateway_math", "gateway_english"]
@@ -20,7 +20,7 @@ def test_every_explorer_measure_has_a_definition() -> None:
 
 
 # Definitions that aren't a measure of their own: the Explorer's other key terms.
-EXPLORER_TERMS = {"federal_retention", "credit_milestones", "student_paths"}
+EXPLORER_TERMS = {"credit_milestones", "student_paths"}
 
 
 def test_every_key_is_a_real_measure_or_explorer_term() -> None:
@@ -69,7 +69,7 @@ def test_definition_for_unknown_measure_raises() -> None:
 
 def test_a_school_can_use_its_own_name(monkeypatch) -> None:
     """With UNCF_SCHOOL set, a school's own name replaces the label and the PDP name stays."""
-    from uncf import definitions
+    from api import definitions
 
     monkeypatch.setitem(definitions.LOCAL_NAMES, "fmu", {"retention": "Returned to FMU"})
     monkeypatch.setenv("UNCF_SCHOOL", "fmu")

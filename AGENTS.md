@@ -9,9 +9,11 @@ changes get in. Priorities: Core (Explorer), Stretch 1 (insight cards), Stretch 
 Never push to `main`, and never commit, push, or open a pull request without the user's explicit
 yes. Keep per-school differences in config, not forks.
 
-**New code goes in `uncf` folders.** Don't edit the starter's Sandbox examples or shared
+**New code goes in our own folders.** Don't edit the starter's Sandbox examples or shared
 foundations to build our features. Copy their pattern into our own folders instead:
-- Python (definitions, precompute, response models, API router): the top-level `uncf/` folder.
+- Calculations (measures, filters on them, page breakdowns): `measures/`. Every number the API
+  returns comes from here.
+- API (request checks, definitions, response models, router): the top-level `api/` folder.
   Mount its router in the Playground server with one line.
 - Client pages: `playground/client_application/src/app/(app)/uncf/`
 - Client components: `playground/client_application/src/components/uncf/`
@@ -33,7 +35,7 @@ change, say so in the pull request.
 - **Define the check first.** Before building, write down how you'll know it works: a command, a
   test, or an expected number.
 - **Every feature gets tests.** Add a pytest test with each feature, in a `tests/` folder next to
-  the code (for `uncf/`, `uncf/tests/`). A pull request without tests for its new behavior isn't done.
+  the code (for `api/`, `api/tests/`). A pull request without tests for its new behavior isn't done.
 - **Cap every retry loop.** Give each fix-and-retry loop a maximum number of tries (3 is a good
   default). At the cap, stop and ask a person. Don't keep trying.
 - **Use the README's skill for each phase.** When two installed skills do the same job (for

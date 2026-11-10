@@ -1,9 +1,9 @@
 """Credit momentum: how fast an entering class builds credits in year 1, and whether those who earn more are retained.
 
-The numbers come from uncf.metrics:
+The numbers come from the measures:
 - year 1 credits attempted and earned from the cohort file (a student with either blank is left out and counted);
-- the credit completion ratio, the shared credit_completion measure's own per student ratio, averaged;
-- retention by the query's retention type, as on every other page.
+- the credit completion ratio, the credit_completion measure's row from run_measure;
+- retention by the chosen retention measure, from run_measure, as on every other page.
 
 This module only breaks them down: credit milestones, the first two terms (from the course file, averaged over the
 students who took a course here that term) and credit tiers. Groups under 10 students are hidden.
@@ -12,9 +12,23 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from uncf import data, metrics
-from uncf.filters import MIN_STUDENTS, CohortQuery, select_students, share, shown
-from uncf.metrics import SEASONS, next_main_term, retention_term, term_label
+from ..models import EVERYONE, Cohort, Group, Measure
+from ..run_measures import read_answers, run_measure
+from .common import (
+    MIN_STUDENTS,
+    SEASONS,
+    check_retention,
+    connect,
+    next_main_term,
+    retained_share,
+    retention,
+    retention_term,
+    select_students,
+    share,
+    shown,
+    term_label,
+    year_one_credits,
+)
 
 MILESTONES = (12, 24, 30)
 # The design's credit tiers by credits earned in year 1: (key, label, lowest, highest + 1).
@@ -43,31 +57,29 @@ def term_credits(connection, cohort: str) -> dict[tuple[str, tuple[str, str]], t
     return {(row["student_id"], (row["year"], row["season"])): (row["attempted"], row["earned"]) for row in rows}
 
 
-def credit_momentum(query: CohortQuery, database: Path | None = None) -> dict:
+def credit_momentum(cohort: str, filters: Group = EVERYONE, retention_measure: Measure = Measure.RETENTION, database: str | Path | None = None) -> dict:
     """The Credit momentum page: year 1 credits, completion, milestones, the first two terms, and tiers."""
-    connection = data.open_database(database)
+    check_retention(retention_measure)
+    connection = connect(database)
     try:
-        students = select_students(connection, query)
-        year_one = metrics.year_one_credits(connection, query.cohort)
-        completion = metrics.completion_answers(connection, query.cohort)
-        per_term = term_credits(connection, query.cohort)
-        answers, observable = metrics.retention_answers(connection, query.cohort, query.retention_type)
-        stamp = data.loaded_at(connection)
+        students = select_students(connection, cohort, filters)
+        year_one = year_one_credits(connection, cohort)
+        per_term = term_credits(connection, cohort)
     finally:
         connection.close()
+    answers, _ = read_answers(retention_measure, cohort, database)
 
     known = {sid: year_one[sid] for sid in students if sid in year_one}
-    meta = {
-        **query.meta(),
-        "retention_term": term_label(retention_term(query.cohort)) if query.retention_type == "federal" else "next academic year",
-        "loaded_at": stamp,
+    context = {
+        "retention_term": term_label(retention_term(cohort)) if retention_measure == Measure.FEDERAL_RETENTION else "next academic year",
     }
     if len(students) < MIN_STUDENTS or len(known) < MIN_STUDENTS:
-        return {"meta": meta, "status": "suppressed", "students": None, "credits": None, "completion": None, "retention": None, "milestones": [], "terms": [], "tiers": []}
+        return {"context": context, "status": "suppressed", "students": None, "credits": None, "completion": None, "retention": None, "milestones": [], "terms": [], "tiers": []}
 
-    ratio = metrics.credit_completion(completion, students)
+    # The completion ratio is the credit_completion measure's row for these students.
+    (completion,) = run_measure(Measure.CREDIT_COMPLETION, [Cohort.of(cohort)], database=database, filters=filters)
     return {
-        "meta": meta,
+        "context": context,
         "status": "ok",
         "students": len(students),
         "credits": {
@@ -76,13 +88,13 @@ def credit_momentum(query: CohortQuery, database: Path | None = None) -> dict:
             "avg_attempted": average([attempted for attempted, _ in known.values()]),
             "avg_earned": average([earned for _, earned in known.values()]),
         },
-        "completion": {"counted": ratio["counted"], "ratio": ratio["ratio"], "status": ratio["status"]},
-        "retention": metrics.retention(answers, observable, students, query.retention_type),
+        "completion": {"counted": completion.denominator, "ratio": completion.metric_rate, "status": completion.status.value},
+        "retention": retention(retention_measure, cohort, filters, database),
         "milestones": [
             {"credits": credits, "students": (n := sum(1 for _, earned in known.values() if earned >= credits)), "share": share(n, len(known))}
             for credits in MILESTONES
         ],
-        "terms": first_terms(query.cohort, students, per_term),
+        "terms": first_terms(cohort, students, per_term),
         "tiers": tiers(known, answers),
     }
 
@@ -125,6 +137,6 @@ def tiers(known: dict, answers: dict) -> list[dict]:
         if len(members) < MIN_STUDENTS:
             rows.append({"key": key, "label": label, "students": None, "share": None, "retained": None, "rate": None})
             continue
-        retained = metrics.retained_share(answers, members)
+        retained = retained_share(answers, members)
         rows.append({"key": key, "label": label, "students": len(members), "share": share(len(members), len(known)), "retained": retained["retained"], "rate": retained["rate"]})
     return rows

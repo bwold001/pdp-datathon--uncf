@@ -8,15 +8,15 @@ from typing import get_args
 import pytest
 from fastapi.testclient import TestClient
 
+from api import __main__ as entry
+from api import data, results, route
+from api.definitions import DEFINITIONS
+from api.route import create_app
+from api.schemas import Dimension
+from api.schemas import Measure as ApiMeasure
 from measures.models import GroupDimension
 from measures.run_measures import DEFAULT_DATABASE
-from uncf import __main__ as entry
-from uncf import api_results, api_route, data
-from uncf.api_route import create_app
-from uncf.definitions import DEFINITIONS
-from uncf.schemas import Dimension
-from uncf.schemas import Measure as ApiMeasure
-from uncf.tests.explorer_fixture import LOADED_AT, here, make_database, student
+from measures.tests.explorer_fixture import LOADED_AT, here, make_database, student
 
 URL = "/api/v1/uncf/results"
 
@@ -33,9 +33,9 @@ def data_file(tmp_path, monkeypatch):
     records = [here(sid, "2023-24", "FALL", cohort="2022-23", grade="3.0") for sid in back]
     path = make_database(tmp_path / "pdp.sqlite", students, records)
     monkeypatch.setattr(data, "data_path", lambda: path)
-    api_route.clear_cache()
+    route.clear_cache()
     yield path
-    api_route.clear_cache()
+    route.clear_cache()
 
 
 @pytest.fixture
@@ -104,7 +104,7 @@ def test_dfw_rate_rows_split_d_f_and_w(tmp_path, monkeypatch, client) -> None:
     records = [here(f"s{n}", "2022-23", "FALL", cohort="2022-23", grade=grade) for n, grade in enumerate(grades)]
     path = make_database(tmp_path / "dfw.sqlite", students, records)
     monkeypatch.setattr(data, "data_path", lambda: path)
-    api_route.clear_cache()
+    route.clear_cache()
     row = get(client, measure="dfw_rate", cohort="2022-23").json()["rows"][0]
     assert row["status"] == "ok"
     assert (row["numerator"], row["denominator"], row["n_excluded"]) == (5, 11, 1)
@@ -124,7 +124,7 @@ def test_pair_order_does_not_matter_and_is_cached(data_file, client) -> None:
     second = client.get(URL, params={"measure": "retention", "cohort": "2022-23", "group_by": ["race", "pell"]})
     assert first.json()["rows"] == second.json()["rows"]
     assert first.json()["rows"][1]["group"] == {"pell": "N", "race": "American Indian or Alaska Native"}
-    assert api_results._calculate.cache_info().misses == 1
+    assert results._calculate.cache_info().misses == 1
 
 
 def test_new_data_clears_the_cache(data_file, client) -> None:
@@ -133,15 +133,13 @@ def test_new_data_clears_the_cache(data_file, client) -> None:
     stamp = data_file.stat().st_mtime + 10
     os.utime(data_file, (stamp, stamp))
     get(client, measure="retention", cohort="2022-23", group_by="pell")
-    assert api_results._calculate.cache_info().misses == 2
+    assert results._calculate.cache_info().misses == 2
 
 
 def test_gateway_with_no_answers_is_not_reported(data_file, client) -> None:
-    """A gateway class with no answers means the requirement isn't reported; retention for a later class is too new."""
+    """A gateway class with no answers means the requirement isn't reported."""
     gateway = get(client, measure="gateway_math", cohort="2022-23").json()["rows"][0]
     assert gateway["status"] == "not_reported" and gateway["rate"] is None
-    retention = get(client, measure="retention", cohort="2023-24", retention_type="federal").json()["rows"][0]
-    assert retention["status"] == "not_yet_observable"
 
 
 @pytest.mark.parametrize(
@@ -167,7 +165,7 @@ def test_provisional_for_year_two_measures_of_the_newest_class(data_file, client
 def test_values_outside_the_lists_are_422(data_file, client, params) -> None:
     """Values the API doesn't offer are refused before anything is calculated."""
     assert client.get(URL, params=params).status_code == 422
-    assert api_results._calculate.cache_info().misses == 0
+    assert results._calculate.cache_info().misses == 0
 
 
 @pytest.mark.parametrize("group_by", [["pell", "race", "gender"], ["pell", "pell"]])
@@ -190,7 +188,7 @@ def test_csv_export(data_file, client) -> None:
 def test_missing_data_is_503(tmp_path, monkeypatch, client) -> None:
     """Without the normalized data, the API says how to load it."""
     monkeypatch.setattr(data, "data_path", lambda: tmp_path / "missing.sqlite")
-    api_route.clear_cache()
+    route.clear_cache()
     response = get(client, measure="retention", cohort="2022-23", group_by="pell")
     assert response.status_code == 503
     assert response.json()["error"]["code"] == "data_missing"
@@ -230,14 +228,14 @@ def test_entry_point_commands(monkeypatch) -> None:
     assert calls == ["load", "serve 8001", "load", "serve 9000", "precompute"]
 
 
-needs_data = pytest.mark.skipif(not DEFAULT_DATABASE.exists(), reason="run `python -m uncf load` first")
+needs_data = pytest.mark.skipif(not DEFAULT_DATABASE.exists(), reason="run `python -m api load` first")
 
 
 @pytest.mark.slow
 @needs_data
 def test_known_answer_on_the_real_data(client) -> None:
     """Retention for 2022-23 by Pell matches the measures package on the synthetic data."""
-    api_route.clear_cache()
+    route.clear_cache()
     rows = get(client, measure="retention", cohort="2022-23", group_by="pell").json()["rows"]
     counts = {tuple(row["group"].values()): (row["numerator"], row["denominator"], row["rate"]) for row in rows}
     assert counts[()] == (1414, 2617, 0.5403)
@@ -309,7 +307,7 @@ def test_api_matches_an_independent_recount_of_the_normalized_data(client) -> No
     """Every measure, class, single grouping and pair: the API's numbers equal plain SQL on pdp.sqlite."""
     from itertools import combinations
 
-    api_route.clear_cache()
+    route.clear_cache()
     connection = sqlite3.connect(f"file:{DEFAULT_DATABASE}?mode=ro", uri=True)
     groupings = [[]] + [[d] for d in get_args(Dimension)] + [sorted(p) for p in combinations(get_args(Dimension), 2)]
     checked = 0
@@ -341,7 +339,7 @@ def test_api_matches_an_independent_recount_of_the_normalized_data(client) -> No
 @needs_data
 def test_every_class_measure_and_grouping_answers_on_the_real_data(client) -> None:
     """Every offered measure, class and single grouping returns 200, and hidden rows have no numbers."""
-    api_route.clear_cache()
+    route.clear_cache()
     for measure in get_args(ApiMeasure):
         for cohort in ["2021-22", "2022-23", "2023-24", "2024-25"]:
             for dimension in get_args(Dimension):

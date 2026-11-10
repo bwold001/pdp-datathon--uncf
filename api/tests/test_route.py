@@ -4,10 +4,10 @@ from __future__ import annotations
 import pytest
 from fastapi.testclient import TestClient
 
-from uncf import api_route, data
-from uncf.api_route import create_app
-from uncf.definitions import DEFINITIONS
-from uncf.tests.explorer_fixture import here, make_database, student
+from api import data, route
+from api.definitions import DEFINITIONS
+from api.route import create_app
+from measures.tests.explorer_fixture import here, make_database, student
 
 
 @pytest.fixture
@@ -17,7 +17,7 @@ def client(tmp_path, monkeypatch):
     records = [here(f"s{n}", "2023-24", "SPRING") for n in range(12)]
     database = make_database(tmp_path / "pdp.sqlite", students, records)
     monkeypatch.setattr(data, "data_path", lambda: database)
-    api_route.clear_cache()
+    route.clear_cache()
     return TestClient(create_app())
 
 
@@ -48,7 +48,7 @@ def test_cohort_options(client):
 def test_missing_data_is_a_503(tmp_path, monkeypatch):
     """Before the data is loaded, every page says how to load it."""
     monkeypatch.setattr(data, "data_path", lambda: tmp_path / "missing.sqlite")
-    api_route.clear_cache()
+    route.clear_cache()
     response = TestClient(create_app()).get("/api/v1/uncf/student-paths")
     assert response.status_code == 503
     assert response.json()["error"]["code"] == "data_missing"
@@ -79,7 +79,7 @@ def test_credit_momentum(client):
 
 
 def test_definitions_come_from_the_shared_dictionary(client):
-    """The Explorer's key terms are uncf/definitions.py, word for word."""
+    """The Explorer's key terms are api/definitions.py, word for word."""
     body = client.get("/api/v1/uncf/definitions").json()
     assert body["definitions"] == DEFINITIONS
     assert body["definitions"]["persistence"]["name"] == "At another college"
@@ -87,12 +87,12 @@ def test_definitions_come_from_the_shared_dictionary(client):
 
 def test_every_page_takes_retention_type_and_the_new_filters(client):
     """retention_type and the two new filters (enrollment_type, ethnicity) work on every page route."""
-    for route in ["student-paths", "dfw", "gateway", "credit-momentum"]:
+    for page in ["student-paths", "dfw", "gateway", "credit-momentum"]:
         params = {"cohort": "2023-24", "retention_type": "federal", "enrollment_type": "First-time", "ethnicity": "UNKNOWN"}
-        response = client.get(f"/api/v1/uncf/{route}", params=params)
-        assert response.status_code == 200, route
-        assert response.json()["meta"]["retention_type"] == "federal", route
-        assert response.json()["meta"]["filters"] == {"enrollment_type": "First-time", "ethnicity": "UNKNOWN"}, route
+        response = client.get(f"/api/v1/uncf/{page}", params=params)
+        assert response.status_code == 200, page
+        assert response.json()["meta"]["retention_type"] == "federal", page
+        assert response.json()["meta"]["filters"] == {"enrollment_type": "First-time", "ethnicity": "UNKNOWN"}, page
     bad = client.get("/api/v1/uncf/gateway", params={"retention_type": "ipeds"})
     assert bad.status_code == 422
     assert bad.json()["error"]["code"] == "invalid_filter"

@@ -18,7 +18,7 @@ SOURCE = "PDP analysis-ready cohort and course files (synthetic sample)"
 
 
 class DataMissing(Exception):
-    """The normalized data isn't loaded yet: run `python -m uncf load`."""
+    """The normalized data isn't loaded yet: run `python -m api load`."""
 
 
 def data_path() -> Path:
@@ -30,7 +30,7 @@ def data_stamp() -> float:
     """The data file's modification time, so cached answers are dropped when the data is reloaded."""
     path = data_path()
     if not path.exists():
-        raise DataMissing(f"{path} does not exist. Run: python -m uncf load")
+        raise DataMissing(f"{path} does not exist. Run: python -m api load")
     return path.stat().st_mtime
 
 
@@ -38,7 +38,7 @@ def open_database(database: Path | None = None) -> sqlite3.Connection:
     """A read-only connection with rows by column name. Raises DataMissing if the data isn't loaded."""
     path = database or data_path()
     if not path.exists():
-        raise DataMissing(f"{path} does not exist. Run: python -m uncf load")
+        raise DataMissing(f"{path} does not exist. Run: python -m api load")
     connection = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
     connection.row_factory = sqlite3.Row
     return connection

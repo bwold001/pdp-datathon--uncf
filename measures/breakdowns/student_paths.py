@@ -8,28 +8,42 @@ five). In each term a student is:
 - elsewhere: neither, but the course file records enrollment at another college that term;
 - stopped: no record at all that term.
 
-The page's retention numbers come from uncf.metrics, by the query's retention type, so they match every other page.
-The statuses come from term records, so they can differ from retention. Groups under 10 students are hidden.
+Retention comes from run_measure (school or federal), so it matches every other page and the Results API. The
+statuses come from term records, so they can differ from retention. Groups under 10 students are hidden.
 """
 from __future__ import annotations
 
 from collections import Counter
 from pathlib import Path
 
-from measures.calculations.sql_counts import normalize
-from measures.models import ALLOWED_VALUES, GroupDimension
-from uncf import data, metrics
-from uncf.filters import (
-    FILTER_NAMES,
+from ..calculations.sql_counts import normalize
+from ..models import (
+    ALLOWED_VALUES,
+    EVERYONE,
+    Cohort,
+    Group,
+    GroupBy,
+    GroupDimension,
+    Measure,
+)
+from ..run_measures import run_measure
+from .common import (
     MIN_STUDENTS,
-    CohortQuery,
-    InvalidFilter,
-    listed_value,
+    RETENTION_TYPES,
+    SEASONS,
+    STUDENT_DIMENSIONS,
+    check_retention,
+    connect,
+    credential_years,
+    next_main_term,
+    observed_terms,
+    result_dict,
+    retention,
     select_students,
     share,
     shown,
+    term_label,
 )
-from uncf.metrics import SEASONS, next_main_term, term_label
 
 STATUSES = ("here", "credential", "elsewhere", "stopped")
 DEFAULT_TERMS = 3
@@ -125,37 +139,44 @@ def column(statuses: list[str], total: int) -> dict:
     return numbers
 
 
-def student_paths(query: CohortQuery, terms: int = DEFAULT_TERMS, group_by: str | None = None, database: Path | None = None) -> dict:
-    """The Student paths page: class size, status per term, moves between terms, transfers and retention."""
+def student_paths(
+    cohort: str,
+    filters: Group = EVERYONE,
+    retention_measure: Measure = Measure.RETENTION,
+    terms: int = DEFAULT_TERMS,
+    group_by: GroupDimension | None = None,
+    database: str | Path | None = None,
+) -> dict:
+    """The Student paths page: class size, status per term, moves between terms, transfers and retention.
+
+    context holds what the page's heading needs (the term names); the API adds it to the answer's meta.
+    """
+    check_retention(retention_measure)
     if not 2 <= terms <= MAX_TERMS:
-        raise InvalidFilter(f"terms must be 2 to {MAX_TERMS}.")
-    if group_by is not None and group_by not in FILTER_NAMES:
-        raise InvalidFilter(f"Student paths can't be grouped by {group_by!r}.")
-    connection = data.open_database(database)
+        raise ValueError(f"terms must be 2 to {MAX_TERMS}.")
+    if group_by is not None and group_by not in STUDENT_DIMENSIONS:
+        raise ValueError(f"Student paths can't be grouped by {group_by}.")
+    connection = connect(database)
     try:
-        students = select_students(connection, query)
-        records = term_records(connection, query.cohort)
-        credentials = metrics.credential_years(connection, query.cohort)
-        observed = metrics.observed_terms(connection)
-        answers, observable = metrics.retention_answers(connection, query.cohort, query.retention_type)
-        stamp = data.loaded_at(connection)
+        students = select_students(connection, cohort, filters)
+        records = term_records(connection, cohort)
+        credentials = credential_years(connection, cohort)
+        observed = observed_terms(connection)
     finally:
         connection.close()
 
-    paths = follow(students, query.cohort, terms, records, credentials, observed)
+    paths = follow(students, cohort, terms, records, credentials, observed)
     total = len(paths)
     start_terms = {students[sid]["cohort_term"] for sid in paths}
     named = len(start_terms) == 1 and total > 0
     labels = [term_label(term) for term, _ in next(iter(paths.values()))] if named else None
-    meta = {
-        **query.meta(),
+    context = {
         "terms": {"entered": labels[0], "next": labels[1], "year2": labels[2] if terms > 2 else None} if labels else None,
         "term_labels": labels,
-        "group_by": group_by,
-        "loaded_at": stamp,
+        "group_by": group_by.value if group_by else None,
     }
     if total < MIN_STUDENTS:
-        return {"meta": meta, "status": "suppressed", "students": None, "left_out": None, "columns": None, "path": [], "moves": None, "transfers": None, "retention": None, "groups": []}
+        return {"context": context, "status": "suppressed", "students": None, "left_out": None, "columns": None, "path": [], "moves": None, "transfers": None, "retention": None, "groups": []}
 
     by_position = [[steps[position][1] for steps in paths.values()] for position in range(1, terms)]
     path = [{"position": position, "label": labels[position] if labels else None, **column(statuses, total)} for position, statuses in enumerate(by_position, start=1)]
@@ -167,7 +188,7 @@ def student_paths(query: CohortQuery, terms: int = DEFAULT_TERMS, group_by: str 
             kinds = records[(student_id, term)]["kinds"]
             transfers[next(iter(kinds)) if len(kinds) == 1 else "other"] += 1
     return {
-        "meta": meta,
+        "context": context,
         "status": "ok",
         "students": total,
         "left_out": shown(len(students) - total),
@@ -183,8 +204,8 @@ def student_paths(query: CohortQuery, terms: int = DEFAULT_TERMS, group_by: str 
             "other": shown(transfers["other"]),
         },
         # Every selected student, placed or not, so it matches the other pages and the Results API.
-        "retention": metrics.retention(answers, observable, students, query.retention_type),
-        "groups": groups(paths, students, group_by, answers, observable, query.retention_type) if group_by else [],
+        "retention": retention(retention_measure, cohort, filters, database),
+        "groups": groups(paths, students, group_by, cohort, filters, retention_measure, database) if group_by else [],
     }
 
 
@@ -194,11 +215,16 @@ def moves(paths: dict[str, list], before: int, after: int) -> list[dict]:
     return [{"from": a, "to": b, "students": shown(counts[(a, b)])} for a in STATUSES for b in STATUSES]
 
 
-def groups(paths: dict, students: dict, dimension: str, answers: dict, observable: bool, retention_type: str) -> list[dict]:
-    """The page's numbers for each value of one filter, so groups can be compared side by side."""
+def groups(paths: dict, students: dict, dimension: GroupDimension, cohort: str, filters: Group, retention_measure: Measure, database) -> list[dict]:
+    """The page's numbers for each value of one dimension, so groups can be compared side by side."""
+    # Each value's retention is run_measure's row for that group, the same row the Results API returns.
+    by_value = {}
+    for row in run_measure(retention_measure, [Cohort.of(cohort)], [GroupBy.of(dimension)], database=database, filters=filters)[1:]:
+        (part,) = row.group.parts
+        by_value[part.value] = row
     rows = []
-    for value in sorted(ALLOWED_VALUES[GroupDimension(dimension)]):
-        members = {sid: steps for sid, steps in paths.items() if listed_value(dimension, students[sid][dimension]) == value}
+    for value in sorted(ALLOWED_VALUES[dimension]):
+        members = {sid: steps for sid, steps in paths.items() if students[sid][dimension.value] == normalize(value)}
         if not members:
             continue
         if len(members) < MIN_STUDENTS:
@@ -206,5 +232,6 @@ def groups(paths: dict, students: dict, dimension: str, answers: dict, observabl
             continue
         positions = len(next(iter(members.values())))
         path = [{"position": p, **column([steps[p][1] for steps in members.values()], len(members))} for p in range(1, positions)]
-        rows.append({"value": value, "students": len(members), "path": path, "retention": metrics.retention(answers, observable, members, retention_type)})
+        counted = result_dict(by_value[value])
+        rows.append({"value": value, "students": len(members), "path": path, "retention": {"type": RETENTION_TYPES[retention_measure], **counted, "retained": counted["numerator"], "students": counted["denominator"]}})
     return rows

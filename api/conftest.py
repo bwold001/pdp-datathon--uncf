@@ -1,4 +1,4 @@
-"""Test settings for uncf/. Tests marked `slow` read the real normalized data; make check-fast skips them."""
+"""Test settings for api/. Tests marked `slow` read the real normalized data; make check-fast skips them."""
 
 
 def pytest_configure(config):

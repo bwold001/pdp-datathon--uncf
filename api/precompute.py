@@ -16,8 +16,8 @@ logger = logging.getLogger(__name__)
 LOADER_FOLDER = Path(__file__).parent.parent / "normalized-data-model"
 COHORT_YEARS = ["2021-22", "2022-23", "2023-24", "2024-25"]
 MEASURES = [Measure.RETENTION, Measure.GATEWAY_MATH, Measure.GATEWAY_ENGLISH]
-# First-gen is left out for now; COURSE is a DFW-only dimension.
-SKIPPED_DIMENSIONS = {GroupDimension.FIRST_GEN, GroupDimension.COURSE}
+# First-gen is left out for now; COURSE, TERM and DELIVERY are DFW-only dimensions.
+SKIPPED_DIMENSIONS = {GroupDimension.FIRST_GEN, GroupDimension.COURSE, GroupDimension.TERM, GroupDimension.DELIVERY}
 
 
 def group_bys() -> list[GroupBy]:

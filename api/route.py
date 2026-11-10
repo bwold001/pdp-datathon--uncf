@@ -1,13 +1,13 @@
 """The UNCF API: the Results API (#5) and the Explorer pages, on one router under /api/v1/uncf.
 
-Every number comes from uncf.metrics, so the pages, the Results API, CSV export, insight card and chat agree.
+Every number comes from api.metrics, so the pages, the Results API, CSV export, insight card and chat agree.
 
 Every page route and /results take the same cohort bar: cohort, the eight filters (cohort_term,
 enrollment_intensity, enrollment_type, pell, gender, race, ethnicity, age_band) with the measures' value names,
 retention_type (school, the default, or federal), and format (json, the default, or csv).
 e.g. /api/v1/uncf/gateway?cohort=2022-23&pell=Y&retention_type=federal&format=csv
 
-Run it with `python -m uncf` (port 8001). The Playground server mounts `router` with one line.
+Run it with `python -m api` (port 8001). The Playground server mounts `router` with one line.
 Errors: 422 for a value the API doesn't offer, 404 for a hidden course, 503 when the data isn't loaded.
 Our bodies are {"error": {"code", "message"}}.
 """
@@ -16,7 +16,6 @@ from __future__ import annotations
 import csv
 import io
 import os
-from collections.abc import Callable
 from functools import lru_cache
 from typing import Annotated, get_args
 
@@ -24,19 +23,16 @@ from fastapi import APIRouter, Depends, FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 
-from uncf import api_results, data
-from uncf.credit_momentum import credit_momentum
-from uncf.definitions import all_definitions, definition_for
-from uncf.dfw_courses import UnknownCourse, dfw_course, dfw_courses
-from uncf.filters import (
+from api import data, results
+from api.definitions import all_definitions, definition_for
+from api.filters import (
     DEFAULT_RETENTION_TYPE,
     FILTER_LABELS,
     CohortQuery,
     InvalidFilter,
     cohort_options,
 )
-from uncf.gateway_courses import gateway_courses
-from uncf.schemas import (
+from api.schemas import (
     MAX_GROUP_BY,
     Cohort,
     CreditMomentumResponse,
@@ -54,7 +50,11 @@ from uncf.schemas import (
     ResultsResponse,
     StudentPathsResponse,
 )
-from uncf.student_paths import DEFAULT_TERMS, student_paths
+from measures.breakdowns.credit_momentum import credit_momentum
+from measures.breakdowns.dfw_courses import UnknownCourse, dfw_course, dfw_courses
+from measures.breakdowns.gateway_courses import gateway_courses
+from measures.breakdowns.student_paths import DEFAULT_TERMS, student_paths
+from measures.models import GroupDimension
 
 PREFIX = "/api/v1/uncf"
 DEFAULT_PORT = 8001
@@ -118,21 +118,41 @@ class Bar:
             self.problem = error(422, "invalid_filter", str(invalid))
 
 
+def run_page(name: str, query: CohortQuery, *extra) -> dict:
+    """Ask measures/breakdowns for one page, then add what every answer says about its question (meta)."""
+    cohort, filters, retention, database = query.cohort, query.as_group(), query.retention_measure, data.data_path()
+    if name == "student-paths":
+        terms, group_by = extra
+        body = student_paths(cohort, filters, retention, terms, GroupDimension(group_by) if group_by else None, database)
+    elif name == "dfw":
+        body = dfw_courses(cohort, filters, database)
+    elif name == "dfw-course":
+        (course,) = extra
+        body = dfw_course(cohort, course, filters, database)
+    elif name == "gateway":
+        body = gateway_courses(cohort, filters, retention, database)
+    else:
+        body = credit_momentum(cohort, filters, retention, database)
+    context = body.pop("context")
+    return {"meta": {**query.meta(), **context, "loaded_at": data.loaded_at()}, **body}
+
+
 @lru_cache(maxsize=256)
-def cached(page: Callable, query: CohortQuery, stamp: float, *extra) -> dict:
+def cached(name: str, query: CohortQuery, stamp: float, *extra) -> dict:
     """A page's answer for one query (plus any extra arguments) and one version of the data file."""
-    return page(query, *extra)
+    return run_page(name, query, *extra)
 
 
-def answer(page: Callable, bar: Bar, name: str, *extra):
+def answer(bar: Bar, name: str, *extra):
     """Run a page for a checked query as JSON or CSV. A bad value is a 422 and missing data is a 503."""
     if bar.problem is not None:
         return bar.problem
     try:
-        body = cached(page, bar.query, data.data_stamp(), *extra)
+        body = cached(name, bar.query, data.data_stamp(), *extra)
     except data.DataMissing as missing:
         return error(503, "data_missing", str(missing))
-    except InvalidFilter as invalid:
+    except ValueError as invalid:
+        # A value the page doesn't take, such as terms=9 or group_by=housing.
         return error(422, "invalid_filter", str(invalid))
     if bar.format == "csv":
         rows = [{"section": section, **flatten(item)} for section in CSV_SECTIONS[name] for item in body.get(section) or []]
@@ -188,7 +208,7 @@ def get_health() -> HealthResponse:
 
 @router.get("/definitions")
 def get_definitions():
-    """Every plain-language definition (uncf/definitions.py), so every page and the chat use the same words."""
+    """Every plain-language definition (api/definitions.py), so every page and the chat use the same words."""
     return {"definitions": all_definitions()}
 
 
@@ -222,7 +242,7 @@ def get_results(
     if bar.problem is not None:
         return bar.problem
     try:
-        rows, loaded_at = api_results.get_results(measure, bar.query, dimensions)
+        rows, loaded_at = results.get_results(measure, bar.query, dimensions)
     except data.DataMissing as missing:
         return error(503, "data_missing", str(missing))
 
@@ -239,7 +259,7 @@ def get_results(
         definition=MeasureDefinition(**definition_for("federal_retention" if federal else measure)),
         source=data.SOURCE,
         loaded_at=loaded_at,
-        provisional=api_results.is_provisional(measure, cohort),
+        provisional=results.is_provisional(measure, cohort),
     )
     return ResultsResponse(meta=meta, rows=rows)
 
@@ -261,20 +281,20 @@ def get_options() -> OptionsResponse:
 @router.get("/student-paths", response_model=StudentPathsResponse, responses=ERRORS)
 def get_student_paths(bar: Annotated[Bar, Depends()], terms: int = DEFAULT_TERMS, group_by: str | None = None):
     """Student paths: each entering student's status term by term, moves, transfers and retention."""
-    return answer(student_paths, bar, "student-paths", terms, group_by)
+    return answer(bar, "student-paths", terms, group_by)
 
 
 @router.get("/dfw", response_model=DfwResponse, responses=ERRORS)
 def get_dfw(bar: Annotated[Bar, Depends()]):
     """DFW list: everyone's DFW rate with D, F and W apart, then each course with 10 or more students."""
-    return answer(dfw_courses, bar, "dfw")
+    return answer(bar, "dfw")
 
 
 @router.get("/dfw/course", response_model=DfwCourseResponse, responses=ERRORS)
 def get_dfw_course(course: str, bar: Annotated[Bar, Depends()]):
     """One DFW course: its terms, delivery methods and groups, each next to everyone else in the course."""
     try:
-        return answer(dfw_course, bar, "dfw-course", course)
+        return answer(bar, "dfw-course", course)
     except UnknownCourse as unknown:
         return error(404, "unknown_course", str(unknown))
 
@@ -282,19 +302,19 @@ def get_dfw_course(course: str, bar: Annotated[Bar, Depends()]):
 @router.get("/gateway", response_model=GatewayResponse, responses=ERRORS)
 def get_gateway(bar: Annotated[Bar, Depends()]):
     """Gateway courses: first attempts in year 1 (passed, D, F, W), retention, and the riskiest course pairs."""
-    return answer(gateway_courses, bar, "gateway")
+    return answer(bar, "gateway")
 
 
 @router.get("/credit-momentum", response_model=CreditMomentumResponse, responses=ERRORS)
 def get_credit_momentum(bar: Annotated[Bar, Depends()]):
     """Credit momentum: year 1 credits, completion, milestones, the first two terms, credit tiers and retention."""
-    return answer(credit_momentum, bar, "credit-momentum")
+    return answer(bar, "credit-momentum")
 
 
 def clear_cache() -> None:
     """Forget every cached answer on both APIs."""
     cached.cache_clear()
-    api_results.clear_cache()
+    results.clear_cache()
 
 
 def create_app() -> FastAPI:

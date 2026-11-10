@@ -1,9 +1,9 @@
 # Success measures
 
 The shared shape for the core student success measures ([#9](https://github.com/devcolor/pdp-datathon-starter/issues/9)).
-This folder holds the contract and the calculations for retention, persistence, gateway completion, DFW rate and credit completion.
+This folder holds the contract and the calculations for retention, federal (fall to fall) retention, persistence, gateway completion, DFW rate and credit completion, plus the Explorer pages' breakdowns ([breakdowns/](breakdowns/)).
 
-The measures are retention, persistence, gateway completion (math and English, one measure each), DFW rate and credit completion.
+The measures are retention, federal retention, persistence, gateway completion (math and English, one measure each), DFW rate and credit completion.
 
 A measure reads tables from the [#8 data model](https://github.com/devcolor/pdp-datathon-starter/issues/8)
 and returns result rows. No files are read or written. Each institution runs this on its own data.
@@ -57,6 +57,8 @@ outside the list can't be built into a `Group`.
 | `enrollment_intensity` | `Full-time`, `Part-time`, `UNKNOWN` |
 | `cohort_term` | `Fall`, `Winter`, `Spring`, `Summer`, `UNKNOWN`: the term the student started in |
 | `course` | `dfw_rate` only. The values come from the data: the course prefix and number, such as `ENGL 1302` |
+| `term` | `dfw_rate` only. The season the course was taken, from the data: `FALL`, `WINTER`, `SPRING`, `SUMMER` |
+| `delivery` | `dfw_rate` only. How the course was taught, from the data: `F`, `H`, `O` or `UNKNOWN` |
 
 Adding a breakdown means adding a dimension and its values in [models.py](models.py).
 
@@ -84,6 +86,7 @@ course enrollments. Credit completion averages each student's ratio. The rate is
 | Measure | Counts as achieved | Counted in the denominator | Left out |
 | --- | --- | --- | --- |
 | `retention` | `retention` is true | `retention` is true or false | blank answer: `n_excluded`, reason `unknown_outcome` |
+| `federal_retention` | took a course here in the fall after year 1 (fall to fall) | every student, once that fall is in the course file | no answers until that fall is in the data: `not_yet_observable`. First time only and credentials counting are settings in [federal_retention.py](calculations/federal_retention.py), both off |
 | `persistence` | `persistence` is true | `persistence` is true or false | blank answer: `n_excluded`, reason `unknown_outcome` |
 | `gateway_math`, `gateway_english` | the year 1 completed flag is `C` | the flag is `C` or `D` | not required (status `N`): `n_out_of_scope`, outside the measure. Requirement or outcome unknown: `n_excluded`, reason `unknown_requirement_or_outcome` |
 | `dfw_rate` | the grade is a D, F or withdrawal | the grade is one we can classify (see below) | any other grade: `n_excluded`, with the reason in the grade table below |
@@ -267,11 +270,32 @@ run_measure(
 `Cohort` needs at least one year and no repeats, and a `GroupBy` needs at least one dimension and no
 repeats.
 
+**Filters:** `run_measure(..., filters=Group.of((PELL, "Y")))` counts only the students who match
+every condition, so "everyone" means every Pell student and `group_by` splits them further. Any
+dimension the measure supports works as a filter, including `course` for DFW. Filtered rows can't be
+saved, since the results table has no column for the filters.
+
+**D, F and W:** `dfw_rate` rows carry `split`, the numerator as D (0.7 to under 2.0), F (an F or under
+0.7) and W counts. They always add up to the numerator. Every row also carries `n_students`, the
+distinct students counted.
+
+**Per student answers:** `read_answers(measure, cohort)` returns each in scope student's answer (1, 0, a
+ratio, or None when it can't be counted) and whether the cohort has answers yet. The page breakdowns
+use it to count a measure among their own sets of students, such as the students who passed a course.
+
+**Breakdowns:** [breakdowns/](breakdowns/) holds the Explorer pages: Student paths, DFW courses,
+gateway courses and credit momentum. They get every rate from `run_measure` and only split it by
+term, course, flow or tier, with the same rule for small groups.
+
 **Pooling cohorts:** a `Cohort` with several years, like `Cohort.of("2021-22", "2022-23")`, counts
 those cohorts together. They are pooled before small groups are hidden, so a group under 10 in each
 cohort can reach 10 together and be shown.
 
 ## Tests
+
+[tests/test_explorer_measures.py](tests/test_explorer_measures.py) checks filters, federal retention, the
+D/F/W split and per student answers, and `tests/test_breakdown_*.py` check the page breakdowns, each on
+a small database built in [tests/explorer_fixture.py](tests/explorer_fixture.py).
 
 [tests/test_measures.py](tests/test_measures.py) checks the calculations on a tiny made-up database,
 [tests/fixture.sql](tests/fixture.sql): 48 students, with the expected numbers worked out by hand in

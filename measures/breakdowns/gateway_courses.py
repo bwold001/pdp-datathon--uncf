@@ -4,7 +4,7 @@ A gateway course is one the institution flags as gateway math (M) or English (E)
 has no flagged courses in year 1, the page says so and infers them instead: year 1 college level courses whose prefix
 is a math or English one.
 
-Outcomes and retention come from uncf.metrics: each student's first attempt in year 1 is passed, D, F or W by the
+Outcomes and retention come from the measures: each student's first attempt in year 1 is passed, D, F or W by the
 shared grade rules, and retention is the query's retention type, as on every other page. Grades that aren't final
 (incomplete, audit, missing) are left out and counted apart.
 
@@ -17,9 +17,20 @@ from collections import Counter, defaultdict
 from itertools import combinations
 from pathlib import Path
 
-from uncf import data, metrics
-from uncf.filters import MIN_STUDENTS, CohortQuery, select_students, shown
-from uncf.metrics import retention_term, term_label
+from ..models import EVERYONE, Group, Measure
+from ..run_measures import read_answers
+from .common import (
+    MIN_STUDENTS,
+    check_retention,
+    connect,
+    course_rows,
+    retained_share,
+    retention,
+    retention_term,
+    select_students,
+    shown,
+    term_label,
+)
 
 TOP_PAIRS = 3
 # Used only when the institution flags no gateway courses for a cohort: college level courses with these prefixes.
@@ -40,42 +51,40 @@ def subject_of(row: dict, flagged: bool) -> str | None:
     return None
 
 
-def gateway_courses(query: CohortQuery, database: Path | None = None) -> dict:
+def gateway_courses(cohort: str, filters: Group = EVERYONE, retention_measure: Measure = Measure.RETENTION, database: str | Path | None = None) -> dict:
     """The Gateway courses page: each gateway course's outcomes and retention, and the riskiest course pairs."""
-    connection = data.open_database(database)
+    check_retention(retention_measure)
+    connection = connect(database)
     try:
-        everyone = select_students(connection, CohortQuery(query.cohort, retention_type=query.retention_type))
-        students = select_students(connection, query)
+        everyone = select_students(connection, cohort)
+        students = select_students(connection, cohort, filters)
         # Whether the institution flags gateway courses at all this year is read across the whole cohort.
-        all_rows = [row for row in metrics.course_rows(connection, query.cohort, everyone) if row["year"] == query.cohort]
-        answers, observable = metrics.retention_answers(connection, query.cohort, query.retention_type)
-        stamp = data.loaded_at(connection)
+        all_rows = [row for row in course_rows(connection, cohort, everyone) if row["year"] == cohort]
     finally:
         connection.close()
+    answers, observable = read_answers(retention_measure, cohort, database)
 
     flagged = any(row["gateway"] in SUBJECTS for row in all_rows)
     mine = [row for row in all_rows if row["student_id"] in students]
     start_terms = {row["cohort_term"] for row in students.values()}
     first_term = None
     if len(start_terms) == 1 and next(iter(start_terms)) != "UNKNOWN":
-        first_term = term_label((query.cohort, next(iter(start_terms))))
+        first_term = term_label((cohort, next(iter(start_terms))))
 
-    meta = {
-        **query.meta(),
+    context = {
         "flagged": flagged,
-        "retention_term": term_label(retention_term(query.cohort)) if query.retention_type == "federal" else "next academic year",
+        "retention_term": term_label(retention_term(cohort)) if retention_measure == Measure.FEDERAL_RETENTION else "next academic year",
         "retention_observed": observable,
         "first_term": first_term,
         "min_pair_students": MIN_STUDENTS,
-        "loaded_at": stamp,
     }
     if len(students) < MIN_STUDENTS:
-        return {"meta": meta, "status": "suppressed", "students": None, "cohort_retention": None, "courses": [], "hidden_courses": 0, "left_out": None, "pairs": [], "pairs_considered": 0}
+        return {"context": context, "status": "suppressed", "students": None, "cohort_retention": None, "courses": [], "hidden_courses": 0, "left_out": None, "pairs": [], "pairs_considered": 0}
 
-    cohort_retention = metrics.retention(answers, observable, students, query.retention_type)
+    cohort_retention = retention(retention_measure, cohort, filters, database)
     outcomes = course_outcomes(mine, flagged, answers)
     return {
-        "meta": meta,
+        "context": context,
         "status": "ok",
         "students": len(students),
         "cohort_retention": cohort_retention,
@@ -125,8 +134,8 @@ def course_outcomes(rows: list[dict], flagged: bool, answers: dict) -> dict:
                 "w": len(outcomes["w"]),
                 "other": shown(len(outcomes["other"])),
                 "shares": {key: round(len(outcomes[key]) / len(graded), 4) for key in ("passed", "d", "f", "w")},
-                "retained_if_passed": metrics.retained_share(answers, outcomes["passed"]),
-                "retained_if_not_passed": metrics.retained_share(answers, not_passed),
+                "retained_if_passed": retained_share(answers, outcomes["passed"]),
+                "retained_if_not_passed": retained_share(answers, not_passed),
             }
         )
     # English first, then math, as in the design; each by how many students took it.
@@ -150,7 +159,7 @@ def course_pairs(rows: list[dict], students: dict, answers: dict, cohort_rate: f
 
     considered = []
     for pair, who in takers.items():
-        numbers = metrics.retained_share(answers, who)
+        numbers = retained_share(answers, who)
         if numbers["students"] is None:
             continue
         considered.append({"courses": list(pair), **numbers, "gap": round((numbers["rate"] - cohort_rate) * 100, 1)})

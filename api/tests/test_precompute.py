@@ -1,6 +1,6 @@
 """Checks the precompute helpers."""
+from api.precompute import group_bys
 from measures.models import GroupDimension
-from uncf.precompute import group_bys
 
 
 def test_group_bys_skip_first_gen_and_course() -> None:
@@ -14,7 +14,7 @@ def test_group_bys_skip_first_gen_and_course() -> None:
 
 def test_precompute_saves_each_measure_in_one_call(monkeypatch) -> None:
     """Each measure gets one save with every cohort and group, so one save can't wipe another."""
-    from uncf import precompute as module
+    from api import precompute as module
 
     calls = []
     monkeypatch.setattr(module, "run_measure", lambda *args, **kwargs: calls.append((args, kwargs)) or [])

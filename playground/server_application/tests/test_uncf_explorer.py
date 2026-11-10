@@ -3,8 +3,8 @@
 import pytest
 
 # app.uncf put the repository root on the import path when the app was built (see conftest.py).
-from uncf import api_route, data
-from uncf.tests.explorer_fixture import here, make_database, student
+from api import data, route
+from measures.tests.explorer_fixture import here, make_database, student
 
 
 @pytest.fixture
@@ -14,7 +14,7 @@ def explorer_data(tmp_path, monkeypatch):
     records = [here(f"s{n}", "2023-24", "SPRING") for n in range(12)]
     database = make_database(tmp_path / "pdp.sqlite", students, records)
     monkeypatch.setattr(data, "data_path", lambda: database)
-    api_route.clear_cache()
+    route.clear_cache()
     return database
 
 

@@ -3,13 +3,12 @@ from __future__ import annotations
 
 import pytest
 
+from measures.breakdowns.gateway_courses import gateway_courses
 from measures.run_measures import DEFAULT_DATABASE
-from uncf.filters import CohortQuery
-from uncf.gateway_courses import gateway_courses
-from uncf.tests.explorer_fixture import here, make_database, student
+from measures.tests.explorer_fixture import ask, here, make_database, student
 
 # These tests follow students back the next fall, so they count federal (fall to fall) retention.
-FEDERAL = CohortQuery.of("2023-24", "federal")
+FEDERAL = ask("2023-24", "federal")
 
 
 def takers(prefix: str, count: int, grades: list[str], back: int, course=("ENG", "101"), gateway="E", **values):
@@ -38,9 +37,9 @@ def test_outcomes_and_retention_by_course(tmp_path):
         takers("drop", 10, ["W"], back=1),
         takers("inc", 2, ["I"], back=0),
     )
-    page = gateway_courses(FEDERAL, database=database)
-    assert page["meta"]["flagged"] is True
-    assert page["meta"]["retention_term"] == "Fall 2024"
+    page = gateway_courses(**FEDERAL, database=database)
+    assert page["context"]["flagged"] is True
+    assert page["context"]["retention_term"] == "Fall 2024"
     (course,) = page["courses"]
     assert course["course"] == "ENG 101"
     assert (course["students"], course["passed"], course["df"], course["w"]) == (32, 12, 10, 10)
@@ -56,8 +55,8 @@ def test_school_retention_is_the_pdp_flag(tmp_path):
     """The default retention type reads the PDP flag, so it can differ from who came back next fall."""
     flagged = takers("a", 12, ["4"], back=0, retention=1)
     unflagged = takers("b", 10, ["F"], back=10, retention=0)
-    page = gateway_courses(CohortQuery.of("2023-24"), database=build(tmp_path, flagged, unflagged))
-    assert page["meta"]["retention_type"] == "school"
+    page = gateway_courses(**ask("2023-24"), database=build(tmp_path, flagged, unflagged))
+    assert page["cohort_retention"]["type"] == "school"
     assert (page["cohort_retention"]["retained"], page["cohort_retention"]["students"]) == (12, 22)
     (course,) = page["courses"]
     assert course["retained_if_passed"]["rate"] == 1.0
@@ -69,7 +68,7 @@ def test_first_attempt_counts_once(tmp_path):
     students, records = takers("s", 10, ["F"], back=0)
     for s in students:
         records.append(here(s["student_id"], "2023-24", "SPRING", prefix="ENG", number="101", grade="4", gateway="E"))
-    page = gateway_courses(FEDERAL, database=make_database(tmp_path / "pdp.sqlite", students, records))
+    page = gateway_courses(**FEDERAL, database=make_database(tmp_path / "pdp.sqlite", students, records))
     (course,) = page["courses"]
     assert (course["students"], course["passed"], course["df"]) == (10, 0, 10)
 
@@ -82,15 +81,15 @@ def test_unflagged_cohort_infers_math_and_english(tmp_path):
         takers("m", 10, ["F"], back=5, course=("MATH", "111"), gateway="N"),
         takers("h", 10, ["4"], back=5, course=("HIS", "101"), gateway="N"),
     )
-    page = gateway_courses(FEDERAL, database=database)
-    assert page["meta"]["flagged"] is False
+    page = gateway_courses(**FEDERAL, database=database)
+    assert page["context"]["flagged"] is False
     assert [(c["course"], c["subject"]) for c in page["courses"]] == [("ENG 101", "E"), ("MATH 111", "M")]
 
 
 def test_small_courses_are_hidden(tmp_path):
     """A gateway course with under 10 students isn't listed; it's counted as hidden."""
     database = build(tmp_path, takers("a", 12, ["4"], back=0), takers("b", 9, ["4"], back=0, course=("ENG", "102")))
-    page = gateway_courses(FEDERAL, database=database)
+    page = gateway_courses(**FEDERAL, database=database)
     assert [c["course"] for c in page["courses"]] == ["ENG 101"]
     assert page["hidden_courses"] == 1
 
@@ -101,15 +100,15 @@ def test_pairs_below_the_cohort(tmp_path):
     for s in students:
         records.append(here(s["student_id"], "2023-24", "FALL", prefix="MATH", number="111", grade="4", gateway="M"))
     more_students, more_records = takers("solo", 10, ["4"], back=9, course=("BIO", "100"), gateway="N")
-    page = gateway_courses(FEDERAL, database=make_database(tmp_path / "pdp.sqlite", students + more_students, records + more_records))
-    assert page["meta"]["first_term"] == "Fall 2023"
+    page = gateway_courses(**FEDERAL, database=make_database(tmp_path / "pdp.sqlite", students + more_students, records + more_records))
+    assert page["context"]["first_term"] == "Fall 2023"
     assert page["cohort_retention"]["rate"] == 0.5
     assert page["pairs"] == [{"courses": ["ENG 101", "MATH 111"], "students": 10, "retained": 1, "rate": 0.1, "gap": -40.0}]
 
 
 def test_fewer_than_ten_students_hides_everything(tmp_path):
     """Nine students: no numbers at all."""
-    page = gateway_courses(FEDERAL, build(tmp_path, takers("s", 9, ["4"], back=9)))
+    page = gateway_courses(**FEDERAL, database=build(tmp_path, takers("s", 9, ["4"], back=9)))
     assert page["status"] == "suppressed"
     assert page["courses"] == [] and page["pairs"] == []
 
@@ -118,11 +117,11 @@ def test_fewer_than_ten_students_hides_everything(tmp_path):
 @pytest.mark.skipif(not DEFAULT_DATABASE.exists(), reason="the normalized data isn't loaded")
 def test_real_data_known_answers():
     """2023-24, checked by hand with SQL on pdp.sqlite (synthetic data)."""
-    page = gateway_courses(FEDERAL)
-    assert page["meta"]["flagged"] is True
+    page = gateway_courses(**FEDERAL)
+    assert page["context"]["flagged"] is True
     retention = page["cohort_retention"]
     assert (retention["students"], retention["retained"], retention["rate"]) == (2580, 1074, 0.4163)
-    school = gateway_courses(CohortQuery.of("2023-24"))["cohort_retention"]
+    school = gateway_courses(**ask("2023-24"))["cohort_retention"]
     assert (school["students"], school["retained"]) == (2580, 1345)  # the PDP flag, as in the Results API
     eng = next(c for c in page["courses"] if c["course"] == "ENG 101")
     assert (eng["students"], eng["passed"], eng["df"], eng["w"]) == (380, 277, 76, 27)

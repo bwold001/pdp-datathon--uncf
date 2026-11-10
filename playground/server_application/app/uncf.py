@@ -20,6 +20,6 @@ def uncf_router() -> APIRouter | None:
     # Appended, not put first: an installed package wins over a same-named repo folder (mcp/).
     if root not in sys.path:
         sys.path.append(root)
-    from uncf.api_route import router
+    from api.route import router
 
     return router
