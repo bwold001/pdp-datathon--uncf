@@ -5,7 +5,7 @@
       "root": "playground/client_application/",
       "framework": "nextjs",
       "installCommand": "bun install --frozen-lockfile",
-      "buildCommand": "NEXT_PUBLIC_API_BASE_URL=/api/v1 bun run build"
+      "buildCommand": "NEXT_PUBLIC_STUDENT_SUCCESS_CHAT_ENABLED=false NEXT_PUBLIC_API_BASE_URL=/api/v1 bun run build"
     },
     "backend": {
       "root": "./",

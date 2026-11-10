@@ -26,6 +26,8 @@ class ChatRequest(Contract):
     prompt: str = Field(min_length=1, max_length=4000)
     pending: AnalysisRequest | None = None
     selection: Selection | None = None
+    proposals: list[AnalysisRequest] = Field(default_factory=list, max_length=36)
+    confirmed: list[AnalysisRequest] | None = Field(default=None, min_length=1, max_length=36)
 
     @field_validator("prompt")
     @classmethod
@@ -43,14 +45,19 @@ class ChatRequest(Contract):
             raise PydanticCustomError(
                 "invalid_parameters", "pending and selection must be supplied together"
             )
+        if self.confirmed is not None and (self.pending or self.proposals):
+            raise PydanticCustomError("invalid_parameters", "Confirm a complete scope separately")
+        if self.proposals and self.pending is None:
+            raise PydanticCustomError("invalid_parameters", "Prior proposals require clarification")
         return self
 
 
 class ChatResponse(Contract):
     """Deterministic numerical evidence with a bounded status message."""
 
-    status: Literal["answer", "clarification", "unsupported"]
+    status: Literal["answer", "clarification", "confirmation", "unsupported"]
     message: str
+    proposals: list[AnalysisRequest] = Field(default_factory=list, max_length=36)
     receipts: list[AnalysisReceipt] = Field(default_factory=list)
     clarification: Clarification | None = None
     source: Literal["synthetic"] = "synthetic"

@@ -1,7 +1,7 @@
 """The model's entire allowlist; no SQL or student-level operation is exposed."""
 
 from uncf.analytics.definitions import DEFINITIONS
-from uncf.analytics.schemas import AnalysisRequest, AnalysisResponse
+from uncf.analytics.schemas import AnalysisRequest
 from uncf.analytics.service import AnalyticsService
 
 TOOLS = [
@@ -26,7 +26,7 @@ TOOLS = [
     },
     {
         "name": "run_analysis",
-        "description": "Run a deterministic analysis. Missing material parameters return clarification. Graduation returns every perspective and horizon.",
+        "description": "Propose an analysis for user confirmation. No numbers are calculated. Missing parameters require clarification; graduation includes all perspectives and horizons.",
         "input_schema": AnalysisRequest.model_json_schema(),
     },
 ]
@@ -34,7 +34,7 @@ TOOLS = [
 
 def dispatch(
     service: AnalyticsService, name: str, arguments: dict
-) -> dict | AnalysisResponse:
+) -> dict | AnalysisRequest:
     """Validate each tool's narrow arguments before touching the data service."""
     if name == "get_analysis_catalog" and not arguments:
         return service.catalog()
@@ -45,5 +45,5 @@ def dispatch(
     ):
         return DEFINITIONS[arguments["analysis"]].model_dump()
     if name == "run_analysis":
-        return service.analyze(AnalysisRequest.model_validate(arguments))
+        return AnalysisRequest.model_validate(arguments)
     raise ValueError("Unsupported tool or arguments")

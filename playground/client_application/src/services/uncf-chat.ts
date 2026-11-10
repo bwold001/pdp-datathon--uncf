@@ -44,12 +44,15 @@ export type Clarification = {
 };
 export type ChatRequest = {
   prompt: string;
+  proposals?: AnalysisRequest[];
+  confirmed?: AnalysisRequest[];
   pending?: AnalysisRequest;
   selection?: { field: Clarification["field"]; value: string };
 };
 export type ChatResponse = {
-  status: "answer" | "clarification" | "unsupported";
+  status: "answer" | "clarification" | "confirmation" | "unsupported";
   message: string;
+  proposals?: AnalysisRequest[];
   receipts: AnalysisReceipt[];
   clarification: Clarification | null;
   source: "synthetic";
@@ -58,4 +61,13 @@ export type ChatResponse = {
 /** Use the configured Playground API origin; credentials stay on the server. */
 export function sendUncfQuestion(request: ChatRequest): Promise<ChatResponse> {
   return apiRequest<ChatResponse>("/uncf/chat", { method: "POST", json: request, timeoutMs: 90_000 });
+}
+
+/** Describe the complete supported scope using typed parameters, never generated prose. */
+export function describeScope(scope: AnalysisRequest): string {
+  if (scope.analysis === "retention") return `Retention for the complete ${scope.cohort} entering cohort, overall and by entry major.`;
+  if (scope.analysis === "enrollment") return "Distinct enrollment by ethnicity and academic program for the latest two certified complete academic years, across all entering cohorts.";
+  const credential = { B: "bachelor's degree", A: "associate degree", C: "certificate" }[scope.credential ?? "B"];
+  const program = scope.program === "chemistry_family" ? "Chemistry family (40.05)" : "Chemistry, General (40.0501)";
+  return `Graduation for the ${scope.cohort} entering cohort, ${credential}, ${program}; all four-year, six-year and completion-to-date perspectives.`;
 }

@@ -45,6 +45,8 @@ def test_three_questions_return_real_receipts(tmp_path, analysis, parameters, qu
     service = AnalyticsService(build_database(tmp_path / 'data.sqlite'), fixture_coverage())
     model = ScriptedModel([call(analysis, **parameters)], [finish()])
     reply = asyncio.run(answer(ChatRequest(prompt=question), model, 'test-model', service))
+    assert reply.status == 'confirmation' and not reply.receipts
+    reply = asyncio.run(answer(ChatRequest(prompt=question, confirmed=reply.proposals), None, 'test', service))
     direct = service.analyze({'analysis': analysis, **parameters})
     assert reply.receipts == direct.receipts
     assert '99.9' not in reply.message and '123' not in reply.message
@@ -57,6 +59,7 @@ def test_all_receipts_survive_multiple_tools(tmp_path):
     service = AnalyticsService(build_database(tmp_path / 'data.sqlite'), fixture_coverage())
     model = ScriptedModel([call('retention', cohort='2022-23')], [call('enrollment')], [finish()])
     reply = asyncio.run(answer(ChatRequest(prompt='Show retention and enrollment'), model, 'test-model', service))
+    reply = asyncio.run(answer(ChatRequest(prompt='confirmed', confirmed=reply.proposals), None, 'test', service))
     assert [r.analysis for r in reply.receipts] == ['retention', 'enrollment']
 
 
@@ -69,6 +72,8 @@ def test_clarification_resumes_only_the_pending_request(tmp_path):
     resumed = asyncio.run(answer(ChatRequest(prompt='2022-23', pending=reply.clarification.pending,
                                              selection={'field': 'cohort', 'value': '2022-23'}),
                                  None, 'test-model', service))
+    assert resumed.status == 'confirmation' and not resumed.receipts
+    resumed = asyncio.run(answer(ChatRequest(prompt='confirmed', confirmed=resumed.proposals), None, 'test', service))
     assert resumed.receipts[0].rows[0].rate == .5
     with pytest.raises(ValueError):
         asyncio.run(answer(ChatRequest(prompt='bad choice', pending=reply.clarification.pending,
@@ -102,8 +107,14 @@ def test_clarification_keeps_independent_results_from_the_same_tool_batch(tmp_pa
     model = ScriptedModel([call('retention'), call('enrollment')])
     reply = asyncio.run(answer(ChatRequest(prompt='Show retention and enrollment'), model, 'test', service))
     assert reply.clarification.field == 'cohort'
-    assert [receipt.analysis for receipt in reply.receipts] == ['enrollment']
-    assert sum(row.count for row in reply.receipts[0].rows) == 3
+    assert not reply.receipts
+    assert [request.analysis for request in reply.proposals] == ['enrollment']
+    resumed = asyncio.run(answer(ChatRequest(prompt='original question', pending=reply.clarification.pending,
+        selection={'field': 'cohort', 'value': '2022-23'}, proposals=reply.proposals), None, 'test', service))
+    assert [request.analysis for request in resumed.proposals] == ['enrollment', 'retention']
+    result = asyncio.run(answer(ChatRequest(prompt='confirmed', confirmed=resumed.proposals), None, 'test', service))
+    assert [r.analysis for r in result.receipts] == ['enrollment', 'retention']
+    assert sum(row.count for row in result.receipts[0].rows) == 3
 
 
 def test_multiple_ambiguous_analyses_explicitly_explain_the_single_pending_scope(tmp_path):
@@ -114,3 +125,26 @@ def test_multiple_ambiguous_analyses_explicitly_explain_the_single_pending_scope
     assert reply.clarification.pending.analysis == 'retention'
     assert 'graduation' in reply.message
     assert 'separate' in reply.message
+
+
+def test_dropped_filter_cannot_trigger_an_unconfirmed_calculation(tmp_path, monkeypatch):
+    """A model omitting Pell cannot turn a narrower question into a numerical answer."""
+    service = AnalyticsService(build_database(tmp_path / 'data.sqlite'), fixture_coverage())
+    def forbidden(*args):
+        raise AssertionError('Numerical execution before user confirmation')
+    monkeypatch.setattr(service, 'analyze', forbidden)
+    model = ScriptedModel([call('retention', cohort='2022-23')], [finish()])
+    reply = asyncio.run(answer(ChatRequest(prompt='Only Pell recipients in 2022-23'), model, 'test', service))
+    assert reply.status == 'confirmation'
+    assert not reply.receipts and len(reply.proposals) == 1
+    assert 'No additional filters' in reply.message
+
+
+def test_model_tool_dispatch_only_returns_a_proposal(tmp_path, monkeypatch):
+    """There is no numerical back door in the tool dispatcher."""
+    from uncf.chat.tools import dispatch
+    from uncf.analytics.schemas import AnalysisRequest
+    service = AnalyticsService(build_database(tmp_path / 'data.sqlite'), fixture_coverage())
+    monkeypatch.setattr(service, 'analyze', lambda request: pytest.fail('Executed numerical tool'))
+    proposed = dispatch(service, 'run_analysis', {'analysis': 'retention', 'cohort': '2022-23'})
+    assert isinstance(proposed, AnalysisRequest)

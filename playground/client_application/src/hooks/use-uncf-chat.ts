@@ -2,7 +2,7 @@
 
 import { useCallback, useRef, useState } from "react";
 import { describeError } from "@/lib/errors";
-import { type ChatRequest, type ChatResponse, type Clarification, sendUncfQuestion } from "@/services/uncf-chat";
+import { type AnalysisRequest, type ChatRequest, type ChatResponse, type Clarification, sendUncfQuestion } from "@/services/uncf-chat";
 
 export type UncfMessage =
   | { id: string; role: "user"; text: string }
@@ -14,6 +14,7 @@ export function useUncfChat(request = sendUncfQuestion) {
   const [messages, setMessages] = useState<UncfMessage[]>([]);
   const [pending, setPending] = useState(false);
   const [clarification, setClarification] = useState<Clarification | null>(null);
+  const [proposals, setProposals] = useState<AnalysisRequest[]>([]);
   const [revision, setRevision] = useState(0);
   const generation = useRef(0);
   const busy = useRef(false);
@@ -29,6 +30,7 @@ export function useUncfChat(request = sendUncfQuestion) {
       const answer = await request(payload);
       if (generation.current !== current) return;
       setClarification(answer.clarification);
+      setProposals(answer.proposals ?? []);
       setMessages((previous) => [...previous, { id: crypto.randomUUID(), role: "assistant", answer }]);
     } catch (error) {
       if (generation.current !== current) return;
@@ -44,6 +46,7 @@ export function useUncfChat(request = sendUncfQuestion) {
   const ask = useCallback((prompt: string) => {
     if (busy.current) return;
     question.current = prompt;
+    setProposals([]);
     setClarification(null);
     return send({ prompt });
   }, [send]);
@@ -51,18 +54,24 @@ export function useUncfChat(request = sendUncfQuestion) {
   const select = useCallback((value: string) => {
     if (!clarification) return;
     const label = clarification.choices.find((choice) => choice.value === value)?.label ?? value;
-    return send({ prompt: question.current, pending: clarification.pending, selection: { field: clarification.field, value } }, label);
-  }, [clarification, send]);
+    return send({ prompt: question.current, pending: clarification.pending, ...(proposals.length ? { proposals } : {}), selection: { field: clarification.field, value } }, label);
+  }, [clarification, proposals, send]);
+
+  const confirm = useCallback(() => {
+    if (busy.current || clarification || !proposals.length) return;
+    return send({ prompt: question.current, confirmed: proposals }, "Confirmed the described scope; no additional filters.");
+  }, [clarification, proposals, send]);
 
   const reset = useCallback(() => {
     generation.current += 1;
     busy.current = false;
     question.current = "";
+    setProposals([]);
     setPending(false);
     setClarification(null);
     setMessages([]);
     setRevision((value) => value + 1);
   }, []);
 
-  return { messages, pending, clarification, revision, ask, select, reset };
+  return { messages, pending, clarification, revision, proposals, ask, select, confirm, reset };
 }

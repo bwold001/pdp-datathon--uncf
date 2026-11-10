@@ -12,10 +12,13 @@ const receipt: AnalysisReceipt = {
 };
 const response: ChatResponse = { status: "answer", message: "Results and calculation details are below.", receipts: [receipt], clarification: null, source: "synthetic" };
 
+const proposed: ChatResponse = { status: "confirmation", message: "Review the complete scope.",
+  proposals: [{ analysis: "retention", cohort: "2022-23" }], receipts: [], clarification: null, source: "synthetic" };
+
 const meta = {
   component: UncfChat,
   title: "UNCF/Student success chat",
-  args: { request: fn<(payload: ChatRequest) => Promise<ChatResponse>>(async () => response) },
+  args: { request: fn<(payload: ChatRequest) => Promise<ChatResponse>>(async (payload) => payload.confirmed ? response : proposed) },
   decorators: [(Story) => <div className="mx-auto h-[44rem] max-w-3xl border"><Story /></div>],
   parameters: { layout: "padded", docs: { description: { component: "Bounded student-success questions, explicit clarification and calculation evidence. Stories use invented interface fixtures; integration tests exercise the real normalized database." } } },
 } satisfies Meta<typeof UncfChat>;
@@ -26,6 +29,9 @@ export const AskAndInspectCalculation: Story = {
   play: async ({ canvas, userEvent }) => {
     await userEvent.type(canvas.getByRole("textbox", { name: "Your question" }), "Retention for 2022-23?");
     await userEvent.click(canvas.getByRole("button", { name: /^Send$/ }));
+    await expect(canvas.getByRole("button", { name: "Confirm scope and calculate" })).toBeDisabled();
+    await userEvent.click(canvas.getByRole("checkbox", { name: /I confirm this scope/ }));
+    await userEvent.click(canvas.getByRole("button", { name: "Confirm scope and calculate" }));
     await expect(canvas.getByText("50.00%", { exact: true })).toBeVisible();
     await expect(canvas.getByText("20 / 40 = 50.00%")).toBeVisible();
     await userEvent.click(canvas.getByText("How these results were calculated"));
@@ -36,15 +42,18 @@ export const AskAndInspectCalculation: Story = {
 };
 
 export const ClarifyCohort: Story = {
-  args: { request: fn(async (payload: ChatRequest): Promise<ChatResponse> => payload.selection ? response : {
+  args: { request: fn(async (payload: ChatRequest): Promise<ChatResponse> => payload.confirmed ? response : payload.selection ? proposed : {
     status: "clarification", source: "synthetic", message: "Which entry cohort?", receipts: [],
     clarification: { field: "cohort", message: "Which entry cohort?", pending: { analysis: "retention" }, choices: [{ value: "2022-23", label: "2022-23" }] },
   }) },
   play: async ({ canvas, userEvent, args }) => {
     await userEvent.click(canvas.getByRole("button", { name: "What is the retention rate for all majors?" }));
     await userEvent.click(canvas.getByRole("button", { name: /^2022-23$/ }));
+    await expect(canvas.getByRole("button", { name: "Confirm scope and calculate" })).toBeDisabled();
+    await userEvent.click(canvas.getByRole("checkbox", { name: /I confirm this scope/ }));
+    await userEvent.click(canvas.getByRole("button", { name: "Confirm scope and calculate" }));
     await expect(canvas.getByText("50.00%", { exact: true })).toBeVisible();
-    await expect(args.request).toHaveBeenLastCalledWith({ prompt: "What is the retention rate for all majors?", pending: { analysis: "retention" }, selection: { field: "cohort", value: "2022-23" } });
+    await expect(args.request).toHaveBeenNthCalledWith(2, { prompt: "What is the retention rate for all majors?", pending: { analysis: "retention" }, selection: { field: "cohort", value: "2022-23" } });
   },
 };
 

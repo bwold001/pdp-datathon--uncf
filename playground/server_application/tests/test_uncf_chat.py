@@ -26,6 +26,11 @@ def test_chat_matches_direct_api(client, analytics):
     model = ScriptedModel([call("retention", cohort="2022-23")], [finish()])
     app.dependency_overrides[get_chat_client] = lambda: model
     chat = client.post("/api/v1/uncf/chat", json={"prompt": "Retention for all majors in 2022-23?"})
+    assert chat.json()["status"] == "confirmation" and not chat.json()["receipts"]
+    chat = client.post(
+        "/api/v1/uncf/chat",
+        json={"prompt": "Confirmed complete scope", "confirmed": chat.json()["proposals"]},
+    )
     direct = client.post(
         "/api/v1/uncf/analyses", json={"analysis": "retention", "cohort": "2022-23"}
     )
@@ -54,6 +59,10 @@ def test_typed_clarification_without_provider(client, analytics):
         },
     )
     assert response.status_code == 200
+    assert response.json()["status"] == "confirmation"
+    response = client.post(
+        "/api/v1/uncf/chat", json={"prompt": "confirmed", "confirmed": response.json()["proposals"]}
+    )
     assert response.json()["receipts"][0]["rows"][0]["rate"] == 0.5
 
 

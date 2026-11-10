@@ -24,6 +24,7 @@ import { brand } from "@/content/brand";
 import { SANDBOX_EXAMPLES_HEADING, sandboxNavItems } from "@/content/sandbox-examples";
 import { useHealthMonitor } from "@/hooks/use-health-monitor";
 import { routes } from "@/lib/routes";
+import { env } from "@/lib/env";
 import { toSystemStatus } from "@/lib/system-status";
 
 // The dot only needs to be roughly current, so it checks far less often than the landing page's tracker.
@@ -84,6 +85,7 @@ export function AppSidebar() {
                 <span>Pathway Explorer</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
+            {env.studentSuccessChatEnabled && (
             <SidebarMenuItem>
               <SidebarMenuButton
                 isActive={pathname === routes.uncfChat}
@@ -94,6 +96,7 @@ export function AppSidebar() {
                 <span>Student success chat</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
+            )}
           </SidebarMenu>
         </SidebarGroup>
         <SidebarGroup>
