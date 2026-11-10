@@ -18,7 +18,7 @@ export function DfwPage() {
   const { apiQuery } = useCohortFilters();
   const loadList = useMemo(() => explorerLoader<DfwList>("/uncf/dfw", apiQuery), [apiQuery]);
   const { resource: list, retry: retryList } = useApiResource(loadList);
-  useShowStudentCount(list.status === "success" ? list.data.everyone.students : null);
+  useShowStudentCount(list.status !== "success" ? null : list.data.status === "suppressed" ? "under 10" : list.data.everyone.students);
 
   const [sort, setSort] = useState<DfwSort>("count");
   const [minimum, setMinimum] = useState(30);
