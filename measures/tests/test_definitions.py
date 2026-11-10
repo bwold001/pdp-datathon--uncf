@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from measures.models import Measure
 from measures.definitions import DEFINITIONS, FINDINGS, definition_for
+from measures.models import Measure
 
 FINDINGS_CSV = Path(__file__).parents[2] / "data" / "quality" / "findings.csv"
 EXPLORER_MEASURES = ["retention", "persistence", "gateway_math", "gateway_english"]
@@ -19,9 +19,13 @@ def test_every_explorer_measure_has_a_definition() -> None:
     assert set(EXPLORER_MEASURES) <= set(DEFINITIONS)
 
 
-def test_every_key_is_a_real_measure() -> None:
-    """No definition for a measure the measures package doesn't have."""
-    assert set(DEFINITIONS) <= {m.value for m in Measure}
+# Definitions that aren't a measure of their own: the Explorer's other key terms.
+EXPLORER_TERMS = {"credit_milestones", "student_paths"}
+
+
+def test_every_key_is_a_real_measure_or_explorer_term() -> None:
+    """No definition for a measure the measures package doesn't have, and every measure has one."""
+    assert set(DEFINITIONS) - EXPLORER_TERMS == {m.value for m in Measure}
 
 
 @pytest.mark.parametrize("measure", sorted(DEFINITIONS))
@@ -60,4 +64,16 @@ def test_definition_for_unknown_measure_raises() -> None:
     """Asking for a measure with no definition is an error, not an empty answer."""
     assert definition_for("retention")["pdp_name"] == "Retention"
     with pytest.raises(KeyError):
-        definition_for("dfw_rate")
+        definition_for("graduation")
+
+
+def test_a_school_can_use_its_own_name(monkeypatch) -> None:
+    """With UNCF_SCHOOL set, a school's own name replaces the label and the PDP name stays."""
+    from measures import definitions
+
+    monkeypatch.setitem(definitions.LOCAL_NAMES, "fmu", {"retention": "Returned to FMU"})
+    monkeypatch.setenv("UNCF_SCHOOL", "fmu")
+    assert definition_for("retention")["name"] == "Returned to FMU"
+    assert definition_for("retention")["pdp_name"] == "Retention"
+    monkeypatch.delenv("UNCF_SCHOOL")
+    assert definition_for("retention")["name"] == "Returned here"

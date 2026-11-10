@@ -12,11 +12,21 @@ import sqlite3
 from itertools import product
 from pathlib import Path
 
-from .calculations import credit_completion, dfw, gateway_english, gateway_math, persistence, retention
+from .calculations import (
+    credit_completion,
+    dfw,
+    federal_retention,
+    gateway_english,
+    gateway_math,
+    persistence,
+    retention,
+)
+from .calculations.sql_counts import SAFE_YEAR as SAFE_COHORT
+from .calculations.sql_counts import as_number
 from .models import (
     ALLOWED_VALUES,
-    OPEN_DIMENSIONS,
     EVERYONE,
+    OPEN_DIMENSIONS,
     SUPPRESSION_THRESHOLD,
     Cohort,
     Counts,
@@ -38,6 +48,7 @@ DEFAULT_DATABASE = Path(__file__).parent.parent / "normalized-data-model" / "out
 # Add a measure by writing its file in calculations/ and listing it here.
 MEASURES = {
     Measure.RETENTION: retention,
+    Measure.FEDERAL_RETENTION: federal_retention,
     Measure.PERSISTENCE: persistence,
     Measure.GATEWAY_MATH: gateway_math,
     Measure.GATEWAY_ENGLISH: gateway_english,
@@ -52,23 +63,29 @@ def run_measure(
     group_by: list[GroupBy] | None = None,
     database: str | Path | None = None,
     save: bool = False,
+    filters: Group = EVERYONE,
 ) -> list[MeasureResult]:
     """Return one row per cohort and group: everyone, plus every group asked for in group_by.
 
     database is the loaded SQLite file to read, or an open connection (for PostgreSQL). It defaults to
     the loader's file. save=True also writes the rows to the results database (see save_results.py).
+    filters counts only the students who match every condition, e.g. Pell students; "everyone" then means
+    everyone who matches. Filtered rows aren't saved, since the results table has no column for the filters.
     """
     if measure not in MEASURES:
         raise NotImplementedError(f"{measure.value} is not written yet")
     if not cohorts:
         raise ValueError("cohorts needs at least one Cohort")
+    if save and filters.parts:
+        raise ValueError("filtered results can't be saved: the results table has no column for the filters")
     calculation = MEASURES[measure]
     check_open_dimensions(measure, calculation, group_by or [])
+    check_open_dimensions(measure, calculation, [GroupBy.of(part.dimension) for part in filters.parts])
 
     connection, opened_here = open_database(database)
     try:
         groups = groups_for(group_by or [], read_open_values(connection, calculation, cohorts, group_by or []))
-        all_counts = calculation.count(connection, cohorts, groups)
+        all_counts = calculation.count(connection, cohorts, groups, filters)
         sources = read_sources(connection)
     finally:
         if opened_here:
@@ -85,6 +102,35 @@ def run_measure(
         save_results(results, loaded_at)
         logger.info("%s: saved %d rows to %s", measure.value, len(results), RESULTS_DATABASE)
     return results
+
+
+def read_answers(measure: Measure, cohort: str, database: str | Path | None = None) -> tuple[dict[str, int | float | None], bool]:
+    """Each in scope student's answer to a student measure for one cohort year, and whether the cohort has answers yet.
+
+    The answer is 1 or 0 (or a ratio, for credit completion), or None when the student can't be counted. A student
+    missing from the result is outside the measure. The page breakdowns use this to count a measure among their
+    own sets of students, such as the students who passed a course. DFW counts enrollments, so it has no answers.
+    """
+    if measure == Measure.DFW_RATE:
+        raise ValueError("dfw_rate counts course enrollments, not students, so it has no per student answers")
+    if not SAFE_COHORT.match(cohort):
+        raise ValueError(f"{cohort!r} is not a valid cohort year")
+    connection, opened_here = open_database(database)
+    try:
+        cursor = connection.cursor()
+        cursor.execute(
+            f"WITH students AS ({MEASURES[measure].STUDENT_SQL}) "
+            f"SELECT student_id, in_scope, has_answer, achieved FROM students WHERE cohort = '{cohort}'"
+        )
+        rows = cursor.fetchall()
+    finally:
+        if opened_here:
+            connection.close()
+    answers = {}
+    for student_id, in_scope, has_answer, achieved in rows:
+        if int(in_scope):
+            answers[student_id] = as_number(achieved) if int(has_answer) else None
+    return answers, any(value is not None for value in answers.values())
 
 
 def open_database(database: str | Path | None):
@@ -185,6 +231,8 @@ def build_result(measure: Measure, cohort: Cohort, group: Group, counts: Counts,
         exclusion_reason=counts.exclusion_reason,
         note=note,
         exclusions=dict(counts.exclusions),
+        split=dict(counts.split) if counts.split is not None else None,
+        n_students=counts.n_students,
     )
 
 

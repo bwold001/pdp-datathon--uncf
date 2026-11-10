@@ -4,9 +4,9 @@ A required student who never took the course counts as not completed.
 """
 from __future__ import annotations
 
+from ..models import EVERYONE, Cohort, Counts, Group
 from .sql_counts import count_in_sql
 from .students import gateway_rows_sql
-from ..models import Cohort, Counts, Group
 
 NOTE = (
     "Students required to take gateway math who completed it in their first academic year "
@@ -18,6 +18,6 @@ NOTE = (
 STUDENT_SQL = gateway_rows_sql("cm.completed_gateway_math_year1", "cm.gateway_math_status")
 
 
-def count(connection, cohorts: list[Cohort], groups: list[Group]) -> dict[tuple[Cohort, Group], Counts]:
+def count(connection, cohorts: list[Cohort], groups: list[Group], filters: Group = EVERYONE) -> dict[tuple[Cohort, Group], Counts]:
     """Count students who completed gateway math, for every cohort and group."""
-    return count_in_sql(connection, STUDENT_SQL, cohorts, groups)
+    return count_in_sql(connection, STUDENT_SQL, cohorts, groups, filters)

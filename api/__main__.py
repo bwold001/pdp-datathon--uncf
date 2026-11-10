@@ -1,6 +1,6 @@
 """Entry point: `python -m api [load|serve]`.
 
-No argument loads missing data and serves the compatible, provider-free Results API.
+No argument loads missing data and serves the API (api/route.py).
 """
 from __future__ import annotations
 
@@ -11,15 +11,15 @@ from api.load import ensure_data_loaded
 
 
 def serve(host: str, port: int) -> None:
-    """Start the Results API with uvicorn."""
+    """Start the API with uvicorn."""
     import uvicorn
 
-    uvicorn.run("api.app:app", host=host, port=port)
+    uvicorn.run("api.route:app", host=host, port=port)
 
 
 def main(argv: list[str] | None = None) -> None:
     """Run the command named on the command line."""
-    from api.app import DEFAULT_PORT
+    from api.route import DEFAULT_PORT
 
     parser = argparse.ArgumentParser(prog="python -m api")
     parser.add_argument("command", nargs="?", choices=["load", "serve"])

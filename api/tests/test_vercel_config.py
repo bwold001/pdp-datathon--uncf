@@ -9,7 +9,7 @@ from pathlib import Path
 
 from fastapi import FastAPI
 
-from api.app import PREFIX
+from api.route import PREFIX
 
 REPO = Path(__file__).resolve().parents[2]
 CONFIG = json.loads((REPO / "vercel.json").read_text(encoding="utf-8"))
@@ -83,13 +83,13 @@ def test_home_redirects_to_an_explorer_tab_that_exists() -> None:
 
 def test_bundle_keeps_what_the_api_reads() -> None:
     """The API's code and pdp.sqlite stay in its bundle."""
-    for path in ["normalized-data-model/output/pdp.sqlite", "api/app.py", "measures/run_measures.py", "analytics/service.py", "analytics/config/analytics.yaml"]:
+    for path in ["normalized-data-model/output/pdp.sqlite", "api/route.py", "measures/run_measures.py", "analytics/service.py", "analytics/config/analytics.yaml"]:
         assert not is_excluded(path), path
 
 
 def test_bundle_drops_the_frontend_and_raw_data() -> None:
     """Big files the API never reads stay out of its bundle."""
-    for path in ["playground/client_application/node_modules/next/package.json", "data/raw/pdp_cohort_data.csv", "api/tests/test_api.py"]:
+    for path in ["playground/client_application/node_modules/next/package.json", "data/raw/pdp_cohort_data.csv", "api/tests/test_results.py"]:
         assert is_excluded(path), path
 
 

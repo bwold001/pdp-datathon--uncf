@@ -10,10 +10,10 @@
     "backend": {
       "root": "./",
       "framework": "fastapi",
-      "entrypoint": "api.app:app",
+      "entrypoint": "api.route:app",
       "buildCommand": "python -m api load",
       "functions": {
-        "api/app.py": {
+        "api/route.py": {
           "excludeFiles": "{playground/**,notebooks/**,docs/**,mcp/**,gap_finder/**,data/**,**/tests/**,normalized-data-model/data/**,normalized-data-model/logs/**,normalized-data-model/output/tables/**}"
         }
       }

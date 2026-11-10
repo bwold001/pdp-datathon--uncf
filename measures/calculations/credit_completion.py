@@ -1,9 +1,9 @@
 """Credit completion: the average share of attempted credits that students earned in their first year."""
 from __future__ import annotations
 
+from ..models import EVERYONE, Cohort, Counts, ExclusionReason, Group
 from .sql_counts import count_in_sql
 from .students import rows_sql
-from ..models import Cohort, Counts, ExclusionReason, Group
 
 NOTE = (
     "Average of each student's year 1 credits earned / credits attempted, modeled on the Postsecondary Data "
@@ -54,6 +54,6 @@ def credit_rows_sql(attempted_column: str, earned_column: str) -> str:
 STUDENT_SQL = credit_rows_sql("cm.number_of_credits_attempted_yr_1", "cm.number_of_credits_earned_yr_1")
 
 
-def count(connection, cohorts: list[Cohort], groups: list[Group]) -> dict[tuple[Cohort, Group], Counts]:
+def count(connection, cohorts: list[Cohort], groups: list[Group], filters: Group = EVERYONE) -> dict[tuple[Cohort, Group], Counts]:
     """Count students and add up their credit completion ratios for every cohort and group."""
-    return count_in_sql(connection, STUDENT_SQL, cohorts, groups)
+    return count_in_sql(connection, STUDENT_SQL, cohorts, groups, filters)

@@ -7,7 +7,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 from yaml import YAMLError
 
-from api import results
+from api import data
 from analytics.schemas import AnalysisRequest, AnalysisResponse
 from analytics.service import AnalyticsService
 from analytics.coverage import DEFAULT_CONFIG, load_coverage
@@ -25,7 +25,7 @@ def get_service() -> AnalyticsService:
         raise HTTPException(
             503, "Analytics coverage configuration is missing or invalid."
         ) from error
-    return AnalyticsService(results.data_path(), coverage)
+    return AnalyticsService(data.data_path(), coverage)
 
 
 @router.get("/analyses/catalog")

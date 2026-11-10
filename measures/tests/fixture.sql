@@ -163,3 +163,11 @@ INSERT INTO course VALUES (1, 'ENGL', '1302');
 INSERT INTO course VALUES (2, 'MATH', '1314');
 INSERT INTO course VALUES (3, 'BIOL', '1101');
 INSERT INTO course VALUES (4, 'HIST', '1301');
+
+-- Terms and delivery, for DFW's term and delivery groups and for federal (fall to fall) retention.
+-- Every enrollment above is in Fall 2022 and taught face to face.
+CREATE TABLE term (term_id INTEGER, academic_year TEXT, academic_term TEXT, sort_order INTEGER);
+INSERT INTO term VALUES (1, '2022-23', 'FALL', 1);
+ALTER TABLE course_enrollment ADD COLUMN term_id INTEGER;
+ALTER TABLE course_enrollment ADD COLUMN delivery_method TEXT;
+UPDATE course_enrollment SET term_id = 1, delivery_method = 'F';

@@ -7,7 +7,14 @@ from pathlib import Path
 
 import pytest
 
-from measures.calculations.dfw import DFW_BELOW, ENROLLMENT_SQL, GRADE_REASONS, NOTE as DFW_NOTE, grade_outcomes, open_values
+from measures.calculations.dfw import (
+    DFW_BELOW,
+    ENROLLMENT_SQL,
+    GRADE_REASONS,
+    grade_outcomes,
+    open_values,
+)
+from measures.calculations.dfw import NOTE as DFW_NOTE
 from measures.calculations.retention import STUDENT_SQL
 from measures.calculations.sql_counts import count_in_sql
 from measures.models import (
@@ -292,7 +299,7 @@ def add_student(database, student_id, cohort):
 def test_dfw_grades_match_ignoring_case_spaces_and_decimals(database):
     add_student(database, "t1", "2025-26")
     for grade in (" w ", "1.67", "4.00", "f", "3.67", "ABC"):
-        database.execute("INSERT INTO course_enrollment VALUES ('t1', '2025-26', 1, ?)", (grade,))
+        database.execute("INSERT INTO course_enrollment VALUES ('t1', '2025-26', 1, ?, 1, 'F')", (grade,))
     cohort = Cohort.of("2025-26")
 
     counts = count_in_sql(database, ENROLLMENT_SQL, [cohort], [EVERYONE])[(cohort, EVERYONE)]
@@ -305,8 +312,8 @@ def test_dfw_courses_that_differ_only_in_case_are_one_course(database):
     add_student(database, "t1", "2025-26")
     database.execute("INSERT INTO course VALUES (5, 'ENG', '101')")
     database.execute("INSERT INTO course VALUES (6, 'eng', '101')")
-    database.execute("INSERT INTO course_enrollment VALUES ('t1', '2025-26', 5, 'P')")
-    database.execute("INSERT INTO course_enrollment VALUES ('t1', '2025-26', 6, 'F')")
+    database.execute("INSERT INTO course_enrollment VALUES ('t1', '2025-26', 5, 'P', 1, 'F')")
+    database.execute("INSERT INTO course_enrollment VALUES ('t1', '2025-26', 6, 'F', 1, 'F')")
     cohort = Cohort.of("2025-26")
 
     assert open_values(database, GroupDimension.COURSE, [cohort]) == ["ENG 101"]
