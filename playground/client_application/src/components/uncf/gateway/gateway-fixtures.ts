@@ -1,6 +1,6 @@
-// Real answers from the shared API (GET /uncf/gateway) on the synthetic sample data (pdp.sqlite), saved for stories
-// and tests with the queries the tab sends. Retention is the API's default (the PDP flag) unless the name says
-// federal. Regenerate them from the running API (measures/breakdowns/gateway_courses.py); don't edit the numbers by hand.
+// Real answers from GET /uncf/gateway on the synthetic sample data (pdp.sqlite), with the default (school)
+// retention type. Regenerate them from the running API (measures/breakdowns/gateway_courses.py); don't edit the
+// numbers by hand.
 import type { GatewayResponse } from "./gateway-data";
 
 /** 2023-24, every student who entered. */
@@ -12,11 +12,13 @@ export const gateway2023: GatewayResponse = {
     "provisional": false,
     "min_students": 10,
     "source": "PDP analysis-ready cohort and course files (synthetic sample)",
-    "loaded_at": "2026-11-10T06:18:59",
+    "loaded_at": "2026-11-07T17:01:14",
     "flagged": true,
+    "year_one": "2023-24",
     "retention_term": "next academic year",
     "retention_observed": true,
     "first_term": null,
+    "compared": false,
     "min_pair_students": 10
   },
   "status": "ok",
@@ -37,74 +39,89 @@ export const gateway2023: GatewayResponse = {
       "course": "ENG 101",
       "name": "ENG-101",
       "subject": "E",
-      "students": 380,
-      "passed": 277,
-      "d": 17,
-      "f": 59,
-      "df": 76,
-      "w": 27,
-      "other": 14,
-      "shares": {
-        "passed": 0.7289,
-        "d": 0.0447,
-        "f": 0.1553,
-        "w": 0.0711
+      "students": 384,
+      "first_pass": 297,
+      "passed": 313,
+      "path": {
+        "first": 297,
+        "retook_passed": 16,
+        "retook_not": null,
+        "no_retake": 64
       },
       "retained_if_passed": {
-        "students": 277,
-        "retained": 218,
-        "rate": 0.787
+        "students": 313,
+        "retained": 244,
+        "rate": 0.7796
       },
       "retained_if_not_passed": {
-        "students": 103,
-        "retained": 39,
-        "rate": 0.3786
-      }
+        "students": 71,
+        "retained": 16,
+        "rate": 0.2254
+      },
+      "group": null
     },
     {
       "course": "ENGL 101",
       "name": "ENGLISH COMPOSITION I",
       "subject": "E",
       "students": 63,
-      "passed": 45,
-      "d": 5,
-      "f": 5,
-      "df": 10,
-      "w": 8,
-      "other": 0,
-      "shares": {
-        "passed": 0.7143,
-        "d": 0.0794,
-        "f": 0.0794,
-        "w": 0.127
+      "first_pass": 50,
+      "passed": 52,
+      "path": {
+        "first": 50,
+        "retook_passed": null,
+        "retook_not": null,
+        "no_retake": 10
       },
       "retained_if_passed": {
-        "students": 45,
-        "retained": 35,
-        "rate": 0.7778
+        "students": 52,
+        "retained": 39,
+        "rate": 0.75
       },
       "retained_if_not_passed": {
-        "students": 18,
-        "retained": 8,
-        "rate": 0.4444
-      }
+        "students": 11,
+        "retained": 4,
+        "rate": 0.3636
+      },
+      "group": null
+    },
+    {
+      "course": "MAT 152",
+      "name": "QUANTITATIVE REASONING",
+      "subject": "M",
+      "students": 56,
+      "first_pass": 39,
+      "passed": 41,
+      "path": {
+        "first": 39,
+        "retook_passed": null,
+        "retook_not": null,
+        "no_retake": 14
+      },
+      "retained_if_passed": {
+        "students": 41,
+        "retained": 30,
+        "rate": 0.7317
+      },
+      "retained_if_not_passed": {
+        "students": 15,
+        "retained": 3,
+        "rate": 0.2
+      },
+      "group": null
     },
     {
       "course": "ENG 121",
       "name": "ENGLISH COMPOSITION I",
       "subject": "E",
       "students": 51,
+      "first_pass": 36,
       "passed": 36,
-      "d": 0,
-      "f": 8,
-      "df": 8,
-      "w": 7,
-      "other": null,
-      "shares": {
-        "passed": 0.7059,
-        "d": 0.0,
-        "f": 0.1569,
-        "w": 0.1373
+      "path": {
+        "first": 36,
+        "retook_passed": 0,
+        "retook_not": 0,
+        "no_retake": 15
       },
       "retained_if_passed": {
         "students": 36,
@@ -115,52 +132,71 @@ export const gateway2023: GatewayResponse = {
         "students": 15,
         "retained": 6,
         "rate": 0.4
-      }
+      },
+      "group": null
     },
     {
       "course": "ENG 111",
       "name": "COLLEGE COMPOSITION I",
       "subject": "E",
       "students": 36,
-      "passed": 27,
-      "d": 1,
-      "f": 3,
-      "df": 4,
-      "w": 5,
-      "other": null,
-      "shares": {
-        "passed": 0.75,
-        "d": 0.0278,
-        "f": 0.0833,
-        "w": 0.1389
+      "first_pass": 28,
+      "passed": 30,
+      "path": {
+        "first": 28,
+        "retook_passed": null,
+        "retook_not": 0,
+        "no_retake": null
       },
       "retained_if_passed": {
-        "students": 27,
-        "retained": 20,
-        "rate": 0.7407
+        "students": 30,
+        "retained": 22,
+        "rate": 0.7333
       },
       "retained_if_not_passed": {
         "students": null,
         "retained": null,
         "rate": null
-      }
+      },
+      "group": null
+    },
+    {
+      "course": "MTH 165",
+      "name": "ELEMENTARY STATISTICS",
+      "subject": "M",
+      "students": 23,
+      "first_pass": 16,
+      "passed": 17,
+      "path": {
+        "first": 16,
+        "retook_passed": null,
+        "retook_not": 0,
+        "no_retake": null
+      },
+      "retained_if_passed": {
+        "students": 17,
+        "retained": 16,
+        "rate": 0.9412
+      },
+      "retained_if_not_passed": {
+        "students": null,
+        "retained": null,
+        "rate": null
+      },
+      "group": null
     },
     {
       "course": "ENGL 112",
       "name": "COMPOSITION I",
       "subject": "E",
       "students": 22,
+      "first_pass": 22,
       "passed": 22,
-      "d": 0,
-      "f": 0,
-      "df": 0,
-      "w": 0,
-      "other": 0,
-      "shares": {
-        "passed": 1.0,
-        "d": 0.0,
-        "f": 0.0,
-        "w": 0.0
+      "path": {
+        "first": 22,
+        "retook_passed": 0,
+        "retook_not": 0,
+        "no_retake": 0
       },
       "retained_if_passed": {
         "students": 22,
@@ -171,52 +207,46 @@ export const gateway2023: GatewayResponse = {
         "students": null,
         "retained": null,
         "rate": null
-      }
+      },
+      "group": null
     },
     {
       "course": "ENGL 1110",
       "name": "COMPOSITION I",
       "subject": "E",
       "students": 21,
-      "passed": 15,
-      "d": 4,
-      "f": 2,
-      "df": 6,
-      "w": 0,
-      "other": 0,
-      "shares": {
-        "passed": 0.7143,
-        "d": 0.1905,
-        "f": 0.0952,
-        "w": 0.0
+      "first_pass": 19,
+      "passed": 19,
+      "path": {
+        "first": 19,
+        "retook_passed": 0,
+        "retook_not": 0,
+        "no_retake": null
       },
       "retained_if_passed": {
-        "students": 15,
-        "retained": 11,
-        "rate": 0.7333
+        "students": 19,
+        "retained": 15,
+        "rate": 0.7895
       },
       "retained_if_not_passed": {
         "students": null,
         "retained": null,
         "rate": null
-      }
+      },
+      "group": null
     },
     {
       "course": "ENGL 121",
       "name": "COLLEGE COMPOSITION",
       "subject": "E",
       "students": 21,
+      "first_pass": 21,
       "passed": 21,
-      "d": 0,
-      "f": 0,
-      "df": 0,
-      "w": 0,
-      "other": 0,
-      "shares": {
-        "passed": 1.0,
-        "d": 0.0,
-        "f": 0.0,
-        "w": 0.0
+      "path": {
+        "first": 21,
+        "retook_passed": 0,
+        "retook_not": 0,
+        "no_retake": 0
       },
       "retained_if_passed": {
         "students": 21,
@@ -227,24 +257,146 @@ export const gateway2023: GatewayResponse = {
         "students": null,
         "retained": null,
         "rate": null
-      }
+      },
+      "group": null
+    },
+    {
+      "course": "MATH 103",
+      "name": "COLLEGE ALGEBRA",
+      "subject": "M",
+      "students": 20,
+      "first_pass": 11,
+      "passed": 11,
+      "path": {
+        "first": 11,
+        "retook_passed": 0,
+        "retook_not": null,
+        "no_retake": null
+      },
+      "retained_if_passed": {
+        "students": 11,
+        "retained": 10,
+        "rate": 0.9091
+      },
+      "retained_if_not_passed": {
+        "students": null,
+        "retained": null,
+        "rate": null
+      },
+      "group": null
     },
     {
       "course": "ENGL 161",
       "name": "COLLEGE COMPOSITION I",
       "subject": "E",
       "students": 18,
+      "first_pass": 13,
+      "passed": 15,
+      "path": {
+        "first": 13,
+        "retook_passed": null,
+        "retook_not": null,
+        "no_retake": null
+      },
+      "retained_if_passed": {
+        "students": 15,
+        "retained": 14,
+        "rate": 0.9333
+      },
+      "retained_if_not_passed": {
+        "students": null,
+        "retained": null,
+        "rate": null
+      },
+      "group": null
+    },
+    {
+      "course": "ENG 102",
+      "name": "FIRST-YEAR COMPOSITION",
+      "subject": "E",
+      "students": 17,
+      "first_pass": 16,
+      "passed": 16,
+      "path": {
+        "first": 16,
+        "retook_passed": 0,
+        "retook_not": 0,
+        "no_retake": null
+      },
+      "retained_if_passed": {
+        "students": 16,
+        "retained": 12,
+        "rate": 0.75
+      },
+      "retained_if_not_passed": {
+        "students": null,
+        "retained": null,
+        "rate": null
+      },
+      "group": null
+    },
+    {
+      "course": "MTH 103",
+      "name": "COLLEGE ALGEBRA",
+      "subject": "M",
+      "students": 17,
+      "first_pass": 11,
       "passed": 12,
-      "d": 1,
-      "f": 4,
-      "df": 5,
-      "w": 1,
-      "other": 0,
-      "shares": {
-        "passed": 0.6667,
-        "d": 0.0556,
-        "f": 0.2222,
-        "w": 0.0556
+      "path": {
+        "first": 11,
+        "retook_passed": null,
+        "retook_not": null,
+        "no_retake": null
+      },
+      "retained_if_passed": {
+        "students": 12,
+        "retained": 9,
+        "rate": 0.75
+      },
+      "retained_if_not_passed": {
+        "students": null,
+        "retained": null,
+        "rate": null
+      },
+      "group": null
+    },
+    {
+      "course": "MAT 162",
+      "name": "STATISTICAL REASONING",
+      "subject": "M",
+      "students": 14,
+      "first_pass": 7,
+      "passed": 7,
+      "path": {
+        "first": null,
+        "retook_passed": 0,
+        "retook_not": 0,
+        "no_retake": null
+      },
+      "retained_if_passed": {
+        "students": null,
+        "retained": null,
+        "rate": null
+      },
+      "retained_if_not_passed": {
+        "students": null,
+        "retained": null,
+        "rate": null
+      },
+      "group": null
+    },
+    {
+      "course": "MATH 120",
+      "name": "MATH-120",
+      "subject": "M",
+      "students": 14,
+      "first_pass": 12,
+      "passed": 12,
+      "path": {
+        "first": 12,
+        "retook_passed": 0,
+        "retook_not": 0,
+        "no_retake": null
       },
       "retained_if_passed": {
         "students": 12,
@@ -255,276 +407,46 @@ export const gateway2023: GatewayResponse = {
         "students": null,
         "retained": null,
         "rate": null
-      }
-    },
-    {
-      "course": "ENG 102",
-      "name": "FIRST-YEAR COMPOSITION",
-      "subject": "E",
-      "students": 17,
-      "passed": 15,
-      "d": 1,
-      "f": 1,
-      "df": 2,
-      "w": 0,
-      "other": 0,
-      "shares": {
-        "passed": 0.8824,
-        "d": 0.0588,
-        "f": 0.0588,
-        "w": 0.0
       },
-      "retained_if_passed": {
-        "students": 15,
-        "retained": 12,
-        "rate": 0.8
-      },
-      "retained_if_not_passed": {
-        "students": null,
-        "retained": null,
-        "rate": null
-      }
-    },
-    {
-      "course": "INRW 385",
-      "name": "INTEGRATED READING AND WRITING",
-      "subject": "E",
-      "students": 10,
-      "passed": 9,
-      "d": 0,
-      "f": 1,
-      "df": 1,
-      "w": 0,
-      "other": null,
-      "shares": {
-        "passed": 0.9,
-        "d": 0.0,
-        "f": 0.1,
-        "w": 0.0
-      },
-      "retained_if_passed": {
-        "students": null,
-        "retained": null,
-        "rate": null
-      },
-      "retained_if_not_passed": {
-        "students": null,
-        "retained": null,
-        "rate": null
-      }
-    },
-    {
-      "course": "MAT 152",
-      "name": "QUANTITATIVE REASONING",
-      "subject": "M",
-      "students": 56,
-      "passed": 39,
-      "d": 0,
-      "f": 13,
-      "df": 13,
-      "w": 4,
-      "other": 0,
-      "shares": {
-        "passed": 0.6964,
-        "d": 0.0,
-        "f": 0.2321,
-        "w": 0.0714
-      },
-      "retained_if_passed": {
-        "students": 39,
-        "retained": 28,
-        "rate": 0.7179
-      },
-      "retained_if_not_passed": {
-        "students": 17,
-        "retained": 5,
-        "rate": 0.2941
-      }
-    },
-    {
-      "course": "MTH 165",
-      "name": "ELEMENTARY STATISTICS",
-      "subject": "M",
-      "students": 23,
-      "passed": 14,
-      "d": 2,
-      "f": 2,
-      "df": 4,
-      "w": 5,
-      "other": 0,
-      "shares": {
-        "passed": 0.6087,
-        "d": 0.087,
-        "f": 0.087,
-        "w": 0.2174
-      },
-      "retained_if_passed": {
-        "students": 14,
-        "retained": 13,
-        "rate": 0.9286
-      },
-      "retained_if_not_passed": {
-        "students": null,
-        "retained": null,
-        "rate": null
-      }
-    },
-    {
-      "course": "MATH 103",
-      "name": "COLLEGE ALGEBRA",
-      "subject": "M",
-      "students": 20,
-      "passed": 10,
-      "d": 1,
-      "f": 6,
-      "df": 7,
-      "w": 3,
-      "other": 0,
-      "shares": {
-        "passed": 0.5,
-        "d": 0.05,
-        "f": 0.3,
-        "w": 0.15
-      },
-      "retained_if_passed": {
-        "students": 10,
-        "retained": 9,
-        "rate": 0.9
-      },
-      "retained_if_not_passed": {
-        "students": 10,
-        "retained": 4,
-        "rate": 0.4
-      }
-    },
-    {
-      "course": "MTH 103",
-      "name": "COLLEGE ALGEBRA",
-      "subject": "M",
-      "students": 17,
-      "passed": 9,
-      "d": 2,
-      "f": 0,
-      "df": 2,
-      "w": 6,
-      "other": 0,
-      "shares": {
-        "passed": 0.5294,
-        "d": 0.1176,
-        "f": 0.0,
-        "w": 0.3529
-      },
-      "retained_if_passed": {
-        "students": null,
-        "retained": null,
-        "rate": null
-      },
-      "retained_if_not_passed": {
-        "students": null,
-        "retained": null,
-        "rate": null
-      }
-    },
-    {
-      "course": "MAT 162",
-      "name": "STATISTICAL REASONING",
-      "subject": "M",
-      "students": 14,
-      "passed": 7,
-      "d": 0,
-      "f": 5,
-      "df": 5,
-      "w": 2,
-      "other": 0,
-      "shares": {
-        "passed": 0.5,
-        "d": 0.0,
-        "f": 0.3571,
-        "w": 0.1429
-      },
-      "retained_if_passed": {
-        "students": null,
-        "retained": null,
-        "rate": null
-      },
-      "retained_if_not_passed": {
-        "students": null,
-        "retained": null,
-        "rate": null
-      }
-    },
-    {
-      "course": "MATH 120",
-      "name": "MATH-120",
-      "subject": "M",
-      "students": 14,
-      "passed": 10,
-      "d": 2,
-      "f": 2,
-      "df": 4,
-      "w": 0,
-      "other": null,
-      "shares": {
-        "passed": 0.7143,
-        "d": 0.1429,
-        "f": 0.1429,
-        "w": 0.0
-      },
-      "retained_if_passed": {
-        "students": 10,
-        "retained": 9,
-        "rate": 0.9
-      },
-      "retained_if_not_passed": {
-        "students": null,
-        "retained": null,
-        "rate": null
-      }
+      "group": null
     },
     {
       "course": "MTH 101",
       "name": "QUANTITATIVE LITERACY",
       "subject": "M",
       "students": 14,
-      "passed": 11,
-      "d": 1,
-      "f": 2,
-      "df": 3,
-      "w": 0,
-      "other": 0,
-      "shares": {
-        "passed": 0.7857,
-        "d": 0.0714,
-        "f": 0.1429,
-        "w": 0.0
+      "first_pass": 12,
+      "passed": 12,
+      "path": {
+        "first": 12,
+        "retook_passed": 0,
+        "retook_not": 0,
+        "no_retake": null
       },
       "retained_if_passed": {
-        "students": 11,
-        "retained": 7,
-        "rate": 0.6364
+        "students": 12,
+        "retained": 8,
+        "rate": 0.6667
       },
       "retained_if_not_passed": {
         "students": null,
         "retained": null,
         "rate": null
-      }
+      },
+      "group": null
     },
     {
       "course": "MATH 202",
       "name": "INTRODUCTION TO STATISTICS",
       "subject": "M",
       "students": 13,
-      "passed": 6,
-      "d": 2,
-      "f": 2,
-      "df": 4,
-      "w": 3,
-      "other": 0,
-      "shares": {
-        "passed": 0.4615,
-        "d": 0.1538,
-        "f": 0.1538,
-        "w": 0.2308
+      "first_pass": 8,
+      "passed": 8,
+      "path": {
+        "first": null,
+        "retook_passed": 0,
+        "retook_not": 0,
+        "no_retake": null
       },
       "retained_if_passed": {
         "students": null,
@@ -535,24 +457,46 @@ export const gateway2023: GatewayResponse = {
         "students": null,
         "retained": null,
         "rate": null
-      }
+      },
+      "group": null
+    },
+    {
+      "course": "MTH 107",
+      "name": "BASIC STATISTICS",
+      "subject": "M",
+      "students": 13,
+      "first_pass": 11,
+      "passed": 11,
+      "path": {
+        "first": 11,
+        "retook_passed": 0,
+        "retook_not": 0,
+        "no_retake": null
+      },
+      "retained_if_passed": {
+        "students": 11,
+        "retained": 9,
+        "rate": 0.8182
+      },
+      "retained_if_not_passed": {
+        "students": null,
+        "retained": null,
+        "rate": null
+      },
+      "group": null
     },
     {
       "course": "MTH 152",
       "name": "STATISTICS (MA)",
       "subject": "M",
       "students": 13,
+      "first_pass": 9,
       "passed": 9,
-      "d": 0,
-      "f": 3,
-      "df": 3,
-      "w": 1,
-      "other": 0,
-      "shares": {
-        "passed": 0.6923,
-        "d": 0.0,
-        "f": 0.2308,
-        "w": 0.0769
+      "path": {
+        "first": null,
+        "retook_passed": 0,
+        "retook_not": 0,
+        "no_retake": null
       },
       "retained_if_passed": {
         "students": null,
@@ -563,52 +507,46 @@ export const gateway2023: GatewayResponse = {
         "students": null,
         "retained": null,
         "rate": null
-      }
-    },
-    {
-      "course": "MTH 107",
-      "name": "BASIC STATISTICS",
-      "subject": "M",
-      "students": 12,
-      "passed": 8,
-      "d": 2,
-      "f": 1,
-      "df": 3,
-      "w": 1,
-      "other": null,
-      "shares": {
-        "passed": 0.6667,
-        "d": 0.1667,
-        "f": 0.0833,
-        "w": 0.0833
       },
-      "retained_if_passed": {
-        "students": null,
-        "retained": null,
-        "rate": null
-      },
-      "retained_if_not_passed": {
-        "students": null,
-        "retained": null,
-        "rate": null
-      }
+      "group": null
     },
     {
       "course": "MTH 140",
       "name": "PRECALCULUS",
       "subject": "M",
       "students": 12,
-      "passed": 8,
-      "d": 1,
-      "f": 1,
-      "df": 2,
-      "w": 2,
-      "other": 0,
-      "shares": {
-        "passed": 0.6667,
-        "d": 0.0833,
-        "f": 0.0833,
-        "w": 0.1667
+      "first_pass": 9,
+      "passed": 10,
+      "path": {
+        "first": null,
+        "retook_passed": null,
+        "retook_not": 0,
+        "no_retake": null
+      },
+      "retained_if_passed": {
+        "students": 10,
+        "retained": 9,
+        "rate": 0.9
+      },
+      "retained_if_not_passed": {
+        "students": null,
+        "retained": null,
+        "rate": null
+      },
+      "group": null
+    },
+    {
+      "course": "MTH 161",
+      "name": "PRECALCULUS I",
+      "subject": "M",
+      "students": 12,
+      "first_pass": 8,
+      "passed": 9,
+      "path": {
+        "first": null,
+        "retook_passed": null,
+        "retook_not": 0,
+        "no_retake": null
       },
       "retained_if_passed": {
         "students": null,
@@ -619,24 +557,46 @@ export const gateway2023: GatewayResponse = {
         "students": null,
         "retained": null,
         "rate": null
-      }
+      },
+      "group": null
+    },
+    {
+      "course": "INRW 385",
+      "name": "INTEGRATED READING AND WRITING",
+      "subject": "E",
+      "students": 11,
+      "first_pass": 9,
+      "passed": 9,
+      "path": {
+        "first": null,
+        "retook_passed": 0,
+        "retook_not": 0,
+        "no_retake": null
+      },
+      "retained_if_passed": {
+        "students": null,
+        "retained": null,
+        "rate": null
+      },
+      "retained_if_not_passed": {
+        "students": null,
+        "retained": null,
+        "rate": null
+      },
+      "group": null
     },
     {
       "course": "MATH 116",
       "name": "MATH-116",
       "subject": "M",
       "students": 11,
-      "passed": 4,
-      "d": 4,
-      "f": 3,
-      "df": 7,
-      "w": 0,
-      "other": null,
-      "shares": {
-        "passed": 0.3636,
-        "d": 0.3636,
-        "f": 0.2727,
-        "w": 0.0
+      "first_pass": 8,
+      "passed": 8,
+      "path": {
+        "first": null,
+        "retook_passed": 0,
+        "retook_not": 0,
+        "no_retake": null
       },
       "retained_if_passed": {
         "students": null,
@@ -647,24 +607,21 @@ export const gateway2023: GatewayResponse = {
         "students": null,
         "retained": null,
         "rate": null
-      }
+      },
+      "group": null
     },
     {
       "course": "MATH 130",
       "name": "INTRODUCTION TO STATISTICS",
       "subject": "M",
       "students": 11,
-      "passed": 7,
-      "d": 1,
-      "f": 1,
-      "df": 2,
-      "w": 2,
-      "other": 0,
-      "shares": {
-        "passed": 0.6364,
-        "d": 0.0909,
-        "f": 0.0909,
-        "w": 0.1818
+      "first_pass": 8,
+      "passed": 9,
+      "path": {
+        "first": null,
+        "retook_passed": null,
+        "retook_not": 0,
+        "no_retake": null
       },
       "retained_if_passed": {
         "students": null,
@@ -675,52 +632,21 @@ export const gateway2023: GatewayResponse = {
         "students": null,
         "retained": null,
         "rate": null
-      }
-    },
-    {
-      "course": "MTH 161",
-      "name": "PRECALCULUS I",
-      "subject": "M",
-      "students": 11,
-      "passed": 7,
-      "d": 0,
-      "f": 0,
-      "df": 0,
-      "w": 4,
-      "other": null,
-      "shares": {
-        "passed": 0.6364,
-        "d": 0.0,
-        "f": 0.0,
-        "w": 0.3636
       },
-      "retained_if_passed": {
-        "students": null,
-        "retained": null,
-        "rate": null
-      },
-      "retained_if_not_passed": {
-        "students": null,
-        "retained": null,
-        "rate": null
-      }
+      "group": null
     },
     {
       "course": "MAT 151",
       "name": "COLLEGE ALGEBRA/FUNCTIONS",
       "subject": "M",
       "students": 10,
+      "first_pass": 10,
       "passed": 10,
-      "d": 0,
-      "f": 0,
-      "df": 0,
-      "w": 0,
-      "other": 0,
-      "shares": {
-        "passed": 1.0,
-        "d": 0.0,
-        "f": 0.0,
-        "w": 0.0
+      "path": {
+        "first": 10,
+        "retook_passed": 0,
+        "retook_not": 0,
+        "no_retake": 0
       },
       "retained_if_passed": {
         "students": 10,
@@ -731,24 +657,21 @@ export const gateway2023: GatewayResponse = {
         "students": null,
         "retained": null,
         "rate": null
-      }
+      },
+      "group": null
     },
     {
       "course": "MATH 104B",
       "name": "MATH-104B",
       "subject": "M",
       "students": 10,
-      "passed": 5,
-      "d": 2,
-      "f": 3,
-      "df": 5,
-      "w": 0,
-      "other": null,
-      "shares": {
-        "passed": 0.5,
-        "d": 0.2,
-        "f": 0.3,
-        "w": 0.0
+      "first_pass": 7,
+      "passed": 7,
+      "path": {
+        "first": null,
+        "retook_passed": 0,
+        "retook_not": 0,
+        "no_retake": null
       },
       "retained_if_passed": {
         "students": null,
@@ -759,24 +682,21 @@ export const gateway2023: GatewayResponse = {
         "students": null,
         "retained": null,
         "rate": null
-      }
+      },
+      "group": null
     },
     {
       "course": "MTH 129",
       "name": "PRECALCULUS I",
       "subject": "M",
       "students": 10,
+      "first_pass": 7,
       "passed": 7,
-      "d": 0,
-      "f": 3,
-      "df": 3,
-      "w": 0,
-      "other": 0,
-      "shares": {
-        "passed": 0.7,
-        "d": 0.0,
-        "f": 0.3,
-        "w": 0.0
+      "path": {
+        "first": null,
+        "retook_passed": 0,
+        "retook_not": 0,
+        "no_retake": null
       },
       "retained_if_passed": {
         "students": null,
@@ -787,11 +707,13 @@ export const gateway2023: GatewayResponse = {
         "students": null,
         "retained": null,
         "rate": null
-      }
+      },
+      "group": null
     }
   ],
-  "hidden_courses": 86,
-  "left_out": 29,
+  "hidden_courses": 82,
+  "left_out": 22,
+  "pairs_considered": 35,
   "pairs": [
     {
       "courses": [
@@ -801,7 +723,10 @@ export const gateway2023: GatewayResponse = {
       "students": 13,
       "retained": 6,
       "rate": 0.4615,
-      "gap": -6.0
+      "others_rate": 0.5216,
+      "gap": -6.01,
+      "affected": -0.8,
+      "likely_noise": true
     },
     {
       "courses": [
@@ -811,23 +736,28 @@ export const gateway2023: GatewayResponse = {
       "students": 18,
       "retained": 9,
       "rate": 0.5,
-      "gap": -2.1
+      "others_rate": 0.5215,
+      "gap": -2.15,
+      "affected": -0.4,
+      "likely_noise": true
     },
     {
       "courses": [
-        "BIO 120",
-        "SSC 100"
+        "ENG 101",
+        "MATH 120E"
       ],
-      "students": 14,
-      "retained": 7,
+      "students": 10,
+      "retained": 5,
       "rate": 0.5,
-      "gap": -2.1
+      "others_rate": 0.5214,
+      "gap": -2.14,
+      "affected": -0.2,
+      "likely_noise": true
     }
-  ],
-  "pairs_considered": 61
+  ]
 };
 
-/** 2023-24 with fall to fall retention (Retention: Back next fall). */
+/** 2023-24 with fall to fall retention (Back next fall). */
 export const gatewayFederal2023: GatewayResponse = {
   "meta": {
     "cohort": "2023-24",
@@ -836,11 +766,13 @@ export const gatewayFederal2023: GatewayResponse = {
     "provisional": false,
     "min_students": 10,
     "source": "PDP analysis-ready cohort and course files (synthetic sample)",
-    "loaded_at": "2026-11-10T06:18:59",
+    "loaded_at": "2026-11-07T17:01:14",
     "flagged": true,
+    "year_one": "2023-24",
     "retention_term": "Fall 2024",
     "retention_observed": true,
     "first_term": null,
+    "compared": false,
     "min_pair_students": 10
   },
   "status": "ok",
@@ -861,74 +793,89 @@ export const gatewayFederal2023: GatewayResponse = {
       "course": "ENG 101",
       "name": "ENG-101",
       "subject": "E",
-      "students": 380,
-      "passed": 277,
-      "d": 17,
-      "f": 59,
-      "df": 76,
-      "w": 27,
-      "other": 14,
-      "shares": {
-        "passed": 0.7289,
-        "d": 0.0447,
-        "f": 0.1553,
-        "w": 0.0711
+      "students": 384,
+      "first_pass": 297,
+      "passed": 313,
+      "path": {
+        "first": 297,
+        "retook_passed": 16,
+        "retook_not": null,
+        "no_retake": 64
       },
       "retained_if_passed": {
-        "students": 277,
-        "retained": 211,
-        "rate": 0.7617
+        "students": 313,
+        "retained": 236,
+        "rate": 0.754
       },
       "retained_if_not_passed": {
-        "students": 103,
-        "retained": 35,
-        "rate": 0.3398
-      }
+        "students": 71,
+        "retained": 14,
+        "rate": 0.1972
+      },
+      "group": null
     },
     {
       "course": "ENGL 101",
       "name": "ENGLISH COMPOSITION I",
       "subject": "E",
       "students": 63,
-      "passed": 45,
-      "d": 5,
-      "f": 5,
-      "df": 10,
-      "w": 8,
-      "other": 0,
-      "shares": {
-        "passed": 0.7143,
-        "d": 0.0794,
-        "f": 0.0794,
-        "w": 0.127
+      "first_pass": 50,
+      "passed": 52,
+      "path": {
+        "first": 50,
+        "retook_passed": null,
+        "retook_not": null,
+        "no_retake": 10
       },
       "retained_if_passed": {
-        "students": 45,
-        "retained": 33,
-        "rate": 0.7333
+        "students": 52,
+        "retained": 37,
+        "rate": 0.7115
       },
       "retained_if_not_passed": {
-        "students": 18,
-        "retained": 5,
-        "rate": 0.2778
-      }
+        "students": 11,
+        "retained": 1,
+        "rate": 0.0909
+      },
+      "group": null
+    },
+    {
+      "course": "MAT 152",
+      "name": "QUANTITATIVE REASONING",
+      "subject": "M",
+      "students": 56,
+      "first_pass": 39,
+      "passed": 41,
+      "path": {
+        "first": 39,
+        "retook_passed": null,
+        "retook_not": null,
+        "no_retake": 14
+      },
+      "retained_if_passed": {
+        "students": 41,
+        "retained": 30,
+        "rate": 0.7317
+      },
+      "retained_if_not_passed": {
+        "students": 15,
+        "retained": 2,
+        "rate": 0.1333
+      },
+      "group": null
     },
     {
       "course": "ENG 121",
       "name": "ENGLISH COMPOSITION I",
       "subject": "E",
       "students": 51,
+      "first_pass": 36,
       "passed": 36,
-      "d": 0,
-      "f": 8,
-      "df": 8,
-      "w": 7,
-      "other": null,
-      "shares": {
-        "passed": 0.7059,
-        "d": 0.0,
-        "f": 0.1569,
-        "w": 0.1373
+      "path": {
+        "first": 36,
+        "retook_passed": 0,
+        "retook_not": 0,
+        "no_retake": 15
       },
       "retained_if_passed": {
         "students": 36,
@@ -939,52 +886,71 @@ export const gatewayFederal2023: GatewayResponse = {
         "students": 15,
         "retained": 5,
         "rate": 0.3333
-      }
+      },
+      "group": null
     },
     {
       "course": "ENG 111",
       "name": "COLLEGE COMPOSITION I",
       "subject": "E",
       "students": 36,
-      "passed": 27,
-      "d": 1,
-      "f": 3,
-      "df": 4,
-      "w": 5,
-      "other": null,
-      "shares": {
-        "passed": 0.75,
-        "d": 0.0278,
-        "f": 0.0833,
-        "w": 0.1389
+      "first_pass": 28,
+      "passed": 30,
+      "path": {
+        "first": 28,
+        "retook_passed": null,
+        "retook_not": 0,
+        "no_retake": null
       },
       "retained_if_passed": {
-        "students": 27,
-        "retained": 3,
-        "rate": 0.1111
+        "students": 30,
+        "retained": 4,
+        "rate": 0.1333
       },
       "retained_if_not_passed": {
         "students": null,
         "retained": null,
         "rate": null
-      }
+      },
+      "group": null
+    },
+    {
+      "course": "MTH 165",
+      "name": "ELEMENTARY STATISTICS",
+      "subject": "M",
+      "students": 23,
+      "first_pass": 16,
+      "passed": 17,
+      "path": {
+        "first": 16,
+        "retook_passed": null,
+        "retook_not": 0,
+        "no_retake": null
+      },
+      "retained_if_passed": {
+        "students": 17,
+        "retained": 15,
+        "rate": 0.8824
+      },
+      "retained_if_not_passed": {
+        "students": null,
+        "retained": null,
+        "rate": null
+      },
+      "group": null
     },
     {
       "course": "ENGL 112",
       "name": "COMPOSITION I",
       "subject": "E",
       "students": 22,
+      "first_pass": 22,
       "passed": 22,
-      "d": 0,
-      "f": 0,
-      "df": 0,
-      "w": 0,
-      "other": 0,
-      "shares": {
-        "passed": 1.0,
-        "d": 0.0,
-        "f": 0.0,
-        "w": 0.0
+      "path": {
+        "first": 22,
+        "retook_passed": 0,
+        "retook_not": 0,
+        "no_retake": 0
       },
       "retained_if_passed": {
         "students": 22,
@@ -995,52 +961,46 @@ export const gatewayFederal2023: GatewayResponse = {
         "students": null,
         "retained": null,
         "rate": null
-      }
+      },
+      "group": null
     },
     {
       "course": "ENGL 1110",
       "name": "COMPOSITION I",
       "subject": "E",
       "students": 21,
-      "passed": 15,
-      "d": 4,
-      "f": 2,
-      "df": 6,
-      "w": 0,
-      "other": 0,
-      "shares": {
-        "passed": 0.7143,
-        "d": 0.1905,
-        "f": 0.0952,
-        "w": 0.0
+      "first_pass": 19,
+      "passed": 19,
+      "path": {
+        "first": 19,
+        "retook_passed": 0,
+        "retook_not": 0,
+        "no_retake": null
       },
       "retained_if_passed": {
-        "students": 15,
-        "retained": 5,
-        "rate": 0.3333
+        "students": 19,
+        "retained": 6,
+        "rate": 0.3158
       },
       "retained_if_not_passed": {
         "students": null,
         "retained": null,
         "rate": null
-      }
+      },
+      "group": null
     },
     {
       "course": "ENGL 121",
       "name": "COLLEGE COMPOSITION",
       "subject": "E",
       "students": 21,
+      "first_pass": 21,
       "passed": 21,
-      "d": 0,
-      "f": 0,
-      "df": 0,
-      "w": 0,
-      "other": 0,
-      "shares": {
-        "passed": 1.0,
-        "d": 0.0,
-        "f": 0.0,
-        "w": 0.0
+      "path": {
+        "first": 21,
+        "retook_passed": 0,
+        "retook_not": 0,
+        "no_retake": 0
       },
       "retained_if_passed": {
         "students": 21,
@@ -1051,220 +1011,121 @@ export const gatewayFederal2023: GatewayResponse = {
         "students": null,
         "retained": null,
         "rate": null
-      }
-    },
-    {
-      "course": "ENGL 161",
-      "name": "COLLEGE COMPOSITION I",
-      "subject": "E",
-      "students": 18,
-      "passed": 12,
-      "d": 1,
-      "f": 4,
-      "df": 5,
-      "w": 1,
-      "other": 0,
-      "shares": {
-        "passed": 0.6667,
-        "d": 0.0556,
-        "f": 0.2222,
-        "w": 0.0556
       },
-      "retained_if_passed": {
-        "students": 12,
-        "retained": 11,
-        "rate": 0.9167
-      },
-      "retained_if_not_passed": {
-        "students": null,
-        "retained": null,
-        "rate": null
-      }
-    },
-    {
-      "course": "ENG 102",
-      "name": "FIRST-YEAR COMPOSITION",
-      "subject": "E",
-      "students": 17,
-      "passed": 15,
-      "d": 1,
-      "f": 1,
-      "df": 2,
-      "w": 0,
-      "other": 0,
-      "shares": {
-        "passed": 0.8824,
-        "d": 0.0588,
-        "f": 0.0588,
-        "w": 0.0
-      },
-      "retained_if_passed": {
-        "students": 15,
-        "retained": 11,
-        "rate": 0.7333
-      },
-      "retained_if_not_passed": {
-        "students": null,
-        "retained": null,
-        "rate": null
-      }
-    },
-    {
-      "course": "INRW 385",
-      "name": "INTEGRATED READING AND WRITING",
-      "subject": "E",
-      "students": 10,
-      "passed": 9,
-      "d": 0,
-      "f": 1,
-      "df": 1,
-      "w": 0,
-      "other": null,
-      "shares": {
-        "passed": 0.9,
-        "d": 0.0,
-        "f": 0.1,
-        "w": 0.0
-      },
-      "retained_if_passed": {
-        "students": null,
-        "retained": null,
-        "rate": null
-      },
-      "retained_if_not_passed": {
-        "students": null,
-        "retained": null,
-        "rate": null
-      }
-    },
-    {
-      "course": "MAT 152",
-      "name": "QUANTITATIVE REASONING",
-      "subject": "M",
-      "students": 56,
-      "passed": 39,
-      "d": 0,
-      "f": 13,
-      "df": 13,
-      "w": 4,
-      "other": 0,
-      "shares": {
-        "passed": 0.6964,
-        "d": 0.0,
-        "f": 0.2321,
-        "w": 0.0714
-      },
-      "retained_if_passed": {
-        "students": 39,
-        "retained": 29,
-        "rate": 0.7436
-      },
-      "retained_if_not_passed": {
-        "students": 17,
-        "retained": 3,
-        "rate": 0.1765
-      }
-    },
-    {
-      "course": "MTH 165",
-      "name": "ELEMENTARY STATISTICS",
-      "subject": "M",
-      "students": 23,
-      "passed": 14,
-      "d": 2,
-      "f": 2,
-      "df": 4,
-      "w": 5,
-      "other": 0,
-      "shares": {
-        "passed": 0.6087,
-        "d": 0.087,
-        "f": 0.087,
-        "w": 0.2174
-      },
-      "retained_if_passed": {
-        "students": 14,
-        "retained": 12,
-        "rate": 0.8571
-      },
-      "retained_if_not_passed": {
-        "students": null,
-        "retained": null,
-        "rate": null
-      }
+      "group": null
     },
     {
       "course": "MATH 103",
       "name": "COLLEGE ALGEBRA",
       "subject": "M",
       "students": 20,
-      "passed": 10,
-      "d": 1,
-      "f": 6,
-      "df": 7,
-      "w": 3,
-      "other": 0,
-      "shares": {
-        "passed": 0.5,
-        "d": 0.05,
-        "f": 0.3,
-        "w": 0.15
+      "first_pass": 11,
+      "passed": 11,
+      "path": {
+        "first": 11,
+        "retook_passed": 0,
+        "retook_not": null,
+        "no_retake": null
       },
       "retained_if_passed": {
-        "students": 10,
-        "retained": 8,
-        "rate": 0.8
+        "students": 11,
+        "retained": 9,
+        "rate": 0.8182
       },
       "retained_if_not_passed": {
-        "students": 10,
-        "retained": 4,
-        "rate": 0.4
-      }
+        "students": null,
+        "retained": null,
+        "rate": null
+      },
+      "group": null
+    },
+    {
+      "course": "ENGL 161",
+      "name": "COLLEGE COMPOSITION I",
+      "subject": "E",
+      "students": 18,
+      "first_pass": 13,
+      "passed": 15,
+      "path": {
+        "first": 13,
+        "retook_passed": null,
+        "retook_not": null,
+        "no_retake": null
+      },
+      "retained_if_passed": {
+        "students": 15,
+        "retained": 14,
+        "rate": 0.9333
+      },
+      "retained_if_not_passed": {
+        "students": null,
+        "retained": null,
+        "rate": null
+      },
+      "group": null
+    },
+    {
+      "course": "ENG 102",
+      "name": "FIRST-YEAR COMPOSITION",
+      "subject": "E",
+      "students": 17,
+      "first_pass": 16,
+      "passed": 16,
+      "path": {
+        "first": 16,
+        "retook_passed": 0,
+        "retook_not": 0,
+        "no_retake": null
+      },
+      "retained_if_passed": {
+        "students": 16,
+        "retained": 11,
+        "rate": 0.6875
+      },
+      "retained_if_not_passed": {
+        "students": null,
+        "retained": null,
+        "rate": null
+      },
+      "group": null
     },
     {
       "course": "MTH 103",
       "name": "COLLEGE ALGEBRA",
       "subject": "M",
       "students": 17,
-      "passed": 9,
-      "d": 2,
-      "f": 0,
-      "df": 2,
-      "w": 6,
-      "other": 0,
-      "shares": {
-        "passed": 0.5294,
-        "d": 0.1176,
-        "f": 0.0,
-        "w": 0.3529
+      "first_pass": 11,
+      "passed": 12,
+      "path": {
+        "first": 11,
+        "retook_passed": null,
+        "retook_not": null,
+        "no_retake": null
       },
       "retained_if_passed": {
-        "students": null,
-        "retained": null,
-        "rate": null
+        "students": 12,
+        "retained": 8,
+        "rate": 0.6667
       },
       "retained_if_not_passed": {
         "students": null,
         "retained": null,
         "rate": null
-      }
+      },
+      "group": null
     },
     {
       "course": "MAT 162",
       "name": "STATISTICAL REASONING",
       "subject": "M",
       "students": 14,
+      "first_pass": 7,
       "passed": 7,
-      "d": 0,
-      "f": 5,
-      "df": 5,
-      "w": 2,
-      "other": 0,
-      "shares": {
-        "passed": 0.5,
-        "d": 0.0,
-        "f": 0.3571,
-        "w": 0.1429
+      "path": {
+        "first": null,
+        "retook_passed": 0,
+        "retook_not": 0,
+        "no_retake": null
       },
       "retained_if_passed": {
         "students": null,
@@ -1275,24 +1136,146 @@ export const gatewayFederal2023: GatewayResponse = {
         "students": null,
         "retained": null,
         "rate": null
-      }
+      },
+      "group": null
     },
     {
       "course": "MATH 120",
       "name": "MATH-120",
       "subject": "M",
       "students": 14,
+      "first_pass": 12,
+      "passed": 12,
+      "path": {
+        "first": 12,
+        "retook_passed": 0,
+        "retook_not": 0,
+        "no_retake": null
+      },
+      "retained_if_passed": {
+        "students": 12,
+        "retained": 10,
+        "rate": 0.8333
+      },
+      "retained_if_not_passed": {
+        "students": null,
+        "retained": null,
+        "rate": null
+      },
+      "group": null
+    },
+    {
+      "course": "MTH 101",
+      "name": "QUANTITATIVE LITERACY",
+      "subject": "M",
+      "students": 14,
+      "first_pass": 12,
+      "passed": 12,
+      "path": {
+        "first": 12,
+        "retook_passed": 0,
+        "retook_not": 0,
+        "no_retake": null
+      },
+      "retained_if_passed": {
+        "students": 12,
+        "retained": 7,
+        "rate": 0.5833
+      },
+      "retained_if_not_passed": {
+        "students": null,
+        "retained": null,
+        "rate": null
+      },
+      "group": null
+    },
+    {
+      "course": "MATH 202",
+      "name": "INTRODUCTION TO STATISTICS",
+      "subject": "M",
+      "students": 13,
+      "first_pass": 8,
+      "passed": 8,
+      "path": {
+        "first": null,
+        "retook_passed": 0,
+        "retook_not": 0,
+        "no_retake": null
+      },
+      "retained_if_passed": {
+        "students": null,
+        "retained": null,
+        "rate": null
+      },
+      "retained_if_not_passed": {
+        "students": null,
+        "retained": null,
+        "rate": null
+      },
+      "group": null
+    },
+    {
+      "course": "MTH 107",
+      "name": "BASIC STATISTICS",
+      "subject": "M",
+      "students": 13,
+      "first_pass": 11,
+      "passed": 11,
+      "path": {
+        "first": 11,
+        "retook_passed": 0,
+        "retook_not": 0,
+        "no_retake": null
+      },
+      "retained_if_passed": {
+        "students": 11,
+        "retained": 8,
+        "rate": 0.7273
+      },
+      "retained_if_not_passed": {
+        "students": null,
+        "retained": null,
+        "rate": null
+      },
+      "group": null
+    },
+    {
+      "course": "MTH 152",
+      "name": "STATISTICS (MA)",
+      "subject": "M",
+      "students": 13,
+      "first_pass": 9,
+      "passed": 9,
+      "path": {
+        "first": null,
+        "retook_passed": 0,
+        "retook_not": 0,
+        "no_retake": null
+      },
+      "retained_if_passed": {
+        "students": null,
+        "retained": null,
+        "rate": null
+      },
+      "retained_if_not_passed": {
+        "students": null,
+        "retained": null,
+        "rate": null
+      },
+      "group": null
+    },
+    {
+      "course": "MTH 140",
+      "name": "PRECALCULUS",
+      "subject": "M",
+      "students": 12,
+      "first_pass": 9,
       "passed": 10,
-      "d": 2,
-      "f": 2,
-      "df": 4,
-      "w": 0,
-      "other": null,
-      "shares": {
-        "passed": 0.7143,
-        "d": 0.1429,
-        "f": 0.1429,
-        "w": 0.0
+      "path": {
+        "first": null,
+        "retook_passed": null,
+        "retook_not": 0,
+        "no_retake": null
       },
       "retained_if_passed": {
         "students": 10,
@@ -1303,80 +1286,21 @@ export const gatewayFederal2023: GatewayResponse = {
         "students": null,
         "retained": null,
         "rate": null
-      }
+      },
+      "group": null
     },
     {
-      "course": "MTH 101",
-      "name": "QUANTITATIVE LITERACY",
+      "course": "MTH 161",
+      "name": "PRECALCULUS I",
       "subject": "M",
-      "students": 14,
-      "passed": 11,
-      "d": 1,
-      "f": 2,
-      "df": 3,
-      "w": 0,
-      "other": 0,
-      "shares": {
-        "passed": 0.7857,
-        "d": 0.0714,
-        "f": 0.1429,
-        "w": 0.0
-      },
-      "retained_if_passed": {
-        "students": 11,
-        "retained": 6,
-        "rate": 0.5455
-      },
-      "retained_if_not_passed": {
-        "students": null,
-        "retained": null,
-        "rate": null
-      }
-    },
-    {
-      "course": "MATH 202",
-      "name": "INTRODUCTION TO STATISTICS",
-      "subject": "M",
-      "students": 13,
-      "passed": 6,
-      "d": 2,
-      "f": 2,
-      "df": 4,
-      "w": 3,
-      "other": 0,
-      "shares": {
-        "passed": 0.4615,
-        "d": 0.1538,
-        "f": 0.1538,
-        "w": 0.2308
-      },
-      "retained_if_passed": {
-        "students": null,
-        "retained": null,
-        "rate": null
-      },
-      "retained_if_not_passed": {
-        "students": null,
-        "retained": null,
-        "rate": null
-      }
-    },
-    {
-      "course": "MTH 152",
-      "name": "STATISTICS (MA)",
-      "subject": "M",
-      "students": 13,
+      "students": 12,
+      "first_pass": 8,
       "passed": 9,
-      "d": 0,
-      "f": 3,
-      "df": 3,
-      "w": 1,
-      "other": 0,
-      "shares": {
-        "passed": 0.6923,
-        "d": 0.0,
-        "f": 0.2308,
-        "w": 0.0769
+      "path": {
+        "first": null,
+        "retook_passed": null,
+        "retook_not": 0,
+        "no_retake": null
       },
       "retained_if_passed": {
         "students": null,
@@ -1387,24 +1311,21 @@ export const gatewayFederal2023: GatewayResponse = {
         "students": null,
         "retained": null,
         "rate": null
-      }
+      },
+      "group": null
     },
     {
-      "course": "MTH 107",
-      "name": "BASIC STATISTICS",
-      "subject": "M",
-      "students": 12,
-      "passed": 8,
-      "d": 2,
-      "f": 1,
-      "df": 3,
-      "w": 1,
-      "other": null,
-      "shares": {
-        "passed": 0.6667,
-        "d": 0.1667,
-        "f": 0.0833,
-        "w": 0.0833
+      "course": "INRW 385",
+      "name": "INTEGRATED READING AND WRITING",
+      "subject": "E",
+      "students": 11,
+      "first_pass": 9,
+      "passed": 9,
+      "path": {
+        "first": null,
+        "retook_passed": 0,
+        "retook_not": 0,
+        "no_retake": null
       },
       "retained_if_passed": {
         "students": null,
@@ -1415,52 +1336,21 @@ export const gatewayFederal2023: GatewayResponse = {
         "students": null,
         "retained": null,
         "rate": null
-      }
-    },
-    {
-      "course": "MTH 140",
-      "name": "PRECALCULUS",
-      "subject": "M",
-      "students": 12,
-      "passed": 8,
-      "d": 1,
-      "f": 1,
-      "df": 2,
-      "w": 2,
-      "other": 0,
-      "shares": {
-        "passed": 0.6667,
-        "d": 0.0833,
-        "f": 0.0833,
-        "w": 0.1667
       },
-      "retained_if_passed": {
-        "students": null,
-        "retained": null,
-        "rate": null
-      },
-      "retained_if_not_passed": {
-        "students": null,
-        "retained": null,
-        "rate": null
-      }
+      "group": null
     },
     {
       "course": "MATH 116",
       "name": "MATH-116",
       "subject": "M",
       "students": 11,
-      "passed": 4,
-      "d": 4,
-      "f": 3,
-      "df": 7,
-      "w": 0,
-      "other": null,
-      "shares": {
-        "passed": 0.3636,
-        "d": 0.3636,
-        "f": 0.2727,
-        "w": 0.0
+      "first_pass": 8,
+      "passed": 8,
+      "path": {
+        "first": null,
+        "retook_passed": 0,
+        "retook_not": 0,
+        "no_retake": null
       },
       "retained_if_passed": {
         "students": null,
@@ -1471,24 +1361,21 @@ export const gatewayFederal2023: GatewayResponse = {
         "students": null,
         "retained": null,
         "rate": null
-      }
+      },
+      "group": null
     },
     {
       "course": "MATH 130",
       "name": "INTRODUCTION TO STATISTICS",
       "subject": "M",
       "students": 11,
-      "passed": 7,
-      "d": 1,
-      "f": 1,
-      "df": 2,
-      "w": 2,
-      "other": 0,
-      "shares": {
-        "passed": 0.6364,
-        "d": 0.0909,
-        "f": 0.0909,
-        "w": 0.1818
+      "first_pass": 8,
+      "passed": 9,
+      "path": {
+        "first": null,
+        "retook_passed": null,
+        "retook_not": 0,
+        "no_retake": null
       },
       "retained_if_passed": {
         "students": null,
@@ -1499,52 +1386,21 @@ export const gatewayFederal2023: GatewayResponse = {
         "students": null,
         "retained": null,
         "rate": null
-      }
-    },
-    {
-      "course": "MTH 161",
-      "name": "PRECALCULUS I",
-      "subject": "M",
-      "students": 11,
-      "passed": 7,
-      "d": 0,
-      "f": 0,
-      "df": 0,
-      "w": 4,
-      "other": null,
-      "shares": {
-        "passed": 0.6364,
-        "d": 0.0,
-        "f": 0.0,
-        "w": 0.3636
       },
-      "retained_if_passed": {
-        "students": null,
-        "retained": null,
-        "rate": null
-      },
-      "retained_if_not_passed": {
-        "students": null,
-        "retained": null,
-        "rate": null
-      }
+      "group": null
     },
     {
       "course": "MAT 151",
       "name": "COLLEGE ALGEBRA/FUNCTIONS",
       "subject": "M",
       "students": 10,
+      "first_pass": 10,
       "passed": 10,
-      "d": 0,
-      "f": 0,
-      "df": 0,
-      "w": 0,
-      "other": 0,
-      "shares": {
-        "passed": 1.0,
-        "d": 0.0,
-        "f": 0.0,
-        "w": 0.0
+      "path": {
+        "first": 10,
+        "retook_passed": 0,
+        "retook_not": 0,
+        "no_retake": 0
       },
       "retained_if_passed": {
         "students": 10,
@@ -1555,24 +1411,21 @@ export const gatewayFederal2023: GatewayResponse = {
         "students": null,
         "retained": null,
         "rate": null
-      }
+      },
+      "group": null
     },
     {
       "course": "MATH 104B",
       "name": "MATH-104B",
       "subject": "M",
       "students": 10,
-      "passed": 5,
-      "d": 2,
-      "f": 3,
-      "df": 5,
-      "w": 0,
-      "other": null,
-      "shares": {
-        "passed": 0.5,
-        "d": 0.2,
-        "f": 0.3,
-        "w": 0.0
+      "first_pass": 7,
+      "passed": 7,
+      "path": {
+        "first": null,
+        "retook_passed": 0,
+        "retook_not": 0,
+        "no_retake": null
       },
       "retained_if_passed": {
         "students": null,
@@ -1583,24 +1436,21 @@ export const gatewayFederal2023: GatewayResponse = {
         "students": null,
         "retained": null,
         "rate": null
-      }
+      },
+      "group": null
     },
     {
       "course": "MTH 129",
       "name": "PRECALCULUS I",
       "subject": "M",
       "students": 10,
+      "first_pass": 7,
       "passed": 7,
-      "d": 0,
-      "f": 3,
-      "df": 3,
-      "w": 0,
-      "other": 0,
-      "shares": {
-        "passed": 0.7,
-        "d": 0.0,
-        "f": 0.3,
-        "w": 0.0
+      "path": {
+        "first": null,
+        "retook_passed": 0,
+        "retook_not": 0,
+        "no_retake": null
       },
       "retained_if_passed": {
         "students": null,
@@ -1611,11 +1461,13 @@ export const gatewayFederal2023: GatewayResponse = {
         "students": null,
         "retained": null,
         "rate": null
-      }
+      },
+      "group": null
     }
   ],
-  "hidden_courses": 86,
-  "left_out": 29,
+  "hidden_courses": 82,
+  "left_out": 22,
+  "pairs_considered": 35,
   "pairs": [
     {
       "courses": [
@@ -1625,7 +1477,10 @@ export const gatewayFederal2023: GatewayResponse = {
       "students": 13,
       "retained": 1,
       "rate": 0.0769,
-      "gap": -33.9
+      "others_rate": 0.418,
+      "gap": -34.11,
+      "affected": -4.4,
+      "likely_noise": false
     },
     {
       "courses": [
@@ -1635,50 +1490,44 @@ export const gatewayFederal2023: GatewayResponse = {
       "students": 11,
       "retained": 1,
       "rate": 0.0909,
-      "gap": -32.5
-    },
-    {
-      "courses": [
-        "ACC 201",
-        "COM 101"
-      ],
-      "students": 10,
-      "retained": 4,
-      "rate": 0.4,
-      "gap": -1.6
+      "others_rate": 0.4177,
+      "gap": -32.68,
+      "affected": -3.6,
+      "likely_noise": true
     }
-  ],
-  "pairs_considered": 61
+  ]
 };
 
-/** 2023-24, Fall starters: their first term has a name. */
-export const gatewayFall2023: GatewayResponse = {
+/** 2023-24 Pell recipients: each course compares them with everyone else. */
+export const gatewayPell2023: GatewayResponse = {
   "meta": {
     "cohort": "2023-24",
     "filters": {
-      "cohort_term": "Fall"
+      "pell": "Y"
     },
     "retention_type": "school",
     "provisional": false,
     "min_students": 10,
     "source": "PDP analysis-ready cohort and course files (synthetic sample)",
-    "loaded_at": "2026-11-10T06:18:59",
+    "loaded_at": "2026-11-07T17:01:14",
     "flagged": true,
+    "year_one": "2023-24",
     "retention_term": "next academic year",
     "retention_observed": true,
-    "first_term": "Fall 2023",
+    "first_term": null,
+    "compared": true,
     "min_pair_students": 10
   },
   "status": "ok",
-  "students": 1584,
+  "students": 873,
   "cohort_retention": {
     "type": "school",
     "status": "ok",
-    "retained": 913,
-    "students": 1584,
-    "numerator": 913,
-    "denominator": 1584,
-    "rate": 0.5764,
+    "retained": 532,
+    "students": 873,
+    "numerator": 532,
+    "denominator": 873,
+    "rate": 0.6094,
     "n_excluded": 0,
     "n_out_of_scope": 0
   },
@@ -1687,140 +1536,124 @@ export const gatewayFall2023: GatewayResponse = {
       "course": "ENG 101",
       "name": "ENG-101",
       "subject": "E",
-      "students": 316,
-      "passed": 222,
-      "d": 15,
-      "f": 56,
-      "df": 71,
-      "w": 23,
-      "other": 12,
-      "shares": {
-        "passed": 0.7025,
-        "d": 0.0475,
-        "f": 0.1772,
-        "w": 0.0728
+      "students": 199,
+      "first_pass": 148,
+      "passed": 155,
+      "path": {
+        "first": 148,
+        "retook_passed": null,
+        "retook_not": null,
+        "no_retake": 37
       },
       "retained_if_passed": {
-        "students": 222,
-        "retained": 180,
-        "rate": 0.8108
+        "students": 155,
+        "retained": 122,
+        "rate": 0.7871
       },
       "retained_if_not_passed": {
-        "students": 94,
-        "retained": 36,
-        "rate": 0.383
+        "students": 44,
+        "retained": 10,
+        "rate": 0.2273
+      },
+      "group": {
+        "status": "ok",
+        "rate": 0.7437,
+        "others_rate": 0.8054,
+        "gap": -6.17,
+        "likely_noise": true
       }
     },
     {
-      "course": "ENG 121",
-      "name": "ENGLISH COMPOSITION I",
-      "subject": "E",
-      "students": 51,
-      "passed": 36,
-      "d": 0,
-      "f": 8,
-      "df": 8,
-      "w": 7,
-      "other": null,
-      "shares": {
-        "passed": 0.7059,
-        "d": 0.0,
-        "f": 0.1569,
-        "w": 0.1373
+      "course": "MAT 152",
+      "name": "QUANTITATIVE REASONING",
+      "subject": "M",
+      "students": 34,
+      "first_pass": 24,
+      "passed": 26,
+      "path": {
+        "first": 24,
+        "retook_passed": null,
+        "retook_not": 0,
+        "no_retake": null
       },
       "retained_if_passed": {
-        "students": 36,
-        "retained": 31,
-        "rate": 0.8611
+        "students": 26,
+        "retained": 18,
+        "rate": 0.6923
       },
       "retained_if_not_passed": {
-        "students": 15,
-        "retained": 6,
-        "rate": 0.4
+        "students": null,
+        "retained": null,
+        "rate": null
+      },
+      "group": {
+        "status": "ok",
+        "rate": 0.7059,
+        "others_rate": 0.6818,
+        "gap": 2.41,
+        "likely_noise": true
       }
     },
     {
       "course": "ENGL 101",
       "name": "ENGLISH COMPOSITION I",
       "subject": "E",
-      "students": 45,
-      "passed": 31,
-      "d": 5,
-      "f": 4,
-      "df": 9,
-      "w": 5,
-      "other": 0,
-      "shares": {
-        "passed": 0.6889,
-        "d": 0.1111,
-        "f": 0.0889,
-        "w": 0.1111
+      "students": 31,
+      "first_pass": 24,
+      "passed": 25,
+      "path": {
+        "first": 24,
+        "retook_passed": null,
+        "retook_not": 0,
+        "no_retake": null
       },
       "retained_if_passed": {
-        "students": 31,
-        "retained": 25,
-        "rate": 0.8065
+        "students": 25,
+        "retained": 19,
+        "rate": 0.76
       },
       "retained_if_not_passed": {
+        "students": null,
+        "retained": null,
+        "rate": null
+      },
+      "group": {
+        "status": "ok",
+        "rate": 0.7742,
+        "others_rate": 0.8125,
+        "gap": -3.83,
+        "likely_noise": true
+      }
+    },
+    {
+      "course": "ENG 121",
+      "name": "ENGLISH COMPOSITION I",
+      "subject": "E",
+      "students": 23,
+      "first_pass": 14,
+      "passed": 14,
+      "path": {
+        "first": 14,
+        "retook_passed": 0,
+        "retook_not": 0,
+        "no_retake": null
+      },
+      "retained_if_passed": {
         "students": 14,
-        "retained": 7,
-        "rate": 0.5
-      }
-    },
-    {
-      "course": "ENG 111",
-      "name": "COLLEGE COMPOSITION I",
-      "subject": "E",
-      "students": 27,
-      "passed": 20,
-      "d": 0,
-      "f": 3,
-      "df": 3,
-      "w": 4,
-      "other": null,
-      "shares": {
-        "passed": 0.7407,
-        "d": 0.0,
-        "f": 0.1111,
-        "w": 0.1481
-      },
-      "retained_if_passed": {
-        "students": 20,
-        "retained": 14,
-        "rate": 0.7
+        "retained": 13,
+        "rate": 0.9286
       },
       "retained_if_not_passed": {
         "students": null,
         "retained": null,
         "rate": null
-      }
-    },
-    {
-      "course": "ENGL 112",
-      "name": "COMPOSITION I",
-      "subject": "E",
-      "students": 20,
-      "passed": 20,
-      "d": 0,
-      "f": 0,
-      "df": 0,
-      "w": 0,
-      "other": 0,
-      "shares": {
-        "passed": 1.0,
-        "d": 0.0,
-        "f": 0.0,
-        "w": 0.0
       },
-      "retained_if_passed": {
-        "students": 20,
-        "retained": 9,
-        "rate": 0.45
-      },
-      "retained_if_not_passed": {
-        "students": null,
-        "retained": null,
-        "rate": null
+      "group": {
+        "status": "ok",
+        "rate": 0.6087,
+        "others_rate": 0.7857,
+        "gap": -17.7,
+        "likely_noise": true
       }
     },
     {
@@ -1828,45 +1661,13 @@ export const gatewayFall2023: GatewayResponse = {
       "name": "COMPOSITION I",
       "subject": "E",
       "students": 19,
-      "passed": 14,
-      "d": 4,
-      "f": 1,
-      "df": 5,
-      "w": 0,
-      "other": 0,
-      "shares": {
-        "passed": 0.7368,
-        "d": 0.2105,
-        "f": 0.0526,
-        "w": 0.0
-      },
-      "retained_if_passed": {
-        "students": 14,
-        "retained": 11,
-        "rate": 0.7857
-      },
-      "retained_if_not_passed": {
-        "students": null,
-        "retained": null,
-        "rate": null
-      }
-    },
-    {
-      "course": "ENGL 121",
-      "name": "COLLEGE COMPOSITION",
-      "subject": "E",
-      "students": 17,
+      "first_pass": 17,
       "passed": 17,
-      "d": 0,
-      "f": 0,
-      "df": 0,
-      "w": 0,
-      "other": 0,
-      "shares": {
-        "passed": 1.0,
-        "d": 0.0,
-        "f": 0.0,
-        "w": 0.0
+      "path": {
+        "first": 17,
+        "retook_passed": 0,
+        "retook_not": 0,
+        "no_retake": null
       },
       "retained_if_passed": {
         "students": 17,
@@ -1877,383 +1678,156 @@ export const gatewayFall2023: GatewayResponse = {
         "students": null,
         "retained": null,
         "rate": null
+      },
+      "group": {
+        "status": "hidden",
+        "rate": null,
+        "others_rate": null,
+        "gap": null,
+        "likely_noise": null
       }
     },
     {
-      "course": "ENGL 161",
+      "course": "ENG 111",
       "name": "COLLEGE COMPOSITION I",
       "subject": "E",
-      "students": 17,
+      "students": 16,
+      "first_pass": 11,
       "passed": 11,
-      "d": 1,
-      "f": 4,
-      "df": 5,
-      "w": 1,
-      "other": 0,
-      "shares": {
-        "passed": 0.6471,
-        "d": 0.0588,
-        "f": 0.2353,
-        "w": 0.0588
+      "path": {
+        "first": 11,
+        "retook_passed": 0,
+        "retook_not": 0,
+        "no_retake": null
       },
       "retained_if_passed": {
         "students": 11,
-        "retained": 11,
-        "rate": 1.0
+        "retained": 9,
+        "rate": 0.8182
       },
       "retained_if_not_passed": {
         "students": null,
         "retained": null,
         "rate": null
+      },
+      "group": {
+        "status": "ok",
+        "rate": 0.6875,
+        "others_rate": 0.85,
+        "gap": -16.25,
+        "likely_noise": true
       }
     },
     {
       "course": "ENG 102",
       "name": "FIRST-YEAR COMPOSITION",
       "subject": "E",
-      "students": 14,
-      "passed": 13,
-      "d": 1,
-      "f": 0,
-      "df": 1,
-      "w": 0,
-      "other": 0,
-      "shares": {
-        "passed": 0.9286,
-        "d": 0.0714,
-        "f": 0.0,
-        "w": 0.0
-      },
-      "retained_if_passed": {
-        "students": 13,
-        "retained": 12,
-        "rate": 0.9231
-      },
-      "retained_if_not_passed": {
-        "students": null,
-        "retained": null,
-        "rate": null
-      }
-    },
-    {
-      "course": "MAT 152",
-      "name": "QUANTITATIVE REASONING",
-      "subject": "M",
-      "students": 39,
-      "passed": 25,
-      "d": 0,
-      "f": 10,
-      "df": 10,
-      "w": 4,
-      "other": 0,
-      "shares": {
-        "passed": 0.641,
-        "d": 0.0,
-        "f": 0.2564,
-        "w": 0.1026
-      },
-      "retained_if_passed": {
-        "students": 25,
-        "retained": 21,
-        "rate": 0.84
-      },
-      "retained_if_not_passed": {
-        "students": 14,
-        "retained": 5,
-        "rate": 0.3571
-      }
-    },
-    {
-      "course": "MTH 165",
-      "name": "ELEMENTARY STATISTICS",
-      "subject": "M",
-      "students": 19,
-      "passed": 13,
-      "d": 0,
-      "f": 1,
-      "df": 1,
-      "w": 5,
-      "other": 0,
-      "shares": {
-        "passed": 0.6842,
-        "d": 0.0,
-        "f": 0.0526,
-        "w": 0.2632
-      },
-      "retained_if_passed": {
-        "students": 13,
-        "retained": 13,
-        "rate": 1.0
-      },
-      "retained_if_not_passed": {
-        "students": null,
-        "retained": null,
-        "rate": null
-      }
-    },
-    {
-      "course": "MTH 103",
-      "name": "COLLEGE ALGEBRA",
-      "subject": "M",
-      "students": 15,
-      "passed": 8,
-      "d": 2,
-      "f": 0,
-      "df": 2,
-      "w": 5,
-      "other": 0,
-      "shares": {
-        "passed": 0.5333,
-        "d": 0.1333,
-        "f": 0.0,
-        "w": 0.3333
-      },
-      "retained_if_passed": {
-        "students": null,
-        "retained": null,
-        "rate": null
-      },
-      "retained_if_not_passed": {
-        "students": null,
-        "retained": null,
-        "rate": null
-      }
-    },
-    {
-      "course": "MATH 103",
-      "name": "COLLEGE ALGEBRA",
-      "subject": "M",
-      "students": 13,
-      "passed": 8,
-      "d": 1,
-      "f": 3,
-      "df": 4,
-      "w": 1,
-      "other": 0,
-      "shares": {
-        "passed": 0.6154,
-        "d": 0.0769,
-        "f": 0.2308,
-        "w": 0.0769
-      },
-      "retained_if_passed": {
-        "students": null,
-        "retained": null,
-        "rate": null
-      },
-      "retained_if_not_passed": {
-        "students": null,
-        "retained": null,
-        "rate": null
-      }
-    },
-    {
-      "course": "MATH 120",
-      "name": "MATH-120",
-      "subject": "M",
-      "students": 13,
-      "passed": 9,
-      "d": 2,
-      "f": 2,
-      "df": 4,
-      "w": 0,
-      "other": null,
-      "shares": {
-        "passed": 0.6923,
-        "d": 0.1538,
-        "f": 0.1538,
-        "w": 0.0
-      },
-      "retained_if_passed": {
-        "students": null,
-        "retained": null,
-        "rate": null
-      },
-      "retained_if_not_passed": {
-        "students": null,
-        "retained": null,
-        "rate": null
-      }
-    },
-    {
-      "course": "MTH 152",
-      "name": "STATISTICS (MA)",
-      "subject": "M",
-      "students": 12,
-      "passed": 8,
-      "d": 0,
-      "f": 3,
-      "df": 3,
-      "w": 1,
-      "other": 0,
-      "shares": {
-        "passed": 0.6667,
-        "d": 0.0,
-        "f": 0.25,
-        "w": 0.0833
-      },
-      "retained_if_passed": {
-        "students": null,
-        "retained": null,
-        "rate": null
-      },
-      "retained_if_not_passed": {
-        "students": null,
-        "retained": null,
-        "rate": null
-      }
-    },
-    {
-      "course": "MATH 202",
-      "name": "INTRODUCTION TO STATISTICS",
-      "subject": "M",
       "students": 11,
-      "passed": 5,
-      "d": 2,
-      "f": 2,
-      "df": 4,
-      "w": 2,
-      "other": 0,
-      "shares": {
-        "passed": 0.4545,
-        "d": 0.1818,
-        "f": 0.1818,
-        "w": 0.1818
+      "first_pass": 11,
+      "passed": 11,
+      "path": {
+        "first": 11,
+        "retook_passed": 0,
+        "retook_not": 0,
+        "no_retake": 0
       },
       "retained_if_passed": {
-        "students": null,
-        "retained": null,
-        "rate": null
+        "students": 11,
+        "retained": 7,
+        "rate": 0.6364
       },
       "retained_if_not_passed": {
         "students": null,
         "retained": null,
         "rate": null
+      },
+      "group": {
+        "status": "hidden",
+        "rate": null,
+        "others_rate": null,
+        "gap": null,
+        "likely_noise": null
       }
     },
     {
-      "course": "MTH 101",
-      "name": "QUANTITATIVE LITERACY",
-      "subject": "M",
-      "students": 11,
-      "passed": 8,
-      "d": 1,
-      "f": 2,
-      "df": 3,
-      "w": 0,
-      "other": 0,
-      "shares": {
-        "passed": 0.7273,
-        "d": 0.0909,
-        "f": 0.1818,
-        "w": 0.0
-      },
-      "retained_if_passed": {
-        "students": null,
-        "retained": null,
-        "rate": null
-      },
-      "retained_if_not_passed": {
-        "students": null,
-        "retained": null,
-        "rate": null
-      }
-    },
-    {
-      "course": "MTH 140",
-      "name": "PRECALCULUS",
-      "subject": "M",
+      "course": "ENGL 112",
+      "name": "COMPOSITION I",
+      "subject": "E",
       "students": 10,
-      "passed": 8,
-      "d": 1,
-      "f": 0,
-      "df": 1,
-      "w": 1,
-      "other": 0,
-      "shares": {
-        "passed": 0.8,
-        "d": 0.1,
-        "f": 0.0,
-        "w": 0.1
+      "first_pass": 10,
+      "passed": 10,
+      "path": {
+        "first": 10,
+        "retook_passed": 0,
+        "retook_not": 0,
+        "no_retake": 0
       },
       "retained_if_passed": {
-        "students": null,
-        "retained": null,
-        "rate": null
+        "students": 10,
+        "retained": 6,
+        "rate": 0.6
       },
       "retained_if_not_passed": {
         "students": null,
         "retained": null,
         "rate": null
-      }
-    },
-    {
-      "course": "MTH 161",
-      "name": "PRECALCULUS I",
-      "subject": "M",
-      "students": 10,
-      "passed": 6,
-      "d": 0,
-      "f": 0,
-      "df": 0,
-      "w": 4,
-      "other": null,
-      "shares": {
-        "passed": 0.6,
-        "d": 0.0,
-        "f": 0.0,
-        "w": 0.4
       },
-      "retained_if_passed": {
-        "students": null,
-        "retained": null,
-        "rate": null
-      },
-      "retained_if_not_passed": {
-        "students": null,
-        "retained": null,
-        "rate": null
+      "group": {
+        "status": "ok",
+        "rate": 1.0,
+        "others_rate": 1.0,
+        "gap": 0.0,
+        "likely_noise": true
       }
     }
   ],
-  "hidden_courses": 85,
-  "left_out": 20,
+  "hidden_courses": 101,
+  "left_out": 11,
+  "pairs_considered": 14,
   "pairs": [
     {
       "courses": [
-        "ENG 111",
-        "SDV 101"
+        "COM 101",
+        "ENG 101"
       ],
-      "students": 10,
-      "retained": 3,
-      "rate": 0.3,
-      "gap": -27.6
+      "students": 20,
+      "retained": 10,
+      "rate": 0.5,
+      "others_rate": 0.612,
+      "gap": -11.2,
+      "affected": -2.2,
+      "likely_noise": true
     },
     {
       "courses": [
         "ENG 101",
         "ENG 11"
       ],
-      "students": 18,
-      "retained": 9,
+      "students": 14,
+      "retained": 7,
       "rate": 0.5,
-      "gap": -7.6
+      "others_rate": 0.6112,
+      "gap": -11.12,
+      "affected": -1.6,
+      "likely_noise": true
     },
     {
       "courses": [
-        "SOC 111",
+        "ENG 101",
         "SSC 100"
       ],
-      "students": 13,
-      "retained": 7,
-      "rate": 0.5385,
-      "gap": -3.8
+      "students": 23,
+      "retained": 13,
+      "rate": 0.5652,
+      "others_rate": 0.6106,
+      "gap": -4.54,
+      "affected": -1.0,
+      "likely_noise": true
     }
-  ],
-  "pairs_considered": 43
+  ]
 };
 
-/** 2024-25: its second year is only partly in the data. */
+/** 2024-25: its next year is only partly in the data. */
 export const gateway2024: GatewayResponse = {
   "meta": {
     "cohort": "2024-25",
@@ -2262,11 +1836,13 @@ export const gateway2024: GatewayResponse = {
     "provisional": true,
     "min_students": 10,
     "source": "PDP analysis-ready cohort and course files (synthetic sample)",
-    "loaded_at": "2026-11-10T06:18:59",
+    "loaded_at": "2026-11-07T17:01:14",
     "flagged": true,
+    "year_one": "2024-25",
     "retention_term": "next academic year",
     "retention_observed": true,
     "first_term": null,
+    "compared": false,
     "min_pair_students": 10
   },
   "status": "ok",
@@ -2287,74 +1863,114 @@ export const gateway2024: GatewayResponse = {
       "course": "ENG 101",
       "name": "COMPOSITION I",
       "subject": "E",
-      "students": 362,
-      "passed": 272,
-      "d": 14,
-      "f": 58,
-      "df": 72,
-      "w": 18,
-      "other": 24,
-      "shares": {
-        "passed": 0.7514,
-        "d": 0.0387,
-        "f": 0.1602,
-        "w": 0.0497
+      "students": 366,
+      "first_pass": 289,
+      "passed": 295,
+      "path": {
+        "first": 289,
+        "retook_passed": null,
+        "retook_not": null,
+        "no_retake": 66
       },
       "retained_if_passed": {
-        "students": 272,
-        "retained": 195,
-        "rate": 0.7169
+        "students": 295,
+        "retained": 211,
+        "rate": 0.7153
       },
       "retained_if_not_passed": {
-        "students": 90,
-        "retained": 38,
-        "rate": 0.4222
-      }
+        "students": 71,
+        "retained": 25,
+        "rate": 0.3521
+      },
+      "group": null
     },
     {
       "course": "ENGL 101",
       "name": "ENGLISH COMPOSITION I",
       "subject": "E",
       "students": 76,
-      "passed": 54,
-      "d": 5,
-      "f": 13,
-      "df": 18,
-      "w": 4,
-      "other": 0,
-      "shares": {
-        "passed": 0.7105,
-        "d": 0.0658,
-        "f": 0.1711,
-        "w": 0.0526
+      "first_pass": 59,
+      "passed": 59,
+      "path": {
+        "first": 59,
+        "retook_passed": 0,
+        "retook_not": 0,
+        "no_retake": 17
       },
       "retained_if_passed": {
-        "students": 54,
+        "students": 59,
         "retained": 34,
-        "rate": 0.6296
+        "rate": 0.5763
       },
       "retained_if_not_passed": {
-        "students": 22,
+        "students": 17,
         "retained": 1,
-        "rate": 0.0455
-      }
+        "rate": 0.0588
+      },
+      "group": null
+    },
+    {
+      "course": "MAT 152",
+      "name": "QUANTITATIVE REASONING",
+      "subject": "M",
+      "students": 53,
+      "first_pass": 35,
+      "passed": 36,
+      "path": {
+        "first": 35,
+        "retook_passed": null,
+        "retook_not": 0,
+        "no_retake": 17
+      },
+      "retained_if_passed": {
+        "students": 36,
+        "retained": 27,
+        "rate": 0.75
+      },
+      "retained_if_not_passed": {
+        "students": 17,
+        "retained": 2,
+        "rate": 0.1176
+      },
+      "group": null
+    },
+    {
+      "course": "MAT 162",
+      "name": "STATISTICAL REASONING",
+      "subject": "M",
+      "students": 29,
+      "first_pass": 18,
+      "passed": 20,
+      "path": {
+        "first": 18,
+        "retook_passed": null,
+        "retook_not": null,
+        "no_retake": null
+      },
+      "retained_if_passed": {
+        "students": 20,
+        "retained": 12,
+        "rate": 0.6
+      },
+      "retained_if_not_passed": {
+        "students": null,
+        "retained": null,
+        "rate": null
+      },
+      "group": null
     },
     {
       "course": "ENGL 121",
       "name": "COLLEGE COMPOSITION",
       "subject": "E",
       "students": 28,
+      "first_pass": 28,
       "passed": 28,
-      "d": 0,
-      "f": 0,
-      "df": 0,
-      "w": 0,
-      "other": 0,
-      "shares": {
-        "passed": 1.0,
-        "d": 0.0,
-        "f": 0.0,
-        "w": 0.0
+      "path": {
+        "first": 28,
+        "retook_passed": 0,
+        "retook_not": 0,
+        "no_retake": 0
       },
       "retained_if_passed": {
         "students": 28,
@@ -2365,24 +1981,21 @@ export const gateway2024: GatewayResponse = {
         "students": null,
         "retained": null,
         "rate": null
-      }
+      },
+      "group": null
     },
     {
       "course": "ENGL 100",
       "name": "COMPOSITION I",
       "subject": "E",
       "students": 23,
+      "first_pass": 21,
       "passed": 21,
-      "d": 0,
-      "f": 2,
-      "df": 2,
-      "w": 0,
-      "other": 0,
-      "shares": {
-        "passed": 0.913,
-        "d": 0.0,
-        "f": 0.087,
-        "w": 0.0
+      "path": {
+        "first": 21,
+        "retook_passed": 0,
+        "retook_not": 0,
+        "no_retake": null
       },
       "retained_if_passed": {
         "students": 21,
@@ -2393,52 +2006,171 @@ export const gateway2024: GatewayResponse = {
         "students": null,
         "retained": null,
         "rate": null
-      }
+      },
+      "group": null
+    },
+    {
+      "course": "MATH 116",
+      "name": "MATH-116",
+      "subject": "M",
+      "students": 22,
+      "first_pass": 14,
+      "passed": 15,
+      "path": {
+        "first": 14,
+        "retook_passed": null,
+        "retook_not": 0,
+        "no_retake": null
+      },
+      "retained_if_passed": {
+        "students": 15,
+        "retained": 12,
+        "rate": 0.8
+      },
+      "retained_if_not_passed": {
+        "students": null,
+        "retained": null,
+        "rate": null
+      },
+      "group": null
     },
     {
       "course": "ENG 102",
       "name": "FIRST-YEAR COMPOSITION",
       "subject": "E",
       "students": 19,
-      "passed": 16,
-      "d": 1,
-      "f": 2,
-      "df": 3,
-      "w": 0,
-      "other": null,
-      "shares": {
-        "passed": 0.8421,
-        "d": 0.0526,
-        "f": 0.1053,
-        "w": 0.0
+      "first_pass": 17,
+      "passed": 17,
+      "path": {
+        "first": 17,
+        "retook_passed": 0,
+        "retook_not": 0,
+        "no_retake": null
       },
       "retained_if_passed": {
-        "students": 16,
-        "retained": 10,
-        "rate": 0.625
+        "students": 17,
+        "retained": 11,
+        "rate": 0.6471
       },
       "retained_if_not_passed": {
         "students": null,
         "retained": null,
         "rate": null
-      }
+      },
+      "group": null
     },
     {
       "course": "ENGL 161",
       "name": "\"COLLEGE COMPOSITION I\"",
       "subject": "E",
       "students": 19,
+      "first_pass": 14,
+      "passed": 15,
+      "path": {
+        "first": 14,
+        "retook_passed": null,
+        "retook_not": null,
+        "no_retake": null
+      },
+      "retained_if_passed": {
+        "students": 15,
+        "retained": 10,
+        "rate": 0.6667
+      },
+      "retained_if_not_passed": {
+        "students": null,
+        "retained": null,
+        "rate": null
+      },
+      "group": null
+    },
+    {
+      "course": "MATH 130",
+      "name": "INTRODUCTION TO STATISTICS",
+      "subject": "M",
+      "students": 18,
+      "first_pass": 12,
       "passed": 13,
-      "d": 1,
-      "f": 3,
-      "df": 4,
-      "w": 2,
-      "other": 0,
-      "shares": {
-        "passed": 0.6842,
-        "d": 0.0526,
-        "f": 0.1579,
-        "w": 0.1053
+      "path": {
+        "first": 12,
+        "retook_passed": null,
+        "retook_not": null,
+        "no_retake": null
+      },
+      "retained_if_passed": {
+        "students": 13,
+        "retained": 7,
+        "rate": 0.5385
+      },
+      "retained_if_not_passed": {
+        "students": null,
+        "retained": null,
+        "rate": null
+      },
+      "group": null
+    },
+    {
+      "course": "ENG 111",
+      "name": "COLLEGE COMPOSITION I",
+      "subject": "E",
+      "students": 17,
+      "first_pass": 13,
+      "passed": 13,
+      "path": {
+        "first": 13,
+        "retook_passed": 0,
+        "retook_not": 0,
+        "no_retake": null
+      },
+      "retained_if_passed": {
+        "students": 13,
+        "retained": 5,
+        "rate": 0.3846
+      },
+      "retained_if_not_passed": {
+        "students": null,
+        "retained": null,
+        "rate": null
+      },
+      "group": null
+    },
+    {
+      "course": "ENGL 1110",
+      "name": "COMPOSITION I",
+      "subject": "E",
+      "students": 17,
+      "first_pass": 8,
+      "passed": 8,
+      "path": {
+        "first": null,
+        "retook_passed": 0,
+        "retook_not": null,
+        "no_retake": null
+      },
+      "retained_if_passed": {
+        "students": null,
+        "retained": null,
+        "rate": null
+      },
+      "retained_if_not_passed": {
+        "students": null,
+        "retained": null,
+        "rate": null
+      },
+      "group": null
+    },
+    {
+      "course": "MATH 103",
+      "name": "COLLEGE ALGEBRA",
+      "subject": "M",
+      "students": 17,
+      "first_pass": 13,
+      "passed": 13,
+      "path": {
+        "first": 13,
+        "retook_passed": 0,
+        "retook_not": null,
+        "no_retake": null
       },
       "retained_if_passed": {
         "students": 13,
@@ -2449,304 +2181,46 @@ export const gateway2024: GatewayResponse = {
         "students": null,
         "retained": null,
         "rate": null
-      }
-    },
-    {
-      "course": "ENG 111",
-      "name": "COLLEGE COMPOSITION I",
-      "subject": "E",
-      "students": 17,
-      "passed": 12,
-      "d": 1,
-      "f": 2,
-      "df": 3,
-      "w": 2,
-      "other": null,
-      "shares": {
-        "passed": 0.7059,
-        "d": 0.0588,
-        "f": 0.1176,
-        "w": 0.1176
       },
-      "retained_if_passed": {
-        "students": 12,
-        "retained": 5,
-        "rate": 0.4167
-      },
-      "retained_if_not_passed": {
-        "students": null,
-        "retained": null,
-        "rate": null
-      }
-    },
-    {
-      "course": "ENGL 1110",
-      "name": "COMPOSITION I",
-      "subject": "E",
-      "students": 17,
-      "passed": 8,
-      "d": 0,
-      "f": 8,
-      "df": 8,
-      "w": 1,
-      "other": 0,
-      "shares": {
-        "passed": 0.4706,
-        "d": 0.0,
-        "f": 0.4706,
-        "w": 0.0588
-      },
-      "retained_if_passed": {
-        "students": null,
-        "retained": null,
-        "rate": null
-      },
-      "retained_if_not_passed": {
-        "students": null,
-        "retained": null,
-        "rate": null
-      }
-    },
-    {
-      "course": "ENGL 162",
-      "name": "\"COLLEGE COMPOSITION II\"",
-      "subject": "E",
-      "students": 14,
-      "passed": 11,
-      "d": 0,
-      "f": 1,
-      "df": 1,
-      "w": 2,
-      "other": 0,
-      "shares": {
-        "passed": 0.7857,
-        "d": 0.0,
-        "f": 0.0714,
-        "w": 0.1429
-      },
-      "retained_if_passed": {
-        "students": 11,
-        "retained": 7,
-        "rate": 0.6364
-      },
-      "retained_if_not_passed": {
-        "students": null,
-        "retained": null,
-        "rate": null
-      }
-    },
-    {
-      "course": "ENG 11103",
-      "name": "COMPOSITION I",
-      "subject": "E",
-      "students": 11,
-      "passed": 8,
-      "d": 0,
-      "f": 3,
-      "df": 3,
-      "w": 0,
-      "other": 0,
-      "shares": {
-        "passed": 0.7273,
-        "d": 0.0,
-        "f": 0.2727,
-        "w": 0.0
-      },
-      "retained_if_passed": {
-        "students": null,
-        "retained": null,
-        "rate": null
-      },
-      "retained_if_not_passed": {
-        "students": null,
-        "retained": null,
-        "rate": null
-      }
-    },
-    {
-      "course": "MAT 152",
-      "name": "QUANTITATIVE REASONING",
-      "subject": "M",
-      "students": 53,
-      "passed": 35,
-      "d": 0,
-      "f": 16,
-      "df": 16,
-      "w": 2,
-      "other": 0,
-      "shares": {
-        "passed": 0.6604,
-        "d": 0.0,
-        "f": 0.3019,
-        "w": 0.0377
-      },
-      "retained_if_passed": {
-        "students": 35,
-        "retained": 27,
-        "rate": 0.7714
-      },
-      "retained_if_not_passed": {
-        "students": 18,
-        "retained": 2,
-        "rate": 0.1111
-      }
-    },
-    {
-      "course": "MAT 162",
-      "name": "STATISTICAL REASONING",
-      "subject": "M",
-      "students": 29,
-      "passed": 18,
-      "d": 0,
-      "f": 8,
-      "df": 8,
-      "w": 3,
-      "other": 0,
-      "shares": {
-        "passed": 0.6207,
-        "d": 0.0,
-        "f": 0.2759,
-        "w": 0.1034
-      },
-      "retained_if_passed": {
-        "students": 18,
-        "retained": 10,
-        "rate": 0.5556
-      },
-      "retained_if_not_passed": {
-        "students": 11,
-        "retained": 5,
-        "rate": 0.4545
-      }
-    },
-    {
-      "course": "MATH 116",
-      "name": "MATH-116",
-      "subject": "M",
-      "students": 22,
-      "passed": 13,
-      "d": 1,
-      "f": 6,
-      "df": 7,
-      "w": 2,
-      "other": null,
-      "shares": {
-        "passed": 0.5909,
-        "d": 0.0455,
-        "f": 0.2727,
-        "w": 0.0909
-      },
-      "retained_if_passed": {
-        "students": 13,
-        "retained": 11,
-        "rate": 0.8462
-      },
-      "retained_if_not_passed": {
-        "students": null,
-        "retained": null,
-        "rate": null
-      }
-    },
-    {
-      "course": "MATH 130",
-      "name": "INTRODUCTION TO STATISTICS",
-      "subject": "M",
-      "students": 18,
-      "passed": 11,
-      "d": 2,
-      "f": 4,
-      "df": 6,
-      "w": 1,
-      "other": 0,
-      "shares": {
-        "passed": 0.6111,
-        "d": 0.1111,
-        "f": 0.2222,
-        "w": 0.0556
-      },
-      "retained_if_passed": {
-        "students": 11,
-        "retained": 7,
-        "rate": 0.6364
-      },
-      "retained_if_not_passed": {
-        "students": null,
-        "retained": null,
-        "rate": null
-      }
-    },
-    {
-      "course": "MATH 103",
-      "name": "COLLEGE ALGEBRA",
-      "subject": "M",
-      "students": 17,
-      "passed": 12,
-      "d": 1,
-      "f": 2,
-      "df": 3,
-      "w": 2,
-      "other": 0,
-      "shares": {
-        "passed": 0.7059,
-        "d": 0.0588,
-        "f": 0.1176,
-        "w": 0.1176
-      },
-      "retained_if_passed": {
-        "students": 12,
-        "retained": 8,
-        "rate": 0.6667
-      },
-      "retained_if_not_passed": {
-        "students": null,
-        "retained": null,
-        "rate": null
-      }
+      "group": null
     },
     {
       "course": "MATH 140",
       "name": "COLLEGE ALGEBRA",
       "subject": "M",
       "students": 17,
-      "passed": 12,
-      "d": 2,
-      "f": 2,
-      "df": 4,
-      "w": 1,
-      "other": 0,
-      "shares": {
-        "passed": 0.7059,
-        "d": 0.1176,
-        "f": 0.1176,
-        "w": 0.0588
+      "first_pass": 14,
+      "passed": 14,
+      "path": {
+        "first": 14,
+        "retook_passed": 0,
+        "retook_not": 0,
+        "no_retake": null
       },
       "retained_if_passed": {
-        "students": 12,
+        "students": 14,
         "retained": 5,
-        "rate": 0.4167
+        "rate": 0.3571
       },
       "retained_if_not_passed": {
         "students": null,
         "retained": null,
         "rate": null
-      }
+      },
+      "group": null
     },
     {
       "course": "MTH 103",
       "name": "COLLEGE ALGEBRA",
       "subject": "M",
       "students": 15,
+      "first_pass": 9,
       "passed": 9,
-      "d": 0,
-      "f": 2,
-      "df": 2,
-      "w": 4,
-      "other": 0,
-      "shares": {
-        "passed": 0.6,
-        "d": 0.0,
-        "f": 0.1333,
-        "w": 0.2667
+      "path": {
+        "first": null,
+        "retook_passed": 0,
+        "retook_not": null,
+        "no_retake": null
       },
       "retained_if_passed": {
         "students": null,
@@ -2757,24 +2231,46 @@ export const gateway2024: GatewayResponse = {
         "students": null,
         "retained": null,
         "rate": null
-      }
+      },
+      "group": null
+    },
+    {
+      "course": "ENGL 162",
+      "name": "\"COLLEGE COMPOSITION II\"",
+      "subject": "E",
+      "students": 14,
+      "first_pass": 11,
+      "passed": 11,
+      "path": {
+        "first": 11,
+        "retook_passed": 0,
+        "retook_not": 0,
+        "no_retake": null
+      },
+      "retained_if_passed": {
+        "students": 11,
+        "retained": 7,
+        "rate": 0.6364
+      },
+      "retained_if_not_passed": {
+        "students": null,
+        "retained": null,
+        "rate": null
+      },
+      "group": null
     },
     {
       "course": "MATH 104B",
       "name": "MATH-104B",
       "subject": "M",
       "students": 13,
-      "passed": 7,
-      "d": 1,
-      "f": 4,
-      "df": 5,
-      "w": 1,
-      "other": null,
-      "shares": {
-        "passed": 0.5385,
-        "d": 0.0769,
-        "f": 0.3077,
-        "w": 0.0769
+      "first_pass": 8,
+      "passed": 8,
+      "path": {
+        "first": null,
+        "retook_passed": 0,
+        "retook_not": 0,
+        "no_retake": null
       },
       "retained_if_passed": {
         "students": null,
@@ -2785,24 +2281,21 @@ export const gateway2024: GatewayResponse = {
         "students": null,
         "retained": null,
         "rate": null
-      }
+      },
+      "group": null
     },
     {
       "course": "MATH 202",
       "name": "INTRODUCTION TO STATISTICS",
       "subject": "M",
       "students": 13,
+      "first_pass": 10,
       "passed": 10,
-      "d": 0,
-      "f": 0,
-      "df": 0,
-      "w": 3,
-      "other": 0,
-      "shares": {
-        "passed": 0.7692,
-        "d": 0.0,
-        "f": 0.0,
-        "w": 0.2308
+      "path": {
+        "first": 10,
+        "retook_passed": 0,
+        "retook_not": 0,
+        "no_retake": null
       },
       "retained_if_passed": {
         "students": 10,
@@ -2813,52 +2306,46 @@ export const gateway2024: GatewayResponse = {
         "students": null,
         "retained": null,
         "rate": null
-      }
+      },
+      "group": null
     },
     {
       "course": "MATH 150",
       "name": "PRE-CALCULUS",
       "subject": "M",
       "students": 12,
-      "passed": 11,
-      "d": 1,
-      "f": 0,
-      "df": 1,
-      "w": 0,
-      "other": 0,
-      "shares": {
-        "passed": 0.9167,
-        "d": 0.0833,
-        "f": 0.0,
-        "w": 0.0
+      "first_pass": 12,
+      "passed": 12,
+      "path": {
+        "first": 12,
+        "retook_passed": 0,
+        "retook_not": 0,
+        "no_retake": 0
       },
       "retained_if_passed": {
-        "students": 11,
+        "students": 12,
         "retained": 6,
-        "rate": 0.5455
+        "rate": 0.5
       },
       "retained_if_not_passed": {
         "students": null,
         "retained": null,
         "rate": null
-      }
+      },
+      "group": null
     },
     {
       "course": "MATH 314",
       "name": "COLLEGE ALGEBRA MATH PATHWAY",
       "subject": "M",
       "students": 12,
+      "first_pass": 12,
       "passed": 12,
-      "d": 0,
-      "f": 0,
-      "df": 0,
-      "w": 0,
-      "other": null,
-      "shares": {
-        "passed": 1.0,
-        "d": 0.0,
-        "f": 0.0,
-        "w": 0.0
+      "path": {
+        "first": 12,
+        "retook_passed": 0,
+        "retook_not": 0,
+        "no_retake": 0
       },
       "retained_if_passed": {
         "students": 12,
@@ -2869,24 +2356,21 @@ export const gateway2024: GatewayResponse = {
         "students": null,
         "retained": null,
         "rate": null
-      }
+      },
+      "group": null
     },
     {
       "course": "MTH 165",
       "name": "ELEMENTARY STATISTICS",
       "subject": "M",
       "students": 12,
-      "passed": 5,
-      "d": 0,
-      "f": 5,
-      "df": 5,
-      "w": 2,
-      "other": 0,
-      "shares": {
-        "passed": 0.4167,
-        "d": 0.0,
-        "f": 0.4167,
-        "w": 0.1667
+      "first_pass": 5,
+      "passed": 6,
+      "path": {
+        "first": null,
+        "retook_passed": null,
+        "retook_not": null,
+        "no_retake": null
       },
       "retained_if_passed": {
         "students": null,
@@ -2897,24 +2381,21 @@ export const gateway2024: GatewayResponse = {
         "students": null,
         "retained": null,
         "rate": null
-      }
+      },
+      "group": null
     },
     {
       "course": "MTHM 168",
       "name": "\"STATISTICS\"",
       "subject": "M",
       "students": 12,
-      "passed": 7,
-      "d": 1,
-      "f": 1,
-      "df": 2,
-      "w": 3,
-      "other": 0,
-      "shares": {
-        "passed": 0.5833,
-        "d": 0.0833,
-        "f": 0.0833,
-        "w": 0.25
+      "first_pass": 8,
+      "passed": 9,
+      "path": {
+        "first": null,
+        "retook_passed": null,
+        "retook_not": null,
+        "no_retake": null
       },
       "retained_if_passed": {
         "students": null,
@@ -2925,24 +2406,46 @@ export const gateway2024: GatewayResponse = {
         "students": null,
         "retained": null,
         "rate": null
-      }
+      },
+      "group": null
+    },
+    {
+      "course": "ENG 11103",
+      "name": "COMPOSITION I",
+      "subject": "E",
+      "students": 11,
+      "first_pass": 8,
+      "passed": 8,
+      "path": {
+        "first": null,
+        "retook_passed": 0,
+        "retook_not": 0,
+        "no_retake": null
+      },
+      "retained_if_passed": {
+        "students": null,
+        "retained": null,
+        "rate": null
+      },
+      "retained_if_not_passed": {
+        "students": null,
+        "retained": null,
+        "rate": null
+      },
+      "group": null
     },
     {
       "course": "MTH 200",
       "name": "CALCULUS I",
       "subject": "M",
       "students": 11,
-      "passed": 4,
-      "d": 1,
-      "f": 1,
-      "df": 2,
-      "w": 5,
-      "other": 0,
-      "shares": {
-        "passed": 0.3636,
-        "d": 0.0909,
-        "f": 0.0909,
-        "w": 0.4545
+      "first_pass": 5,
+      "passed": 6,
+      "path": {
+        "first": null,
+        "retook_passed": null,
+        "retook_not": null,
+        "no_retake": null
       },
       "retained_if_passed": {
         "students": null,
@@ -2953,24 +2456,21 @@ export const gateway2024: GatewayResponse = {
         "students": null,
         "retained": null,
         "rate": null
-      }
+      },
+      "group": null
     },
     {
       "course": "MTH 101",
       "name": "QUANTITATIVE LITERACY",
       "subject": "M",
       "students": 10,
-      "passed": 6,
-      "d": 1,
-      "f": 2,
-      "df": 3,
-      "w": 1,
-      "other": 0,
-      "shares": {
-        "passed": 0.6,
-        "d": 0.1,
-        "f": 0.2,
-        "w": 0.1
+      "first_pass": 7,
+      "passed": 7,
+      "path": {
+        "first": null,
+        "retook_passed": 0,
+        "retook_not": 0,
+        "no_retake": null
       },
       "retained_if_passed": {
         "students": null,
@@ -2981,47 +2481,57 @@ export const gateway2024: GatewayResponse = {
         "students": null,
         "retained": null,
         "rate": null
-      }
+      },
+      "group": null
     }
   ],
-  "hidden_courses": 76,
-  "left_out": 36,
+  "hidden_courses": 74,
+  "left_out": 32,
+  "pairs_considered": 34,
   "pairs": [
     {
       "courses": [
-        "MA 119",
-        "MA 121"
+        "ENGL 101",
+        "MA 119"
       ],
-      "students": 11,
-      "retained": 0,
-      "rate": 0.0,
-      "gap": -37.9
-    },
-    {
-      "courses": [
-        "FYS 100",
-        "ST 100"
-      ],
-      "students": 11,
-      "retained": 0,
-      "rate": 0.0,
-      "gap": -37.9
+      "students": 41,
+      "retained": 2,
+      "rate": 0.0488,
+      "others_rate": 0.3839,
+      "gap": -33.51,
+      "affected": -13.7,
+      "likely_noise": false
     },
     {
       "courses": [
         "ENGL 101",
-        "SP 211"
+        "ST 100"
       ],
-      "students": 11,
-      "retained": 0,
-      "rate": 0.0,
-      "gap": -37.9
+      "students": 22,
+      "retained": 2,
+      "rate": 0.0909,
+      "others_rate": 0.3811,
+      "gap": -29.02,
+      "affected": -6.4,
+      "likely_noise": false
+    },
+    {
+      "courses": [
+        "ENGL 101",
+        "SOCY 101"
+      ],
+      "students": 17,
+      "retained": 1,
+      "rate": 0.0588,
+      "others_rate": 0.3807,
+      "gap": -32.19,
+      "affected": -5.5,
+      "likely_noise": false
     }
-  ],
-  "pairs_considered": 61
+  ]
 };
 
-/** A filter combination with fewer than 10 students. */
+/** Fewer than 10 students match: no numbers. */
 export const gatewayTooFew: GatewayResponse = {
   "meta": {
     "cohort": "2023-24",
@@ -3033,11 +2543,13 @@ export const gatewayTooFew: GatewayResponse = {
     "provisional": false,
     "min_students": 10,
     "source": "PDP analysis-ready cohort and course files (synthetic sample)",
-    "loaded_at": "2026-11-10T06:18:59",
+    "loaded_at": "2026-11-07T17:01:14",
     "flagged": true,
+    "year_one": "2023-24",
     "retention_term": "next academic year",
     "retention_observed": true,
     "first_term": "Fall 2023",
+    "compared": true,
     "min_pair_students": 10
   },
   "status": "suppressed",
@@ -3046,6 +2558,6 @@ export const gatewayTooFew: GatewayResponse = {
   "courses": [],
   "hidden_courses": 0,
   "left_out": null,
-  "pairs": [],
-  "pairs_considered": 0
+  "pairs_considered": 0,
+  "pairs": []
 };
