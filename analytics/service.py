@@ -10,6 +10,7 @@ from hashlib import sha256
 from pathlib import Path
 
 from analytics import enrollment, graduation, retention
+from analytics.execution import check_cancelled, watch_sqlite
 from analytics.definitions import DEFINITIONS
 from analytics.presentation import suppress
 from analytics.schemas import (
@@ -47,11 +48,15 @@ class AnalyticsService:
             raise DataUnavailable("No database is configured")
         db = sqlite3.connect(f"{self.database.resolve().as_uri()}?mode=ro", uri=True)
         db.row_factory = sqlite3.Row
+        detach = None
         try:
             db.execute("PRAGMA query_only = ON")
             db.execute("BEGIN")
+            detach = watch_sqlite(db)
             yield db
         finally:
+            if detach is not None:
+                detach()
             db.rollback()
             db.close()
 
@@ -67,6 +72,7 @@ class AnalyticsService:
                     )
                 ]
         except (sqlite3.Error, OSError, DataUnavailable):
+            check_cancelled()
             pass
         return {
             "analyses": {key: value.model_dump() for key, value in DEFINITIONS.items()},
@@ -213,10 +219,12 @@ class AnalyticsService:
                         receipt.limitations.append(
                             "The extract has no exact award semester. Inferred completion-program attribution is unknown."
                         )
+                check_cancelled()
                 receipt.rows = suppress(
                     receipt.rows, self.coverage.suppression_threshold
                 )
         except (sqlite3.Error, OSError, DataUnavailable):
+            check_cancelled()
             return self.unavailable(
                 receipt,
                 "Normalized data is missing or incompatible. Load cohort and course files into the configured database and check its schema.",

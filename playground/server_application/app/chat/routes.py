@@ -5,6 +5,7 @@ from functools import cache
 from typing import Annotated
 
 import anthropic
+from analytics.execution import CalculationCancelled, execution_scope
 from analytics.service import AnalyticsService
 from api.analyses import get_service
 from fastapi import APIRouter, Depends, HTTPException
@@ -40,11 +41,12 @@ async def chat(
     from app.core.config import settings
 
     try:
-        return await asyncio.wait_for(
-            answer(payload, client, settings.UNCF_CHAT_MODEL, service),
-            timeout=REQUEST_TIMEOUT_SECONDS,
-        )
-    except TimeoutError as error:
+        with execution_scope(REQUEST_TIMEOUT_SECONDS):
+            return await asyncio.wait_for(
+                answer(payload, client, settings.UNCF_CHAT_MODEL, service),
+                timeout=REQUEST_TIMEOUT_SECONDS,
+            )
+    except (TimeoutError, CalculationCancelled) as error:
         raise HTTPException(
             502, "The analysis request timed out. Try one supported question."
         ) from error

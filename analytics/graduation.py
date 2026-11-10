@@ -1,5 +1,7 @@
 """Credential-specific completion and graduate composition without invented award dates."""
 
+from analytics.execution import checked
+
 from analytics.presentation import rate_row
 from analytics.schemas import CalculationRow
 from analytics.coverage import Coverage
@@ -47,9 +49,9 @@ def calculate(
 ) -> list[CalculationRow]:
     """Return each completion horizon and distinguish rate from graduate composition."""
     result = []
-    eligible = [s for s in students if s["credential_type_sought_year_1"] == credential]
+    eligible = [s for s in checked(students) if s["credential_type_sought_year_1"] == credential]
     unknown_eligibility = sum(
-        s["credential_type_sought_year_1"] in (None, "", "UNKNOWN") for s in students
+        s["credential_type_sought_year_1"] in (None, "", "UNKNOWN") for s in checked(students)
     )
     observed = coverage.cohort_followup_years.get(cohort, 0)
     for horizon, years in HORIZONS:
@@ -78,27 +80,27 @@ def calculate(
             )
             continue
         limit = years if years is not None else observed
-        known = [(s, completion_year(s, credential, observed)) for s in eligible]
+        known = [(s, completion_year(s, credential, observed)) for s in checked(eligible)]
         entrants = [
             (s, y)
-            for s, y in known
+            for s, y in checked(known)
             if normalize_program(s["program_of_study_term_1"]) in programs
         ]
-        any_known = [(s, y) for s, y in entrants if y is not None]
-        any_graduates = [(s, y) for s, y in any_known if 0 < y <= limit]
+        any_known = [(s, y) for s, y in checked(entrants) if y is not None]
+        any_graduates = [(s, y) for s, y in checked(any_known) if 0 < y <= limit]
         program_known = [
             (s, y)
-            for s, y in any_known
+            for s, y in checked(any_known)
             if not 0 < y <= limit or s.get("graduation_program") is not None
         ]
         program_graduates = [
             (s, y)
-            for s, y in program_known
+            for s, y in checked(program_known)
             if 0 < y <= limit and s.get("graduation_program") in programs
         ]
         inferred = [
             s
-            for s, y in known
+            for s, y in checked(known)
             if y is not None
             and 0 < y <= limit
             and s.get("graduation_program") in programs
@@ -107,9 +109,9 @@ def calculate(
             "unknown_credential_eligibility": unknown_eligibility,
             "unknown_entry_program": sum(
                 normalize_program(s["program_of_study_term_1"]) is None
-                for s in eligible
+                for s in checked(eligible)
             ),
-            "unknown_completion_timing": sum(y is None for _, y in entrants),
+            "unknown_completion_timing": sum(y is None for _, y in checked(entrants)),
         }
         result.append(
             rate_row(
@@ -136,7 +138,7 @@ def calculate(
         composition_exclusions = {
             "unknown_completion_program": sum(
                 y is not None and 0 < y <= limit and s.get("graduation_program") is None
-                for s, y in known
+                for s, y in checked(known)
             )
         }
         for label, predicate in [
@@ -146,7 +148,7 @@ def calculate(
         ]:
             count = sum(
                 predicate(normalize_program(s["program_of_study_term_1"]))
-                for s in inferred
+                for s in checked(inferred)
             )
             result.append(
                 rate_row(

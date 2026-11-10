@@ -151,3 +151,5 @@ Verify with `make check` at the root; in Playground run `mise run api:lint`, `mi
 Chat first proposes the full scope and requires explicit approval before calculating. No additional filters are inferred.
 The provider-free Vercel frontend disables Chat; a provider-enabled Playground deployment can set
 `NEXT_PUBLIC_STUDENT_SUCCESS_CHAT_ENABLED=true` together with `UNCF_CHAT_ENABLED=true` on its backend.
+
+Calculation deadlines cancel SQLite VM work and cooperative counting loops. Timeout responses wait for worker transaction cleanup; PostgreSQL statements use the remaining request budget.

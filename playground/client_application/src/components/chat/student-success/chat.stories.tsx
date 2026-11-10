@@ -2,6 +2,8 @@ import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { expect, fn, waitFor } from "storybook/test";
 import type { AnalysisReceipt, ChatRequest, ChatResponse } from "@/services/student-success-chat";
 import { StudentSuccessChat } from "./chat";
+import StudentSuccessChatPage from "@/app/(app)/chat/page";
+import { env } from "@/lib/env";
 import { CalculationCard } from "./calculation-card";
 
 const receipt: AnalysisReceipt = {
@@ -104,5 +106,20 @@ export const LongAnswerStaysInView: Story = {
     await expect(await canvas.findByText("Program 19")).toBeInTheDocument();
     const scrollingRegion = canvas.getByRole("list", { name: "Conversation" }).parentElement!;
     await waitFor(() => expect(scrollingRegion.scrollTop).toBeGreaterThan(0));
+  },
+};
+
+
+export const ProviderFreeDeployment: Story = {
+  beforeEach: () => {
+    const descriptor = Object.getOwnPropertyDescriptor(env, "studentSuccessChatEnabled")!;
+    Object.defineProperty(env, "studentSuccessChatEnabled", { ...descriptor, value: false });
+    return () => { Object.defineProperty(env, "studentSuccessChatEnabled", descriptor); };
+  },
+  render: () => <StudentSuccessChatPage />,
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText(/Chat is not enabled on this site/)).toBeVisible();
+    await expect(canvas.queryByRole("textbox", { name: "Your question" })).not.toBeInTheDocument();
+    await expect(canvas.queryByRole("button", { name: "Confirm scope and calculate" })).not.toBeInTheDocument();
   },
 };

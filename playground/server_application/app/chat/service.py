@@ -1,10 +1,11 @@
 """Bounded provider tool loop; all displayed numbers come from deterministic receipts."""
 
-import asyncio
 import json
 
+from analytics.execution import run_sync
 from analytics.schemas import AnalysisRequest, AnalysisResponse
 from analytics.service import AnalyticsService
+
 from app.chat.schemas import ChatRequest, ChatResponse
 from app.chat.tools import TOOLS, dispatch
 
@@ -12,7 +13,8 @@ MAX_TOOL_ROUNDS = 6
 MAX_TOOLS_PER_ROUND = 6
 RULES = """Answer only graduation by chemistry program, retention overall/by entry major, and
 annual enrollment by ethnicity/program. Use get_analysis_catalog to learn choices and coverage.
-Use run_analysis to propose a scope. It never executes numerical calculations. Never choose a cohort, credential or chemistry definition
+Use run_analysis to propose a scope. It never executes numerical calculations.
+Never choose a cohort, credential or chemistry definition
 when the question leaves it unspecified: omit that parameter so the tool requests clarification.
 Chemistry alone is ambiguous between chemistry_general and chemistry_family. Do not use course
 subjects as majors. For retention all majors, omit program and request the cohort.
@@ -37,7 +39,10 @@ def response_for(result: AnalysisResponse) -> ChatResponse:
         )
     return ChatResponse(
         status="answer",
-        message="Results and calculation details are below. These describe synthetic data, not real students or institutions.",
+        message=(
+            "Results and calculation details are below. "
+            "These describe synthetic data, not real students or institutions."
+        ),
         receipts=result.receipts,
     )
 
@@ -45,9 +50,10 @@ def response_for(result: AnalysisResponse) -> ChatResponse:
 def confirmation(proposals: list[AnalysisRequest]) -> ChatResponse:
     """Require the user to approve the full scope before any calculation."""
     return ChatResponse(
-        status="confirmation", proposals=proposals,
+        status="confirmation",
+        proposals=proposals,
         message="Review the complete scope below. No additional filters will be applied. "
-                "If it omits a filter from your question, do not confirm; start over.",
+        "If it omits a filter from your question, do not confirm; start over.",
     )
 
 
@@ -59,25 +65,32 @@ async def answer(
         receipts = []
         # Validate every scope before executing any of the batch.
         for request in payload.confirmed:
-            if await asyncio.to_thread(service.clarify, request):
+            if await run_sync(service.clarify, request):
                 raise ValueError("Resolve all required parameters before confirming")
         for request in payload.confirmed:
-            result = await asyncio.to_thread(service.analyze, request)
+            result = await run_sync(service.analyze, request)
             receipts.extend(result.receipts)
         return response_for(AnalysisResponse(receipts=receipts))
     if payload.pending:
-        current = await asyncio.to_thread(service.clarify, payload.pending)
+        current = await run_sync(service.clarify, payload.pending)
         selection = payload.selection
-        if (not current or selection.field != current.field
-                or selection.value not in {c["value"] for c in current.choices}):
+        if (
+            not current
+            or selection.field != current.field
+            or selection.value not in {c["value"] for c in current.choices}
+        ):
             raise ValueError("Choose one of the current clarification options")
         request = AnalysisRequest.model_validate(
             {**payload.pending.model_dump(), selection.field: selection.value}
         )
-        unresolved = await asyncio.to_thread(service.clarify, request)
+        unresolved = await run_sync(service.clarify, request)
         if unresolved:
-            return ChatResponse(status="clarification", message=unresolved.message,
-                                clarification=unresolved, proposals=payload.proposals)
+            return ChatResponse(
+                status="clarification",
+                message=unresolved.message,
+                clarification=unresolved,
+                proposals=payload.proposals,
+            )
         return confirmation([*payload.proposals, request])
     if client is None:
         raise ChatFailed("UNCF chat needs ANTHROPIC_API_KEY in the server environment.")
@@ -91,9 +104,13 @@ async def answer(
         if not uses:
             if proposals:
                 return confirmation(proposals)
-            return ChatResponse(status="unsupported", message=(
-                "I can propose graduation by chemistry program, retention by entry major, "
-                "and enrollment by ethnicity/program. No supported scope was returned."))
+            return ChatResponse(
+                status="unsupported",
+                message=(
+                    "I can propose graduation by chemistry program, retention by entry major, "
+                    "and enrollment by ethnicity/program. No supported scope was returned."
+                ),
+            )
         if len(uses) > MAX_TOOLS_PER_ROUND:
             raise ChatFailed("The assistant requested too many tools in one round.")
         messages.append({"role": "assistant", "content": list(response.content)})
@@ -102,9 +119,9 @@ async def answer(
         additional_analyses = set()
         for use in uses:
             try:
-                result = await asyncio.to_thread(dispatch, service, use.name, dict(use.input or {}))
+                result = await run_sync(dispatch, service, use.name, dict(use.input or {}))
                 if isinstance(result, AnalysisRequest):
-                    unresolved = await asyncio.to_thread(service.clarify, result)
+                    unresolved = await run_sync(service.clarify, result)
                     if unresolved:
                         if clarification is None:
                             clarification = unresolved
@@ -114,19 +131,31 @@ async def answer(
                     else:
                         if result not in proposals:
                             proposals.append(result)
-                        result = {"confirmation_required": True,
-                                  "proposal": result.model_dump(mode="json")}
+                        result = {
+                            "confirmation_required": True,
+                            "proposal": result.model_dump(mode="json"),
+                        }
                 error = False
-            except (ValueError, TypeError):
+            except ValueError, TypeError:
                 result, error = {"error": "Unsupported tool or scope parameters."}, True
-            outputs.append({"type": "tool_result", "tool_use_id": use.id,
-                            "content": json.dumps(result), "is_error": error})
+            outputs.append(
+                {
+                    "type": "tool_result",
+                    "tool_use_id": use.id,
+                    "content": json.dumps(result),
+                    "is_error": error,
+                }
+            )
         if clarification:
             message = clarification.message
             if additional_analyses:
                 names = ", ".join(sorted(additional_analyses))
                 message += f" Also requested: {names}. Please ask these as separate questions."
-            return ChatResponse(status="clarification", message=message,
-                                clarification=clarification, proposals=proposals)
+            return ChatResponse(
+                status="clarification",
+                message=message,
+                clarification=clarification,
+                proposals=proposals,
+            )
         messages.append({"role": "user", "content": outputs})
     raise ChatFailed("The assistant reached its tool-round limit. Try one supported question.")

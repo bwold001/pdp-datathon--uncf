@@ -62,6 +62,8 @@ def test_all_chat_paths_match_direct_service(client, configured_data, analysis_r
     model = ScriptedModel([call(analysis, **parameters)], [finish()])
     app.dependency_overrides[get_chat_client] = lambda: model
     reply = client.post(url, json={"prompt": "Synthetic parity example"})
+    assert reply.json()["status"] == "confirmation" and not reply.json()["receipts"]
+    reply = client.post(url, json={"prompt": "confirmed", "confirmed": reply.json()["proposals"]})
     expected = AnalyticsService(path, coverage).analyze(analysis_request).model_dump(mode="json")
     assert reply.status_code == 200
     assert reply.json()["receipts"] == expected["receipts"]

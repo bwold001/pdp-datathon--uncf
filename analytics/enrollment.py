@@ -1,5 +1,7 @@
 """Distinct annual program enrollments, with ethnicity kept separate from race."""
 
+from analytics.execution import checked
+
 from collections import defaultdict
 
 from analytics.schemas import CalculationRow
@@ -9,7 +11,7 @@ from analytics.programs import normalize_program
 def calculate(enrollments: list[dict], years: list[str]) -> list[CalculationRow]:
     """Count a student once per year, program and ethnicity, regardless of course count."""
     groups = defaultdict(set)
-    for row in enrollments:
+    for row in checked(enrollments):
         if row["academic_year"] not in years or row["course_id"] is None:
             continue
         program = normalize_program(row["term_program_of_study"]) or "UNKNOWN"
@@ -26,5 +28,5 @@ def calculate(enrollments: list[dict], years: list[str]) -> list[CalculationRow]
             calculation=f"COUNT(DISTINCT student_id) = {len(students)}",
             note="Program totals overlap when a student changes programs.",
         )
-        for (year, program, ethnicity), students in sorted(groups.items())
+        for (year, program, ethnicity), students in checked(sorted(groups.items()))
     ]

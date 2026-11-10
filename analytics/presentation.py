@@ -1,6 +1,7 @@
 """Calculation text and conservative suppression shared by browser and model."""
 
 from analytics.schemas import CalculationRow
+from analytics.execution import checked
 
 
 def rate_row(
@@ -58,13 +59,13 @@ def has_small_cell(row: CalculationRow, threshold: int) -> bool:
 
 def suppress(rows: list[CalculationRow], threshold: int) -> list[CalculationRow]:
     """Hide linked small cells, preserving a safe overall result only with all groups hidden."""
-    if not any(has_small_cell(row, threshold) for row in rows):
+    if not any(has_small_cell(row, threshold) for row in checked(rows)):
         return rows
-    totals = [row for row in rows if not row.group and row.horizon is None]
+    totals = [row for row in checked(rows) if not row.group and row.horizon is None]
     safe_total = (
         totals[0]
         if len(totals) == 1
-        and any(row.group for row in rows)
+        and any(row.group for row in checked(rows))
         and not has_small_cell(totals[0], threshold)
         else None
     )
@@ -79,5 +80,5 @@ def suppress(rows: list[CalculationRow], threshold: int) -> list[CalculationRow]
         )
         if row is not safe_total and row.status in ("ok", "provisional")
         else row
-        for row in rows
+        for row in checked(rows)
     ]
