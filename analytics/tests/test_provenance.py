@@ -30,8 +30,8 @@ def test_same_snapshot_and_request_have_stable_computation_identity(database):
         assert one == two
         assert not {"execution_id", "started_at", "completed_at", "duration"} & one.model_dump().keys()
         validate_replay(one, snapshot.identity, versions, operations, coverage)
-        assert make_replay_spec(plan, snapshot.identity, versions, operations, coverage,
-            ("linked-partition",)).computation_fingerprint != one.computation_fingerprint
+        assert one.fingerprint_schema == 2
+        assert "disclosure_context" not in one.model_dump()
 
 
 @pytest.mark.parametrize("field", ["implementation", "configuration", "coverage", "disclosure"])
@@ -114,7 +114,7 @@ def test_correlation_requires_feature_and_method_versions_and_canonicalizes_refe
         with pytest.raises(VersionUnavailable, match="method"):
             make_replay_spec(plan, snapshot.identity, Versions.model_validate(raw_versions), operations, coverage)
         raw_versions["method"] = {"id": "pearson", "version": "1"}
-        original = make_replay_spec(plan, snapshot.identity, Versions.model_validate(raw_versions), operations, coverage, ("a", "b"))
+        original = make_replay_spec(plan, snapshot.identity, Versions.model_validate(raw_versions), operations, coverage)
         raw_versions["features"].reverse()
-        reordered = make_replay_spec(plan, snapshot.identity, Versions.model_validate(raw_versions), operations, coverage, ("b", "a"))
+        reordered = make_replay_spec(plan, snapshot.identity, Versions.model_validate(raw_versions), operations, coverage)
         assert original.computation_fingerprint == reordered.computation_fingerprint

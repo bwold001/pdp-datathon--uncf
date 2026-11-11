@@ -1,4 +1,4 @@
-"""What every page breakdown shares: the students a filter picks, small group hiding, terms and result rows.
+"""What every page breakdown shares: the students a filter picks, visible counts, terms and result rows.
 
 Rates come from run_measure; this module only picks students and counts within sets of them (a course's takers,
 a credit tier) with the same rule: unknown counts stay missing; every known count is shown.
@@ -13,6 +13,7 @@ from pathlib import Path
 
 from ..calculations.dfw import grade_result
 from ..data_access import ReadConnection, ReadSnapshot
+from ..disclosure import DASHBOARD_V1
 from ..calculations.sql_counts import SAFE_YEAR, filters_sql, group_value_sql, normalize
 from ..models import (
     ALLOWED_VALUES,
@@ -121,9 +122,7 @@ def listed_value(dimension: str, normalized: str) -> str:
 
 def shown(count: int | None) -> int | None:
     """A count as a page may show it: every known count, including zero, is shown."""
-    if count is None or 0 < count < min_students():
-        return None
-    return count
+    return DASHBOARD_V1.visible_count(count)
 
 
 def share(count: int | None, total: int | None) -> float | None:

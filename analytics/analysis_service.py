@@ -18,6 +18,7 @@ from analytics.contracts_v2 import (
     Text,
     VisibleResult,
     VisibleTableRow,
+    VersionReference,
 )
 from analytics.execution import check_cancelled
 from analytics.legacy_operations import LEGACY_IDS
@@ -28,6 +29,7 @@ from gap_finder.gateway import add_gateway_gaps
 from measures import service as measures_service
 from measures.breakdowns.dfw_courses import UnknownCourse
 from measures.models import MeasureResult
+from measures.disclosure import DASHBOARD_V1, profile
 from measures.registry import CATALOG_VERSION
 from measures.registry import OPERATIONS as DEFINED_OPERATIONS
 from measures.requests import Filters
@@ -56,6 +58,7 @@ class OperationEvidence(Contract):
 
     operation_id: Identifier
     operation_version: Identifier
+    disclosure_profile: VersionReference
     result: Result
     context: Annotated[tuple[Text, ...], Field(max_length=32)] = ()
 
@@ -82,11 +85,7 @@ def _rate_values(row: MeasureResult, spec):
 
 def _row_status(row, spec, provisional):
     """Keep dashboard gateway nonreporting distinct from an unobservable follow-up window."""
-    if row.status.value == "not_yet_observable" and spec.id.startswith("gateway."):
-        return "not_reported"
-    if row.status.value == "ok" and provisional:
-        return "provisional"
-    return row.status.value
+    return DASHBOARD_V1.dashboard_status(spec.measure.value, row.status.value, provisional=provisional)
 
 
 def _exclusions(row):
@@ -404,6 +403,8 @@ class AnalysisService:
                 "unsupported_operation", "The requested operation is not registered."
             )
         spec = self.operations[raw["operation_id"]]
+        policy = profile(spec.disclosure_profile)
+        policy_reference = VersionReference(id=policy.id, version=policy.version)
         try:
             step = _STEP.validate_python(raw)
             if step.kind != spec.kind:
@@ -424,6 +425,7 @@ class AnalysisService:
                 return OperationEvidence(
                     operation_id=spec.id,
                     operation_version=spec.version,
+                    disclosure_profile=policy_reference,
                     result=_hidden("unavailable"),
                     context=spec.component_denominators,
                 )
@@ -473,6 +475,7 @@ class AnalysisService:
         return OperationEvidence(
             operation_id=spec.id,
             operation_version=spec.version,
+            disclosure_profile=policy_reference,
             result=result,
             context=context,
         )

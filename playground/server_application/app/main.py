@@ -19,6 +19,13 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     await engine.dispose()
 
 
+def analysis_v2_runtime_factory():
+    """Use the configured source even when chat/provider routes are disabled."""
+    from app.services.analytics import get_service
+
+    return get_service
+
+
 def create_app() -> FastAPI:
     app = FastAPI(
         title=settings.PROJECT_NAME,
@@ -46,6 +53,11 @@ def create_app() -> FastAPI:
     if settings.SANDBOX_ENABLED:
         app.include_router(sandbox_router, prefix=settings.API_V1_PREFIX)
     app.include_router(uncf_router(), prefix=settings.API_V1_PREFIX)
+    from api.analysis_v2 import get_runtime_factory
+    from api.analysis_v2 import router as analysis_v2_router
+
+    app.include_router(analysis_v2_router)
+    app.dependency_overrides[get_runtime_factory] = analysis_v2_runtime_factory
     if settings.UNCF_CHAT_ENABLED:
         from api.analyses import get_service as default_service
         from api.analyses import router as analytics_router
