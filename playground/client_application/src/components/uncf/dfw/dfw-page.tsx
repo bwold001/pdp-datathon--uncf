@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { explorerLoader } from "@/components/uncf/layout/explorer-api";
 import { useShowStudentCount } from "@/components/uncf/layout/explorer-context";
 import { LoadingBlock, MessageCard } from "@/components/uncf/layout/explorer-parts";
+import { privacyNote, tooFew } from "@/components/uncf/layout/small-groups";
 import { useCohortFilters } from "@/components/uncf/layout/use-cohort-filters";
 import { useApiResource } from "@/hooks/use-api-resource";
 
@@ -18,7 +19,7 @@ export function DfwPage() {
   const { apiQuery } = useCohortFilters();
   const loadList = useMemo(() => explorerLoader<DfwList>("/uncf/dfw", apiQuery), [apiQuery]);
   const { resource: list, retry: retryList } = useApiResource(loadList);
-  useShowStudentCount(list.status !== "success" ? null : list.data.status === "suppressed" ? "under 10" : list.data.everyone.students);
+  useShowStudentCount(list.status !== "success" ? null : list.data.status === "suppressed" ? "too few" : list.data.everyone.students);
 
   const [sort, setSort] = useState<DfwSort>("count");
   const [minimum, setMinimum] = useState(30);
@@ -46,8 +47,8 @@ export function DfwPage() {
   }
   if (list.data.status === "suppressed") {
     return (
-      <MessageCard title="Fewer than 10 students with final grades match these filters.">
-        Remove a filter to see results. Groups under 10 students are hidden to protect privacy.
+      <MessageCard title={`${tooFew(list.data.meta.min_students, "students with final grades")} match these filters.`}>
+        Remove a filter to see results. {privacyNote(list.data.meta.min_students)}
       </MessageCard>
     );
   }
@@ -85,7 +86,7 @@ export function DfwPage() {
           <CourseDetailLoading />
         )}
       </div>
-      <DfwCounted scale={list.data.meta.grade_scale} />
+      <DfwCounted scale={list.data.meta.grade_scale} minStudents={list.data.meta.min_students} />
     </>
   );
 }

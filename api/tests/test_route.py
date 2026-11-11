@@ -5,7 +5,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from api import data, route
-from measures.definitions import DEFINITIONS
+from measures.definitions import all_definitions
 from api.route import create_app
 from measures.tests.explorer_fixture import here, make_database, student
 
@@ -74,6 +74,7 @@ def test_gateway(client):
 
 def test_dfw_and_gateway_carry_each_grade_and_the_scale(tmp_path, monkeypatch):
     """The DFW split has each DFW grade, gateway courses have every grade, and both answers carry the grade scale."""
+    monkeypatch.setenv("UNCF_MIN_STUDENTS", "1")  # show every count; hiding is checked in measures/tests
     students = [student(f"s{n}") for n in range(12)]
     grades = ["1.5", "1.0", "0.7", "0.3", "W", "1.7"] * 2
     records = [here(f"s{n}", "2023-24", "FALL", prefix="ENG", number="101", grade=grade, gateway="E") for n, grade in enumerate(grades)]
@@ -124,9 +125,10 @@ def test_credit_momentum_progress(tmp_path, monkeypatch):
 
 
 def test_definitions_come_from_the_shared_dictionary(client):
-    """The Explorer's key terms are api/definitions.py, word for word."""
+    """The Explorer's key terms are measures/definitions.py, word for word, with the small-groups line filled in."""
     body = client.get("/api/v1/uncf/definitions").json()
-    assert body["definitions"] == DEFINITIONS
+    assert body["definitions"] == all_definitions()
+    assert "A course or group with fewer than 10 students is hidden." in body["definitions"]["dfw_rate"]["limits"]
     assert body["definitions"]["persistence"]["name"] == "At another college"
 
 

@@ -2,6 +2,7 @@
 import { cn } from "@/lib/utils";
 
 import type { RetentionType } from "./explorer-api";
+import { hiddenCount } from "./small-groups";
 
 /** A white card with a border, the design's main container. */
 export function Card({ className, children }: { className?: string; children: React.ReactNode }) {
@@ -135,9 +136,9 @@ export function MessageCard({ title, children, onRetry }: MessageCardProps) {
   );
 }
 
-/** A count for display: 1,234, or "Under 10" when it's hidden. */
-export function formatCount(count: number | null): string {
-  return count === null ? "Under 10" : count.toLocaleString("en-US");
+/** A count for display: 1,234, or "Under 10" when it's hidden (minStudents is the answer's meta.min_students). */
+export function formatCount(count: number | null, minStudents: number): string {
+  return count === null ? hiddenCount(minStudents) : count.toLocaleString("en-US");
 }
 
 /**

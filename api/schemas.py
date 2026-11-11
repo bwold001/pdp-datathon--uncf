@@ -81,6 +81,7 @@ class MeasureByGroupMeta(BaseModel):
     source: str
     loaded_at: str  # when the source data was loaded, not when the numbers were calculated
     provisional: bool  # the class's second year is only partly in the data, so a year-2 rate can still change
+    min_students: int  # groups with fewer students have no numbers (UNCF_MIN_STUDENTS)
 
 
 class MeasureByGroupResponse(BaseModel):
@@ -129,7 +130,7 @@ class DfwSplit(BaseModel):
 
 
 class DfwTally(BaseModel):
-    """A DFW rate. Every number is null when under 10 students."""
+    """A DFW rate. Every number is null when under min_students() (UNCF_MIN_STUDENTS)."""
 
     model_config = ConfigDict(extra="allow")
 

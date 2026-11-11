@@ -37,8 +37,9 @@ Copy the Student paths tab (`components/uncf/paths/`): a page with a `ViewIntro`
 - **Student count.** `useShowStudentCount(count)` shows "Showing 1,114 students" in the cohort bar.
 - **Parts.** `explorer-parts.tsx` has the design's `Card`, `CardHead`, `KpiGrid` and `Kpi`, `Legend`, `TrackBar`,
   `Counted` ("How it's counted"), `Notice`, `MessageCard` (too few students, or an error) and `LoadingBlock`.
-- **Hidden numbers.** The API sends groups under 10 students as `null`. Show them with `formatCount` ("Under 10"),
-  never as 0.
+- **Hidden numbers.** The API sends groups under `meta.min_students` as `null` (the server's `UNCF_MIN_STUDENTS`,
+  1 by default). Show them with `formatCount(count, meta.min_students)` ("Under 10", or "None" at 1), never as 0.
+  Word notes about hidden groups with `small-groups.ts`, which says nothing is hidden when the minimum is 1.
 - **Colors and type.** Use the design's colors from `explorer-tokens.css` in Tailwind, e.g. `bg-(--uncf-surface)`,
   `text-(--uncf-ink-2)`, `border-(--uncf-line)`. IBM Plex Sans is already on; put `uncf-num` on numbers for IBM Plex
   Mono with aligned digits. The Explorer is always light; avoid the app's `ui/` components, which follow dark mode.

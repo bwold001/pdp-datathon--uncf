@@ -1,6 +1,6 @@
 import type { ExplorerMeta, GradeScale } from "@/components/uncf/layout/explorer-api";
 
-/** Retention for a group of students. Every number is null when the group has under 10 students. */
+/** Retention for a group of students. Every number is null when the group is under meta.min_students. */
 export type Retention = { students: number | null; retained: number | null; rate: number | null; [more: string]: unknown };
 
 /** What happened after the first try, in year 1. A step is null when it has 1 to 9 students. */
@@ -34,8 +34,8 @@ export type GatewayCourse = {
   /** Passed on any try in year 1. */
   passed: number;
   path: GatewayPath;
-  /** How many tries ended in each grade (A to F, P, W), one per student per term, in the scale's order. */
-  grades: Record<string, number>;
+  /** How many tries ended in each grade (A to F, P, W), one per student per term, in the scale's order. Null when hidden. */
+  grades: Record<string, number | null>;
   retained_if_passed: Retention;
   retained_if_not_passed: Retention;
   /** null when no filter is set, so there is no group to compare. */

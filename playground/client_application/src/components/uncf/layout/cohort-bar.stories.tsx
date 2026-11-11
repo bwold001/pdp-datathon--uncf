@@ -152,9 +152,19 @@ export const SearchALongList: Story = {
 /** When the tab hides its numbers for too few students, the bar says so, not the whole cohort's size. */
 export const FewerThanTen: Story = {
   name: "Fewer than 10 match",
-  render: () => <CohortBarView filters={{ ...defaultCohortFilters(), pell: "Y", race: "Asian" }} options={cohortOptions2023} studentCount="under 10" />,
+  render: () => <CohortBarView filters={{ ...defaultCohortFilters(), pell: "Y", race: "Asian" }} options={cohortOptions2023} studentCount="too few" />,
   play: async ({ canvas }) => {
     await expect(canvas.getByText("Fewer than 10 students match · 2 filters set")).toBeVisible();
     await expect(canvas.queryByText(/2,580/)).not.toBeInTheDocument();
+  },
+};
+
+/** With UNCF_MIN_STUDENTS unset (1), nothing is hidden, so the bar doesn't say groups are hidden. */
+export const SmallGroupsShown: Story = {
+  name: "Small groups shown",
+  render: () => <CohortBarView filters={defaultCohortFilters()} options={{ ...cohortOptions2023, min_students: 1 }} studentCount={1114} />,
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText("Showing 1,114 students")).toBeVisible();
+    await expect(canvas.queryByText(/Groups under/)).not.toBeInTheDocument();
   },
 };

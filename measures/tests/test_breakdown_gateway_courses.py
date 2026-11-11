@@ -61,16 +61,16 @@ def test_first_try_path_and_retention(tmp_path):
 
 
 def test_every_grade_is_counted_apart(tmp_path):
-    """Each try's letter, one per student per term: all letters from A to W, zeros included, adding up to the tries."""
+    """Each try's letter, one per student per term: all letters from A to W, zeros included; under 10 is hidden."""
     first = takers("first", 12, ["4", "1.5", "P", "0.3"], back=0)
     retake(*first, grade="2.0")
     page = gateway_courses(**FEDERAL, database=build(tmp_path, first))
     (course,) = page["courses"]
     grades = course["grades"]
     assert list(grades) == ["A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D+", "D", "D-", "F", "P", "W"]
-    # First tries: 3 each of A, D+ (1.5), P and F (0.3); then a C for all 12 on the retake.
-    assert {grade: count for grade, count in grades.items() if count} == {"A": 3, "D+": 3, "P": 3, "F": 3, "C": 12}
-    assert sum(grades.values()) == 24
+    # First tries: 3 each of A, D+ (1.5), P and F (0.3), hidden under UNCF_MIN_STUDENTS=10 like the path; then a C
+    # for all 12 on the retake.
+    assert {grade: count for grade, count in grades.items() if count != 0} == {"A": None, "D+": None, "P": None, "F": None, "C": 12}
     assert page["context"]["grade_scale"]["grades"][-1] == {"grade": "W", "points": "the code W (withdrew)", "dfw": True, "gateway_pass": False}
 
 

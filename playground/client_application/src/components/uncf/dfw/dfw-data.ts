@@ -25,7 +25,7 @@ export const dfwGradeStyles: Record<DfwGrade, { label: string; color: string }> 
   W: { label: "W", color: "var(--uncf-grey)" },
 };
 
-/** D-or-F, W and pass counts for a set of final grades. Every number is null when under 10 students. */
+/** D-or-F, W and pass counts for a set of final grades. Every number is null under meta.min_students. */
 export type DfwTally = {
   students: number | null;
   /** D, F and W grades. */
@@ -36,7 +36,7 @@ export type DfwTally = {
   split: DfwSplit | null;
 };
 
-/** One course in the list. Courses with under 10 students aren't listed. */
+/** One course in the list. Courses with fewer than 10 final grades, or under meta.min_students, aren't listed. */
 export type DfwCourseSummary = DfwTally & {
   course: string;
   names: { top: string[]; distinct: number };
@@ -63,7 +63,7 @@ export type DfwList = {
 /** One value of a field within a course, e.g. Pell = Y, or delivery = Online, next to everyone else in the course. */
 export type DfwPart = DfwTally & {
   value: string;
-  /** The DFW rate of every other final grade in the course; null when they're under 10. */
+  /** The DFW rate of every other final grade in the course; null when they're under meta.min_students. */
   rest_rate: number | null;
   /** The part's rate minus rest_rate, in points. */
   gap: number | null;

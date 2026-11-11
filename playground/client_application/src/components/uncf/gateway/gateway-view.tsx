@@ -6,6 +6,7 @@ import type { GradeScale } from "@/components/uncf/layout/explorer-api";
 import { Card, CardHead, MessageCard, Notice, formatShare, retentionWords } from "@/components/uncf/layout/explorer-parts";
 import { explorerButton } from "@/components/uncf/layout/explorer-styles";
 import { GradeScaleTable } from "@/components/uncf/layout/grade-scale";
+import { hiddenCount, hidesSmallGroups, privacyNote, tooFew } from "@/components/uncf/layout/small-groups";
 import { cn } from "@/lib/utils";
 
 import {
@@ -38,8 +39,8 @@ export function GatewayView({ data, groupLabel = null }: GatewayViewProps) {
 
   if (data.status === "suppressed" || !data.students || !data.cohort_retention) {
     return (
-      <MessageCard title="Fewer than 10 students match these filters.">
-        Remove a filter to see results. Groups under 10 students are hidden to protect privacy.
+      <MessageCard title={`${tooFew(data.meta.min_students)} match these filters.`}>
+        Remove a filter to see results. {privacyNote(data.meta.min_students)}
       </MessageCard>
     );
   }
@@ -74,7 +75,15 @@ export function GatewayView({ data, groupLabel = null }: GatewayViewProps) {
           }}
           onMore={courses.length > shown ? () => setShown(shown + PAGE) : undefined}
         />
-        {selected && <CourseDetail course={selected} compared={data.meta.compared} groupLabel={groupLabel} scale={data.meta.grade_scale} />}
+        {selected && (
+          <CourseDetail
+            course={selected}
+            compared={data.meta.compared}
+            groupLabel={groupLabel}
+            minStudents={data.meta.min_students}
+            scale={data.meta.grade_scale}
+          />
+        )}
       </div>
       <PairsCard data={data} />
       <GatewayCounted data={data} />
@@ -142,7 +151,7 @@ function CourseList({ data, courses, total, sort, groupLabel, selected, onSelect
         <span className="text-right">Group gap</span>
       </div>
       {courses.length === 0 ? (
-        <p className="px-2.5 py-4 text-[13px] text-(--uncf-ink-3)">No gateway course has 10 or more students with these filters.</p>
+        <p className="px-2.5 py-4 text-[13px] text-(--uncf-ink-3)">No gateway course has {data.meta.min_students} or more students with these filters.</p>
       ) : (
         <ul>
           {courses.map((course) => (
@@ -183,7 +192,7 @@ function CourseList({ data, courses, total, sort, groupLabel, selected, onSelect
   );
 }
 
-/** A retention share in the list, or "hidden" for a group under 10 students. */
+/** A retention share in the list, or "hidden" for a group under min_students. */
 function RetentionCell({ rate }: { rate: number | null }) {
   return rate === null ? (
     <span className="hidden text-right text-xs text-(--uncf-ink-3) sm:block">hidden</span>
@@ -209,10 +218,16 @@ function signedPoints(gap: number): string {
   return `${gap < 0 ? "−" : "+"}${Math.abs(gap).toFixed(1)}`;
 }
 
-type CourseDetailProps = { course: GatewayCourse; compared: boolean; groupLabel: string | null; scale: GradeScale };
+type CourseDetailProps = {
+  course: GatewayCourse;
+  compared: boolean;
+  groupLabel: string | null;
+  minStudents: number;
+  scale: GradeScale;
+};
 
 /** The selected course: first try and in the end, what happened after the first try, and your group. */
-function CourseDetail({ course, compared, groupLabel, scale }: CourseDetailProps) {
+function CourseDetail({ course, compared, groupLabel, minStudents, scale }: CourseDetailProps) {
   return (
     <section aria-live="polite" className="min-[961px]:sticky min-[961px]:top-4">
       <Card className="flex flex-col gap-4.5">
@@ -238,13 +253,13 @@ function CourseDetail({ course, compared, groupLabel, scale }: CourseDetailProps
           <p className="text-[13px] text-(--uncf-ink-3)">
             Each try’s grade, one per student per term. Blue grades pass (D or higher, or P); orange ones don’t.
           </p>
-          <GradeBar grades={course.grades} scale={scale} />
+          <GradeBar grades={course.grades} scale={scale} minStudents={minStudents} />
         </Section>
         <Section title="Your group vs. everyone else">
           <p className="text-[13px] text-(--uncf-ink-3)">
             First-try pass rate for the group picked in the filters, next to all other students in {course.course}.
           </p>
-          <GroupCompare course={course} compared={compared} groupLabel={groupLabel} />
+          <GroupCompare course={course} compared={compared} groupLabel={groupLabel} minStudents={minStudents} />
         </Section>
       </Card>
     </section>
@@ -298,23 +313,29 @@ function PathBar({ course }: { course: GatewayCourse }) {
   );
 }
 
-/** Every grade the course's tries ended in: one bar, blue for passing and orange for not, then each grade's count. */
-function GradeBar({ grades, scale }: { grades: Record<string, number>; scale: GradeScale }) {
-  const total = Object.values(grades).reduce((sum, count) => sum + count, 0);
+type GradeBarProps = { grades: Record<string, number | null>; scale: GradeScale; minStudents: number };
+
+/**
+ * Every grade the course's tries ended in: one bar, blue for passing and orange for not, then each grade's count.
+ * A hidden count (under minStudents) reads like a hidden path step; shares show only when nothing is hidden.
+ */
+function GradeBar({ grades, scale, minStudents }: GradeBarProps) {
+  const counts = Object.values(grades);
+  const total = counts.every((count) => count !== null) ? counts.reduce<number>((sum, count) => sum + count!, 0) : 0;
   const color = (row: GradeScale["grades"][number]) =>
     row.grade === "W" ? "var(--uncf-grey)" : row.gateway_pass ? "var(--uncf-blue)" : "var(--uncf-f)";
-  const label = scale.grades.map((row) => `${row.grade}: ${grades[row.grade] ?? 0}`).join(", ");
+  const label = scale.grades.map((row) => `${row.grade}: ${grades[row.grade] ?? "hidden"}`).join(", ");
   return (
     <>
       <div className="flex h-7.5 gap-px overflow-hidden rounded-[4px] bg-(--uncf-track)" role="img" aria-label={label}>
         {scale.grades.map((row) => {
-          const count = grades[row.grade] ?? 0;
+          const count = grades[row.grade];
           return count ? <div key={row.grade} style={{ flex: count, background: color(row) }} title={`${row.grade}: ${fmt(count)}`} /> : null;
         })}
       </div>
       <dl className="grid grid-cols-[repeat(auto-fill,minmax(118px,1fr))] gap-x-5 gap-y-1.5 text-sm">
         {scale.grades.map((row) => {
-          const count = grades[row.grade] ?? 0;
+          const count = grades[row.grade];
           return (
             <div key={row.grade} className="flex items-center gap-2">
               <dt className="flex flex-1 items-center gap-1.5">
@@ -322,8 +343,8 @@ function GradeBar({ grades, scale }: { grades: Record<string, number>; scale: Gr
                 {row.grade}
               </dt>
               <dd className="uncf-num whitespace-nowrap">
-                {fmt(count)}
-                {total > 0 && <span className="text-(--uncf-ink-3)"> · {formatShare(count / total)}</span>}
+                {count === null ? hiddenCount(minStudents) : fmt(count)}
+                {count !== null && total > 0 && <span className="text-(--uncf-ink-3)"> · {formatShare(count / total)}</span>}
               </dd>
             </div>
           );
@@ -334,13 +355,17 @@ function GradeBar({ grades, scale }: { grades: Record<string, number>; scale: Gr
 }
 
 /** The filtered group's first-try pass rate next to everyone else's, or why it can't be shown. */
-function GroupCompare({ course, compared, groupLabel }: Omit<CourseDetailProps, "scale">) {
+function GroupCompare({ course, compared, groupLabel, minStudents }: Omit<CourseDetailProps, "scale">) {
   const group = course.group;
   if (!compared || !group) {
     return <p className="text-[13px] text-(--uncf-ink-3)">Pick a group in the filters above, such as Pell or Full / part-time.</p>;
   }
   if (group.status !== "ok") {
-    return <p className="text-[13px] text-(--uncf-ink-3)">Hidden in this course: under 10 students in the group, or too few others.</p>;
+    return (
+      <p className="text-[13px] text-(--uncf-ink-3)">
+        Hidden in this course: {hidesSmallGroups(minStudents) ? `under ${minStudents} students in the group, or too few others.` : "no students to compare with."}
+      </p>
+    );
   }
   const bars = [
     { label: groupLabel ?? "Your group", rate: group.rate!, color: "var(--uncf-blue)" },
@@ -440,10 +465,10 @@ function GatewayCounted({ data }: { data: GatewayResponse }) {
       The DFW page draws its line higher: there a D+, D or D- counts as a DFW. A try is a term, and the first try is the
       earliest; a class listed twice in one term counts once, at the better grade. Retention follows the Retention filter above: “
       {retentionWords(data.meta.retention_type, data.meta.retention_term).name}” means{" "}
-      {retentionWords(data.meta.retention_type, data.meta.retention_term).how}. Everyone else is all other students who took the same course. A gap shows a difference, not its cause. Courses and
-      groups with fewer than 10 students are hidden to protect privacy
-      {data.hidden_courses ? ` (${fmt(data.hidden_courses)} courses)` : ""}. The data is synthetic: it doesn’t describe real
-      students.
+      {retentionWords(data.meta.retention_type, data.meta.retention_term).how}. Everyone else is all other students who took the same course. A gap shows a difference, not its cause.
+      {hidesSmallGroups(data.meta.min_students) &&
+        ` Courses and groups with fewer than ${data.meta.min_students} students are hidden to protect privacy${data.hidden_courses ? ` (${fmt(data.hidden_courses)} courses)` : ""}.`}{" "}
+      The data is synthetic: it doesn’t describe real students.
       <GradeScaleTable scale={data.meta.grade_scale} rule="gateway" />
     </div>
   );

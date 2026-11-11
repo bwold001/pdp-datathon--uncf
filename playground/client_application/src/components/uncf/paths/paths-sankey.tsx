@@ -1,4 +1,5 @@
 import { formatShare } from "@/components/uncf/layout/explorer-parts";
+import { hiddenCount } from "@/components/uncf/layout/small-groups";
 
 import { type PathStatus, type PathsResponse, type TermCounts, pathStatuses, statusStyle, studentsLabel, termNames } from "./paths-data";
 
@@ -133,7 +134,7 @@ export function PathsSankey({ data }: { data: PathsResponse }) {
 const labelClass =
   "fill-(--uncf-ink) text-[15px] font-semibold [paint-order:stroke] stroke-(--uncf-surface) [stroke-width:4px] [stroke-linejoin:round]";
 
-/** A column's bars, top to bottom in status order. Hidden counts (under 10) and empty ones get no bar. */
+/** A column's bars, top to bottom in status order. Hidden counts (under min_students) and empty ones get no bar. */
 function stack(counts: TermCounts, scale: number): Node[] {
   const nodes: Node[] = [];
   let top = 0;
@@ -212,7 +213,7 @@ function secondMovePhrase(before: PathStatus, after: PathStatus, next: string, y
 function summary(data: PathsResponse): string {
   const names = termNames(data);
   const year2 = data.columns!.year2;
-  const part = (count: number | null, words: string) => `${count === null ? "under 10" : count.toLocaleString("en-US")} ${words}`;
+  const part = (count: number | null, words: string) => `${count === null ? hiddenCount(data.meta.min_students).toLowerCase() : count.toLocaleString("en-US")} ${words}`;
   return `Flow of ${data.students!.toLocaleString("en-US")} students (${studentsLabel(data)}) through ${names.next} and ${names.year2}: ${part(year2.here, "enrolled here")}, ${part(year2.credential, "with a credential")}, ${part(year2.elsewhere, "transferred out")}, ${part(year2.stopped, "stopped out")} by ${names.year2}.`;
 }
 
