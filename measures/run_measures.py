@@ -27,7 +27,6 @@ from .models import (
     ALLOWED_VALUES,
     EVERYONE,
     OPEN_DIMENSIONS,
-    SUPPRESSION_THRESHOLD,
     Cohort,
     Counts,
     Group,
@@ -36,6 +35,7 @@ from .models import (
     Measure,
     MeasureResult,
     Status,
+    min_students,
     check_unique,
 )
 from .save_results import RESULTS_DATABASE, save_results
@@ -217,7 +217,7 @@ def build_result(measure: Measure, cohort: Cohort, group: Group, counts: Counts,
     """Turn counts into a result row, hiding the group if its cohort isn't observable yet or it has too few students."""
     if counts.not_yet_observable:
         return hidden_result(measure, cohort, group, Status.NOT_YET_OBSERVABLE, note)
-    if counts.n_students < SUPPRESSION_THRESHOLD:
+    if counts.n_students < min_students():
         return hidden_result(measure, cohort, group, Status.SUPPRESSED, note)
 
     return MeasureResult(

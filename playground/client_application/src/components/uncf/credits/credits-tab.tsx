@@ -19,7 +19,7 @@ export function CreditsTab() {
   const searchParams = useSearchParams();
   const load = useMemo(() => explorerLoader<CreditsResponse>("/uncf/credit-momentum", apiQuery), [apiQuery]);
   const { resource, retry } = useApiResource(load);
-  useShowStudentCount(resource.status !== "success" ? null : resource.data.status === "suppressed" ? "under 10" : resource.data.students);
+  useShowStudentCount(resource.status !== "success" ? null : resource.data.status === "suppressed" ? "too few" : resource.data.students);
 
   // The student filters someone set, in words. The cohort year and retention measure aren't filters on who's counted.
   const picked = definitions.filter((definition) => !definition.required && (filters[definition.id] ?? null) !== (definition.defaultValue ?? null));

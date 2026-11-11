@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { Card, CardHead, MessageCard, Notice, formatShare, retentionWords } from "@/components/uncf/layout/explorer-parts";
 import { explorerButton } from "@/components/uncf/layout/explorer-styles";
+import { hidesSmallGroups, privacyNote, tooFew } from "@/components/uncf/layout/small-groups";
 import { cn } from "@/lib/utils";
 
 import {
@@ -36,8 +37,8 @@ export function GatewayView({ data, groupLabel = null }: GatewayViewProps) {
 
   if (data.status === "suppressed" || !data.students || !data.cohort_retention) {
     return (
-      <MessageCard title="Fewer than 10 students match these filters.">
-        Remove a filter to see results. Groups under 10 students are hidden to protect privacy.
+      <MessageCard title={`${tooFew(data.meta.min_students)} match these filters.`}>
+        Remove a filter to see results. {privacyNote(data.meta.min_students)}
       </MessageCard>
     );
   }
@@ -72,7 +73,7 @@ export function GatewayView({ data, groupLabel = null }: GatewayViewProps) {
           }}
           onMore={courses.length > shown ? () => setShown(shown + PAGE) : undefined}
         />
-        {selected && <CourseDetail course={selected} compared={data.meta.compared} groupLabel={groupLabel} />}
+        {selected && <CourseDetail course={selected} compared={data.meta.compared} groupLabel={groupLabel} minStudents={data.meta.min_students} />}
       </div>
       <PairsCard data={data} />
       <GatewayCounted data={data} />
@@ -140,7 +141,7 @@ function CourseList({ data, courses, total, sort, groupLabel, selected, onSelect
         <span className="text-right">Group gap</span>
       </div>
       {courses.length === 0 ? (
-        <p className="px-2.5 py-4 text-[13px] text-(--uncf-ink-3)">No gateway course has 10 or more students with these filters.</p>
+        <p className="px-2.5 py-4 text-[13px] text-(--uncf-ink-3)">No gateway course has {data.meta.min_students} or more students with these filters.</p>
       ) : (
         <ul>
           {courses.map((course) => (
@@ -181,7 +182,7 @@ function CourseList({ data, courses, total, sort, groupLabel, selected, onSelect
   );
 }
 
-/** A retention share in the list, or "hidden" for a group under 10 students. */
+/** A retention share in the list, or "hidden" for a group under min_students. */
 function RetentionCell({ rate }: { rate: number | null }) {
   return rate === null ? (
     <span className="hidden text-right text-xs text-(--uncf-ink-3) sm:block">hidden</span>
@@ -207,10 +208,10 @@ function signedPoints(gap: number): string {
   return `${gap < 0 ? "−" : "+"}${Math.abs(gap).toFixed(1)}`;
 }
 
-type CourseDetailProps = { course: GatewayCourse; compared: boolean; groupLabel: string | null };
+type CourseDetailProps = { course: GatewayCourse; compared: boolean; groupLabel: string | null; minStudents: number };
 
 /** The selected course: first try and in the end, what happened after the first try, and your group. */
-function CourseDetail({ course, compared, groupLabel }: CourseDetailProps) {
+function CourseDetail({ course, compared, groupLabel, minStudents }: CourseDetailProps) {
   return (
     <section aria-live="polite" className="min-[961px]:sticky min-[961px]:top-4">
       <Card className="flex flex-col gap-4.5">
@@ -236,7 +237,7 @@ function CourseDetail({ course, compared, groupLabel }: CourseDetailProps) {
           <p className="text-[13px] text-(--uncf-ink-3)">
             First-try pass rate for the group picked in the filters, next to all other students in {course.course}.
           </p>
-          <GroupCompare course={course} compared={compared} groupLabel={groupLabel} />
+          <GroupCompare course={course} compared={compared} groupLabel={groupLabel} minStudents={minStudents} />
         </Section>
       </Card>
     </section>
@@ -291,13 +292,17 @@ function PathBar({ course }: { course: GatewayCourse }) {
 }
 
 /** The filtered group's first-try pass rate next to everyone else's, or why it can't be shown. */
-function GroupCompare({ course, compared, groupLabel }: CourseDetailProps) {
+function GroupCompare({ course, compared, groupLabel, minStudents }: CourseDetailProps) {
   const group = course.group;
   if (!compared || !group) {
     return <p className="text-[13px] text-(--uncf-ink-3)">Pick a group in the filters above, such as Pell or Full / part-time.</p>;
   }
   if (group.status !== "ok") {
-    return <p className="text-[13px] text-(--uncf-ink-3)">Hidden in this course: under 10 students in the group, or too few others.</p>;
+    return (
+      <p className="text-[13px] text-(--uncf-ink-3)">
+        Hidden in this course: {hidesSmallGroups(minStudents) ? `under ${minStudents} students in the group, or too few others.` : "no students to compare with."}
+      </p>
+    );
   }
   const bars = [
     { label: groupLabel ?? "Your group", rate: group.rate!, color: "var(--uncf-blue)" },
@@ -396,10 +401,10 @@ function GatewayCounted({ data }: { data: GatewayResponse }) {
       as gateway math or English count. Passed: a grade of 1.0 or higher, or a Pass; the DFW page uses 2.0. A try is a
       term, and the first try is the earliest. Retention follows the Retention filter above: “
       {retentionWords(data.meta.retention_type, data.meta.retention_term).name}” means{" "}
-      {retentionWords(data.meta.retention_type, data.meta.retention_term).how}. Everyone else is all other students who took the same course. A gap shows a difference, not its cause. Courses and
-      groups with fewer than 10 students are hidden to protect privacy
-      {data.hidden_courses ? ` (${fmt(data.hidden_courses)} courses)` : ""}. The data is synthetic: it doesn’t describe real
-      students.
+      {retentionWords(data.meta.retention_type, data.meta.retention_term).how}. Everyone else is all other students who took the same course. A gap shows a difference, not its cause.
+      {hidesSmallGroups(data.meta.min_students) &&
+        ` Courses and groups with fewer than ${data.meta.min_students} students are hidden to protect privacy${data.hidden_courses ? ` (${fmt(data.hidden_courses)} courses)` : ""}.`}{" "}
+      The data is synthetic: it doesn’t describe real students.
     </div>
   );
 }

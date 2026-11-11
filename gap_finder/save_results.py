@@ -15,7 +15,7 @@ from pathlib import Path
 from measures.save_results import RESULTS_DATABASE
 
 from .find_gaps import find_gaps, stub_gaps
-from .models import COLUMNS, GROUP_JOIN, SUPPRESSION_THRESHOLD, GapResult
+from .models import COLUMNS, GROUP_JOIN, GapResult, min_students
 
 OUTPUT = Path(__file__).parent / "output"
 # Real results: the table goes in the shared measures' results file, next to their own table, so the two join
@@ -26,8 +26,8 @@ STUB_DATABASE = OUTPUT / "equity_gaps_stub.sqlite"
 STUB_CSV = OUTPUT / "equity_gaps_stub.csv"
 
 # One column per COLUMNS entry, in the same order. The CHECKs are GapResult's main rules, so a bad row
-# can't be saved by code that skips GapResult either.
-CREATE_TABLE = f"""
+# can't be saved by code that skips GapResult either. {min_students} is filled in by create_table_sql().
+CREATE_TABLE = """
 CREATE TABLE IF NOT EXISTS equity_gaps (
     measure                TEXT    NOT NULL,
     cohort                 TEXT    NOT NULL,
@@ -65,15 +65,15 @@ CREATE TABLE IF NOT EXISTS equity_gaps (
     -- A shown row has its own counts.
     CHECK (suppressed OR (numerator IS NOT NULL AND denominator IS NOT NULL AND metric_rate IS NOT NULL
                           AND n_excluded IS NOT NULL AND n_out_of_scope IS NOT NULL)),
-    -- A shown group has at least 10 students.
-    CHECK (suppressed OR denominator >= {SUPPRESSION_THRESHOLD}),
+    -- A shown group has at least min_students() students.
+    CHECK (suppressed OR denominator >= {min_students}),
     -- An ok row has every comparison column; rank_by_gap is blank for small groups.
     CHECK (status != 'ok' OR (comparison_numerator IS NOT NULL AND comparison_denominator IS NOT NULL
         AND comparison_rate IS NOT NULL AND gap_pts IS NOT NULL AND students_affected IS NOT NULL
         AND ci_low IS NOT NULL AND ci_high IS NOT NULL AND p_value IS NOT NULL AND q_value IS NOT NULL
         AND likely_noise IS NOT NULL AND rank_by_affected IS NOT NULL)),
-    -- An ok row's everyone else has at least 10 students too, or its comparison columns would show a hidden group.
-    CHECK (status != 'ok' OR comparison_denominator >= {SUPPRESSION_THRESHOLD}),
+    -- An ok row's everyone else has at least min_students() too, or its comparison columns would show a hidden group.
+    CHECK (status != 'ok' OR comparison_denominator >= {min_students}),
     -- An unknown group is shown but not compared.
     CHECK (status != 'unknown_group' OR COALESCE(
         comparison_numerator, comparison_denominator, comparison_rate, gap_pts, students_affected, ci_low,
@@ -93,6 +93,17 @@ def sql_value(value):
     return value
 
 
+def create_table_sql() -> str:
+    """The equity_gaps table, with today's min_students() in its checks."""
+    return CREATE_TABLE.format(min_students=min_students())
+
+
+def made_with_todays_minimum(connection: sqlite3.Connection) -> bool:
+    """Whether the saved equity_gaps table's checks use today's min_students()."""
+    row = connection.execute("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'equity_gaps'").fetchone()
+    return row is not None and f"denominator >= {min_students()})" in row[0]
+
+
 def table_columns(connection: sqlite3.Connection) -> tuple[str, ...]:
     """The equity_gaps table's column names, in order. Empty if there's no table."""
     return tuple(row[1] for row in connection.execute("PRAGMA table_info(equity_gaps)"))
@@ -103,11 +114,12 @@ def save_gaps(rows: list[GapResult], database: Path) -> None:
     database.parent.mkdir(parents=True, exist_ok=True)
     connection = sqlite3.connect(database)
     try:
-        # An older layout can't take today's rows. Results are regenerated, so rebuild the table.
+        # An older layout, or one made with another minimum, can't take today's rows. Results are regenerated, so
+        # rebuild the table.
         columns = table_columns(connection)
-        if columns and columns != COLUMNS:
+        if columns and (columns != COLUMNS or not made_with_todays_minimum(connection)):
             connection.execute("DROP TABLE equity_gaps")
-        connection.execute(CREATE_TABLE)
+        connection.execute(create_table_sql())
         # Deleting first means a run with fewer breakdowns can't leave old rows, with old ranks, behind.
         for measure, cohort in sorted({(r.measure, r.cohort) for r in rows}):
             connection.execute("DELETE FROM equity_gaps WHERE measure = ? AND cohort = ?", (measure, cohort))

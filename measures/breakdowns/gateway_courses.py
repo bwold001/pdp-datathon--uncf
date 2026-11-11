@@ -14,7 +14,8 @@ again, or failed and didn't retake (all within year 1).
 
 This module only counts. The comparisons (the filtered students against everyone else who took a course, and each
 course pair against everyone else) are the gap finder's job, which sits on top of measures: gap_finder/gateway.py
-runs these counts through gap_finder.compare, and the API calls it. Groups under 10 students are hidden.
+runs these counts through gap_finder.compare, and the API calls it. Groups under min_students() are hidden.
+Only course pairs taken by 10 or more students are sent for comparing (MIN_PAIR_STUDENTS).
 """
 from __future__ import annotations
 
@@ -24,10 +25,9 @@ from pathlib import Path
 
 from ..calculations.dfw import grade_result
 from ..data_access import ReadSnapshot
-from ..models import EVERYONE, Group, Measure
+from ..models import EVERYONE, Group, Measure, min_students
 from ..run_measures import read_answers
 from .common import (
-    MIN_STUDENTS,
     check_retention,
     page_source,
     course_rows,
@@ -43,6 +43,9 @@ SUBJECTS = ("E", "M")
 # The PDP's gateway pass line: a grade of 1.0 or higher (the DFW measure's line is 2.0).
 GATEWAY_PASS_AT = 1.0
 PATH_STEPS = ("first", "retook_passed", "retook_not", "no_retake")
+# Course pairs are compared only with this many students. Not a privacy rule: the gap finder corrects for how many
+# comparisons it runs, so thousands of tiny pairs would make real gaps read as noise.
+MIN_PAIR_STUDENTS = 10
 
 
 def gateway_passed(grade: str | None) -> bool | None:
@@ -84,9 +87,9 @@ def _gateway_courses(cohort: str, filters: Group = EVERYONE, retention_measure: 
         "retention_observed": observable,
         "first_term": first_term,
         "compared": filters != EVERYONE,
-        "min_pair_students": MIN_STUDENTS,
+        "min_pair_students": max(MIN_PAIR_STUDENTS, min_students()),
     }
-    if len(students) < MIN_STUDENTS:
+    if len(students) < min_students():
         return {"context": context, "status": "suppressed", "students": None, "cohort_retention": None, "courses": [], "hidden_courses": 0, "left_out": None, "pair_counts": [], "pairs_considered": 0}
 
     cohort_retention = retention(retention_measure, cohort, filters, database)
@@ -129,7 +132,7 @@ def student_tries(rows: list[dict]) -> tuple[dict[str, dict[str, list[bool]]], d
 
 
 def path_counts(tries: dict[str, list[bool]]) -> dict:
-    """First-try passes, passes in the end, and each step of the path, for these students. Steps hide under 10."""
+    """First-try passes, passes in the end, and each step of the path, for these students. Steps hide under min_students()."""
     steps = Counter()
     for passes in tries.values():
         if passes[0]:
@@ -149,14 +152,14 @@ def path_counts(tries: dict[str, list[bool]]) -> dict:
 
 
 def course_paths(rows: list[dict], students: set[str], compared: bool, answers: dict) -> dict:
-    """Each gateway course with 10 or more of the filtered students: their path, retention, and the group gap."""
+    """Each gateway course with min_students() or more of the filtered students: their path, retention, and the group gap."""
     tries, no_grade, names, flags = student_tries(rows)
     courses = []
     hidden = 0
     left_out = 0
     for course, takers in tries.items():
         mine = {sid: passes for sid, passes in takers.items() if sid in students}
-        if len(mine) < MIN_STUDENTS:
+        if len(mine) < min_students():
             hidden += 1
             continue
         # Filtered students whose only year 1 grades here weren't final (incomplete, audit, missing).
@@ -180,7 +183,7 @@ def course_paths(rows: list[dict], students: set[str], compared: bool, answers: 
 
 
 def course_pairs(rows: list[dict], answers: dict) -> dict:
-    """Retention for each gateway course taken with another course in the first term, by 10 or more students."""
+    """Retention for each gateway course taken with another course in the first term, by MIN_PAIR_STUDENTS or more."""
     first_courses: dict[str, set[str]] = defaultdict(set)
     gateway: set[str] = set()
     for row in rows:
@@ -197,6 +200,6 @@ def course_pairs(rows: list[dict], answers: dict) -> dict:
     counted = []
     for pair, who in sorted(takers.items()):
         numbers = retained_share(answers, who)
-        if numbers["students"] is not None:
+        if numbers["students"] is not None and numbers["students"] >= MIN_PAIR_STUDENTS:
             counted.append({"courses": list(pair), "students": numbers["students"], "retained": numbers["retained"]})
     return {"pair_counts": counted, "pairs_considered": len(counted)}

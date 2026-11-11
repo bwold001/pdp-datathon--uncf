@@ -15,7 +15,7 @@ from measures.breakdowns.credit_momentum import credit_momentum
 from measures.breakdowns.dfw_courses import dfw_course, dfw_courses
 from measures.breakdowns.gateway_courses import gateway_courses
 from measures.breakdowns.student_paths import student_paths
-from measures.models import Cohort, Measure
+from measures.models import Cohort, Group, GroupDimension, Measure
 from measures.run_measures import run_measure
 from measures.tests.explorer_fixture import here, make_database, student
 
@@ -75,6 +75,40 @@ def test_page_wrappers_preserve_values_and_borrow_snapshot(database, page, extra
         assert snapshot.named.execute("SELECT 1 AS n").fetchone()["n"] == 1
     with pytest.raises(DataUnavailable):
         snapshot.named.execute("SELECT 1")
+
+
+@pytest.mark.parametrize("page", [credit_momentum, gateway_courses, student_paths, dfw_courses])
+@pytest.mark.parametrize("threshold,status", [(None, "ok"), ("10", "suppressed")])
+def test_small_groups_follow_setting_inside_borrowed_snapshot(database, monkeypatch, page, threshold, status):
+    """Three synthetic students stay visible by default without losing snapshot ownership or configured hiding."""
+    monkeypatch.delenv("UNCF_MIN_STUDENTS", raising=False)
+    if threshold is not None:
+        monkeypatch.setenv("UNCF_MIN_STUDENTS", threshold)
+    with sqlite3.connect(database) as writer:
+        writer.execute("UPDATE cohort_membership SET pell_status_first_year='N' WHERE student_id NOT IN ('s0', 's1', 's2')")
+    filters = Group.of((GroupDimension.PELL, "Y"))
+    with sqlite_snapshot(database) as snapshot:
+        # Commit new values after pinning the read snapshot; every page must retain the old answers.
+        with sqlite3.connect(database) as writer:
+            writer.execute("UPDATE cohort_membership SET retention=0, number_of_credits_earned_yr_1=0")
+        result = page("2023-24", filters=filters, snapshot=snapshot)
+        assert result["status"] == status
+        if status == "ok":
+            if page is dfw_courses:
+                assert result["everyone"]["students"] == 3
+                assert result["courses"] == []  # The list still requires ten final grades.
+            else:
+                assert result["students"] == 3
+            if page is credit_momentum:
+                assert result["credits"]["avg_earned"] == 6
+                assert result["retention"]["rate"] == 1
+                assert result["progress"] is not None
+            if page is gateway_courses:
+                assert result["courses"][0]["students"] == 3
+                assert result["context"]["min_pair_students"] == 10
+        elif page is credit_momentum:
+            assert result["progress"] is None
+        assert snapshot.positional.execute("SELECT SUM(retention) FROM cohort_membership").fetchone() == (6,)
 
 
 def test_writes_poison_the_session_and_cleanup_finishes(database):
