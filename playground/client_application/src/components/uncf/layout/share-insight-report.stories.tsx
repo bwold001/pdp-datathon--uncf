@@ -17,10 +17,22 @@ export const WithFilters: Story = {
   name: "With filters",
   play: async ({ canvas }) => {
     await expect(canvas.getByText("Cohort 2023-24 · 594 students")).toBeVisible();
-    await expect(canvas.getByText(/Enrollment type: First-time · Pell \(year 1\): Pell recipient/)).toBeVisible();
+    await expect(canvas.getByText("Enrollment type:").parentElement).toHaveTextContent("Enrollment type: First-time");
+    await expect(canvas.getByText("Pell (year 1):").parentElement).toHaveTextContent("Pell (year 1): Pell recipient");
     await expect(canvas.getByText("Synthetic sample data")).toBeVisible();
     await expect(canvas.queryByRole("combobox")).not.toBeInTheDocument();
     await expect(canvas.queryByRole("button")).not.toBeInTheDocument();
+  },
+};
+
+/** Gateway and Credit momentum list the retention measure, which changes their numbers, even at its default. */
+export const WithRetention: Story = {
+  name: "With the retention measure",
+  args: { facts: describeView("/uncf/gateway", "?retention_type=federal&gender=F", 530) },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText("Retention:").parentElement).toHaveTextContent("Retention: Back next fall");
+    await expect(canvas.getByText("Gender:").parentElement).toHaveTextContent("Gender: Female");
+    await expect(canvas.queryByText(/^Cohort:/)).not.toBeInTheDocument();
   },
 };
 
@@ -30,6 +42,6 @@ export const NoFilters: Story = {
   args: { facts: describeView("/uncf/dfw", "?cohort=2022-23", "too few") },
   play: async ({ canvas }) => {
     await expect(canvas.getByText("Cohort 2022-23 · Too few students to show")).toBeVisible();
-    await expect(canvas.getByText(/No filters/)).toBeVisible();
+    await expect(canvas.getByText("None. Every student in the cohort.")).toBeVisible();
   },
 };

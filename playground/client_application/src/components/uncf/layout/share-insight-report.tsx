@@ -7,19 +7,20 @@ import { explorerFontClass } from "./explorer-fonts";
 import { ExplorerMark } from "./explorer-header";
 import { explorerWrap } from "./explorer-styles";
 
-/** Who a shared tab counts, in words: the cohort, how many students, and each filter that isn't "All". */
-export type ReportFacts = { cohort: string; students: string | null; filters: string[]; date: string };
+/** Who a shared tab counts, in words: the cohort, how many students, and each filter that isn't "All" (Retention too). */
+export type ReportFacts = { cohort: string; students: string | null; filters: { label: string; value: string }[]; date: string };
 
 /** The facts for the tab at this address, read the same way the cohort bar reads them. */
 export function describeView(pathname: string, search: string, studentCount: StudentCount): ReportFacts {
   const definitions = cohortFiltersFor(pathname);
   const filters = readCohortFilters(new URLSearchParams(search), definitions);
-  const picked = definitions.filter((definition) => !definition.required && filters[definition.id] != null);
+  // The cohort leads the report on its own line; the retention measure changes the numbers, so it's listed.
+  const picked = definitions.filter((definition) => definition.id !== "cohort" && filters[definition.id] != null);
   return {
     cohort: filters.cohort ?? "",
     students:
       studentCount === "too few" ? "Too few students to show" : studentCount === null ? null : `${studentCount.toLocaleString("en-US")} students`,
-    filters: picked.map((definition) => `${definition.label}: ${filterValueLabel(definition, filters[definition.id] ?? null)}`),
+    filters: picked.map((definition) => ({ label: definition.label, value: filterValueLabel(definition, filters[definition.id] ?? null) })),
     date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
   };
 }
@@ -56,15 +57,24 @@ export function ShareInsightReport({ facts, width, ref, slotRef }: ShareInsightR
         </div>
       </header>
       <section className="border-b border-(--uncf-line) bg-(--uncf-band)">
-        <div className={cn(explorerWrap, "flex items-baseline gap-6 py-4 text-sm")}>
-          <p className="min-w-0 flex-1">
-            <b className="font-semibold">{who}</b>
-            <span className="text-(--uncf-ink-2)">
-              {" · "}
-              {facts.filters.length ? facts.filters.join(" · ") : "No filters"}
-            </span>
-          </p>
-          <span className="shrink-0 text-(--uncf-ink-3)">Shared {facts.date}</span>
+        <div className={cn(explorerWrap, "flex flex-col gap-3 py-4.5")}>
+          <div className="flex items-baseline gap-6">
+            <p className="min-w-0 flex-1 text-[17px] font-semibold">{who}</p>
+            <span className="shrink-0 text-sm text-(--uncf-ink-3)">Shared {facts.date}</span>
+          </div>
+          {/* Read-only pills, not the cohort bar's dropdowns: what was picked, for someone who can't change it. */}
+          <div className="flex flex-wrap items-center gap-2 text-sm">
+            <span className="mr-1 text-xs font-bold tracking-[0.08em] text-(--uncf-ink-2) uppercase">Filters</span>
+            {facts.filters.length ? (
+              facts.filters.map(({ label, value }) => (
+                <span key={label} className="rounded-full border border-(--uncf-line-2) bg-(--uncf-surface) px-3 py-1">
+                  <span className="text-(--uncf-ink-3)">{label}:</span> <b className="font-semibold">{value}</b>
+                </span>
+              ))
+            ) : (
+              <span className="text-(--uncf-ink-2)">None. Every student in the cohort.</span>
+            )}
+          </div>
         </div>
       </section>
       <div ref={slotRef} />

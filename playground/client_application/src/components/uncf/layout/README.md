@@ -15,11 +15,11 @@ It replaces the app's left sidebar on these pages, so the pages live in their ow
 
 **Share Insight** (`share-insight-button.tsx`) sits beside each tab's title: `ViewIntro` draws it, and Credit
 momentum, which draws its own heading, adds it there. It downloads the tab as one long PDF page with no page breaks.
-The PDF is a report, not a screenshot (`share-insight-report.tsx`): the Explorer's name and source, who's counted in
-words ("Cohort 2023-24 · 594 students · Pell (year 1): Pell recipient") instead of the tabs and cohort bar, then a copy
-of the tab. Mark a control `data-pdf-skip` to leave it out (sort menus, "Show 10 more", "Try again"). It's drawn in
-the browser (`html-to-image`, then `jspdf`), off screen, so the page doesn't change; the PDF's text is part of the
-picture, not selectable. It doesn't print: print lays the page out again for the paper and splits it.
+The PDF is a report, not a screenshot (`share-insight-report.tsx`): the Explorer's name and source, who's counted
+("Cohort 2023-24 · 594 students") with each filter picked as a read-only pill instead of the tabs and cohort bar, then
+a copy of the tab. Mark a control `data-pdf-skip` to leave it out (sort menus, "Show 10 more", "Try again"). It's
+drawn in the browser (`html-to-image`, then `jspdf`), off screen, so the page doesn't change; the PDF's text is part of
+the picture, not selectable. It doesn't print: print lays the page out again for the paper and splits it.
 
 The numbers come from the shared API (`api/route.py`), which takes every number from `measures/` and is mounted in
 the Playground server under `/api/v1`. The tabs do no counting. The numbers are calculated from the synthetic sample
