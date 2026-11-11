@@ -3,7 +3,7 @@ import { expect, within } from "storybook/test";
 
 import { ExplorerStoryFrame } from "@/components/uncf/layout/explorer-story-frame";
 
-import { gateway2023, gateway2024, gatewayFall2023, gatewayFederal2023, gatewayTooFew } from "./gateway-fixtures";
+import { gateway2023, gateway2024, gatewayFederal2023, gatewayPell2023, gatewayTooFew } from "./gateway-fixtures";
 import { GatewayView } from "./gateway-view";
 
 const meta = {
@@ -22,68 +22,77 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** 2023-24 from the real synthetic data, with the API's default retention (the PDP flag): the outcomes and the pairs. */
+/** 2023-24 from the real synthetic data: the course list, ENG 101's path, and the course pairs. */
 export const RealCourses: Story = {
   name: "2023-24 gateway courses",
   play: async ({ canvas, userEvent }) => {
-    // The institution flags its gateway courses, so there's no "inferred" notice.
+    // The institution flags its gateway courses, so there's no "not flagged" notice.
     await expect(canvas.queryByRole("note")).not.toBeInTheDocument();
 
-    const table = within(canvas.getByRole("table"));
-    const eng = table.getByRole("row", { name: /^ENG 101/ });
-    await expect(eng).toHaveTextContent("380");
-    await expect(within(eng).getByRole("img")).toHaveAccessibleName("73% passed (a–c), 20% d or f, 7% withdrew");
-    await expect(eng).toHaveTextContent("79%");
-    await expect(eng).toHaveTextContent("38%");
-    // The columns name the measure the numbers use, not a fixed "next fall".
-    await expect(table.getByRole("columnheader", { name: "Returned here if passed" })).toBeVisible();
-    await expect(canvas.queryByText(/next-fall/i)).not.toBeInTheDocument();
+    // Biggest course first, and selected: 297 of 384 passed on the first try, 313 in the end.
+    const eng = canvas.getByRole("button", { name: /^ENG 101/ });
+    await expect(eng).toHaveAttribute("aria-pressed", "true");
+    await expect(eng).toHaveTextContent("384");
+    await expect(eng).toHaveTextContent("77%");
+    await expect(eng).toHaveTextContent("82%");
+    await expect(canvas.getByText("passed on the first try: 297 of 384 students")).toBeVisible();
+    await expect(canvas.getByRole("img", { name: /Passed on the first try: 297, Retook it and passed: 16, Retook it, still didn’t pass: hidden, Didn’t pass, didn’t retake: 64/ })).toBeVisible();
 
-    // Both subjects show before "Show all": five English and five math courses.
-    const rows = table.getAllByRole("row").slice(1);
-    await expect(rows.filter((row) => row.textContent?.includes("· English"))).toHaveLength(5);
-    await expect(rows.filter((row) => row.textContent?.includes("· Math"))).toHaveLength(5);
-    await userEvent.click(canvas.getByRole("button", { name: "Show all 27 courses" }));
-    await expect(within(canvas.getByRole("table")).getAllByRole("row")).toHaveLength(28);
+    // With no filter, there's no group to compare.
+    await expect(canvas.getByText("Pick a group in the filters above to compare it with everyone else in each course.")).toBeVisible();
+    await expect(canvas.getByRole("option", { name: "Group furthest behind" })).toBeDisabled();
 
-    await expect(canvas.getByText(/^Cohort, returned here:/)).toHaveTextContent("Cohort, returned here: 52%");
-    await expect(canvas.getByText("−6 pts vs. cohort")).toBeVisible();
-    await expect(canvas.getByText("13 students took both in their first term")).toBeVisible();
-    await expect(canvas.getByText(/29 first attempts with an incomplete, audit or missing grade are left out/)).toBeVisible();
+    // Ten rows, then ten more of 27.
+    const list = canvas.getAllByRole("listitem");
+    await expect(list).toHaveLength(10);
+    await userEvent.click(canvas.getByRole("button", { name: "Show 10 more of 27" }));
+    await expect(canvas.getAllByRole("listitem")).toHaveLength(20);
+
+    // Sorting by the lowest first-try pass puts MAT 162 on top.
+    await userEvent.selectOptions(canvas.getByRole("combobox", { name: /Sort by/ }), "first");
+    await expect(canvas.getAllByRole("listitem")[0]).toHaveTextContent("MAT 162");
+
+    // Pairs are compared with everyone else, and say when a gap could be chance.
+    await expect(canvas.getByText(/Returned here, these students:/)).toHaveTextContent("52%");
+    await expect(canvas.getByText("6 of 13 students who took both in their first term: returned here · could be chance")).toBeVisible();
+    await expect(canvas.getByText(/^35 pairs have 10 or more students/)).toBeVisible();
   },
 };
 
-/** Retention set to Back next fall: the same courses, fall to fall retention, and every label says so. */
-export const FederalRetention: Story = {
+/** Fall to fall retention: the page names the measure the Retention filter picked. */
+export const BackNextFall: Story = {
   name: "Back next fall",
   args: { data: gatewayFederal2023 },
   play: async ({ canvas }) => {
-    const table = within(canvas.getByRole("table"));
-    await expect(table.getByRole("columnheader", { name: "Back next fall if passed" })).toBeVisible();
-    const eng = table.getByRole("row", { name: /^ENG 101/ });
-    await expect(eng).toHaveTextContent("76%");
-    await expect(eng).toHaveTextContent("34%");
-    await expect(canvas.getByText(/^Cohort, back next fall:/)).toHaveTextContent("Cohort, back next fall: 42%");
-    await expect(canvas.getByText("−34 pts vs. cohort")).toBeVisible();
+    await expect(canvas.getByText(/Back next fall, these students:/)).toHaveTextContent("42%");
+    await expect(canvas.getByText("1 of 13 students who took both in their first term: back next fall")).toBeVisible();
     await expect(canvas.getByText(/took a course here in Fall 2024, the fall after year 1/)).toBeVisible();
   },
 };
 
-/** Fall starters share a first term, so the pairs name it. */
-export const FallStarters: Story = {
-  name: "Fall starters",
-  args: { data: gatewayFall2023 },
-  play: async ({ canvas }) => {
-    await expect(canvas.getAllByText(/students took both in Fall 2023$/).length).toBeGreaterThan(0);
+/** Pell recipients: each course compares them with everyone else who took it. */
+export const PellRecipients: Story = {
+  name: "Pell recipients vs. everyone else",
+  args: { data: gatewayPell2023, groupLabel: "Pell (year 1): Pell recipient" },
+  play: async ({ canvas, userEvent }) => {
+    await expect(canvas.getByText("Comparing Pell (year 1): Pell recipient with everyone else who took each course.")).toBeVisible();
+    await expect(canvas.getByRole("button", { name: /^ENG 101/ })).toHaveTextContent("−6.2");
+    await expect(canvas.getByText("−6.2 pts")).toBeVisible();
+    await expect(canvas.getByText(/passes on the first try less often than everyone else\. Could be chance\./)).toBeVisible();
+
+    // Furthest behind first: ENG 121 at −17.7 points.
+    await userEvent.selectOptions(canvas.getByRole("combobox", { name: /Sort by/ }), "gap");
+    await expect(canvas.getAllByRole("listitem")[0]).toHaveTextContent("ENG 121");
+    await expect(within(canvas.getAllByRole("listitem")[0]).getByText("−17.7")).toBeVisible();
   },
 };
 
-/** The 2024-25 class: its second year is only partly in the data, and the page says so first. */
+/** The 2024-25 class: its next year is only partly in the data, and the page says so first. */
 export const ProvisionalClass: Story = {
-  name: "Second year still arriving",
+  name: "Next year still arriving",
   args: { data: gateway2024 },
   play: async ({ canvas }) => {
-    await expect(canvas.getByRole("note")).toHaveTextContent("The 2024-25 class’s second year is only partly in the data.");
+    await expect(canvas.getByRole("note")).toHaveTextContent("The next year is only partly in the data.");
   },
 };
 

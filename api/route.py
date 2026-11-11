@@ -28,6 +28,7 @@ from api import data
 from api.analyses import router as analytics_router
 from api.measure_by_group import clear_cache as clear_measure_cache
 from api.measure_by_group import is_provisional, measure_by_group
+from gap_finder.gateway import add_gateway_gaps
 from measures.definitions import all_definitions, definition_for
 from api.filters import (
     DEFAULT_RETENTION_TYPE,
@@ -134,7 +135,7 @@ def run_page(name: str, query: CohortQuery, *extra) -> dict:
         (course,) = extra
         body = dfw_course(cohort, course, filters, database)
     elif name == "gateway":
-        body = gateway_courses(cohort, filters, retention, database)
+        body = add_gateway_gaps(gateway_courses(cohort, filters, retention, database))
     else:
         body = credit_momentum(cohort, filters, retention, database)
     context = body.pop("context")
@@ -312,7 +313,7 @@ def get_dfw_course(course: str, bar: Annotated[Bar, Depends()]):
 
 @router.get("/gateway", response_model=GatewayResponse, responses=ERRORS)
 def get_gateway(bar: Annotated[Bar, Depends()]):
-    """Gateway courses: first attempts in year 1 (passed, D, F, W), retention, and the riskiest course pairs."""
+    """Gateway courses: each course's year 1 path (first try, in the end), retention, group gap and course pairs."""
     return answer(bar, "gateway")
 
 
