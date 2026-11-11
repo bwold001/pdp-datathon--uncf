@@ -75,7 +75,7 @@ export const DesignClass: Story = {
   },
 };
 
-/** With filters set, the page says who it covers, and Clear filters calls the cohort bar's reset. */
+/** With filters set, the page says who it covers, and Clear filters clears the cohort bar's added filters. */
 export const Filtered: Story = {
   args: { data: creditsFall2022Pell, filters: { text: "Fall · Pell recipient", onClear: fn() }, linkQuery: "cohort=2022-23&cohort_term=Fall&pell=Y" },
   play: async ({ args, canvas, userEvent }) => {

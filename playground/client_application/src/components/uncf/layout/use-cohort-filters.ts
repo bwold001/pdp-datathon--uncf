@@ -8,12 +8,8 @@ import {
   cohortFiltersFor,
   cohortFiltersToApiQuery,
   cohortFiltersToUrl,
-  defaultCohortFilters,
   readCohortFilters,
 } from "./cohort-filters";
-import { cohortFilters } from "./explorer-config";
-
-const allFilterIds = new Set(cohortFilters.map((definition) => definition.id));
 
 /**
  * The cohort bar's filters on this tab, read from and written to the URL, so a view can be shared and Back undoes a
@@ -55,7 +51,5 @@ export function useCohortFilters() {
       const cleared = definitions.filter((definition) => definition.place === "menu").map((definition) => [definition.id, definition.defaultValue ?? null]);
       navigate({ ...filters, ...Object.fromEntries(cleared) }, () => true);
     },
-    /** Every filter back to its default, on every tab. The page's own query values (a sort order) stay. */
-    reset: () => navigate(defaultCohortFilters(definitions), (key) => !allFilterIds.has(key)),
   };
 }

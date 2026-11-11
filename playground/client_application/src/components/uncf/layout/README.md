@@ -38,7 +38,7 @@ Copy the Student paths tab (`components/uncf/paths/`): a page with a `ViewIntro`
 
 - **Filters.** `useCohortFilters()` gives `filters` (each value, `null` for "All") and `apiQuery`, the same as query
   values for your endpoint. Load with `explorerLoader<YourResponse>("/uncf/your-page", apiQuery)` inside `useMemo`,
-  then `useApiResource(load)`. The filters live in the URL (`?cohort=2022-23&pell=Y`), so a view can be shared, Back
+  then `useExplorerResource(load)`. The filters live in the URL (`?cohort=2022-23&pell=Y`), so a view can be shared, Back
   works, and the ones someone set carry across tabs. A tab's own query values (a sort order) stay on that tab.
 - **Retention.** Gateway and Credit momentum show a Retention setting beside "Add filter": `school` (the PDP flag,
   "Returned here", the API's default) or `federal` ("Back next fall"). Name the measure from the answer's
@@ -46,7 +46,8 @@ Copy the Student paths tab (`components/uncf/paths/`): a page with a `ViewIntro`
 - **No math in the tab.** Shares, gaps, totals and hiding come from the API (`measures/`); a tab only formats and
   draws them.
 - **Student count.** `useShowStudentCount(count)` puts your tab's count in the bar's sentence ("1,114 first-time
-  students who entered in 2023-24"). Pass "too few" when the tab hides its numbers.
+  students who entered in 2023-24"). Pass "too few" when the tab hides its numbers, and null while it loads or while
+  `useExplorerResource`'s `current` is false (the last filters' answer is still on screen).
 - **Parts.** `explorer-parts.tsx` has the design's `Card`, `CardHead`, `KpiGrid` and `Kpi`, `Legend`, `TrackBar`,
   `Counted` ("How it's counted"), `Notice`, `MessageCard` (too few students, or an error) and `LoadingBlock`.
 - **Hidden numbers.** The API sends groups under `meta.min_students` as `null` (the server's `UNCF_MIN_STUDENTS`,

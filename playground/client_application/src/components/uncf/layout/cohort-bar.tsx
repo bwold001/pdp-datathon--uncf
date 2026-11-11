@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import { useMemo } from "react";
 
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { useApiResource } from "@/hooks/use-api-resource";
 import { cn } from "@/lib/utils";
 
 import { type CohortFilters, cohortFiltersFor, defaultCohortFilters, filterChips, sentenceWord } from "./cohort-filters";
@@ -17,6 +16,7 @@ import { explorerLinkButton, explorerWrap } from "./explorer-styles";
 import { AddFilterMenu, FilterSheet, SentencePicker, type ValueCounts } from "./filter-menu";
 import { hidesSmallGroups, privacyNote, tooFew } from "./small-groups";
 import { useCohortFilters } from "./use-cohort-filters";
+import { useExplorerResource } from "./use-explorer-resource";
 
 /** The grey cohort bar under the tabs, wired to the URL and the API's counts. Every tab reads the same filters. */
 export function CohortBar() {
@@ -24,9 +24,9 @@ export function CohortBar() {
   const { studentCount } = useExplorer();
   const cohort = filters.cohort ?? "";
   const load = useMemo(() => explorerLoader<CohortOptions>("/uncf/cohort-options", `cohort=${encodeURIComponent(cohort)}`), [cohort]);
-  const { resource } = useApiResource(load);
-  // Counts are optional: if they can't load, the bar still works without them.
-  const options = resource.status === "success" ? resource.data : undefined;
+  const { resource, current } = useExplorerResource(load);
+  // Counts are optional: if they can't load, the bar still works without them. A past class year's counts aren't shown.
+  const options = resource.status === "success" && current ? resource.data : undefined;
   return (
     <CohortBarView
       definitions={definitions}
@@ -131,7 +131,6 @@ export function CohortBarView({ definitions = cohortFilters, filters, options, s
               onChange={change}
               countsNote={countsNote}
               summary={summary}
-              showLabel={showLabel(studentCount, minStudents)}
               activeCount={chips.length}
               onClearAll={() => onClearFilters?.()}
               disabled={disabled}
@@ -156,7 +155,7 @@ export function CohortBarView({ definitions = cohortFilters, filters, options, s
           ))}
           {chips.length > 0 && (
             <button type="button" className={cn(explorerLinkButton, "flex-none text-sm max-md:hidden")} onClick={() => onClearFilters?.()} disabled={disabled}>
-              Clear all
+              Clear filters
             </button>
           )}
         </div>
@@ -176,13 +175,6 @@ function countText(filters: CohortFilters, chipCount: number, studentCount: Stud
   const type = filters.enrollment_type ?? null;
   const size = type === null ? options.cohorts[filters.cohort ?? ""] : options.filters.enrollment_type?.[type];
   return size == null ? null : size.toLocaleString("en-US");
-}
-
-/** The sheet's button: "Show 351 students", until the tab has a count. */
-function showLabel(studentCount: StudentCount, minStudents = 1): string {
-  if (studentCount === "too few") return `${tooFew(minStudents)} match`;
-  if (studentCount === null) return "Show students";
-  return `Show ${studentCount.toLocaleString("en-US")} students`;
 }
 
 /** The ⓘ after the sentence: why some groups have no numbers. Only shown when the API hides small groups. */

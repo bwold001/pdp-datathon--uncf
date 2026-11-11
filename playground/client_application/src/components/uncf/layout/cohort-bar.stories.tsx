@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { getRouter } from "@storybook/nextjs-vite/navigation.mock";
+import { useState } from "react";
 import { expect, fn, waitFor, within } from "storybook/test";
 
 import { cohortOptions2023 } from "@/components/uncf/paths/paths-fixtures";
@@ -7,9 +8,10 @@ import { cohortOptions2023 } from "@/components/uncf/paths/paths-fixtures";
 import { CohortBar, CohortBarView } from "./cohort-bar";
 import { cohortFiltersFor, defaultCohortFilters } from "./cohort-filters";
 import { cohortFilters } from "./explorer-config";
-import { ExplorerProvider } from "./explorer-context";
+import { ExplorerProvider, useExplorer, useShowStudentCount } from "./explorer-context";
 import { ExplorerStoryFrame } from "./explorer-story-frame";
 import { FilterSheet } from "./filter-menu";
+import { useExplorerResource } from "./use-explorer-resource";
 
 const meta = {
   component: CohortBar,
@@ -50,25 +52,25 @@ export const AddAFilter: Story = {
   },
 };
 
-/** Each filter set is a chip: × removes it, and Clear all removes them all but keeps the class year. */
+/** Each filter set is a chip: × removes it, and Clear filters removes them all but keeps the class year and enrollment type. */
 export const ChipsAndClearAll: Story = {
-  name: "Chips and Clear all",
+  name: "Chips and Clear filters",
   parameters: { nextjs: { appDirectory: true, navigation: { pathname: "/uncf/dfw", query: { cohort: "2022-23", pell: "Y", race: "Asian" } } } },
   play: async ({ canvas, userEvent }) => {
     await expect(canvas.getByRole("button", { name: "Remove Pell recipient" })).toBeVisible();
     await userEvent.click(canvas.getByRole("button", { name: "Remove Asian" }));
     await expect(getRouter().push).toHaveBeenLastCalledWith("/uncf/dfw?cohort=2022-23&pell=Y", { scroll: false });
-    await userEvent.click(canvas.getByRole("button", { name: "Clear all" }));
+    await userEvent.click(canvas.getByRole("button", { name: "Clear filters" }));
     await expect(getRouter().push).toHaveBeenLastCalledWith("/uncf/dfw?cohort=2022-23", { scroll: false });
   },
 };
 
-/** With nothing added, the bar is one line: no chips, no Clear all. */
+/** With nothing added, the bar is one line: no chips, no Clear filters. */
 export const NothingAdded: Story = {
   name: "Nothing added",
   play: async ({ canvas }) => {
     await expect(canvas.queryByRole("button", { name: /^Remove / })).not.toBeInTheDocument();
-    await expect(canvas.queryByRole("button", { name: "Clear all" })).not.toBeInTheDocument();
+    await expect(canvas.queryByRole("button", { name: "Clear filters" })).not.toBeInTheDocument();
   },
 };
 
@@ -117,14 +119,14 @@ export const RetentionOnlyWhereUsed: Story = {
   },
 };
 
-/** Clear all keeps what this tab doesn't show (a retention measure set on Gateway) and the page's own values. */
+/** Clear filters keeps what this tab doesn't show (a retention measure set on Gateway) and the page's own values. */
 export const ClearAllKeepsHiddenFilters: Story = {
-  name: "Clear all keeps filters other tabs show",
+  name: "Clear filters keeps filters other tabs show",
   parameters: {
     nextjs: { appDirectory: true, navigation: { pathname: "/uncf/dfw", query: { pell: "Y", retention_type: "federal", sort: "rate" } } },
   },
   play: async ({ canvas, userEvent }) => {
-    await userEvent.click(canvas.getByRole("button", { name: "Clear all" }));
+    await userEvent.click(canvas.getByRole("button", { name: "Clear filters" }));
     await expect(getRouter().push).toHaveBeenCalledWith("/uncf/dfw?retention_type=federal&sort=rate", { scroll: false });
   },
 };
@@ -181,7 +183,7 @@ export const SmallGroupsShown: Story = {
   },
 };
 
-/** On a phone, one Filters button opens every filter in a sheet; a pick goes back to the list, Show closes it. */
+/** On a phone, one Filters button opens every filter in a sheet; a pick applies at once and goes back to the list, Done closes it. */
 export const PhoneSheet: Story = {
   name: "Phone sheet",
   render: () => (
@@ -192,7 +194,6 @@ export const PhoneSheet: Story = {
       onChange={sheetChange}
       countsNote="Counts are the 2023-24 class’s students with each value, before other filters."
       summary="594 first-time students who entered in 2023-24"
-      showLabel="Show 594 students"
       activeCount={1}
       onClearAll={sheetClearAll}
     />
@@ -207,10 +208,48 @@ export const PhoneSheet: Story = {
     await userEvent.click(within(sheet).getByRole("button", { name: /^Female/ }));
     await expect(sheetChange).toHaveBeenCalledWith("gender", "F");
     await expect(within(sheet).getByRole("group", { name: "Demographics" })).toBeVisible();
-    await userEvent.click(within(sheet).getByRole("button", { name: "Clear all" }));
+    await userEvent.click(within(sheet).getByRole("button", { name: "Clear filters" }));
     await expect(sheetClearAll).toHaveBeenCalled();
-    await userEvent.click(within(sheet).getByRole("button", { name: "Show 594 students" }));
+    await userEvent.click(within(sheet).getByRole("button", { name: "Done" }));
     // The sheet stays mounted while it animates closed.
     await waitFor(() => expect(page.queryByRole("dialog", { name: "Filters" })).not.toBeInTheDocument());
+  },
+};
+
+// The Pell answer, held until the story lets it arrive.
+let sendPellAnswer: (students: number) => void = () => {};
+const everyoneAnswer = () => Promise.resolve(1114);
+const pellAnswer = () => new Promise<number>((resolve) => (sendPellAnswer = resolve));
+
+/** A tab that loads its count like the real ones, and a button that adds Pell as the bar's "Add filter" would. */
+function TabWithSlowAnswer() {
+  const [pell, setPell] = useState(false);
+  const { resource, current } = useExplorerResource(pell ? pellAnswer : everyoneAnswer);
+  useShowStudentCount(resource.status !== "success" || !current ? null : resource.data);
+  const { studentCount } = useExplorer();
+  const filters = { ...defaultCohortFilters(paths), pell: pell ? "Y" : null };
+  return (
+    <>
+      <CohortBarView definitions={paths} filters={filters} options={cohortOptions2023} studentCount={studentCount} />
+      <button type="button" onClick={() => setPell(true)}>
+        Add Pell
+      </button>
+    </>
+  );
+}
+
+/** While the new filters' answer loads, the sentence drops the last filters' count instead of pairing it with them. */
+export const CountWhileNewFiltersLoad: Story = {
+  name: "Count while new filters load",
+  render: () => <TabWithSlowAnswer />,
+  play: async ({ canvas, userEvent }) => {
+    const sentence = () => canvas.getByText(/who entered in/).closest("p");
+    await waitFor(() => expect(sentence()).toHaveTextContent("1,114 first-time students who entered in 2023-24"));
+    await userEvent.click(canvas.getByRole("button", { name: "Add Pell" }));
+    await expect(canvas.getByRole("button", { name: "Remove Pell recipient" })).toBeVisible();
+    await expect(sentence()).not.toHaveTextContent("1,114");
+    await expect(sentence()).toHaveTextContent("Showing first-time students who entered in 2023-24");
+    sendPellAnswer(594);
+    await waitFor(() => expect(sentence()).toHaveTextContent("594 first-time students who entered in 2023-24"));
   },
 };

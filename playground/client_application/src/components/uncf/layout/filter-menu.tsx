@@ -206,15 +206,13 @@ export function AddFilterMenu({ disabled, ...picker }: AddFilterMenuProps) {
 type FilterSheetProps = FilterPickerProps & {
   /** Who's shown, in words, under the title. */
   summary: string;
-  /** The button that closes the sheet: "Show 351 students". */
-  showLabel: string;
   activeCount: number;
   onClearAll: () => void;
   disabled?: boolean;
 };
 
-/** On a phone: one "Filters" button that opens every "Add filter" filter in a sheet from the bottom. */
-export function FilterSheet({ summary, showLabel, activeCount, onClearAll, disabled, ...picker }: FilterSheetProps) {
+/** On a phone: one "Filters" button that opens every "Add filter" filter in a sheet from the bottom. A pick applies at once. */
+export function FilterSheet({ summary, activeCount, onClearAll, disabled, ...picker }: FilterSheetProps) {
   const [open, setOpen] = useState(false);
   return (
     <Dialog.Root open={open} onOpenChange={setOpen}>
@@ -247,9 +245,9 @@ export function FilterSheet({ summary, showLabel, activeCount, onClearAll, disab
           </div>
           <div className="flex items-center justify-between gap-3 border-t border-(--uncf-line) px-4 pt-3 pb-6">
             <button type="button" className={explorerLinkButton} onClick={onClearAll}>
-              Clear all
+              Clear filters
             </button>
-            <Dialog.Close className={cn(explorerPrimaryButton, "min-h-12 px-5")}>{showLabel}</Dialog.Close>
+            <Dialog.Close className={cn(explorerPrimaryButton, "min-h-12 px-5")}>Done</Dialog.Close>
           </div>
         </Dialog.Popup>
       </Dialog.Portal>
