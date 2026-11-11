@@ -446,6 +446,13 @@ class HiddenTableRow(Contract):
     """Represent a hidden row with no cells, numerical inputs or formula text."""
 
     status: HiddenStatus
+    path: Text | None = None
+
+
+class TablePage(Contract):
+    """Carry another immutable receipt page without requerying its source."""
+
+    rows: Annotated[tuple[Annotated[Union[VisibleTableRow, HiddenTableRow], Field(discriminator="status")], ...], Field(min_length=1, max_length=200)]
 
 
 class TablePayload(Contract):
@@ -454,6 +461,7 @@ class TablePayload(Contract):
     kind: Literal["table"]
     columns: Annotated[tuple[TableColumn, ...], Field(min_length=1, max_length=32)]
     rows: Annotated[tuple[Annotated[Union[VisibleTableRow, HiddenTableRow], Field(discriminator="status")], ...], Field(max_length=200)]
+    pages: Annotated[tuple[TablePage, ...], Field(max_length=63)] = ()
 
     @model_validator(mode="after")
     def typed_cells(self):
@@ -461,7 +469,9 @@ class TablePayload(Contract):
         names = [c.id for c in self.columns]
         if len(names) != len(set(names)) or "student_id" in names:
             raise ValueError("columns must be unique and cannot expose student_id")
-        for row in self.rows:
+        if self.pages and (len(self.rows) != 200 or any(len(p.rows) != 200 for p in self.pages[:-1])):
+            raise ValueError("only the final receipt page may be shorter than 200 rows")
+        for row in (*self.rows, *(row for page in self.pages for row in page.rows)):
             if isinstance(row, HiddenTableRow):
                 continue
             if len(row.cells) != len(self.columns):

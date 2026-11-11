@@ -28,7 +28,7 @@
         "chat_app.py": {
           "maxDuration": 120,
           "includeFiles": "{playground/server_application/app/**,analytics/config/**,normalized-data-model/output/pdp.sqlite}",
-          "excludeFiles": "{playground/client*/**,**/tests/**,**/.venv/**,.venv/**,**/.env*,.env*,**/docs/**,docs/**,notebooks/**,mcp/**,gap_finder/**,data/**,normalized-data-model/data/**,normalized-data-model/logs/**,normalized-data-model/output/tables/**}"
+          "excludeFiles": "{playground/client*/**,**/tests/**,**/.venv/**,.venv/**,**/.env*,.env*,**/docs/**,docs/**,notebooks/**,mcp/**,data/**,normalized-data-model/data/**,normalized-data-model/logs/**,normalized-data-model/output/tables/**}"
         }
       }
     }

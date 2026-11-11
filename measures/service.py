@@ -18,7 +18,7 @@ _PAGES = {
 }
 
 
-def execute(operation_id, parameters, snapshot):
+def execute(operation_id, parameters, snapshot, *, include_evidence=False):
     """Borrow the supplied snapshot and return owner results without changing any formulas."""
     spec = OPERATIONS[operation_id]
     parameters = spec.parameters.model_validate(parameters)
@@ -44,6 +44,8 @@ def execute(operation_id, parameters, snapshot):
     options = {"cohort": parameters.cohort, "filters": filters, "snapshot": snapshot}
     if hasattr(parameters, "retention_type"):
         options["retention_measure"] = RETENTION_MEASURES[parameters.retention_type]
+    if operation_id == "credit_momentum.summary" and include_evidence:
+        options["include_evidence"] = True
     if operation_id == "dfw.course_detail":
         options["course"] = parameters.course
     if operation_id == "student_paths.summary":

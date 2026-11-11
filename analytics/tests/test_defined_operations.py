@@ -234,14 +234,53 @@ def test_page_limits_refuse_whole_result_and_explicit_hidden_components_are_scru
         "credit_momentum.summary",
         False,
     )
-    assert hidden.payload.rows[0].model_dump() == {"status": "suppressed"}
+    assert hidden.payload.rows[0].model_dump() == {
+        "status": "suppressed",
+        "path": "secret",
+    }
     empty = _page_result({"pairs": []}, "gateway.course_outcomes", False)
     assert empty.payload.rows[0].cells == (
         "pairs",
         None,
         "no entries",
         "empty collection",
+        None,
     )
+    paged = _page_result(
+        {"values": list(range(601))}, "credit_momentum.summary", False
+    ).payload
+    rows = [*paged.rows, *(r for p in paged.pages for r in p.rows)]
+    assert len(paged.rows) == 200 and len(paged.pages) == 3
+    assert [r.cells[1] for r in rows] == list(range(601))
+    assert rows[-1].cells[0] == "values[600]"
     with pytest.raises(OperationError) as error:
-        _page_result({"values": list(range(201))}, "credit_momentum.summary", False)
+        _page_result({"values": list(range(12801))}, "credit_momentum.summary", False)
     assert error.value.code == "limit_exceeded"
+
+
+def test_v2_credit_tiers_keep_known_retention_denominator(defined_data):
+    """Twelve tier members include ten known outcomes and six retained: 6/10=.6."""
+    with sqlite3.connect(defined_data) as connection:
+        connection.execute(
+            "UPDATE cohort_membership SET retention=NULL WHERE student_id IN ('s10', 's11')"
+        )
+    with sqlite_snapshot(defined_data) as snapshot:
+        result = (
+            AnalysisService(Coverage())
+            .execute(
+                request("credit_momentum.summary", retention_type="school"), snapshot
+            )
+            .result
+        )
+    rows = {
+        row.cells[0]: row.cells
+        for row in (
+            *result.payload.rows,
+            *(r for p in result.payload.pages for r in p.rows),
+        )
+        if row.status == "ok"
+    }
+    assert rows["tiers[0].students"][1] == 12
+    assert rows["tiers[0].rate"][1] == 0.6
+    assert rows["tiers[0].rate"][4] == 10
+    assert rows["tiers[0].share"][4] == 12
