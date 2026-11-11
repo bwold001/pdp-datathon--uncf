@@ -9,22 +9,20 @@ class DisclosureProfile:
     """Name an application-selected policy without accepting request-level threshold overrides."""
 
     id: str
-    version: str = "1"
-    minimum: int = 10
+    version: str = "2"
+    minimum: int = 1
 
     def sample_visible(self, distinct_units):
-        """Check the existing minimum sample boundary, including zero-sized populations."""
+        """Require a nonempty population without a minimum-size suppression rule."""
         return distinct_units >= self.minimum
 
     def visible_count(self, count):
-        """Preserve dashboard zero counts while hiding positive counts below its minimum."""
-        return None if count is None or 0 < count < self.minimum else count
+        """Preserve every known dashboard count, including zero."""
+        return count
 
     def small_cell(self, count, *, threshold=None):
-        """Identify a small positive cell; trusted legacy fixture configuration may set its threshold."""
-        return count is not None and 0 < count < (
-            self.minimum if threshold is None else threshold
-        )
+        """Retain the compatibility predicate without hiding small cells or honoring old thresholds."""
+        return False
 
     def dashboard_status(self, measure, status, *, provisional=False):
         """Preserve dashboard gateway nonreporting and explicit provisional coverage semantics."""

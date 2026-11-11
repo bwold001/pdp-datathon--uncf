@@ -1,7 +1,7 @@
-"""What every page breakdown shares: the students a filter picks, small group hiding, terms and result rows.
+"""What every page breakdown shares: the students a filter picks, visible counts, terms and result rows.
 
 Rates come from run_measure; this module only picks students and counts within sets of them (a course's takers,
-a credit tier) with the same rule: fewer than 10 students is hidden, never shown as 0.
+a credit tier) with the same rule: unknown counts stay missing; every known count is shown.
 """
 from __future__ import annotations
 
@@ -18,16 +18,15 @@ from ..calculations.sql_counts import SAFE_YEAR, filters_sql, group_value_sql, n
 from ..models import (
     ALLOWED_VALUES,
     EVERYONE,
-    SUPPRESSION_THRESHOLD,
     Cohort,
     Group,
     GroupDimension,
     Measure,
     MeasureResult,
+    min_students,
 )
 from ..run_measures import DEFAULT_DATABASE, run_measure
 
-MIN_STUDENTS = SUPPRESSION_THRESHOLD
 SEASONS = ("FALL", "WINTER", "SPRING", "SUMMER")
 # The student dimensions a page can filter or group by, in the cohort bar's order.
 STUDENT_DIMENSIONS = (
@@ -122,7 +121,7 @@ def listed_value(dimension: str, normalized: str) -> str:
 
 
 def shown(count: int | None) -> int | None:
-    """A count as a page may show it: groups of 1 to 9 students are hidden (None), never shown as 0."""
+    """A count as a page may show it: every known count, including zero, is shown."""
     return DASHBOARD_V1.visible_count(count)
 
 
@@ -134,9 +133,9 @@ def share(count: int | None, total: int | None) -> float | None:
 
 
 def retained_share(answers: dict[str, int | None], students: Iterable[str]) -> dict:
-    """How many of these students were retained, for a breakdown (a course, a tier, a pair). Hidden under 10."""
+    """How many of these students were retained, for a breakdown (a course, a tier, a pair). Unavailable when no retention outcomes are known."""
     known = [sid for sid in students if answers.get(sid) is not None]
-    if len(known) < MIN_STUDENTS:
+    if len(known) < min_students():
         return {"students": None, "retained": None, "rate": None}
     back = sum(answers[sid] for sid in known)
     return {"students": len(known), "retained": back, "rate": share(back, len(known))}

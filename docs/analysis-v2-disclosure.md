@@ -1,45 +1,43 @@
-# Versioned disclosure and API parity
+# Versioned visibility and API parity
 
-[Issue #50](https://github.com/bwold001/pdp-datathon--uncf/issues/50) centralizes existing display rules and adds a conservative disclosure boundary for a future complete v2 plan. All fixtures/results are synthetic. Existing dashboard numerical policy is preserved; this migration does not repair its documented cross-result subtraction issue.
+[Issue #50](https://github.com/bwold001/pdp-datathon--uncf/issues/50) centralizes result visibility and shared execution. All fixtures/results are synthetic. Every nonempty group is eligible for display, including groups of one. There is no minimum-size, numerator, complement, exclusion, linked-family or overlap suppression rule.
 
 ## Owners and profiles
 
-`measures/disclosure.py` contains the dependency-free policy definitions and predicates. Measures/models cannot import analytics orchestration without creating a cycle, so `analytics/disclosure.py` builds legacy projection and plan-level exploration handling on those definitions. Each registered profile has version `1` and a default minimum of ten:
+`measures/disclosure.py` contains dependency-free profile definitions. `analytics/disclosure.py` validates staged evidence and projects complete plan results. Each registered profile now has version `2` and minimum sample `1`:
 
 | Application-selected profile | Behavior |
 | --- | --- |
-| `dashboard_v1` | Existing per-owner dashboard rules: scalar suppression counts distinct students, page components keep their existing populations/rules, zero page counts remain visible, and gateway missing reporting remains `not_reported`. A small numerator/complement alone does not newly suppress a dashboard rate. |
-| `legacy_analytics_v1` | Existing legacy small count/numerator/denominator/complement/exclusion checks, linked-family suppression, and safe overall-total exception. The trusted coverage configuration retains its existing threshold setting; fixture threshold one is not a request parameter. |
-| `exploration_v1` | At least ten distinct analysis units; safe binary complements, exclusion counts and comparison inputs; conservative whole-family and mixed-plan withholding. No model-selected policy/threshold is accepted. |
+| `dashboard_v1` | Every nonempty scalar population and page group is visible. Known zero counts remain visible; empty populations have no rate. Gateway missing reporting remains `not_reported`. |
+| `legacy_analytics_v1` | Small counts, numerators, denominators, complements and exclusions remain visible, together with linked totals and groups. |
+| `exploration_v1` | Valid nonempty samples and comparison inputs remain visible, including small cells and linked or overlapping scopes. |
 
-Legacy projection has one implementation, `suppress_legacy`; `analytics/presentation.py` retains compatible helper exports. Legacy service execution applies that policy once. The former inactive registry label `legacy_v1` is corrected to the canonical `legacy_analytics_v1`; the legacy behavior is unchanged. Catalog metadata is now `defined-2` and includes policy version, population/grain, partitions, measures and the possibility of overlap between scopes. Different operation IDs/cohort labels do not prove disjoint populations.
+Profile IDs remain stable for compatibility; their version changes identify the new behavior. Catalog `defined-3` advertises version `2`, population/grain, minimum sample, partitions, measures and possible overlap. `UNCF_MIN_STUDENTS` and legacy `suppression_threshold` settings cannot reenable hiding. The old `has_small_cell` and `suppress_legacy` helper exports remain callable as no-ops for compatibility; service execution no longer applies legacy suppression.
 
-The dashboard runner's threshold and component predicates now come from the versioned profile. Measures/page owners still perform their existing disclosure at calculation time; adapters never rerun dashboard output through legacy suppression. `OperationEvidence` carries the registry-selected policy ID/version. `stage_defined(step_id, spec, evidence)` checks that stamp and operation version, then stages the already-disclosed result without applying another policy.
+`OperationEvidence` carries the registry-selected policy ID/version. `stage_defined(step_id, spec, evidence)` validates that stamp and the operation version without reapplying a visibility policy. Evidence stamped with an earlier policy version must be recomputed before staging under version `2`. Previously stored receipts remain historical artifacts; removing suppression cannot reconstruct values omitted from them.
 
 ## Dashboard/API/CSV execution
 
-Dashboard page routes and both `/measures/{measure}` and legacy `/results` dispatch through `measures.service.execute` on a caller-owned read transaction. Load timestamps are read from that transaction. Existing API response shapes/statuses, metadata, query defaults, formulas and caches remain supported. JSON and CSV consume the same cached disclosed result objects.
+Dashboard page routes and both `/measures/{measure}` and legacy `/results` dispatch through `measures.service.execute` on a caller-owned read transaction. Load timestamps come from that transaction. Existing API response shapes, formulas, query defaults and caches remain supported. JSON and CSV consume the same cached result objects.
 
-One export defect was found by the new acceptance tests: DFW detail stores `groups` as dimension-keyed lists, while the previous CSV loop treated it as a flat list and crashed. Export now flattens each existing group record with its dimension. Other page list exports retain their existing layout. No counts or suppression rules change for this correction.
+DFW detail stores `groups` as dimension-keyed lists. Its exporter flattens those existing records with a `dimension` column rather than treating the dictionary as a flat list. Other page list exports retain their layout.
 
-Independent fixture checks prove that a dashboard result with one retained student out of twelve remains visible in JSON, CSV and a serialized v2 receipt, even though the legacy policy would suppress that numerator. Existing tests continue covering fractional credit completion, DFW enrollments versus distinct students, page denominators, hidden groups, exclusions, provisional status and gateway nonreporting. No v2 HTTP route is enabled here.
+Groups of one through nine, fractional credit numerators, DFW enrollment counts and one-of-twelve rates remain visible through JSON, CSV and v2 evidence. Missing values, unknown outcomes, incomplete coverage, provisional states and gateway nonreporting retain their existing meaning. Empty populations have no rate. The historical `suppressed` status remains in response contracts for compatibility and empty-population results; it no longer means a nonempty group failed a size threshold. No v2 HTTP route is enabled here.
 
-## Complete-plan protection boundary
+## Complete-plan projection
 
-`disclose_plan(staged, relations)` accepts one to four unique internal `StagedEvidence` records and returns only typed `DisclosedStep` projections. Inputs contain trusted executor facts: distinct-unit count, binary/exclusion counts, group unit counts and optional linked partition-family identity. These facts and `DisclosureRelation` records must come from registry/executor code, never provider/client parameters. This module does not derive exact overlap proofs from natural language or arbitrary query strings.
+`disclose_plan(staged, relations)` accepts one to four unique internal `StagedEvidence` records and returns typed `DisclosedStep` projections. Executor facts and `DisclosureRelation` records remain application-owned, not model/client parameters. Unknown, overlapping, partitioned and linked populations are all permitted; relationships do not withhold numerical results.
 
-For exploration, means/correlations must match the declared distinct sample; counts/rates check small complements, and comparisons require visible input-group sample sizes. Tables require group unit counts for every row and conservative checks of integer cells. Missing sample/group evidence fails closed. Existing unavailable/unknown/unobservable result statuses are preserved without inventing numbers.
+Exploration validation still rejects inconsistent evidence: missing or nonpositive distinct-unit counts, negative count metadata, binary counts that do not partition the declared population, inconsistent mean/correlation sample sizes, counts above the population, rate denominator mismatches, and tables without input-group evidence for every row. These are validation errors, not suppression results. Valid one-unit inputs and zero complements are permitted.
 
-Unsafe linked families withhold exploratory totals, differences, exclusions and other payload cells. A hidden defined input can also protect an exploratory sibling in that family even when the category populations are disjoint. Defined dashboard output is preserved. Every exploratory step with another plan step is withheld unless a trusted registry relation establishes disjointness; recognized overlap, partition relationships and unknown/missing relationships all withhold its numerical evidence. The policy deliberately does not infer safe compatibility for overlapping exploratory queries. Even with disjointness, local/family checks still run.
+Existing unavailable, unknown and unobservable results remain hidden because their values are not known. Historical hidden results are preserved without inventing payloads. `comparisons_allowed` is false for a result with hidden inputs; a hidden sibling does not suppress otherwise valid evidence. The projection contains no staged metadata or generated numerical narrative.
 
-Withheld results contain only a hidden status/reason. The returned `comparisons_allowed` flag is false for withheld evidence or results with hidden inputs; callers must omit derived ranks and narrative comparisons. The projector returns no staged raw counts, relationship metadata or free-text conclusions. Subsequent receipt assembly must use this projected result and application-controlled metadata, not copy numerical prose from an internal calculation or provider response.
+The actual plan executor and exploratory registry remain later work. They must stage the actual returned response set after transaction cleanup, validate evidence, and bind policy/context versions into receipts and fingerprints. No new exploration endpoint is enabled by this change.
 
-The actual plan executor and exploratory registry remain later work. They must stage the whole actual returned set after transaction cleanup, supply trustworthy unit/family/relationship facts, call this boundary once before serialization, and bind policy/context versions into the fingerprint and receipt. An operation-local call alone does not establish complete-plan safety. A partial plan must project its actual surviving set, rather than assuming a planned but failed step was returned.
+## Impact and validation
 
-This boundary does not change defined-only dashboard subtraction behavior, account across requests/conversation history, or protect unlimited repeated queries over real student data. Broader dashboard complementary suppression requires a coordinated policy/version and dashboard/API/CSV expectation change. Production disclosure accounting is separate scope.
+Small groups can now appear in rankings and comparisons. Their rates can change sharply with a single student. Removing linked and overlap suppression also permits subtraction across related aggregates. This policy provides no minimum-size privacy protection or protection against inference from repeated queries if real student data is used. It changes visibility, not metric formulas, populations or denominators.
 
-## Validation and next task
+Tests cover groups of one through nine, small complements/exclusions, linked totals, recognized/unknown overlap, disjoint results, malformed metadata, policy-version binding, missing evidence, and JSON/CSV/final-receipt parity. Route spies verify shared service execution and cache reuse for export. Run `make check-fast` and full `make check`; PostgreSQL and live-provider checks remain environment-dependent.
 
-Tests cover existing dashboard and legacy behavior, policy binding, hidden input preservation, each supported statistic shape, small binary/exclusion cells, linked partitions, mixed-plan recognized/unknown overlap, proven disjointness, malformed relationships, and JSON/CSV/final-receipt boundaries. API dispatch spies verify every page and both scalar URLs use the shared service once, including reuse for export.
-
-Run focused disclosure/API tests, then `make check-fast` and full `make check`. PostgreSQL and live-provider verification remain environment-dependent; SQLite tests do not establish backend parity. No client/Playground source changes are required. Next planned work is [issue #51](https://github.com/bwold001/pdp-datathon--uncf/issues/51).
+Next planned work is [issue #51](https://github.com/bwold001/pdp-datathon--uncf/issues/51).

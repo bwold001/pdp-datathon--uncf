@@ -105,7 +105,6 @@ DEFINITIONS: dict[str, Definition] = {
         "limits": [
             "F is an F or a numeric grade under 0.7. D is 0.7 to under 2.0, so a C minus counts. W is a withdrawal.",
             "Incomplete, audit, missing and other grades aren't final, so they are left out.",
-            "A course or group with fewer than 10 students is hidden.",
         ],
     },
     "credit_completion": {
@@ -168,7 +167,7 @@ def school() -> str | None:
 
 def definition_for(measure: str) -> Definition:
     """The definition for one measure, with the school's own name when it has one. KeyError if there is none."""
-    definition = DEFINITIONS[measure]
+    definition = {**DEFINITIONS[measure], "limits": list(DEFINITIONS[measure]["limits"])}
     local = LOCAL_NAMES.get(school() or "", {}).get(measure)
     return {**definition, "name": local} if local else definition
 

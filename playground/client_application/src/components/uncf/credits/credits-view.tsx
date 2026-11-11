@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { Card, Counted, Legend, MessageCard, Notice, TrackBar, formatCount, formatShare, retentionWords } from "@/components/uncf/layout/explorer-parts";
+import { hiddenCount, privacyNote, tooFew } from "@/components/uncf/layout/small-groups";
 import { routes } from "@/lib/routes";
 import { cn } from "@/lib/utils";
 
@@ -41,13 +42,14 @@ export function CreditsView({ data, filters, linkQuery = "" }: CreditsViewProps)
     return (
       <>
         <ProgressIntro data={data} />
-        <MessageCard title="Fewer than 10 students match these filters.">
-          Remove a filter to see results. Groups under 10 students are hidden to protect privacy.
+        <MessageCard title={`${tooFew(data.meta.min_students)} match these filters.`}>
+          Remove a filter to see results. {privacyNote(data.meta.min_students)}
         </MessageCard>
       </>
     );
   }
   const total = data.students;
+  const min = data.meta.min_students;
   const words = retentionWords(data.meta.retention_type, data.meta.retention_term);
   const link = (href: string) => (linkQuery ? `${href}?${linkQuery}` : href);
   return (
@@ -74,13 +76,13 @@ export function CreditsView({ data, filters, linkQuery = "" }: CreditsViewProps)
         </Notice>
       )}
       <div className="flex flex-wrap gap-5">
-        <MinimumCard progress={progress} total={total} />
-        <PaceCard progress={progress} total={total} />
+        <MinimumCard progress={progress} min={min} total={total} />
+        <PaceCard progress={progress} min={min} total={total} />
       </div>
-      <BandsCard progress={progress} retentionName={words.name} />
+      <BandsCard progress={progress} min={min} retentionName={words.name} />
       <div className="flex flex-wrap gap-6">
-        <BelowCard progress={progress} dfwHref={link(routes.uncfDfw)} />
-        <YearTwoCard progress={progress} total={total} pathsHref={link(routes.uncfPaths)} />
+        <BelowCard progress={progress} min={min} dfwHref={link(routes.uncfDfw)} />
+        <YearTwoCard progress={progress} min={min} total={total} pathsHref={link(routes.uncfPaths)} />
       </div>
       <Counted>
         credits that count are earned credits in courses PDP marks college-level (CU) or developmental credit that applies
@@ -143,20 +145,20 @@ function aYear(credits: number): string {
 }
 
 /** Question 1: did they do the minimum in year 1, and again in year 2? */
-function MinimumCard({ progress, total }: { progress: CreditProgress; total: number }) {
+function MinimumCard({ progress, total, min }: { progress: CreditProgress; total: number; min: number }) {
   const { minimum, settings } = progress;
   const yearTwo = progress.year_two_follow_up.status === "ok";
   return (
     <BigQuestion number={1} question="Did they do the minimum?" color="var(--uncf-blue-2)" share={minimum.share} answer={oneIn(minimum.share, "did.", "None did.")}>
       <p className="text-(--uncf-ink-2)">
-        {formatCount(minimum.students)} of {fmt(total)} students earned {settings.minimum} or more credits that count toward a
+        {formatCount(minimum.students, min)} of {fmt(total)} students earned {settings.minimum} or more credits that count toward a
         degree in their first year.
       </p>
       <BigQuestionNotes>
         {yearTwo ? (
           <span>
             <Strong>{formatShare(progress.both_years.share)}</Strong> did the minimum in year 1 and again in year 2 (
-            {formatCount(progress.both_years.students)} students).
+            {formatCount(progress.both_years.students, min)} students).
           </span>
         ) : (
           <span>Year 2 ({progress.year_two}) isn’t in the data yet, so it’s too soon to say who did it again.</span>
@@ -167,7 +169,7 @@ function MinimumCard({ progress, total }: { progress: CreditProgress; total: num
 }
 
 /** Question 2: are they on pace to finish in the degree's years? */
-function PaceCard({ progress, total }: { progress: CreditProgress; total: number }) {
+function PaceCard({ progress, total, min }: { progress: CreditProgress; total: number; min: number }) {
   const { pace, settings } = progress;
   const twoYears = progress.two_year_pace;
   return (
@@ -180,7 +182,7 @@ function PaceCard({ progress, total }: { progress: CreditProgress; total: number
       highlighted
     >
       <p className="text-(--uncf-ink-2)">
-        {formatCount(pace.students)} of {fmt(total)} students earned {settings.pace} or more credits that count toward a degree
+        {formatCount(pace.students, min)} of {fmt(total)} students earned {settings.pace} or more credits that count toward a degree
         in year 1.
       </p>
       <BigQuestionNotes>
@@ -244,7 +246,7 @@ function Strong({ children }: { children: React.ReactNode }) {
 }
 
 /** Where every student landed in year 1: one bar split by group, then each group with its count and retention. */
-function BandsCard({ progress, retentionName }: { progress: CreditProgress; retentionName: string }) {
+function BandsCard({ progress, retentionName, min }: { progress: CreditProgress; retentionName: string; min: number }) {
   const { settings } = progress;
   const ranges: Record<ProgressBandKey, string> = {
     pace: `${settings.pace} or more`,
@@ -297,7 +299,7 @@ function BandsCard({ progress, retentionName }: { progress: CreditProgress; rete
                   </span>
                 </td>
                 <td className="py-3 pr-3">{ranges[band.key]}</td>
-                <td className="uncf-num py-3 pr-3 text-right">{countAndShare(band)}</td>
+                <td className="uncf-num py-3 pr-3 text-right">{countAndShare(band, min)}</td>
                 <td className="uncf-num py-3 text-right">{formatShare(band.retention.rate)}</td>
               </tr>
             ))}
@@ -306,7 +308,7 @@ function BandsCard({ progress, retentionName }: { progress: CreditProgress; rete
       </div>
       {progress.unsorted !== 0 && (
         <p className="text-[13px] text-(--uncf-ink-3)">
-          {formatCount(progress.unsorted)} students under the minimum aren’t in a group: their next fall or spring term isn’t in
+          {formatCount(progress.unsorted, min)} students under the minimum aren’t in a group: their next fall or spring term isn’t in
           the data yet, or their starting term is unknown.
         </p>
       )}
@@ -314,9 +316,9 @@ function BandsCard({ progress, retentionName }: { progress: CreditProgress; rete
   );
 }
 
-/** "778 · 51%", or "Under 10" alone when the group is hidden. */
-function countAndShare(counted: CountedStudents): string {
-  return counted.students === null ? "Under 10" : `${fmt(counted.students)} · ${formatShare(counted.share)}`;
+/** "778 · 51%", or "Under 10" alone when the group is hidden (min is the answer's meta.min_students). */
+function countAndShare(counted: CountedStudents, min: number): string {
+  return counted.students === null ? hiddenCount(min) : `${fmt(counted.students)} · ${formatShare(counted.share)}`;
 }
 
 /** Each reason's words and what to act on, in the design's words. */
@@ -327,8 +329,8 @@ const reasonText: Record<BelowReasonKey, { label: (minimum: number) => string; n
   not_counted: { label: () => "Passed enough, not all of it counts", note: "Developmental or other credit that doesn’t apply to a degree." },
 };
 
-/** Why the students still taking courses fell below the minimum. Hidden when they're under 10. */
-function BelowCard({ progress, dfwHref }: { progress: CreditProgress; dfwHref: string }) {
+/** Why the students still taking courses fell below the minimum. Hidden when they're under min_students. */
+function BelowCard({ progress, dfwHref, min }: { progress: CreditProgress; dfwHref: string; min: number }) {
   const { below, settings } = progress;
   return (
     <SideCard
@@ -336,13 +338,13 @@ function BelowCard({ progress, dfwHref }: { progress: CreditProgress; dfwHref: s
       subtitle={`Students still taking courses in ${progress.next_term ?? "their next fall or spring term"} who ended year 1 under ${settings.minimum} credits that count`}
     >
       {below.students === null ? (
-        <p className="text-(--uncf-ink-2)">Fewer than 10 of these students fell below the minimum, so the reasons are hidden.</p>
+        <p className="text-(--uncf-ink-2)">Fewer than {min} of these students fell below the minimum, so the reasons are hidden.</p>
       ) : below.students === 0 ? (
         <p className="text-(--uncf-ink-2)">None of these students fell below the minimum.</p>
       ) : (
         <>
           {below.reasons.map((reason) => (
-            <ShareRow key={reason.key} label={reasonText[reason.key].label(settings.minimum)} counted={reason} color="var(--uncf-orange)">
+            <ShareRow min={min} key={reason.key} label={reasonText[reason.key].label(settings.minimum)} counted={reason} color="var(--uncf-orange)">
               {reasonText[reason.key].note}
               {reasonText[reason.key].dfwLink && (
                 <>
@@ -356,7 +358,7 @@ function BelowCard({ progress, dfwHref }: { progress: CreditProgress; dfwHref: s
           ))}
           {below.unexplained !== 0 && (
             <p className="text-[13px] text-(--uncf-ink-3)">
-              {formatCount(below.unexplained)} more had incomplete or missing grades, or lost as many credits to F grades as to
+              {formatCount(below.unexplained, min)} more had incomplete or missing grades, or lost as many credits to F grades as to
               withdrawals, so they aren’t in a reason.
             </p>
           )}
@@ -367,33 +369,33 @@ function BelowCard({ progress, dfwHref }: { progress: CreditProgress; dfwHref: s
 }
 
 /** What the students who did the minimum in year 1 did in year 2. */
-function YearTwoCard({ progress, total, pathsHref }: { progress: CreditProgress; total: number; pathsHref: string }) {
+function YearTwoCard({ progress, total, pathsHref, min }: { progress: CreditProgress; total: number; pathsHref: string; min: number }) {
   const { year_two_follow_up: followUp, settings } = progress;
   return (
     <SideCard
       title="Did they keep it up in year 2?"
-      subtitle={`The ${formatCount(followUp.students)} students who did the minimum in year 1, and what they did in year 2 (${progress.year_two})`}
+      subtitle={`The ${formatCount(followUp.students, min)} students who did the minimum in year 1, and what they did in year 2 (${progress.year_two})`}
     >
       {followUp.students === null ? (
-        <p className="text-(--uncf-ink-2)">Fewer than 10 of these students did the minimum in year 1, so year 2 is hidden.</p>
+        <p className="text-(--uncf-ink-2)">Fewer than {min} of these students did the minimum in year 1, so year 2 is hidden.</p>
       ) : followUp.status !== "ok" ? (
         <p className="text-(--uncf-ink-2)">Year 2 ({progress.year_two}) isn’t in the data yet for this class.</p>
       ) : (
         <>
-          <ShareRow label="Did the minimum again" counted={followUp.again} color="var(--uncf-blue)">
+          <ShareRow min={min} label="Did the minimum again" counted={followUp.again} color="var(--uncf-blue)">
             {settings.minimum} or more credits that count, two years running.
           </ShareRow>
-          <ShareRow label={`Kept taking courses, fell under ${settings.minimum}`} counted={followUp.kept_taking_courses} color="var(--uncf-orange)">
+          <ShareRow min={min} label={`Kept taking courses, fell under ${settings.minimum}`} counted={followUp.kept_taking_courses} color="var(--uncf-orange)">
             Still enrolled, but below the minimum in year 2. Act on: advising before year-2 registration.
           </ShareRow>
-          <ShareRow label="Took no courses in year 2" counted={followUp.no_courses} color="var(--uncf-grey)">
+          <ShareRow min={min} label="Took no courses in year 2" counted={followUp.no_courses} color="var(--uncf-grey)">
             Did the minimum, then left.{" "}
             <Link href={pathsHref} className="text-(--uncf-blue) underline">
               Where they went: Student paths
             </Link>
           </ShareRow>
           <p className="rounded-lg bg-(--uncf-blue-tint) px-3.5 py-3 text-sm">
-            Only {formatCount(progress.both_years.students)} of {fmt(total)} students ({formatShare(progress.both_years.share)}) did
+            Only {formatCount(progress.both_years.students, min)} of {fmt(total)} students ({formatShare(progress.both_years.share)}) did
             the minimum in both years.
           </p>
         </>
@@ -416,14 +418,14 @@ function SideCard({ title, subtitle, children }: { title: string; subtitle: stri
 }
 
 /** A labelled count and share with its bar, and a note under it. */
-function ShareRow({ label, counted, color, children }: { label: string; counted: CountedStudents; color: string; children: React.ReactNode }) {
+function ShareRow({ label, counted, color, min, children }: { label: string; counted: CountedStudents; color: string; min: number; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-1.5">
       <div className="flex justify-between gap-3">
         <span className="font-medium">{label}</span>
-        <span className="uncf-num">{countAndShare(counted)}</span>
+        <span className="uncf-num">{countAndShare(counted, min)}</span>
       </div>
-      <TrackBar share={counted.share} color={color} height={22} label={`${label}: ${countAndShare(counted)}`} />
+      <TrackBar share={counted.share} color={color} height={22} label={`${label}: ${countAndShare(counted, min)}`} />
       <span className="text-sm text-(--uncf-ink-3)">{children}</span>
     </div>
   );

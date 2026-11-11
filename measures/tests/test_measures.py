@@ -66,15 +66,14 @@ def test_persistence_for_everyone(database):
     assert (row.numerator, row.denominator, row.metric_rate) == (5, 20, 0.25)
 
 
-def test_small_group_is_hidden_by_students_counted(database):
+def test_small_group_preserves_counts_and_exclusions(database):
     # 12 students are pell = N, but only 8 have an answer, so the group is hidden.
     results = run_measure(Measure.RETENTION, [C2022], [GroupBy.of(GroupDimension.PELL)], database=database)
     assert find(results, "pell=Y").metric_rate == 1.0
 
     hidden = find(results, "pell=N")
-    assert hidden.status == Status.SUPPRESSED and hidden.suppressed
-    assert hidden.numerator is None and hidden.denominator is None and hidden.metric_rate is None
-    assert hidden.n_excluded is None
+    assert hidden.status == Status.OK and not hidden.suppressed
+    assert (hidden.numerator, hidden.denominator, hidden.metric_rate, hidden.n_excluded) == (4, 8, .5, 4)
 
 
 def test_group_values_match_ignoring_case_and_spaces(database):
@@ -152,15 +151,14 @@ def test_gateway_english(database):
     assert (row.n_excluded, row.exclusion_reason, row.n_out_of_scope) == (0, None, 0)
 
 
-def test_gateway_group_is_hidden_by_students_counted(database):
+def test_small_gateway_group_preserves_population_counts(database):
     # 12 students are pell = N, but 2 aren't required and 2 can't be classified, so only 8 are counted and the group is hidden.
     results = run_measure(Measure.GATEWAY_MATH, [C2022], [GroupBy.of(GroupDimension.PELL)], database=database)
     assert (find(results, "pell=Y").numerator, find(results, "pell=Y").denominator) == (12, 12)
 
     hidden = find(results, "pell=N")
-    assert hidden.status == Status.SUPPRESSED
-    assert hidden.numerator is None and hidden.denominator is None
-    assert hidden.n_excluded is None and hidden.n_out_of_scope is None
+    assert hidden.status == Status.OK
+    assert (hidden.numerator, hidden.denominator, hidden.n_excluded, hidden.n_out_of_scope) == (0, 8, 2, 2)
 
 
 def test_gateway_pooled_cohort(database):
@@ -197,11 +195,11 @@ def test_dfw_cohort_with_no_final_grades_is_not_yet_observable(database):
     assert row.status == Status.NOT_YET_OBSERVABLE
 
 
-def test_dfw_group_is_hidden_by_students_counted(database):
+def test_small_dfw_group_preserves_student_and_enrollment_counts(database):
     # 2023-24 has 12 graded enrollments, but they come from only 3 students, so the group is hidden.
     row = find(run_measure(Measure.DFW_RATE, [Cohort.of("2023-24")], database=database), "everyone")
-    assert row.status == Status.SUPPRESSED
-    assert row.numerator is None and row.denominator is None and row.n_excluded is None
+    assert row.status == Status.OK
+    assert (row.numerator, row.denominator, row.n_students) == (0, 12, 3)
 
 
 def test_dfw_pooled_cohort(database):
@@ -264,7 +262,7 @@ def test_dfw_by_course_finds_the_courses_in_the_data(database):
     english = find(results, "course=ENGL 1302")
     assert (english.numerator, english.denominator, english.metric_rate) == (7, 22, 0.3182)
     # Three students took MATH 1314, so it is hidden whatever its numbers are.
-    assert find(results, "course=MATH 1314").status == Status.SUPPRESSED
+    assert find(results, "course=MATH 1314").status == Status.OK
 
 
 def test_dfw_by_course_and_pell(database):
@@ -363,13 +361,13 @@ def test_credit_completion_groups(database):
     results = run_measure(Measure.CREDIT_COMPLETION, [C2022], [GroupBy.of(GroupDimension.PELL)], database=database)
     assert (find(results, "pell=Y").numerator, find(results, "pell=Y").denominator) == (10, 12)
     # pell = N has only 6 students counted, so it is hidden.
-    assert find(results, "pell=N").status == Status.SUPPRESSED
+    assert find(results, "pell=N").status == Status.OK
 
 
 def test_credit_completion_by_enrollment_type(database):
     results = run_measure(Measure.CREDIT_COMPLETION, [C2022], [GroupBy.of(GroupDimension.ENROLLMENT_TYPE)], database=database)
     assert (find(results, "enrollment_type=First-time").numerator, find(results, "enrollment_type=First-time").denominator) == (10, 16)
-    assert find(results, "enrollment_type=Transfer-in").status == Status.SUPPRESSED  # 2 students
+    assert find(results, "enrollment_type=Transfer-in").status == Status.OK  # 2 students
     assert find(results, "enrollment_type=Re-admit").status == Status.SUPPRESSED  # nobody is counted
 
 
@@ -423,7 +421,7 @@ def test_results_are_saved_and_replaced(database, tmp_path):
     row = saved.execute(
         "SELECT numerator, denominator, status FROM success_measures WHERE group_values = 'N'"
     ).fetchone()
-    assert row == (None, None, "suppressed")
+    assert row == (4, 8, "ok")
 
 
 def test_a_save_is_always_the_latest_run(database, tmp_path):

@@ -1,6 +1,6 @@
 import type { ExplorerMeta, RetentionBlock } from "@/components/uncf/layout/explorer-api";
 
-/** The answer from GET /uncf/credit-momentum (measures/breakdowns/credit_momentum.py). Hidden numbers (under 10 students) are null. */
+/** The answer from GET /uncf/credit-momentum (measures/breakdowns/credit_momentum.py). Hidden numbers (under meta.min_students) are null. */
 export type CreditsResponse = {
   meta: ExplorerMeta & {
     /** When retention is measured: a fall term for federal (Fall 2024), "next academic year" for school. */

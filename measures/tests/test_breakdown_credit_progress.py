@@ -147,12 +147,12 @@ def test_year_two_not_in_the_data_yet(tmp_path):
     assert page["both_years"]["students"] is None
 
 
-def test_small_groups_are_hidden(tmp_path):
-    """A group or reason of 1 to 9 students is None, and so is its share; the page still answers for the rest."""
+def test_small_groups_are_visible(tmp_path):
+    """A four-student group retains its count and share; unknown retention stays unavailable."""
     database = build(tmp_path, group("min", 15, [credits(24)]), group("stop", 4, [credits(6)], spring=False))
     page = progress_of(database)
     bands = {b["key"]: b for b in page["bands"]}
-    assert (bands["stopped"]["students"], bands["stopped"]["share"]) == (None, None)
+    assert (bands["stopped"]["students"], bands["stopped"]["share"]) == (4, 0.2105)
     assert bands["stopped"]["retention"]["rate"] is None
     assert (bands["below"]["students"], bands["minimum"]["students"]) == (0, 15)
 
@@ -165,10 +165,10 @@ def test_filters_narrow_every_number(tmp_path):
     assert [b["students"] for b in page["bands"]] == [10, 0, 0, 0]
 
 
-def test_too_few_students(tmp_path):
-    """Fewer than 10 students: the page is hidden, progress too."""
+def test_small_populations_are_visible(tmp_path):
+    """Five students retain the page and its credit-progress evidence."""
     database = build(tmp_path, group("few", 5, [credits(30)]))
-    assert credit_momentum(**ask("2023-24"), database=database)["progress"] is None
+    assert credit_momentum(**ask("2023-24"), database=database)["progress"]["minimum"] == {"students": 5, "share": 1.0}
 
 
 @pytest.mark.slow

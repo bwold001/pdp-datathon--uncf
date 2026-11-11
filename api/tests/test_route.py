@@ -5,7 +5,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from api import data, route
-from measures.definitions import DEFINITIONS
+from measures.definitions import all_definitions
 from api.route import create_app
 from measures.tests.explorer_fixture import here, make_database, student
 
@@ -98,9 +98,10 @@ def test_credit_momentum_progress(tmp_path, monkeypatch):
 
 
 def test_definitions_come_from_the_shared_dictionary(client):
-    """The Explorer's key terms are api/definitions.py, word for word."""
+    """The Explorer's key terms are measures/definitions.py, word for word, with the small-groups line filled in."""
     body = client.get("/api/v1/uncf/definitions").json()
-    assert body["definitions"] == DEFINITIONS
+    assert body["definitions"] == all_definitions()
+    assert not any("students is hidden" in line for line in body["definitions"]["dfw_rate"]["limits"])
     assert body["definitions"]["persistence"]["name"] == "At another college"
 
 

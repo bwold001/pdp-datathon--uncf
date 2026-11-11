@@ -9,8 +9,9 @@ from __future__ import annotations
 from dataclasses import dataclass, fields
 from enum import Enum
 
-SUPPRESSION_THRESHOLD = 10  # the shared measures' threshold: groups with fewer students are hidden
-GAP_RANK_MIN_N = 30  # smaller groups are still tested, but not ranked by gap size, since their gaps swing a lot
+# Compatibility metadata: every nonempty group is eligible for display.
+from measures.models import min_students
+
 NOISE_Q = 0.05  # a gap whose q-value is at or above this is likely noise
 GROUP_JOIN = " x "  # how two-way groups are written in files, as in the shared measures' table
 
@@ -73,7 +74,7 @@ class GapResult:
     q_value: float | None  # Benjamini-Hochberg, over the compared rows of the same measure and cohort in one call
     likely_noise: bool | None
     rank_by_affected: int | None  # 1 is the most students behind
-    rank_by_gap: int | None  # 1 is the largest gap behind; blank under GAP_RANK_MIN_N students
+    rank_by_gap: int | None  # 1 is the largest gap behind; every nonempty comparison is ranked
 
     def __post_init__(self) -> None:
         self.check_group()
@@ -109,11 +110,11 @@ class GapResult:
             raise ValueError("a hidden row must have every number blank")
 
     def check_counts(self) -> None:
-        """A shown row has its own counts, from at least SUPPRESSION_THRESHOLD students."""
+        """A shown row has its own counts, from at least min_students() students."""
         if any(v is None for v in (self.numerator, self.denominator, self.metric_rate, self.n_excluded, self.n_out_of_scope)):
             raise ValueError("a shown row needs numerator, denominator, metric_rate, n_excluded and n_out_of_scope")
-        if self.denominator < SUPPRESSION_THRESHOLD:
-            raise ValueError(f"a shown row needs at least {SUPPRESSION_THRESHOLD} students")
+        if self.denominator < min_students():
+            raise ValueError(f"a shown row needs at least {min_students()} students")
         if not 0 <= self.numerator <= self.denominator:
             raise ValueError("numerator must be between 0 and the denominator")
 
@@ -121,10 +122,10 @@ class GapResult:
         """An ok row has every comparison column, and they agree with each other."""
         if any(getattr(self, name) is None for name in COMPARISON_FIELDS):
             raise ValueError("an ok row needs every comparison column")
-        if (self.rank_by_gap is None) != (self.denominator < GAP_RANK_MIN_N):
-            raise ValueError(f"rank_by_gap is blank exactly when there are fewer than {GAP_RANK_MIN_N} students")
-        if self.comparison_denominator < SUPPRESSION_THRESHOLD:
-            raise ValueError(f"everyone else needs at least {SUPPRESSION_THRESHOLD} students")
+        if self.rank_by_gap is None:
+            raise ValueError("rank_by_gap is required for every comparison")
+        if self.comparison_denominator < min_students():
+            raise ValueError(f"everyone else needs at least {min_students()} students")
         if not 0 <= self.p_value <= self.q_value <= 1:
             raise ValueError("p_value and q_value must satisfy 0 <= p <= q <= 1")
         if self.likely_noise != (self.q_value >= NOISE_Q):

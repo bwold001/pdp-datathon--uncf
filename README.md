@@ -19,7 +19,7 @@ commit `cef57aa` (the starter's latest commit when this repo was created, 2026-1
 
 Every page, export and chat answer uses one result contract: measure, filters, numerator,
 denominator, rate, suppression status, limitations, definition, source and load time. "Unavailable"
-is never shown as zero. Small groups are suppressed everywhere, including exports and chat.
+is never shown as zero. Every nonempty group is shown; small result sets are not suppressed.
 
 ## Set up
 
@@ -129,16 +129,19 @@ Every page route and `/measures/{measure}` take the same query values: `cohort`,
 | `GET /api/v1/uncf/cohort-options?cohort=` | Students per cohort year, and per filter value in the chosen cohort |
 | `GET /api/v1/uncf/definitions` | Every plain language definition |
 | `GET /api/v1/uncf/student-paths?…&terms=&group_by=` | Each student's status term by term (here, credential, elsewhere, stopped) with shares, moves, transfers, retention, and per group paths |
-| `GET /api/v1/uncf/dfw?…` | Everyone's DFW rate with D, F, W, then each course with 10 or more students |
+| `GET /api/v1/uncf/dfw?…` | Everyone's DFW rate with D, F, W, then each course with `min_students` or more students |
 | `GET /api/v1/uncf/dfw/course?course=ENG%20101&…` | One course by term, delivery and group, each with `rest_rate` and `gap` against everyone else |
 | `GET /api/v1/uncf/gateway?…` | Each flagged gateway course in year 1: students, passed on the first try and in the end (the PDP's 1.0 line), the path after the first try, retention if passed / not, the filtered group's gap against everyone else, and the course pairs with lower retention |
 | `GET /api/v1/uncf/credit-momentum?…` | Year 1 credits, completion ratio, 12/24/30 milestones, first two terms, credit tiers with retention; `progress`: meaningful progress toward a degree (the 24-credit minimum, 4-year pace, year 1 groups with retention, why students fell below, year 2), settings in `measures/breakdowns/credit_progress.py` |
 | `GET /api/v1/uncf/analyses/catalog` | The chat's approved analyses, their choices and declared data coverage |
 | `POST /api/v1/uncf/analyses` | One approved analysis with its receipt, or a clarification when a needed choice is missing |
 
-- **Hidden or missing numbers** are `null` with a status: `suppressed` (under 10 students),
-  `not_yet_observable`, or `not_reported` (a gateway measure the college doesn't report). Never 0.
-  Starter issue #87 (working out a hidden group by subtraction) is not fixed.
+- **Small groups:** every nonempty cohort, course, course pair and comparison is eligible for display,
+  including groups of one. `UNCF_MIN_STUDENTS` and the legacy analytics `suppression_threshold`
+  no longer hide results. API `min_students` metadata remains 1 for compatibility.
+- **Missing numbers** remain `null` with a status when evidence is unknown, unavailable or not yet
+  observable. Empty populations have no rate. The legacy `suppressed` status remains in response
+  contracts for empty groups and previously stored evidence.
 - **`provisional`** is true for the 2024-25 class, whose second year is only partly in the data.
 - **Errors:** 422 for a value the API doesn't offer (`invalid_filter`, `invalid_group_by`,
   `invalid_analysis`), 404 `unknown_course`, 503 `data_missing` or `analytics_unavailable`. Bodies
@@ -259,4 +262,5 @@ The [defined operation catalog](docs/analysis-v2-defined-operations.md) register
 and legacy analyses with executable request schemas and typed result adapters. It remains inactive in HTTP/chat.
 
 The [disclosure and parity guide](docs/analysis-v2-disclosure.md) documents versioned dashboard/legacy
-policies, shared API/CSV execution, and the conservative guard for future mixed v2 plans.
+profiles at version 2, shared API/CSV execution, and validation for future mixed v2 plans.
+Small, linked and overlapping results remain visible; no size-based privacy protection applies.

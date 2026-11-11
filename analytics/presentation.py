@@ -1,4 +1,4 @@
-"""Calculation text and conservative suppression shared by browser and model."""
+"""Calculation text shared by browser and model."""
 
 from analytics.schemas import CalculationRow
 from analytics.disclosure import has_small_cell, suppress_legacy as suppress

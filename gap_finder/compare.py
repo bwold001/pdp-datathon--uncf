@@ -10,7 +10,7 @@ from dataclasses import dataclass
 
 from measures.models import UNKNOWN, Status
 
-from .models import GAP_RANK_MIN_N, NOISE_Q, SUPPRESSION_THRESHOLD, GapResult, GapStatus, check_table, sort_key
+from .models import NOISE_Q, GapResult, GapStatus, check_table, min_students, sort_key
 
 Z_95 = 1.96  # for the 95% interval
 UNKNOWN_VALUES = frozenset({UNKNOWN, ""})  # the shared measures' unknown value, or a blank
@@ -91,7 +91,7 @@ def compare_family(everyone: CountRow, groups: list[CountRow]) -> list[GapResult
     stats = {g: group_stats(everyone, g) for g in groups if statuses[g] == GapStatus.OK}
     q_values = benjamini_hochberg({g: s.p_value for g, s in stats.items()})
     by_affected = ranks(stats, lambda g: stats[g].students_affected)
-    by_gap = ranks({g: s for g, s in stats.items() if g.denominator >= GAP_RANK_MIN_N}, lambda g: stats[g].gap_pts)
+    by_gap = ranks(stats, lambda g: stats[g].gap_pts)
     return [
         build_result(g, statuses[g], stats.get(g), q_values.get(g), by_affected.get(g), by_gap.get(g))
         for g in groups
@@ -102,11 +102,11 @@ def gap_status(everyone: CountRow, group: CountRow) -> GapStatus:
     """The row's status. When more than one applies, too new wins, then too small, then unknown."""
     if MEASURE_NOT_YET_OBSERVABLE in (everyone.status, group.status):
         return GapStatus.NOT_YET_OBSERVABLE
-    if group.status != MEASURE_OK or group.denominator is None or group.denominator < SUPPRESSION_THRESHOLD:
+    if group.status != MEASURE_OK or group.denominator is None or group.denominator < min_students():
         return GapStatus.SUPPRESSED
     # Everyone else is a group too: under the threshold, the comparison columns would print a hidden group's
     # counts. This also hides a group that is everyone, which has no one to compare with.
-    if everyone.denominator - group.denominator < SUPPRESSION_THRESHOLD:
+    if everyone.denominator - group.denominator < min_students():
         return GapStatus.SUPPRESSED
     if any(value in UNKNOWN_VALUES for value in group.group_values):
         return GapStatus.UNKNOWN_GROUP

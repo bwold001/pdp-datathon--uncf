@@ -77,20 +77,22 @@ def test_status_must_be_a_gap_status():
         replace(OK, status="maybe")
 
 
-def test_shown_row_needs_ten_students():
-    with pytest.raises(ValueError, match="at least 10"):
-        replace(OK, numerator=5, denominator=9, rank_by_gap=None)
+def test_shown_row_accepts_small_nonempty_populations():
+    assert replace(OK, numerator=5, denominator=9).denominator == 9
+    with pytest.raises(ValueError, match="at least 1"):
+        replace(OK, numerator=0, denominator=0)
 
 
-def test_ok_row_needs_ten_in_everyone_else():
-    with pytest.raises(ValueError, match="everyone else needs at least 10"):
-        replace(OK, comparison_numerator=5, comparison_denominator=9)
+def test_comparison_accepts_small_nonempty_populations():
+    assert replace(OK, comparison_numerator=5, comparison_denominator=9).comparison_denominator == 9
+    with pytest.raises(ValueError, match="everyone else needs at least 1"):
+        replace(OK, comparison_numerator=0, comparison_denominator=0)
 
 
-def test_rank_by_gap_is_blank_exactly_under_thirty():
-    replace(OK, numerator=10, denominator=29, rank_by_gap=None)
+def test_rank_by_gap_is_required_for_small_groups():
+    replace(OK, numerator=10, denominator=29)
     with pytest.raises(ValueError, match="rank_by_gap"):
-        replace(OK, numerator=10, denominator=29)
+        replace(OK, numerator=10, denominator=29, rank_by_gap=None)
     with pytest.raises(ValueError, match="rank_by_gap"):
         replace(OK, rank_by_gap=None)
 

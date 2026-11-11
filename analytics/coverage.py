@@ -17,7 +17,7 @@ class Coverage(Contract):
     cohort_followup_years: dict[str, int] = Field(default_factory=dict)
     cutoff: str | None = None
     provenance: str = ""
-    suppression_threshold: int = Field(default=10, ge=1)
+    suppression_threshold: int = Field(default=1, ge=1)  # legacy config; no longer hides results
     provisional_retention_cohorts: list[str] = Field(
         default_factory=lambda: ["2024-25"]
     )

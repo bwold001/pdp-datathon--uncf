@@ -14,7 +14,6 @@ from analytics.data_access import sqlite_snapshot
 from analytics.execution import check_cancelled
 from analytics.provenance import DataUnavailable
 from analytics.definitions import DEFINITIONS
-from analytics.disclosure import suppress_legacy
 from analytics.schemas import (
     AnalysisReceipt,
     AnalysisRequest,
@@ -27,7 +26,7 @@ from analytics.programs import PROGRAMS, resolve_program
 
 
 class AnalyticsService:
-    """Own deterministic analyses and serialize evidence only after suppression."""
+    """Own deterministic analyses and preserve all calculable aggregate evidence."""
 
     def __init__(self, database: Path | None, coverage: Coverage, *, connection_factory=None, snapshot_factory=None, bound_snapshot=None):
         """Use an explicit connection provider or the standalone normalized extract."""
@@ -232,9 +231,6 @@ class AnalyticsService:
                             "The extract has no exact award semester. Inferred completion-program attribution is unknown."
                         )
                 check_cancelled()
-                receipt.rows = suppress_legacy(
-                    receipt.rows, self.coverage.suppression_threshold
-                )
         except (sqlite3.Error, OSError, DataUnavailable):
             check_cancelled()
             if self.bound_snapshot is not None:

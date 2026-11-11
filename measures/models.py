@@ -7,10 +7,12 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
 
-from .disclosure import DASHBOARD_V1
-
-SUPPRESSION_THRESHOLD = DASHBOARD_V1.minimum  # preserve the versioned dashboard policy
 UNKNOWN = "UNKNOWN"  # how the data model stores a value nobody knows
+
+
+def min_students() -> int:
+    """Keep API metadata compatible: every nonempty group is eligible for display."""
+    return 1
 
 
 class Measure(str, Enum):
@@ -29,7 +31,7 @@ class Status(str, Enum):
     """Whether a row's numbers are shown, and if not, why."""
 
     OK = "ok"
-    SUPPRESSED = "suppressed"  # too few students, so the group is hidden
+    SUPPRESSED = "suppressed"  # no eligible students, so the group has no rate
     NOT_YET_OBSERVABLE = "not_yet_observable"  # nobody in the cohort has an answer yet
 
 

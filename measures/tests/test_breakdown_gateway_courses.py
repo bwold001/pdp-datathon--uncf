@@ -102,12 +102,12 @@ def test_filtered_students_and_everyone_who_took_the_course(tmp_path):
     assert course["all_takers"] == {"students": 40, "first_pass": 20}
 
 
-def test_small_courses_are_hidden(tmp_path):
-    """A gateway course with under 10 students isn't listed; it's counted as hidden."""
+def test_small_courses_are_visible(tmp_path):
+    """A gateway course with three students is listed with its counts."""
     database = build(tmp_path, takers("a", 12, ["4"], back=0), takers("b", 9, ["4"], back=0, course=("ENG", "102")))
     page = gateway_courses(**FEDERAL, database=database)
-    assert [c["course"] for c in page["courses"]] == ["ENG 101"]
-    assert page["hidden_courses"] == 1
+    assert [c["course"] for c in page["courses"]] == ["ENG 101", "ENG 102"]
+    assert page["hidden_courses"] == 0
 
 
 def pairs_database(tmp_path):
@@ -130,11 +130,12 @@ def test_pairs_need_a_gateway_course(tmp_path):
     assert page["pairs_considered"] == 1  # ART + MUS has no gateway course
 
 
-def test_fewer_than_ten_students_hides_everything(tmp_path):
-    """Nine students: no numbers at all."""
+def test_fewer_than_ten_students_remain_visible(tmp_path):
+    """Nine students keep their course outcomes."""
     page = gateway_courses(**FEDERAL, database=build(tmp_path, takers("s", 9, ["4"], back=9)))
-    assert page["status"] == "suppressed"
-    assert page["courses"] == [] and page["pair_counts"] == []
+    assert page["status"] == "ok"
+    assert page["courses"][0]["students"] == 9
+    assert page["pair_counts"] == []
 
 
 @pytest.mark.slow

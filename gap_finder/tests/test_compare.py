@@ -87,11 +87,11 @@ def test_two_point_gap_in_forty_students_is_noise():
     assert b.likely_noise is True and b.q_value >= 0.05
 
 
-def test_group_under_thirty_is_tested_but_not_ranked_by_gap():
+def test_group_under_thirty_is_tested_and_ranked_by_gap():
     rows = [count("2022-23", (), 50, 100), count("2022-23", ("A",), 5, 20), count("2022-23", ("B",), 45, 80)]
     a = by_group(compare(rows))[("2022-23", ("A",))]
     assert a.status == GapStatus.OK and a.p_value is not None
-    assert a.rank_by_affected is not None and a.rank_by_gap is None
+    assert a.rank_by_affected is not None and a.rank_by_gap == 1
 
 
 def test_unknown_group_is_shown_but_not_tested():
@@ -103,10 +103,10 @@ def test_unknown_group_is_shown_but_not_tested():
     assert by_group(rows)[("2022-23", ("A",))].q_value == without[("2022-23", ("A",))].q_value
 
 
-def test_small_group_is_hidden_even_if_the_measure_showed_it():
+def test_small_group_is_compared_and_ranked():
     rows = compare(planted() + [count("2022-23", ("D",), 3, 9)])
     d = by_group(rows)[("2022-23", ("D",))]
-    assert d.status == GapStatus.SUPPRESSED and d.numerator is None
+    assert d.status == GapStatus.OK and d.numerator == 3
 
 
 def test_too_new_wins_over_too_small_and_unknown():
@@ -148,12 +148,12 @@ def test_refuses_duplicate_rows():
         compare(planted() + planted()[1:2])
 
 
-def test_hidden_when_everyone_else_is_under_ten():
+def test_comparison_is_visible_when_everyone_else_is_under_ten():
     # A has 96 of 100 students, so everyone else is B's 4. Showing A's comparison would print B's hidden counts.
     rows = by_group(compare([count("2022-23", (), 50, 100), count("2022-23", ("A",), 48, 96), count("2022-23", ("B",), None, None, "suppressed")]))
     a = rows[("2022-23", ("A",))]
-    assert a.status == GapStatus.SUPPRESSED
-    assert a.comparison_numerator is None and a.comparison_denominator is None and a.numerator is None
+    assert a.status == GapStatus.OK
+    assert (a.comparison_numerator, a.comparison_denominator, a.numerator) == (2, 4, 48)
 
 
 def test_a_group_that_is_everyone_is_hidden():

@@ -56,7 +56,7 @@ def test_dashboard_single_success_remains_visible_in_api_csv_and_v2(
         )
         assert row["denominator"] == projected.result.payload.denominator == 12
         assert (
-            projected.profile.id == "dashboard_v1" and projected.profile.version == "1"
+            projected.profile.id == "dashboard_v1" and projected.profile.version == "2"
         )
         serialized = disclosed_receipt(service, snapshot, projected.result)
         assert (
@@ -212,3 +212,54 @@ def test_gateway_unreported_and_hidden_group_statuses_survive_json_and_csv(
         )
         assert evidence.result.status == "not_reported"
     route.clear_cache()
+
+
+@pytest.mark.parametrize("threshold", [10, 100])
+def test_legacy_small_groups_and_exclusions_survive_http_and_v2(tmp_path, threshold):
+    """Old config cannot hide a one-of-two rate, linked major or one missing outcome."""
+    from analytics.analysis_service import legacy_step
+    from analytics.service import AnalyticsService
+    from analytics.tests.analytics_fixtures import build_database, fixture_coverage
+    from analytics.tests.test_snapshots import add_identity
+    from api.analyses import get_service
+
+    path = build_database(tmp_path / "legacy.sqlite")
+    add_identity(path)
+    coverage = fixture_coverage(threshold)
+    app = route.create_app()
+    app.dependency_overrides[get_service] = lambda: AnalyticsService(path, coverage)
+    raw = {"analysis": "retention", "cohort": "2022-23"}
+    with TestClient(app) as client, sqlite_snapshot(path) as snapshot:
+        response = client.post("/api/v1/uncf/analyses", json=raw)
+        assert response.status_code == 200
+        rows = response.json()["receipts"][0]["rows"]
+        assert rows[0]["status"] == "ok"
+        assert all(row["status"] != "suppressed" for row in rows)
+        assert (rows[0]["numerator"], rows[0]["denominator"]) == (1, 2)
+        assert rows[0]["exclusions"]["unknown_outcome"] == 1
+        assert any(row["group"] and row["numerator"] == 1 for row in rows)
+        service = AnalysisService(coverage)
+        step = legacy_step(raw)
+        evidence = service.execute(step, snapshot)
+        (projected,) = disclose_plan(
+            (
+                stage_defined(
+                    step.step_id,
+                    service.operations[step.operation_id],
+                    evidence,
+                ),
+            )
+        )
+        assert projected.profile.version == "2"
+        result = type(projected.result).model_validate_json(
+            projected.result.model_dump_json()
+        )
+        assert all(row.status != "suppressed" for row in result.payload.rows)
+        columns = [column.id for column in result.payload.columns]
+        values = [
+            dict(zip(columns, row.cells))
+            for row in result.payload.rows
+            if row.status in ("ok", "provisional")
+        ]
+        assert any(row["numerator"] == 1 and row["denominator"] == 2 for row in values)
+        assert any(row["kind"] == "exclusion" and row["count"] == 1 for row in values)

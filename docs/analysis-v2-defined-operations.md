@@ -26,9 +26,9 @@ with legacy_service.snapshot() as snapshot:
 
 `execute` borrows the snapshot without closing it. Invalid requests fail before reads; cancellation/database errors propagate to the outer owner. A course lacking disclosed evidence returns a legitimate unavailable result. `legacy_step(old_request)` maps a fully resolved old request; incomplete old requests still need the existing clarification flow.
 
-This is **internal single-operation evidence**, not a complete plan executor or HTTP endpoint. Catalog/snapshot freshness, version resolution, dependency scheduling, exploration, plan-wide disclosure and final receipts remain later work. Do not serialize this evidence as a final chat response before those checks. Existing display suppression alone does not prevent inference by subtraction.
+This is **internal single-operation evidence**, not a complete plan executor or HTTP endpoint. Catalog/snapshot freshness, version resolution, dependency scheduling, exploration, plan-wide disclosure and final receipts remain later work. Do not serialize this evidence as a final chat response before those checks. Small nonempty results are visible; this interface applies no minimum-size privacy protection.
 
-The [disclosure boundary](analysis-v2-disclosure.md) now supplies versioned profiles, a policy stamp on staged evidence, shared API execution and a conservative complete-plan projection primitive. The future plan executor must call that primitive on the actual returned set before constructing public receipts.
+The [disclosure boundary](analysis-v2-disclosure.md) now supplies versioned profiles, a policy stamp on staged evidence, shared API execution and a complete-plan validation and projection primitive without size or overlap suppression. The future plan executor must call that primitive on the actual returned set before constructing public receipts.
 
 ## Registered meanings
 
@@ -36,7 +36,7 @@ The [disclosure boundary](analysis-v2-disclosure.md) now supplies versioned prof
 | --- | --- |
 | `retention.rate` | Explicitly selected school/PDP or next-fall federal implementation; federal is not claimed fully IPEDS compliant. |
 | `persistence.rate` | Other-college persistence flag. |
-| `dfw.rate` | Classifiable final-grade enrollments; distinct students determine suppression. |
+| `dfw.rate` | Classifiable final-grade enrollments; distinct student counts remain explicit; small groups are visible. |
 | `dfw.course_list`, `dfw.course_detail` | Course/term/delivery/group breakdowns with their own enrollment denominators. Detail requires a course. |
 | `credit_completion.ratio` | Mean of individual student ratios, preserving its fractional numerator, never total earned divided by total attempted. |
 | `credit_momentum.summary` | Milestones, tiers, term credits and Credit progress, with selected school/federal retention. |

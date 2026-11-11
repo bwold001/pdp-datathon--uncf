@@ -9,7 +9,7 @@ five). In each term a student is:
 - stopped: no record at all that term.
 
 Retention comes from run_measure (school or federal), so it matches every other page and /measures/retention. The
-statuses come from term records, so they can differ from retention. Groups under 10 students are hidden.
+statuses come from term records, so they can differ from retention. Every nonempty group is shown.
 """
 from __future__ import annotations
 
@@ -26,10 +26,10 @@ from ..models import (
     GroupBy,
     GroupDimension,
     Measure,
+    min_students,
 )
 from ..run_measures import run_measure
 from .common import (
-    MIN_STUDENTS,
     RETENTION_TYPES,
     SEASONS,
     STUDENT_DIMENSIONS,
@@ -131,7 +131,7 @@ def follow(students: dict, cohort: str, terms: int, records: dict, credentials: 
 
 
 def column(statuses: list[str], total: int) -> dict:
-    """One term's counts and shares of the students followed. Counts under 10 are hidden."""
+    """One term's counts and shares of the students followed. Every known count is visible."""
     counts = Counter(statuses)
     numbers = {status: shown(counts[status]) for status in STATUSES}
     numbers["anywhere"] = shown(counts["here"] + counts["elsewhere"])
@@ -184,7 +184,7 @@ def _student_paths(
         "term_labels": labels,
         "group_by": group_by.value if group_by else None,
     }
-    if total < MIN_STUDENTS:
+    if total < min_students():
         return {"context": context, "status": "suppressed", "students": None, "left_out": None, "columns": None, "path": [], "moves": None, "transfers": None, "retention": None, "groups": []}
 
     by_position = [[steps[position][1] for steps in paths.values()] for position in range(1, terms)]
@@ -236,7 +236,7 @@ def groups(paths: dict, students: dict, dimension: GroupDimension, cohort: str, 
         members = {sid: steps for sid, steps in paths.items() if students[sid][dimension.value] == normalize(value)}
         if not members:
             continue
-        if len(members) < MIN_STUDENTS:
+        if len(members) < min_students():
             rows.append({"value": value, "students": None, "path": [], "retention": None})
             continue
         positions = len(next(iter(members.values())))

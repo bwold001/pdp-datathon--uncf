@@ -17,10 +17,10 @@ from measures.requests import (
 )
 from measures.models import (
     ALLOWED_VALUES as ALLOWED_VALUES,
-    SUPPRESSION_THRESHOLD,
     Group,
     GroupDimension,
     Measure,
+    min_students,
 )
 
 # The cohort bar's filters after the cohort year, in the bar's order. /measures/{measure} groups by the same list.
@@ -37,7 +37,6 @@ FILTER_LABELS = {
 # school: the PDP retention flag. federal: fall to fall. Each is its own measure.
 RETENTION_TYPES = tuple(RETENTION_MEASURES)
 DEFAULT_RETENTION_TYPE = "school"
-MIN_STUDENTS = SUPPRESSION_THRESHOLD
 
 
 @dataclass(frozen=True)
@@ -80,7 +79,7 @@ class CohortQuery:
             "filters": self.as_dict(),
             "retention_type": self.retention_type,
             "provisional": data.is_provisional(self.cohort),
-            "min_students": MIN_STUDENTS,
+            "min_students": min_students(),
             "source": data.SOURCE,
         }
 
@@ -94,7 +93,7 @@ def cohort_options(cohort: str = DEFAULT_COHORT) -> dict:
         **counts,
         "labels": FILTER_LABELS,
         "retention_types": list(RETENTION_TYPES),
-        "min_students": MIN_STUDENTS,
+        "min_students": min_students(),
         "source": data.SOURCE,
         "loaded_at": data.loaded_at(),
     }

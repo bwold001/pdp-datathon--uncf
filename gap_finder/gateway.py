@@ -7,7 +7,7 @@ with compare() below; api/ only calls it:
 """
 from __future__ import annotations
 
-from measures.models import SUPPRESSION_THRESHOLD
+from measures.models import min_students
 
 from .compare import CountRow, compare
 
@@ -17,7 +17,7 @@ TOP_PAIRS = 3
 def count_row(measure: str, cohort: str, value: str | None, numerator: int, denominator: int) -> CountRow:
     """A gap finder input row: everyone when value is None, else one group named value."""
     dimensions, values = ((), ()) if value is None else (("group",), (value,))
-    status = "ok" if denominator >= SUPPRESSION_THRESHOLD else "suppressed"
+    status = "ok" if denominator >= min_students() else "suppressed"
     return CountRow(measure, cohort, dimensions, values, numerator, denominator, status, 0, 0, None, f"Gateway page: {measure}.", "gateway page")
 
 

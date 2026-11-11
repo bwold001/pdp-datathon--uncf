@@ -4,5 +4,5 @@ complete_academic_years: []
 cohort_followup_years: {}
 cutoff: null
 provenance: "Synthetic starter extract; completeness and exact award semesters are unverified."
-suppression_threshold: 10
+suppression_threshold: 1  # compatibility only; small results are always visible
 provisional_retention_cohorts: ["2024-25"]
