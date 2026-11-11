@@ -162,6 +162,8 @@ dir = "client_application"
 run = "bun run storybook"
 
 [tasks."web:test-storybook"]
-description = "Install Chromium and its system dependencies, then run every story's play function"
+description = "Install Chromium, then run every story's play function"
 dir = "client_application"
-run = ["bunx playwright install --with-deps chromium", "bun run test-storybook"]
+# No --with-deps: the CI runner already has Chromium's libraries, and the extra fonts it adds come from Ubuntu's
+# servers, which can be unreachable. On a fresh Linux machine, run `bunx playwright install-deps chromium` once.
+run = ["bunx playwright install chromium", "bun run test-storybook"]
