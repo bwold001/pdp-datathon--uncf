@@ -38,6 +38,7 @@ from pathlib import Path
 
 import yaml
 
+from src.build_identity import build_manifest as _build_manifest
 from src.loader.backends import BACKENDS, refresh
 from src.loader.tables import build_tables
 from src.rules.rules import ConfigError, check_value, load_rules
@@ -132,7 +133,8 @@ def load(config="config/pipeline.yaml", backend=None, sqlite_path=None, cohort=N
                    for s, f, d in zip(settings["sources"], folders, described)]
         summary["staging"] = str(staging)
         tables, report = build_tables(rules, sources, started.replace(tzinfo=None, microsecond=0))
-        tables["load_run"] = [_load_run(settings, run_id, started, staging, folders, report_dir)]
+        tables["load_run"] = [{**_load_run(settings, run_id, started, staging, folders, report_dir),
+                               "build_manifest": _build_manifest(settings, folders, rules)}]
         broken = [rule for column, value in tables["load_run"][0].items()
                   for rule, severity in check_value(rules, "load_run", column, value) if severity == "error"]
         if broken:  # the loader writes this row itself, so its own rules hold it to the schema too

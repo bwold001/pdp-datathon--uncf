@@ -344,6 +344,8 @@ FROM load_run;
 
 The paths are from `normalized-data-model/` on the machine that ran the load. In a database copied to another machine they name files that aren't there; the run id still finds them where the load ran. `started_at` is the same moment as every `data_provider.loaded_at`; `finished_at` is when the rows were written, just before the commit. A full refresh rebuilds every table, so **every row in the database belongs to this one run**: no table needs a key pointing at `load_run`. Its file format, credit cutoff and validation reports are read from the run's `validated/` folder, so they say what the run did, even for a run loaded with `--staging`.
 
+`load_run.build_manifest` is nullable versioned JSON containing a fresh load generation, pipeline version and normalization digest. New map/fix/validate stages retain the code and configuration identities actually used; the loader includes those staged identities and its own rules, then commits the manifest atomically with the normalized rows. Older staged artifacts and fixed sample outputs leave this field blank: v1 reads remain supported, while v2 snapshot/replay requires a complete pipeline rebuild. See the [snapshot guide](../docs/analysis-v2-snapshots.md) for the identity and transaction contract.
+
 To check the counts and the links between tables yourself, in SQLite or PostgreSQL:
 
 ```sql

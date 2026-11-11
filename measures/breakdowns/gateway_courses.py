@@ -24,11 +24,12 @@ from itertools import combinations
 from pathlib import Path
 
 from ..calculations.dfw import grade_result
+from ..data_access import ReadSnapshot
 from ..models import EVERYONE, Group, Measure, min_students
 from ..run_measures import read_answers
 from .common import (
     check_retention,
-    connect,
+    page_source,
     course_rows,
     retained_share,
     retention,
@@ -59,18 +60,20 @@ def gateway_passed(grade: str | None) -> bool | None:
     return float(code) >= GATEWAY_PASS_AT
 
 
-def gateway_courses(cohort: str, filters: Group = EVERYONE, retention_measure: Measure = Measure.RETENTION, database: str | Path | None = None) -> dict:
+def gateway_courses(cohort: str, filters: Group = EVERYONE, retention_measure: Measure = Measure.RETENTION, database: str | Path | None = None, *, snapshot: ReadSnapshot | None = None) -> dict:
+    """Run the page with a borrowed snapshot, or own one local read transaction."""
+    with page_source(database, snapshot) as source:
+        return _gateway_courses(cohort, filters, retention_measure, database=source.positional, connection=source.named)
+
+
+def _gateway_courses(cohort: str, filters: Group = EVERYONE, retention_measure: Measure = Measure.RETENTION, database: str | Path | None = None, *, connection) -> dict:
     """The Gateway courses page: each gateway course's student path and retention, and the riskiest course pairs."""
     check_retention(retention_measure)
-    connection = connect(database)
-    try:
-        everyone = select_students(connection, cohort)
-        students = select_students(connection, cohort, filters)
-        # Year 1 flagged grades for the whole cohort: the filtered students' own, and everyone else's to compare with.
-        flagged_rows = [row for row in course_rows(connection, cohort, everyone) if row["year"] == cohort and row["gateway"] in SUBJECTS]
-        first_term_rows = [row for row in course_rows(connection, cohort, students) if is_first_term(row)]
-    finally:
-        connection.close()
+    everyone = select_students(connection, cohort)
+    students = select_students(connection, cohort, filters)
+    # Year 1 flagged grades for the whole cohort: the filtered students' own, and everyone else's to compare with.
+    flagged_rows = [row for row in course_rows(connection, cohort, everyone) if row["year"] == cohort and row["gateway"] in SUBJECTS]
+    first_term_rows = [row for row in course_rows(connection, cohort, students) if is_first_term(row)]
     answers, observable = read_answers(retention_measure, cohort, database)
 
     start_terms = {row["cohort_term"] for row in students.values()}
