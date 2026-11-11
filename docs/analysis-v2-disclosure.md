@@ -4,7 +4,7 @@
 
 ## Owners and profiles
 
-`measures/disclosure.py` contains the dependency-free policy definitions and predicates. Measures/models cannot import analytics orchestration without creating a cycle, so `analytics/disclosure.py` builds legacy projection and plan-level exploration handling on those definitions. Each registered profile has version `1` and a default minimum of ten:
+`measures/disclosure.py` contains the dependency-free policy definitions and predicates. Measures/models cannot import analytics orchestration without creating a cycle, so `analytics/disclosure.py` builds legacy projection and plan-level exploration handling on those definitions. Legacy/exploration retain version `1` and minimum ten. The merged dashboard configuration uses profile version `2` with the server-selected minimum (synthetic default one):
 
 | Application-selected profile | Behavior |
 | --- | --- |
@@ -43,3 +43,5 @@ This boundary does not change defined-only dashboard subtraction behavior, accou
 Tests cover existing dashboard and legacy behavior, policy binding, hidden input preservation, each supported statistic shape, small binary/exclusion cells, linked partitions, mixed-plan recognized/unknown overlap, proven disjointness, malformed relationships, and JSON/CSV/final-receipt boundaries. API dispatch spies verify every page and both scalar URLs use the shared service once, including reuse for export.
 
 Run focused disclosure/API tests, then `make check-fast` and full `make check`. PostgreSQL and live-provider verification remain environment-dependent; SQLite tests do not establish backend parity. No client/Playground source changes are required. Next planned work is [issue #51](https://github.com/bwold001/pdp-datathon--uncf/issues/51).
+
+The [v2 plan API](analysis-v2-api.md) now stages the actual returned set and calls this boundary after cleanup. Dashboard display configuration is pinned within each plan and fingerprinted; the policy ID is preserved with version `2` for the coordinated configurable-threshold update from `main`. No exploratory operation is enabled by this transport.

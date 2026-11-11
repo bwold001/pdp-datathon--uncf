@@ -96,7 +96,7 @@ def watch_sqlite(connection):
     return detach
 
 
-async def run_sync(function, *arguments):
+async def run_sync(function, *arguments, check_completion=True):
     """Await worker termination, including database cleanup, before propagating cancellation."""
     def invoke():
         """Validate the budget before and after synchronous work."""
@@ -106,7 +106,8 @@ async def run_sync(function, *arguments):
         except Exception:
             check_cancelled()
             raise
-        check_cancelled()
+        if check_completion:
+            check_cancelled()
         return result
 
     worker = asyncio.get_running_loop().run_in_executor(None, copy_context().run, invoke)

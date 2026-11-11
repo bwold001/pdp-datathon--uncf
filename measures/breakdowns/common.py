@@ -18,7 +18,6 @@ from ..calculations.sql_counts import SAFE_YEAR, filters_sql, group_value_sql, n
 from ..models import (
     ALLOWED_VALUES,
     EVERYONE,
-    SUPPRESSION_THRESHOLD,
     Cohort,
     Group,
     GroupDimension,

@@ -27,7 +27,6 @@ from .models import (
     ALLOWED_VALUES,
     EVERYONE,
     OPEN_DIMENSIONS,
-    SUPPRESSION_THRESHOLD as SUPPRESSION_THRESHOLD,
     Cohort,
     Counts,
     Group,

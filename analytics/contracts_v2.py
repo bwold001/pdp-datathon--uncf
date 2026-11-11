@@ -138,13 +138,24 @@ EXPLORATORY_REQUESTS = [
 ]
 
 
+class _StepJsonSchema:
+    """Keep nested operation unions valid in OpenAPI while runtime dispatch still discriminates by kind."""
+
+    @classmethod
+    def __get_pydantic_json_schema__(cls, schema, handler):
+        """Remove Pydantic's inline-object kind mapping, which OpenAPI requires to contain string refs."""
+        result = handler(schema)
+        result.pop("discriminator", None)
+        return result
+
+
 def step_union(defined, legacy, exploration):
     """Keep path and operation discriminators visible in JSON Schema."""
     return Annotated[Union[
         Annotated[Union[tuple(defined)], Field(discriminator="operation_id")],
         Annotated[Union[tuple(legacy)], Field(discriminator="operation_id")],
         Annotated[Union[tuple(exploration)], Field(discriminator="operation")],
-    ], Field(discriminator="kind")]
+    ], Field(discriminator="kind"), _StepJsonSchema]
 
 
 Step = step_union(DEFINED_REQUESTS, LEGACY_REQUESTS, EXPLORATORY_REQUESTS)
@@ -536,6 +547,7 @@ class Receipt(Contract):
     request: Step
     operation_id: Identifier
     operation_version: Identifier
+    disclosure_profile: VersionReference | None = None
     population: Text
     time_window: Text
     grain: Text

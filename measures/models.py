@@ -7,10 +7,13 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
 
-from .disclosure import DASHBOARD_V1, DEFAULT_MIN_STUDENTS, MIN_STUDENTS_SETTING, min_students
+from .disclosure import (
+    DEFAULT_MIN_STUDENTS as DEFAULT_MIN_STUDENTS,
+    MIN_STUDENTS_SETTING as MIN_STUDENTS_SETTING,
+    min_students as min_students,
+)
 
 
-SUPPRESSION_THRESHOLD = DASHBOARD_V1.minimum  # preserve the versioned dashboard policy
 UNKNOWN = "UNKNOWN"  # how the data model stores a value nobody knows
 
 

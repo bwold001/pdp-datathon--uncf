@@ -1,22 +1,38 @@
 """Dependency-free, versioned disclosure rules shared by calculation and presentation owners."""
 
 import os
+from contextlib import contextmanager
+from contextvars import ContextVar
 from dataclasses import dataclass
 from types import MappingProxyType
 
 
 MIN_STUDENTS_SETTING = "UNCF_MIN_STUDENTS"
 DEFAULT_MIN_STUDENTS = 1
+_DISPLAY_MINIMUM: ContextVar[int | None] = ContextVar("display_minimum", default=None)
 
 
 def min_students() -> int:
     """Use main's server-only display setting; synthetic groups default to one student."""
+    selected = _DISPLAY_MINIMUM.get()
+    if selected is not None:
+        return selected
     raw = os.environ.get(MIN_STUDENTS_SETTING, "").strip()
     if not raw:
         return DEFAULT_MIN_STUDENTS
     if not raw.isdigit() or int(raw) < 1:
         raise ValueError(f"{MIN_STUDENTS_SETTING} must be a whole number of 1 or more, not {raw!r}")
     return int(raw)
+
+
+@contextmanager
+def dashboard_scope():
+    """Pin the server's display setting for one execution without accepting a client override."""
+    token = _DISPLAY_MINIMUM.set(min_students())
+    try:
+        yield
+    finally:
+        _DISPLAY_MINIMUM.reset(token)
 
 
 @dataclass(frozen=True)

@@ -17,7 +17,6 @@ from measures.requests import (
 )
 from measures.models import (
     ALLOWED_VALUES as ALLOWED_VALUES,
-    SUPPRESSION_THRESHOLD,
     Group,
     GroupDimension,
     Measure,

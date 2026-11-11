@@ -26,6 +26,7 @@ from fastapi.responses import JSONResponse, Response
 
 from api import data
 from api.analyses import router as analytics_router
+from api.analysis_v2 import router as analysis_v2_router
 from api.measure_by_group import clear_cache as clear_measure_cache
 from api.measure_by_group import is_provisional, measure_by_group
 from gap_finder.gateway import add_gateway_gaps
@@ -368,6 +369,7 @@ def create_app() -> FastAPI:
 
     app.include_router(router, prefix="/api/v1")
     app.include_router(analytics_router)
+    app.include_router(analysis_v2_router)
     return app
 
 

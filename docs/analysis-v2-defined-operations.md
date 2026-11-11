@@ -1,6 +1,6 @@
 # Defined operation catalog and adapters
 
-[Issue #49](https://github.com/bwold001/pdp-datathon--uncf/issues/49) adds an inactive, provider-free catalog and single-operation adapter. All data/results are synthetic. Existing v1 URLs, formulas, response models and provider tools keep their behavior.
+[Issue #49](https://github.com/bwold001/pdp-datathon--uncf/issues/49) adds the provider-free catalog and single-operation adapters used by the [v2 plan API](analysis-v2-api.md). All data/results are synthetic. Existing v1 URLs, formulas, response models and provider tools keep their behavior.
 
 ## Owners and calls
 
@@ -64,3 +64,5 @@ The existing v2 bound is 200 table rows. Oversized pages/analyses return typed `
 The independent twelve-student fixture has 24 final-grade enrollments, twelve D grades, six retained students and a credit-ratio numerator of 35/6. Tests cover all eleven dashboard operations, separate retention definitions, gateway reporting, hidden/provisional/grouped results and bounded projection. Three-student fixtures exercise all legacy operations and original coverage. Serialized v1 JSON/CSV are checked against the same explicit expectations, including Gateway's shared gap-finder projection.
 
 Run registry, defined/legacy operation, rate-breakdown and API parity tests, then `make check-fast` and full `make check`. No browser/provider is needed for this inactive boundary. PostgreSQL parity still requires the configured integration environment from the [snapshot guide](analysis-v2-snapshots.md). Next planned work is [issue #50](https://github.com/bwold001/pdp-datathon--uncf/issues/50).
+
+The complete-plan owner now calls this adapter through the [v2 API](analysis-v2-api.md), including whole-plan validation, source/version checks, disclosure and receipt construction. Existing provider tools are still unchanged. Current dashboard minimum-group configuration comes from merged `main`; legacy/exploration policies remain independent.
