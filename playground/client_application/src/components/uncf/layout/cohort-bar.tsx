@@ -13,6 +13,7 @@ import { type CohortFilterDefinition, cohortFilters } from "./explorer-config";
 import { type StudentCount, useExplorer } from "./explorer-context";
 import { explorerLinkButton, explorerWrap } from "./explorer-styles";
 import { FilterSelect } from "./filter-select";
+import { hidesSmallGroups, tooFew } from "./small-groups";
 import { useCohortFilters } from "./use-cohort-filters";
 
 /** The grey cohort bar under the tabs, wired to the URL and the API's counts. Every tab reads the same filters. */
@@ -48,7 +49,7 @@ type CohortBarViewProps = {
   filters: CohortFilters;
   /** The counts behind each choice; left out while they load. */
   options?: CohortOptions;
-  /** The current tab's student count, "under 10" when it hides its numbers, or null when it hasn't reported one. */
+  /** The current tab's student count, "too few" when it hides its numbers, or null when it hasn't reported one. */
   studentCount: StudentCount;
   onChange?: (id: string, value: string | null) => void;
   onReset?: () => void;
@@ -69,6 +70,7 @@ export function CohortBarView({ definitions = cohortFilters, filters, options, s
               value={filters[definition.id] ?? null}
               onChange={(value) => onChange?.(definition.id, value)}
               counts={definition.id === "cohort" ? options?.cohorts : options?.filters[definition.id]}
+              minStudents={options?.min_students}
               disabled={disabled}
             />
           ))}
@@ -78,10 +80,12 @@ export function CohortBarView({ definitions = cohortFilters, filters, options, s
         </div>
         <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-sm text-(--uncf-ink-3)">
           <span>{showingText(filters, definitions, studentCount, options)}</span>
-          <span className="inline-flex items-center gap-1.5">
-            <Info className="size-4" aria-hidden />
-            Groups under 10 students hidden
-          </span>
+          {options && hidesSmallGroups(options.min_students) && (
+            <span className="inline-flex items-center gap-1.5">
+              <Info className="size-4" aria-hidden />
+              Groups under {options.min_students} students hidden
+            </span>
+          )}
         </div>
       </div>
     </section>
@@ -94,7 +98,7 @@ function showingText(filters: CohortFilters, definitions: CohortFilterDefinition
   const cohortSize = options?.cohorts[cohort];
   let showing = `${cohort} cohort`;
   // Never the cohort's size here: it would read as if that many students matched.
-  if (studentCount === "under 10") showing = "Fewer than 10 students match";
+  if (studentCount === "too few") showing = `${tooFew(options?.min_students ?? 1)} match`;
   else if (studentCount !== null) showing = `Showing ${studentCount.toLocaleString("en-US")} students`;
   else if (cohortSize != null) showing = `${cohort} cohort: ${cohortSize.toLocaleString("en-US")} students`;
   const changed = countChangedFilters(filters, definitions);

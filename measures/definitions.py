@@ -4,6 +4,8 @@ from __future__ import annotations
 import os
 from typing import TypedDict
 
+from .models import min_students
+
 
 class Definition(TypedDict):
     """One measure's definition, as the client reads it."""
@@ -20,6 +22,8 @@ EVERYONE_WHO_ENTERED = (
     "Everyone who entered that year: every start term (fall, winter, spring and summer) and every "
     "enrollment type (first time, transfer in and readmitted)."
 )
+# Filled in with min_students() by definition_for, and left out when no group is hidden (the setting is 1).
+SMALL_GROUPS = "A course or group with fewer than {min_students} students is hidden."
 NEWEST_CLASS = "The newest entering class may not have its full second year in the data yet, so its rate can still change."
 GATEWAY_NOT_MAPPED = "Each college chooses its gateway courses. Until they are mapped in the data, this shows Not reported."
 GATEWAY_UNKNOWN_ATTEMPT = (
@@ -105,7 +109,7 @@ DEFINITIONS: dict[str, Definition] = {
         "limits": [
             "F is an F or a numeric grade under 0.7. D is 0.7 to under 2.0, so a C minus counts. W is a withdrawal.",
             "Incomplete, audit, missing and other grades aren't final, so they are left out.",
-            "A course or group with fewer than 10 students is hidden.",
+            SMALL_GROUPS,
         ],
     },
     "credit_completion": {
@@ -168,9 +172,15 @@ def school() -> str | None:
 
 def definition_for(measure: str) -> Definition:
     """The definition for one measure, with the school's own name when it has one. KeyError if there is none."""
-    definition = DEFINITIONS[measure]
+    definition = {**DEFINITIONS[measure], "limits": small_groups_limit(DEFINITIONS[measure]["limits"])}
     local = LOCAL_NAMES.get(school() or "", {}).get(measure)
     return {**definition, "name": local} if local else definition
+
+
+def small_groups_limit(limits: list[str]) -> list[str]:
+    """The limits with the small-groups line filled in from min_students(), or left out when nothing is hidden."""
+    minimum = min_students()
+    return [line.format(min_students=minimum) for line in limits if line != SMALL_GROUPS or minimum > 1]
 
 
 def all_definitions() -> dict[str, Definition]:

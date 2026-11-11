@@ -19,7 +19,7 @@ export function GatewayTab() {
   const groupLabel = useMemo(() => describeGroup(filters), [filters]);
   const load = useMemo(() => explorerLoader<GatewayResponse>("/uncf/gateway", apiQuery), [apiQuery]);
   const { resource, retry } = useApiResource(load);
-  useShowStudentCount(resource.status !== "success" ? null : resource.data.status === "suppressed" ? "under 10" : resource.data.students);
+  useShowStudentCount(resource.status !== "success" ? null : resource.data.status === "suppressed" ? "too few" : resource.data.students);
 
   if (resource.status === "loading") return <GatewayLoading />;
   if (resource.status === "error") {

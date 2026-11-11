@@ -2,7 +2,7 @@
 
 Every rate comes from run_measure's dfw_rate (the course, term, delivery and student group splits included), so
 the page, /measures/dfw_rate and the chat agree. This module adds what isn't a rate: each course's catalog names and
-gateway flags, which values exist, and each group next to everyone else in the course. Fewer than 10 students
+gateway flags, which values exist, and each group next to everyone else in the course. Fewer than min_students()
 is hidden.
 """
 from __future__ import annotations
@@ -24,9 +24,10 @@ from ..models import (
     GroupPart,
     Measure,
     MeasureResult,
+    min_students,
 )
 from ..run_measures import run_measure
-from .common import MIN_STUDENTS, check_cohort, page_source, select_students, share
+from .common import check_cohort, page_source, select_students, share
 
 # The student groups a course can be split by, besides delivery and the term it was taken.
 GROUP_DIMENSIONS = (
@@ -42,6 +43,8 @@ GROUP_DIMENSIONS = (
 SEASONS = {"FALL": "Fall", "WINTER": "Winter", "SPRING": "Spring", "SUMMER": "Summer"}
 DELIVERY = {"F": "Face-to-face", "H": "Hybrid", "O": "Online", "UNKNOWN": "Blank"}
 TOP_NAMES = 3
+# The page's smallest cutoff is 10 final grades, so courses with fewer aren't sent: the list never shows them.
+MIN_LISTED_GRADES = 10
 
 
 class UnknownCourse(LookupError):
@@ -49,7 +52,7 @@ class UnknownCourse(LookupError):
 
 
 def tally(row: MeasureResult) -> dict:
-    """A dfw_rate row as the page shows it, with D, F and W apart. Every number is None under 10 students."""
+    """A dfw_rate row as the page shows it, with D, F and W apart. Every number is None under min_students()."""
     if row.numerator is None:
         return {"students": None, "num": None, "den": None, "rate": None, "split": None}
     split = dict(row.split)
@@ -106,7 +109,7 @@ def dfw_courses(cohort: str, filters: Group = EVERYONE, database: str | Path | N
 
 
 def _dfw_courses(cohort: str, filters: Group = EVERYONE, database: str | Path | None = None, *, connection) -> dict:
-    """The DFW page's list: everyone's DFW rate, then each course with 10 or more students."""
+    """The DFW page's list: everyone's DFW rate, then each course with 10 or more final grades and min_students() students."""
     rows = run_measure(Measure.DFW_RATE, [Cohort.of(cohort)], [GroupBy.of(GroupDimension.COURSE)], database=database, filters=filters)
     facts = course_facts(connection, cohort, select_students(connection, cohort, filters))
 
@@ -115,7 +118,7 @@ def _dfw_courses(cohort: str, filters: Group = EVERYONE, database: str | Path | 
     courses = []
     for course, fact in facts.items():
         numbers = tally(by_course[course])
-        if numbers["den"] is not None:
+        if numbers["den"] is not None and numbers["den"] >= MIN_LISTED_GRADES:
             courses.append({"course": course, "names": names_of(fact), **numbers, "gateway": {"M": fact["gateway"]["M"], "E": fact["gateway"]["E"]}})
     courses.sort(key=lambda c: (-c["num"], -c["rate"], c["course"]))
     shown_any = everyone["den"] is not None
@@ -124,7 +127,7 @@ def _dfw_courses(cohort: str, filters: Group = EVERYONE, database: str | Path | 
         "status": "ok" if shown_any else "suppressed",
         "everyone": everyone,
         "courses": courses if shown_any else [],
-        # Courses these students took that are hidden for having fewer than 10 of them.
+        # Courses these students took that aren't listed: under 10 final grades, or hidden under min_students().
         "hidden_courses": len(facts) - len(courses),
     }
 
@@ -134,7 +137,7 @@ def compare(part: dict, course: dict) -> dict:
     if part["den"] is None or course["den"] is None:
         return {**part, "rest_rate": None, "gap": None}
     rest_grades = course["den"] - part["den"]
-    if rest_grades < MIN_STUDENTS:
+    if rest_grades < min_students():
         return {**part, "rest_rate": None, "gap": None}
     rest_rate = (course["num"] - part["num"]) / rest_grades
     return {**part, "rest_rate": round(rest_rate, 4), "gap": round((part["num"] / part["den"] - rest_rate) * 100, 1)}
@@ -152,7 +155,7 @@ def _dfw_course(cohort: str, course: str, filters: Group = EVERYONE, database: s
     students = select_students(connection, cohort, filters)
     fact = course_facts(connection, cohort, students).get(code)
     if fact is None:
-        raise UnknownCourse(f"No course {code!r} with 10 or more students for these filters.")
+        raise UnknownCourse(f"No course {code!r} with {min_students()} or more students for these filters.")
 
     # The course is one more filter, so every row below is about this course only.
     in_course = Group(filters.parts | {GroupPart(GroupDimension.COURSE, code)})
@@ -160,7 +163,7 @@ def _dfw_course(cohort: str, course: str, filters: Group = EVERYONE, database: s
     rows = run_measure(Measure.DFW_RATE, [Cohort.of(cohort)], splits, database=database, filters=in_course)
     numbers = tally(rows[0])
     if numbers["den"] is None:
-        raise UnknownCourse(f"No course {code!r} with 10 or more students for these filters.")
+        raise UnknownCourse(f"No course {code!r} with {min_students()} or more students for these filters.")
 
     by_group = {}
     for row in rows[1:]:

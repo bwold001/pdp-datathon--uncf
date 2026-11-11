@@ -1,6 +1,6 @@
 import type { ExplorerMeta } from "@/components/uncf/layout/explorer-api";
 
-/** Retention for a group of students. Every number is null when the group has under 10 students. */
+/** Retention for a group of students. Every number is null when the group is under meta.min_students. */
 export type Retention = { students: number | null; retained: number | null; rate: number | null; [more: string]: unknown };
 
 /** What happened after the first try, in year 1. A step is null when it has 1 to 9 students. */
