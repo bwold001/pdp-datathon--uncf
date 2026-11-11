@@ -16,7 +16,7 @@ export function StudentPaths() {
   const { apiQuery } = useCohortFilters();
   const load = useMemo(() => explorerLoader<PathsResponse>("/uncf/student-paths", apiQuery), [apiQuery]);
   const { resource, retry } = useApiResource(load);
-  useShowStudentCount(resource.status !== "success" ? null : resource.data.status === "suppressed" ? "under 10" : resource.data.students);
+  useShowStudentCount(resource.status !== "success" ? null : resource.data.status === "suppressed" ? "too few" : resource.data.students);
 
   if (resource.status === "loading") return <PathsLoading />;
   if (resource.status === "error") {

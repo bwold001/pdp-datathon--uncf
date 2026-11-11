@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { Card, CardHead, Counted, Legend, MessageCard, Notice, formatShare, tableClasses } from "@/components/uncf/layout/explorer-parts";
 import { explorerButton } from "@/components/uncf/layout/explorer-styles";
+import { hidesSmallGroups, privacyNote, tooFew } from "@/components/uncf/layout/small-groups";
 import { cn } from "@/lib/utils";
 
 import { type GatewayCourse, type GatewayResponse, outcomeStyle, subjectLabel } from "./gateway-data";
@@ -16,8 +17,8 @@ const FIRST_PER_SUBJECT = 5;
 export function GatewayView({ data }: { data: GatewayResponse }) {
   if (data.status === "suppressed" || !data.students || !data.cohort_retention) {
     return (
-      <MessageCard title="Fewer than 10 students match these filters.">
-        Remove a filter to see results. Groups under 10 students are hidden to protect privacy.
+      <MessageCard title={`${tooFew(data.meta.min_students)} match these filters.`}>
+        Remove a filter to see results. {privacyNote(data.meta.min_students)}
       </MessageCard>
     );
   }
@@ -54,7 +55,7 @@ function OutcomesCard({ data }: { data: GatewayResponse }) {
         aside={<Legend items={outcomeStyle.map((outcome) => ({ label: outcome.label, color: outcome.color }))} />}
       />
       {data.courses.length === 0 ? (
-        <p className="text-(--uncf-ink-3)">No gateway course has 10 or more students with these filters.</p>
+        <p className="text-(--uncf-ink-3)">No gateway course has {data.meta.min_students} or more students with these filters.</p>
       ) : (
         <div className="overflow-x-auto">
           <table className={tableClasses.table}>
@@ -106,8 +107,9 @@ function OutcomesCard({ data }: { data: GatewayResponse }) {
         {data.meta.flagged
           ? "the institution flags as gateway math or English in the PDP course file"
           : "inferred from year-1 college-level courses with a math or English prefix"}
-        . Courses with fewer than 10 students
-        {data.hidden_courses ? ` (${fmt(data.hidden_courses)})` : ""} are hidden; “–” is a group under 10 students.
+        .
+        {hidesSmallGroups(data.meta.min_students) &&
+          ` Courses with fewer than ${data.meta.min_students} students${data.hidden_courses ? ` (${fmt(data.hidden_courses)})` : ""} are hidden; “–” is a group under ${data.meta.min_students} students.`}
       </Counted>
     </Card>
   );

@@ -14,6 +14,7 @@ import {
   shareOf,
   tableClasses,
 } from "@/components/uncf/layout/explorer-parts";
+import { hiddenCount, privacyNote, tooFew } from "@/components/uncf/layout/small-groups";
 import { cn } from "@/lib/utils";
 
 import { type PathsResponse, pathStatuses, statusStyle, termNames } from "./paths-data";
@@ -23,8 +24,8 @@ import { PathsSankey } from "./paths-sankey";
 export function PathsView({ data }: { data: PathsResponse }) {
   if (data.status === "suppressed" || !data.students || !data.columns || !data.transfers) {
     return (
-      <MessageCard title="Fewer than 10 students match these filters.">
-        Remove a filter to see results. Groups under 10 students are hidden to protect privacy.
+      <MessageCard title={`${tooFew(data.meta.min_students)} match these filters.`}>
+        Remove a filter to see results. {privacyNote(data.meta.min_students)}
       </MessageCard>
     );
   }
@@ -33,6 +34,7 @@ export function PathsView({ data }: { data: PathsResponse }) {
   const year2 = data.columns.year2;
   const returned = data.moves?.find((move) => move.from === "stopped" && move.to === "here")?.students ?? null;
   const notObserved = data.columns.next.not_observed || data.columns.year2.not_observed;
+  const min = data.meta.min_students;
 
   return (
     <>
@@ -54,7 +56,7 @@ export function PathsView({ data }: { data: PathsResponse }) {
           label={`Still here · ${names.year2Short}`}
           value={formatShare(shareOf(year2.here, total))}
           tone="blue"
-          note={`${formatCount(year2.here)} took a course here that term`}
+          note={`${formatCount(year2.here, min)} took a course here that term`}
         />
         <Kpi
           label={`Enrolled anywhere · ${names.year2Short}`}
@@ -65,7 +67,7 @@ export function PathsView({ data }: { data: PathsResponse }) {
           label={`Stopped out by ${names.year2Short}`}
           value={formatShare(shareOf(year2.stopped, total))}
           tone="warn"
-          note={returnedNote(returned)}
+          note={returnedNote(returned, min)}
         />
       </KpiGrid>
 
@@ -79,7 +81,7 @@ export function PathsView({ data }: { data: PathsResponse }) {
         </div>
         {notObserved ? (
           <p className="mt-3 text-[13px] text-(--uncf-ink-3)">
-            {formatCount(notObserved)} students’ later terms aren’t in the data yet, so they aren’t drawn there.
+            {formatCount(notObserved, min)} students’ later terms aren’t in the data yet, so they aren’t drawn there.
           </p>
         ) : null}
         <Counted>
@@ -99,8 +101,8 @@ export function PathsView({ data }: { data: PathsResponse }) {
 }
 
 /** The stopped-out tile's note: how many came back after a term with no record. */
-function returnedNote(returned: number | null): string {
-  if (returned === null) return "Under 10 students returned after a term away";
+function returnedNote(returned: number | null, minStudents: number): string {
+  if (returned === null) return `${hiddenCount(minStudents)} students returned after a term away`;
   if (returned === 0) return "No students returned after a term away";
   return `${returned.toLocaleString("en-US")} students returned after a term away`;
 }
@@ -109,6 +111,7 @@ function returnedNote(returned: number | null): string {
 function TransfersCard({ data, year2 }: { data: PathsResponse; year2: string }) {
   const transfers = data.transfers!;
   const moved = transfers.students;
+  const min = data.meta.min_students;
   const rows = [
     { label: "To a 4-year institution", count: transfers.four_year },
     { label: "To a 2-year institution", count: transfers.two_year },
@@ -121,7 +124,7 @@ function TransfersCard({ data, year2 }: { data: PathsResponse; year2: string }) 
       <h3 className="text-[21px] font-semibold">Where transfers went</h3>
       <p className="mt-1 text-(--uncf-ink-3)">
         {moved === null
-          ? `Fewer than 10 students transferred out by ${year2}, so this is hidden.`
+          ? `${tooFew(min)} transferred out by ${year2}, so this is hidden.`
           : moved === 0
             ? `No students transferred out by ${year2}.`
             : `Of ${moved.toLocaleString("en-US")} students who transferred out by ${year2}`}
@@ -136,11 +139,11 @@ function TransfersCard({ data, year2 }: { data: PathsResponse; year2: string }) 
                   <div className="flex justify-between gap-3">
                     <span>{row.label}</span>
                     <span className="uncf-num">
-                      {formatCount(row.count)}
+                      {formatCount(row.count, min)}
                       {share !== null && ` · ${formatShare(share)}`}
                     </span>
                   </div>
-                  <TrackBar share={share} color="var(--uncf-grey)" label={`${row.label}: ${formatCount(row.count)}`} />
+                  <TrackBar share={share} color="var(--uncf-grey)" label={`${row.label}: ${formatCount(row.count, min)}`} />
                 </div>
               );
             })}
@@ -156,10 +159,11 @@ function TransfersCard({ data, year2 }: { data: PathsResponse; year2: string }) 
 function TermTableCard({ data }: { data: PathsResponse }) {
   const names = termNames(data);
   const columns = data.columns!;
+  const count = (value: number | null) => formatCount(value, data.meta.min_students);
   const rows = [
-    { term: names.entered ?? "Entering term", here: formatCount(data.students), elsewhere: "–", stopped: "–" },
-    { term: capitalize(names.next), here: formatCount(columns.next.here), elsewhere: formatCount(columns.next.elsewhere), stopped: formatCount(columns.next.stopped) },
-    { term: capitalize(names.year2), here: formatCount(columns.year2.here), elsewhere: formatCount(columns.year2.elsewhere), stopped: formatCount(columns.year2.stopped) },
+    { term: names.entered ?? "Entering term", here: count(data.students), elsewhere: "–", stopped: "–" },
+    { term: capitalize(names.next), here: count(columns.next.here), elsewhere: count(columns.next.elsewhere), stopped: count(columns.next.stopped) },
+    { term: capitalize(names.year2), here: count(columns.year2.here), elsewhere: count(columns.year2.elsewhere), stopped: count(columns.year2.stopped) },
   ];
 
   return (

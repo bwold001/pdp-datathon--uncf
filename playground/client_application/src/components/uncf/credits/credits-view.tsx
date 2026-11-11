@@ -13,6 +13,7 @@ import {
   formatShare,
   tableClasses,
 } from "@/components/uncf/layout/explorer-parts";
+import { hidesSmallGroups, privacyNote, tooFew } from "@/components/uncf/layout/small-groups";
 import { cn } from "@/lib/utils";
 
 import { type CreditsResponse, milestoneLabel, tierStyle } from "./credits-data";
@@ -24,8 +25,8 @@ const one = (n: number | null) => (n === null ? "–" : n.toFixed(1));
 export function CreditsView({ data }: { data: CreditsResponse }) {
   if (data.status === "suppressed" || !data.credits || !data.completion) {
     return (
-      <MessageCard title="Fewer than 10 students with year-1 credits match these filters.">
-        Remove a filter to see results. Groups under 10 students are hidden to protect privacy.
+      <MessageCard title={`${tooFew(data.meta.min_students, "students with year-1 credits")} match these filters.`}>
+        Remove a filter to see results. {privacyNote(data.meta.min_students)}
       </MessageCard>
     );
   }
@@ -124,7 +125,7 @@ function TermsCard({ data }: { data: CreditsResponse }) {
         {data.terms.map((term) => (
           <span key={term.label}>
             {term.label}
-            <span className="block text-[13px] text-(--uncf-ink-3)">{formatCount(term.enrolled)} enrolled</span>
+            <span className="block text-[13px] text-(--uncf-ink-3)">{formatCount(term.enrolled, data.meta.min_students)} enrolled</span>
           </span>
         ))}
       </div>
@@ -169,7 +170,7 @@ function TiersCard({ data }: { data: CreditsResponse }) {
             {data.tiers.map((tier) => (
               <tr key={tier.key}>
                 <td className={tableClasses.td}>{tier.label}</td>
-                <td className={cn(tableClasses.td, tableClasses.right, "uncf-num pr-8")}>{formatCount(tier.students)}</td>
+                <td className={cn(tableClasses.td, tableClasses.right, "uncf-num pr-8")}>{formatCount(tier.students, data.meta.min_students)}</td>
                 <td className={cn(tableClasses.td, "w-[60%]")}>
                   <TrackBar share={tier.rate} color={tierStyle[tier.key].bar} height={12} label={`${tier.label}: ${formatShare(tier.rate)} retained`} />
                 </td>
@@ -184,7 +185,7 @@ function TiersCard({ data }: { data: CreditsResponse }) {
         {data.credits!.left_out ? `; ${fmt(data.credits!.left_out)} students with blank credits are left out` : ""}. The
         by-term columns use the course file’s credits for the starting term and the next fall or spring term. Retained to{" "}
         {data.meta.retention_term}: took a course here that term. The credit completion ratio counts first-time and
-        transfer-in students who attempted at least one credit. Tiers with fewer than 10 students are hidden.
+        transfer-in students who attempted at least one credit.{hidesSmallGroups(data.meta.min_students) && ` Tiers with fewer than ${data.meta.min_students} students are hidden.`}
       </Counted>
     </Card>
   );

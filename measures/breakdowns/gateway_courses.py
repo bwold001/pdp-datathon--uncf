@@ -9,7 +9,7 @@ shared grade rules, and retention is the query's retention type, as on every oth
 (incomplete, audit, missing) are left out and counted apart.
 
 Riskiest course pairs: two courses taken together in the student's first term, by 10 or more students, whose
-retention is below the whole cohort's. The three furthest below are shown. Groups under 10 students are hidden.
+retention is below the whole cohort's. The three furthest below are shown. Groups under min_students() are hidden.
 """
 from __future__ import annotations
 
@@ -17,10 +17,9 @@ from collections import Counter, defaultdict
 from itertools import combinations
 from pathlib import Path
 
-from ..models import EVERYONE, Group, Measure
+from ..models import EVERYONE, Group, Measure, min_students
 from ..run_measures import read_answers
 from .common import (
-    MIN_STUDENTS,
     check_retention,
     connect,
     course_rows,
@@ -33,6 +32,8 @@ from .common import (
 )
 
 TOP_PAIRS = 3
+# Pairs are ranked only with this many students: a rate from a handful of students swings too much to rank.
+MIN_PAIR_STUDENTS = 10
 # Used only when the institution flags no gateway courses for a cohort: college level courses with these prefixes.
 INFERRED_PREFIXES = {"M": {"MATH", "MTH", "MAT", "MA", "STAT"}, "E": {"ENG", "ENGL"}}
 SUBJECTS = ("E", "M")
@@ -76,9 +77,9 @@ def gateway_courses(cohort: str, filters: Group = EVERYONE, retention_measure: M
         "retention_term": term_label(retention_term(cohort)) if retention_measure == Measure.FEDERAL_RETENTION else "next academic year",
         "retention_observed": observable,
         "first_term": first_term,
-        "min_pair_students": MIN_STUDENTS,
+        "min_pair_students": max(MIN_PAIR_STUDENTS, min_students()),
     }
-    if len(students) < MIN_STUDENTS:
+    if len(students) < min_students():
         return {"context": context, "status": "suppressed", "students": None, "cohort_retention": None, "courses": [], "hidden_courses": 0, "left_out": None, "pairs": [], "pairs_considered": 0}
 
     cohort_retention = retention(retention_measure, cohort, filters, database)
@@ -94,7 +95,7 @@ def gateway_courses(cohort: str, filters: Group = EVERYONE, retention_measure: M
 
 
 def course_outcomes(rows: list[dict], flagged: bool, answers: dict) -> dict:
-    """Each gateway course with 10 or more students: outcomes of their first attempt, and their retention."""
+    """Each gateway course with min_students() or more students: outcomes of their first attempt, and their retention."""
     first_attempts: dict[tuple[str, str], dict] = {}
     subjects: dict[str, str] = {}
     names: dict[str, Counter] = defaultdict(Counter)
@@ -117,7 +118,7 @@ def course_outcomes(rows: list[dict], flagged: bool, answers: dict) -> dict:
     for course, outcomes in by_course.items():
         not_passed = outcomes["d"] | outcomes["f"] | outcomes["w"]
         graded = outcomes["passed"] | not_passed
-        if len(graded) < MIN_STUDENTS:
+        if len(graded) < min_students():
             hidden += 1
             continue
         left_out += len(outcomes["other"])
@@ -160,7 +161,7 @@ def course_pairs(rows: list[dict], students: dict, answers: dict, cohort_rate: f
     considered = []
     for pair, who in takers.items():
         numbers = retained_share(answers, who)
-        if numbers["students"] is None:
+        if numbers["students"] is None or numbers["students"] < MIN_PAIR_STUDENTS:
             continue
         considered.append({"courses": list(pair), **numbers, "gap": round((numbers["rate"] - cohort_rate) * 100, 1)})
     below = sorted((pair for pair in considered if pair["gap"] < 0), key=lambda pair: (pair["gap"], -pair["students"]))

@@ -58,7 +58,7 @@ from measures.breakdowns.credit_momentum import credit_momentum
 from measures.breakdowns.dfw_courses import UnknownCourse, dfw_course, dfw_courses
 from measures.breakdowns.gateway_courses import gateway_courses
 from measures.breakdowns.student_paths import DEFAULT_TERMS, student_paths
-from measures.models import GroupDimension
+from measures.models import GroupDimension, min_students
 
 PREFIX = "/api/v1/uncf"
 DEFAULT_PORT = 8001
@@ -271,6 +271,7 @@ def measure_answer(measure: str, cohort: str, bar: Bar, dimensions: list[str]):
         source=data.SOURCE,
         loaded_at=loaded_at,
         provisional=is_provisional(measure, cohort),
+        min_students=min_students(),
     )
     return MeasureByGroupResponse(meta=meta, rows=rows)
 
@@ -297,7 +298,7 @@ def get_student_paths(bar: Annotated[Bar, Depends()], terms: int = DEFAULT_TERMS
 
 @router.get("/dfw", response_model=DfwResponse, responses=ERRORS)
 def get_dfw(bar: Annotated[Bar, Depends()]):
-    """DFW list: everyone's DFW rate with D, F and W apart, then each course with 10 or more students."""
+    """DFW list: everyone's DFW rate with D, F and W apart, then each course with min_students() or more students."""
     return answer(bar, "dfw")
 
 

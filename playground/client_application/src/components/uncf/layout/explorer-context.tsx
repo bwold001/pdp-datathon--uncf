@@ -2,8 +2,8 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 
-/** The tab's student count: a number, "under 10" when its numbers are hidden, or null while it loads. */
-export type StudentCount = number | "under 10" | null;
+/** The tab's student count: a number, "too few" when its numbers are hidden, or null while it loads. */
+export type StudentCount = number | "too few" | null;
 
 type ExplorerContextValue = {
   studentCount: StudentCount;
@@ -26,8 +26,8 @@ export function useExplorer(): ExplorerContextValue {
 }
 
 /**
- * Shows this tab's student count in the cohort bar ("Showing 1,114 students"). Pass "under 10" when the tab hides its
- * numbers for too few students, and null while it loads.
+ * Shows this tab's student count in the cohort bar ("Showing 1,114 students"). Pass "too few" when the tab hides its
+ * numbers for too few students (under the API's min_students), and null while it loads.
  */
 export function useShowStudentCount(count: StudentCount) {
   const { setStudentCount } = useExplorer();

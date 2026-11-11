@@ -6,16 +6,15 @@ The numbers come from the measures:
 - retention by the chosen retention measure, from run_measure, as on every other page.
 
 This module only breaks them down: credit milestones, the first two terms (from the course file, averaged over the
-students who took a course here that term) and credit tiers. Groups under 10 students are hidden.
+students who took a course here that term) and credit tiers. Groups under min_students() are hidden.
 """
 from __future__ import annotations
 
 from pathlib import Path
 
-from ..models import EVERYONE, Cohort, Group, Measure
+from ..models import EVERYONE, Cohort, Group, Measure, min_students
 from ..run_measures import read_answers, run_measure
 from .common import (
-    MIN_STUDENTS,
     SEASONS,
     check_retention,
     connect,
@@ -73,7 +72,7 @@ def credit_momentum(cohort: str, filters: Group = EVERYONE, retention_measure: M
     context = {
         "retention_term": term_label(retention_term(cohort)) if retention_measure == Measure.FEDERAL_RETENTION else "next academic year",
     }
-    if len(students) < MIN_STUDENTS or len(known) < MIN_STUDENTS:
+    if len(students) < min_students() or len(known) < min_students():
         return {"context": context, "status": "suppressed", "students": None, "credits": None, "completion": None, "retention": None, "milestones": [], "terms": [], "tiers": []}
 
     # The completion ratio is the credit_completion measure's row for these students.
@@ -117,7 +116,7 @@ def first_terms(cohort: str, students: dict, per_term: dict) -> list[dict]:
             if credits:
                 attempted.append(credits[0])
                 earned.append(credits[1])
-        hidden = len(attempted) < MIN_STUDENTS
+        hidden = len(attempted) < min_students()
         columns.append(
             {
                 "label": term_label(term) if named and term else label,
@@ -134,7 +133,7 @@ def tiers(known: dict, answers: dict) -> list[dict]:
     rows = []
     for key, label, lowest, highest in TIERS:
         members = {sid for sid, (_, earned) in known.items() if earned >= lowest and (highest is None or earned < highest)}
-        if len(members) < MIN_STUDENTS:
+        if len(members) < min_students():
             rows.append({"key": key, "label": label, "students": None, "share": None, "retained": None, "rate": None})
             continue
         retained = retained_share(answers, members)
