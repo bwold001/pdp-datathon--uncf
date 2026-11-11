@@ -424,8 +424,11 @@ def test_catalog_ignores_legacy_threshold_and_replay_rejects_old_policy(
     assert refused.json()["receipts"] == []
 
 
-def test_owner_cleanup_failure_is_not_labeled_complete(client, defined_data):
-    """The current step is uncertified when owner cleanup fails, even if its SQL returned rows."""
+@pytest.mark.parametrize("bounded_failure", [False, True])
+def test_owner_cleanup_failure_preserves_completed_evidence(
+    client, defined_data, monkeypatch, bounded_failure
+):
+    """Cleanup reports its failure after close without discarding completed in-memory evidence."""
     from contextlib import contextmanager
 
     from analytics.data_access import connection_snapshot
@@ -454,11 +457,34 @@ def test_owner_cleanup_failure_is_not_labeled_complete(client, defined_data):
             yield snapshot
 
     raw = plan(client)
+    if bounded_failure:
+        from analytics.analysis_service import OperationError
+        from measures import service
+
+        owner = service.execute
+
+        def refuse(operation, parameters, snapshot):
+            """Leave the transaction usable after a bounded refusal of the second operation."""
+            if operation == "dfw.rate":
+                raise OperationError("limit_exceeded", "bounded refusal")
+            return owner(operation, parameters, snapshot)
+
+        monkeypatch.setattr(service, "execute", refuse)
+        raw["steps"].append({**request("dfw.rate"), "step_id": "dfw"})
     client.app.dependency_overrides[get_runtime_factory] = lambda: (
         lambda: AnalyticsService(None, Coverage(), snapshot_factory=source)
     )
     body = client.post(PREFIX + "/execute", json=raw).json()
-    assert body["outcome"] == "failed" and body["receipts"] == []
+    assert body["outcome"] == ("partial" if bounded_failure else "complete")
+    assert body["receipts"][0]["result"]["payload"]["numerator"] == 6
+    assert body["receipts"][0]["result"]["payload"]["denominator"] == 12
+    assert body["step_outcomes"][:1] == [
+        {"step_id": "result", "outcome": "completed", "issue": None}
+    ]
+    assert body["issues"][-1]["code"] == "data_unavailable"
+    assert body["issues"][-1]["step_id"] is None
+    assert "cleanup" in body["message"]
+    assert "private cleanup failure" not in json.dumps(body)
     assert events == ["rollback", "close"]
 
 
@@ -570,3 +596,185 @@ def test_all_steps_keep_small_groups_visible_during_obsolete_setting_changes(
         client.get(PREFIX + "/catalog").json()["catalog_version"]
         == raw["catalog_version"]
     )
+
+
+@pytest.mark.parametrize("threshold", [10, 100])
+def test_legacy_threshold_changes_do_not_stale_catalog_or_replay(
+    client, defined_data, threshold
+):
+    """Ignored legacy settings cannot pin catalog/configuration or computation identities."""
+    raw = plan(client)
+    first = client.post(PREFIX + "/execute", json=raw).json()
+    client.app.dependency_overrides[get_runtime_factory] = lambda: (
+        lambda: AnalyticsService(
+            defined_data, Coverage(suppression_threshold=threshold)
+        )
+    )
+    assert (
+        client.get(PREFIX + "/catalog").json()["catalog_version"]
+        == raw["catalog_version"]
+    )
+    repeated = client.post(PREFIX + "/execute", json=first["replay"]).json()
+    assert repeated["outcome"] == "complete"
+    assert repeated["replay"] == first["replay"]
+    assert repeated["receipts"][0]["result"]["payload"]["numerator"] == 6
+
+
+def test_partial_execution_does_not_change_computation_identity(client, monkeypatch):
+    """A bounded sibling failure changes outcomes, never the requested computation identity."""
+    from analytics.analysis_service import OperationError
+    from measures import service
+
+    raw = plan(
+        client,
+        request("retention.rate", retention_type="school"),
+        {**request("dfw.rate"), "step_id": "dfw"},
+    )
+    complete = client.post(PREFIX + "/execute", json=raw).json()
+    owner = service.execute
+
+    def refuse(operation, parameters, snapshot):
+        """Fail one sibling without changing the successfully calculated retention evidence."""
+        if operation == "dfw.rate":
+            raise OperationError("limit_exceeded", "bounded refusal")
+        return owner(operation, parameters, snapshot)
+
+    monkeypatch.setattr(service, "execute", refuse)
+    partial = client.post(PREFIX + "/execute", json=raw).json()
+    assert partial["outcome"] == "partial"
+    assert partial["replay"] == complete["replay"]
+    assert partial["replay"]["fingerprint_schema"] == 2
+    assert "disclosure_context" not in partial["replay"]
+    assert (
+        partial["receipts"][0]["computation_fingerprint"]
+        == complete["receipts"][0]["computation_fingerprint"]
+    )
+    monkeypatch.setattr(service, "execute", owner)
+    repeated = client.post(PREFIX + "/execute", json=partial["replay"]).json()
+    assert repeated["outcome"] == "complete"
+    assert repeated["replay"] == complete["replay"]
+
+
+def test_obsolete_fingerprint_inputs_are_refused_before_calculation(
+    client, monkeypatch
+):
+    """Old fingerprint semantics and suppression-context fields cannot be silently upgraded."""
+    from measures import service
+
+    replay = client.post(PREFIX + "/execute", json=plan(client)).json()["replay"]
+
+    def forbidden(*args, **kwargs):
+        """Invalid replay inputs must not enter a calculation owner."""
+        pytest.fail("obsolete replay executed a metric")
+
+    monkeypatch.setattr(service, "execute", forbidden)
+    for changed in (
+        {**replay, "fingerprint_schema": 1},
+        {**replay, "disclosure_context": ["obsolete"]},
+    ):
+        refused = client.post(PREFIX + "/execute", json=changed)
+        assert refused.status_code == 422
+        assert refused.json()["issues"][0]["code"] == "invalid_plan"
+        assert refused.json()["receipts"] == []
+
+
+def test_catalog_names_missing_schema_prerequisites(client):
+    """Capabilities explain registered missing columns and preserve distinct definition metadata."""
+    operations = {
+        op["id"]: op for op in client.get(PREFIX + "/catalog").json()["operations"]
+    }
+    retention = operations["retention.rate"]
+    assert retention["available"] and retention["missing_prerequisites"] == []
+    assert retention["executor"] and retention["aliases"]
+    legacy = operations["legacy.entry_major_retention"]
+    assert legacy["missing_prerequisites"] == [
+        "cohort_membership.program_of_study_term_1"
+    ]
+    raw = plan(
+        client,
+        {
+            "kind": "legacy_analysis",
+            "step_id": "legacy",
+            "operation_id": "legacy.entry_major_retention",
+            "parameters": {"cohort": "2023-24"},
+        },
+    )
+    refused = client.post(PREFIX + "/validate", json=raw).json()
+    assert refused["issues"][0]["step_id"] == "legacy"
+    assert refused["issues"][0]["code"] == "data_unavailable"
+    assert (
+        "cohort_membership.program_of_study_term_1" in refused["issues"][0]["message"]
+    )
+
+
+@pytest.mark.parametrize("threshold", [10, 100])
+def test_overlapping_zero_rates_and_small_exclusions_survive_http(
+    client, defined_data, threshold
+):
+    """Twelve synthetic entrants include one missing outcome and one nonretained male student."""
+    with sqlite3.connect(defined_data) as db:
+        db.execute("UPDATE student SET gender='M' WHERE student_id='s11'")
+        db.execute("UPDATE cohort_membership SET retention=NULL WHERE student_id='s0'")
+    client.app.dependency_overrides[get_runtime_factory] = lambda: (
+        lambda: AnalyticsService(
+            defined_data, Coverage(suppression_threshold=threshold)
+        )
+    )
+    raw = plan(
+        client,
+        request("retention.rate", retention_type="school", group_by=["gender"]),
+        {
+            **request(
+                "retention.rate", retention_type="school", filters={"gender": "M"}
+            ),
+            "step_id": "male",
+        },
+        {
+            **request(
+                "retention.rate", retention_type="school", filters={"gender": "F"}
+            ),
+            "step_id": "female",
+        },
+    )
+    body = client.post(PREFIX + "/execute", json=raw).json()
+    assert body["outcome"] == "complete"
+    overall, male, female = [
+        receipt["result"]["payload"] for receipt in body["receipts"]
+    ]
+    assert (overall["numerator"], overall["denominator"], overall["n_excluded"]) == (
+        5,
+        11,
+        1,
+    )
+    assert (male["numerator"], male["denominator"], male["value"]) == (0, 1, 0)
+    assert (female["numerator"], female["denominator"], female["n_excluded"]) == (
+        5,
+        10,
+        1,
+    )
+    grouped_male = next(
+        row for row in overall["breakdowns"] if row["group"]["gender"] == "M"
+    )
+    assert grouped_male["status"] == "ok"
+    assert (
+        grouped_male["numerator"],
+        grouped_male["denominator"],
+        grouped_male["value"],
+    ) == (0, 1, 0)
+
+
+def test_many_missing_schema_columns_keep_bounded_typed_errors(client, defined_data):
+    """A large missing schema retains its exact catalog list without overflowing issue text."""
+    with sqlite3.connect(defined_data) as db:
+        for table in ("student", "course", "course_enrollment", "term"):
+            db.execute(f'DROP TABLE "{table}"')
+    catalog = client.get(PREFIX + "/catalog").json()
+    operation = next(
+        op for op in catalog["operations"] if op["id"] == "student_paths.summary"
+    )
+    assert not operation["available"] and len(operation["missing_prerequisites"]) > 20
+    raw = plan(client, request("student_paths.summary", retention_type="school"))
+    refused = client.post(PREFIX + "/validate", json=raw).json()
+    assert refused["issues"][0]["code"] == "data_unavailable"
+    assert operation["missing_prerequisites"][0] in refused["issues"][0]["message"]
+    assert len(refused["issues"][0]["message"]) <= 500

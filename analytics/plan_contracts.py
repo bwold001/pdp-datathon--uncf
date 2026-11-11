@@ -40,12 +40,15 @@ class CatalogChoices(Contract):
 
 
 class CatalogOperation(Contract):
-    """Expose semantic capabilities and a server-built JSON schema, without implementation paths."""
+    """Expose semantic capabilities, registered executor references and server-built schemas."""
 
     id: Identifier
     version: Identifier
     kind: Literal["defined_measure", "legacy_analysis"]
     label: Text
+    aliases: Annotated[tuple[Text, ...], Field(max_length=100)]
+    executor: Text
+    missing_prerequisites: Annotated[tuple[Text, ...], Field(max_length=200)]
     purpose: Text
     available: bool
     unavailable_reason: Literal["data_unavailable"] | None = None

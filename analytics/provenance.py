@@ -10,7 +10,7 @@ from uuid import UUID
 from pydantic import Field
 
 from analytics.contracts_v2 import (
-    Contract, ExecutablePlan, Fingerprint, Identifier, VersionReference, Versions,
+    Contract, ExecutablePlan, Fingerprint, VersionReference, Versions,
 )
 from analytics.coverage import Coverage
 
@@ -103,7 +103,7 @@ def read_snapshot_identity(connection) -> SnapshotIdentity:
 
 def coverage_digest(coverage: Coverage) -> str:
     """Canonicalize declared set-like coverage lists without changing their meaning."""
-    raw = coverage.model_dump(mode="json")
+    raw = coverage.model_dump(mode="json", exclude={"suppression_threshold"})
     for key in ("complete_academic_years", "provisional_retention_cohorts"):
         raw[key] = sorted(set(raw[key]))
     return digest(raw)
@@ -112,14 +112,13 @@ def coverage_digest(coverage: Coverage) -> str:
 class ReplaySpec(Contract):
     """Export the exact computation inputs without accepting execution IDs or timestamps."""
 
-    fingerprint_schema: Literal[1] = 1
+    fingerprint_schema: Literal[2] = 2
     plan: ExecutablePlan
     versions: Versions
     operations: tuple[VersionReference, ...] = Field(min_length=1, max_length=4)
     policies: tuple[VersionReference, ...] = Field(default=(), max_length=4)
     coverage_digest: Fingerprint
     normalization_digest: Fingerprint
-    disclosure_context: tuple[Identifier, ...] = Field(default=(), max_length=16)
     computation_fingerprint: Fingerprint
 
 
@@ -129,7 +128,6 @@ def _material(spec: ReplaySpec) -> dict:
     raw["operations"] = sorted(raw["operations"], key=lambda r: r["id"])
     raw["policies"] = sorted(raw["policies"], key=lambda r: r["id"])
     raw["versions"]["features"] = sorted(raw["versions"]["features"], key=lambda r: r["id"])
-    raw["disclosure_context"] = sorted(set(raw["disclosure_context"]))
     return raw
 
 
@@ -142,7 +140,7 @@ def _check_operations(plan, operations):
 
 
 def make_replay_spec(plan: ExecutablePlan, identity: SnapshotIdentity, versions: Versions,
-                     operations: tuple[VersionReference, ...], coverage: Coverage, disclosure_context=(), policies=()) -> ReplaySpec:
+                     operations: tuple[VersionReference, ...], coverage: Coverage, policies=()) -> ReplaySpec:
     """Build a fingerprint from all computation inputs, never from a unique execution identity."""
     plan = ExecutablePlan.model_validate(plan)
     _check_operations(plan, operations)
@@ -163,7 +161,7 @@ def make_replay_spec(plan: ExecutablePlan, identity: SnapshotIdentity, versions:
         raise ValueError("policy versions must be unique")
     spec = ReplaySpec(plan=plan, versions=versions, operations=operations, policies=policies,
         coverage_digest=coverage_digest(coverage), normalization_digest=identity.normalization_digest,
-        disclosure_context=disclosure_context, computation_fingerprint="0" * 64)
+        computation_fingerprint="0" * 64)
     return spec.model_copy(update={"computation_fingerprint": digest(_material(spec))})
 
 
@@ -173,7 +171,7 @@ def validate_replay(spec: ReplaySpec, identity: SnapshotIdentity, versions: Vers
     spec = ReplaySpec.model_validate(spec)
     if spec.plan.snapshot_ref != identity.snapshot_ref:
         raise SnapshotUnavailable("The requested snapshot is unavailable.")
-    expected = make_replay_spec(spec.plan, identity, versions, operations, coverage, spec.disclosure_context, policies)
+    expected = make_replay_spec(spec.plan, identity, versions, operations, coverage, policies)
     if digest(_material(spec)) != spec.computation_fingerprint:
         raise ValueError("replay specification fingerprint is inconsistent")
     if expected.computation_fingerprint != spec.computation_fingerprint:
@@ -181,10 +179,10 @@ def validate_replay(spec: ReplaySpec, identity: SnapshotIdentity, versions: Vers
 
 
 def step_fingerprint(spec: ReplaySpec, step_id: str) -> str:
-    """Bind a step to the whole ordered plan, including siblings that may affect disclosure."""
+    """Bind a step to the whole ordered plan, including ordered siblings and dependencies."""
     spec = ReplaySpec.model_validate(spec)
     if step_id not in {step.step_id for step in spec.plan.steps}:
         raise ValueError("step ID is absent from the replay plan")
     if digest(_material(spec)) != spec.computation_fingerprint:
         raise ValueError("replay specification fingerprint is inconsistent")
-    return digest({"fingerprint_schema": 1, "step_id": step_id, "plan": spec.computation_fingerprint})
+    return digest({"fingerprint_schema": 2, "step_id": step_id, "plan": spec.computation_fingerprint})

@@ -244,12 +244,18 @@ def _requirements(spec, parameters=None):
     return needs
 
 
+def _missing_prerequisites(spec, schema, parameters=None):
+    """Name only registered schema prerequisites, never raw driver errors or source rows."""
+    return tuple(
+        f"{table}.{column}"
+        for table, columns in sorted(_requirements(spec, parameters).items())
+        for column in sorted(columns - schema.get(table, set()))
+    )
+
+
 def _available(spec, schema, parameters=None):
     """Refuse unsupported source shapes before any requested operation runs."""
-    return all(
-        columns <= schema.get(table, set())
-        for table, columns in _requirements(spec, parameters).items()
-    )
+    return not _missing_prerequisites(spec, schema, parameters)
 
 
 def _usable(result):
@@ -352,6 +358,9 @@ class PlanService:
                     version=spec.version,
                     kind=spec.kind,
                     label=spec.label,
+                    aliases=spec.aliases,
+                    executor=spec.executor,
+                    missing_prerequisites=_missing_prerequisites(spec, schema),
                     purpose=spec.purpose,
                     available=available,
                     unavailable_reason=None if available else "data_unavailable",
@@ -430,8 +439,16 @@ class PlanService:
             cohort = getattr(step.parameters, "cohort", None)
             if isinstance(cohort, str) and cohort not in catalog.choices.cohorts:
                 issues.append(issue("unsupported_parameter", step.step_id))
-            if not _available(spec, schema, step.parameters):
-                issues.append(issue("data_unavailable", step.step_id))
+            missing = _missing_prerequisites(spec, schema, step.parameters)
+            if missing:
+                issues.append(
+                    AnalysisIssue(
+                        code="data_unavailable",
+                        step_id=step.step_id,
+                        message=f"Missing source schema prerequisite: {missing[0]}. "
+                        "See the catalog for all missing prerequisites.",
+                    )
+                )
         return tuple(issues)
 
     def _proposal(self, plan, catalog):
@@ -614,11 +631,8 @@ class PlanService:
             halt = "data_unavailable"
         if not begun:
             return refusal(halt or "data_unavailable", plan)
-        if (
-            halt
-            and current
-            and (current not in outcomes or outcomes[current].outcome == "completed")
-        ):
+        cleanup_failure = halt if current in outcomes else None
+        if halt and current and current not in outcomes:
             evidence.pop(current, None)
             times.pop(current, None)
             outcomes[current] = StepOutcome(
@@ -655,7 +669,7 @@ class PlanService:
                 policies,
                 execution_id,
                 started,
-                halt,
+                cleanup_failure,
             )
         finally:
             CURRENT.reset(token)
@@ -673,31 +687,18 @@ class PlanService:
         policies,
         execution_id,
         started,
-        halt,
+        cleanup_failure,
     ):
         """Apply whole-response disclosure and assemble safe, fingerprinted receipts from bounded memory only."""
         ordered = tuple(outcomes[s.step_id] for s in plan.steps)
         completed = tuple(s for s in plan.steps if s.step_id in evidence)
-        context = (
-            digest(
-                [
-                    (
-                        state.step_id,
-                        state.outcome,
-                        state.issue.code if state.issue else None,
-                    )
-                    for state in ordered
-                ]
-            ),
-        )
         replay = make_replay_spec(
             plan,
             identity,
             versions,
             operations,
             self.runtime.coverage,
-            context,
-            policies,
+            policies=policies,
         )
         projected = (
             disclose_plan(
@@ -760,14 +761,17 @@ class PlanService:
             outcome=outcome,
             step_outcomes=ordered,
             receipts=receipts,
-            issues=tuple(state.issue for state in ordered if state.issue),
+            issues=tuple(state.issue for state in ordered if state.issue)
+            + ((issue(cleanup_failure),) if cleanup_failure else ()),
             replay=replay,
             execution=ExecutionInfo(
                 execution_id=execution_id,
                 started_at=started,
                 completed_at=datetime.now(timezone.utc),
             ),
-            message="Synthetic execution completed."
+            message="Synthetic execution finished; snapshot cleanup reported an error."
+            if cleanup_failure
+            else "Synthetic execution completed."
             if outcome == "complete"
             else "Synthetic execution returned partial evidence."
             if receipts
