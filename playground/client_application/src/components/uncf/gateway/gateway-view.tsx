@@ -112,7 +112,7 @@ function CourseList({ data, courses, total, sort, groupLabel, selected, onSelect
         title="Gateway courses"
         subtitle={`${fmt(total)} courses have ${data.meta.year_one} grades the school marked as a gateway course`}
         aside={
-          <label className="inline-flex items-center gap-2 text-sm text-(--uncf-ink-2)">
+          <label data-pdf-skip className="inline-flex items-center gap-2 text-sm text-(--uncf-ink-2)">
             Sort by
             <select
               value={sort}
@@ -184,7 +184,7 @@ function CourseList({ data, courses, total, sort, groupLabel, selected, onSelect
         </ul>
       )}
       {onMore && (
-        <button type="button" className={cn(explorerButton, "mt-3.5")} onClick={onMore}>
+        <button type="button" data-pdf-skip className={cn(explorerButton, "mt-3.5")} onClick={onMore}>
           Show {PAGE} more of {fmt(total)}
         </button>
       )}

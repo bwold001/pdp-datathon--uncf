@@ -25,6 +25,11 @@ export function useExplorer(): ExplorerContextValue {
   return value;
 }
 
+/** The tab's student count, or null outside the Explorer layout (in a story). */
+export function useStudentCount(): StudentCount {
+  return useContext(ExplorerContext)?.studentCount ?? null;
+}
+
 /**
  * Shows this tab's student count in the cohort bar ("Showing 1,114 students"). Pass "too few" when the tab hides its
  * numbers for too few students (under the API's min_students), and null while it loads.
