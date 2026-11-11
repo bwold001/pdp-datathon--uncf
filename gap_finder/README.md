@@ -48,7 +48,7 @@ That saves the rows twice, neither of them committed:
   next to their `success_measures` table, so a query can join a measure to its gaps on measure, cohort and
   group. One column per column below, in the same order, with groups written as ` x ` text and booleans as
   0/1. It refuses a row that breaks the rules below, for example a hidden row with a number in it, or a
-  shown group under the minimum (`UNCF_MIN_STUDENTS`). If the table's columns have changed since it was saved, the next save
+  shown group with no eligible students. If the table's columns have changed since it was saved, the next save
   rebuilds it, so rerun any other measures you need.
 - **`gap_finder/output/equity_gaps.csv`**, the same rows, for Excel or Power BI.
 
@@ -76,7 +76,7 @@ its own files, `gap_finder/output/equity_gaps_stub.sqlite` and `.csv`, so it can
 | --- | --- | --- |
 | 8 races, each compared with everyone else | 2021-22 + 2022-23 + 2023-24, pooled | `ok` |
 | Unknown race | the same | `unknown_group` |
-| Gender X and Two or More Races: 1 student | the same | `suppressed` |
+| Historical suppressed example (compatibility fixture) | the same | `suppressed`; current calculations show nonempty groups |
 | 9 races | 2024-25, marked too new by hand | `not_yet_observable` |
 
 ## An example
@@ -110,7 +110,7 @@ so the two read the same way. The comparison columns come after them. Blank mean
 | `q_value` | the p-value corrected for testing many groups (Benjamini–Hochberg), over the compared rows with the same measure and cohort in one call |
 | `likely_noise` | `true` when `q_value` is 0.05 or more |
 | `rank_by_affected` | 1 is the most students behind. The default order |
-| `rank_by_gap` | 1 is the largest gap behind. Blank for groups under 30 students, whose gaps swing a lot |
+| `rank_by_gap` | 1 is the largest gap behind. Every nonempty comparison is ranked, including small groups |
 
 ### Status
 
@@ -119,7 +119,7 @@ When more than one applies, the first one wins.
 | Status | When | What's shown |
 | --- | --- | --- |
 | `not_yet_observable` | the shared measures say the cohort is too new for the measure | every number blank |
-| `suppressed` | fewer students than `UNCF_MIN_STUDENTS` in the group, or in everyone else (1 by default, so only an empty group; 10 for real student data) | every number blank |
+| `suppressed` | no eligible students in the group or in everyone else | every number blank |
 | `unknown_group` | the value is unknown, e.g. race `UNKNOWN` | the group's own counts and rate. They stay in everyone else, but aren't compared or ranked |
 | `ok` | otherwise | everything |
 
@@ -194,7 +194,7 @@ make check          # includes it: it loads the full mock data into a temporary 
 or only these, from the repo root: `python -m pytest gap_finder/tests`.
 
 They cover #26's completion test: the table and CSV with a note on every row (1), the planted 15-point and
-2-point gaps (2, 3), hiding under 10 with `UNCF_MIN_STUDENTS=10` (4), no group under 30 in the gap-size order (5), and the Black or
+2-point gaps (2, 3), small groups remaining visible and ranked (4, 5), and the Black or
 African American retention gap reproduced by hand from the raw cohort file (6).
 
 ## The Explorer's Gateway page

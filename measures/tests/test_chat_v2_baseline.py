@@ -59,9 +59,9 @@ def test_tier_size_is_not_the_known_retention_denominator(tmp_path):
     assert (tier["students"], tier["share"], tier["retained"], tier["rate"]) == (12, 1.0, 6, 0.6)
 
 
-@pytest.mark.parametrize("size,status", [(9, Status.SUPPRESSED), (10, Status.OK)])
-def test_dfw_threshold_counts_students_instead_of_enrollments(tmp_path, size, status):
-    """Two grades per student do not let nine students clear the threshold of ten."""
+@pytest.mark.parametrize("size,status", [(1, Status.OK), (9, Status.OK), (10, Status.OK)])
+def test_small_dfw_results_keep_student_and_enrollment_units(tmp_path, size, status):
+    """One to nine students retain separate student counts and enrollment denominators."""
     students = [student(f"s{i}") for i in range(size)]
     records = [
         here(f"s{i}", "2023-24", "FALL", grade=grade)
@@ -73,8 +73,4 @@ def test_dfw_threshold_counts_students_instead_of_enrollments(tmp_path, size, st
     (result,) = run_measure(Measure.DFW_RATE, [Cohort.of("2023-24")], database=path)
 
     assert result.status == status
-    if size == 9:
-        assert (result.numerator, result.denominator, result.n_students, result.metric_rate) == (None,) * 4
-        assert result.exclusions == {} and result.split is None
-    else:
-        assert (result.numerator, result.denominator, result.n_students, result.metric_rate) == (10, 20, 10, 0.5)
+    assert (result.numerator, result.denominator, result.n_students, result.metric_rate) == (size, 2 * size, size, 0.5)

@@ -41,7 +41,7 @@ complete_academic_years: ["2022-23", "2023-24"]
 cohort_followup_years: {"2022-23": 4}
 cutoff: "2026-06-30"
 provenance: "Hand-counted synthetic fixture; not a certification of the shared mock extract"
-suppression_threshold: 10
+suppression_threshold: 1  # legacy compatibility; no longer hides small results
 provisional_retention_cohorts: ["2024-25"]
 ```
 

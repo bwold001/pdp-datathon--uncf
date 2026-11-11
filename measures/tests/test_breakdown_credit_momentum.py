@@ -38,7 +38,7 @@ def test_tiles_milestones_and_tiers(tmp_path):
     )
     page = credit_momentum(**ask("2023-24", "federal"), database=database)
     assert page["status"] == "ok"
-    assert page["credits"] == {"counted": 30, "left_out": None, "avg_attempted": 22.0, "avg_earned": 20.0}
+    assert page["credits"] == {"counted": 30, "left_out": 2, "avg_attempted": 22.0, "avg_earned": 20.0}
     assert [(m["credits"], m["students"]) for m in page["milestones"]] == [(12, 20), (24, 20), (30, 10)]
     assert [(t["label"], t["students"], t["retained"]) for t in page["tiers"]] == [("Under 15", 10, 0), ("15–29", 10, 10), ("30 or more", 10, 10)]
     # The shared measure: the average of each student's own ratio (0.5 x 10, 1.0 x 20) -> 0.8333.
@@ -46,11 +46,11 @@ def test_tiles_milestones_and_tiers(tmp_path):
     assert (page["retention"]["type"], page["retention"]["retained"], page["retention"]["students"]) == ("federal", 20, 32)
 
 
-def test_milestones_under_10_are_hidden(tmp_path):
+def test_small_milestones_are_visible(tmp_path):
     """A milestone 1 to 9 students reached is hidden (None, with no share), never shown; 0 stays 0."""
     database = build(tmp_path, group("low", 12, attempted=12, earned=12), group("high", 6, attempted=30, earned=30))
     page = credit_momentum(**ask("2023-24"), database=database)
-    assert [(m["credits"], m["students"], m["share"]) for m in page["milestones"]] == [(12, 18, 1.0), (24, None, None), (30, None, None)]
+    assert [(m["credits"], m["students"], m["share"]) for m in page["milestones"]] == [(12, 18, 1.0), (24, 6, 0.3333), (30, 6, 0.3333)]
     (tmp_path / "none").mkdir()
     nobody = build(tmp_path / "none", group("low", 12, attempted=12, earned=6))
     # Nobody reached any milestone: 0 is shown as 0, since it reveals no small group.
@@ -78,19 +78,19 @@ def test_first_two_terms(tmp_path):
     assert terms[1] == {"label": "Spring 2024", "enrolled": 10, "avg_attempted": 12.0, "avg_earned": 10.0}
 
 
-def test_small_tiers_and_terms_are_hidden(tmp_path):
-    """A tier or term with under 10 students has no numbers."""
+def test_small_tiers_and_terms_are_visible(tmp_path):
+    """A three-student tier keeps its count and share; unknown retention remains missing."""
     database = build(tmp_path, group("a", 12, attempted=12, earned=6, terms=[("FALL", 12, 6)]), group("b", 3, attempted=30, earned=30))
     page = credit_momentum(**ask("2023-24"), database=database)
-    assert page["tiers"][2] == {"key": "30_plus", "label": "30 or more", "students": None, "share": None, "retained": None, "rate": None}
+    assert page["tiers"][2] == {"key": "30_plus", "label": "30 or more", "students": 3, "share": 0.2, "retained": None, "rate": None}
     assert page["terms"][1]["enrolled"] is None
 
 
-def test_filters_and_suppression(tmp_path):
-    """The cohort bar's filters pick students; under 10 with known credits hides everything."""
+def test_filters_preserve_small_groups(tmp_path):
+    """The cohort bar narrows the population while preserving small-group evidence."""
     database = build(tmp_path, group("y", 12, attempted=12, earned=12, pell="Y"), group("n", 9, attempted=12, earned=0, pell="N"))
     assert credit_momentum(**ask("2023-24", pell="Y"), database=database)["credits"]["avg_earned"] == 12.0
-    assert credit_momentum(**ask("2023-24", pell="N"), database=database)["status"] == "suppressed"
+    assert credit_momentum(**ask("2023-24", pell="N"), database=database)["status"] == "ok"
 
 
 @pytest.mark.slow

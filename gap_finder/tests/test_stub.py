@@ -53,9 +53,9 @@ def test_black_students_are_furthest_behind():
     assert black.likely_noise is False
 
 
-def test_small_group_is_compared_but_not_ranked_by_gap():
+def test_small_group_is_compared_and_ranked_by_gap():
     nhpi = pooled_race_rows()["Native Hawaiian or Other Pacific Islander"]
-    assert nhpi.status == GapStatus.OK and nhpi.rank_by_gap is None
+    assert nhpi.status == GapStatus.OK and nhpi.rank_by_gap == 1
 
 
 def test_unknown_race_is_shown_but_not_ranked():

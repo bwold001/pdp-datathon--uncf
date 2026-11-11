@@ -4,24 +4,15 @@ It refuses rows that break the rules, so a bad result fails when it is built.
 """
 from __future__ import annotations
 
-import os
 from dataclasses import dataclass, field
 from enum import Enum
 
-# Groups with fewer students than this are hidden. Set UNCF_MIN_STUDENTS=10 before real student data is used.
-MIN_STUDENTS_SETTING = "UNCF_MIN_STUDENTS"
-DEFAULT_MIN_STUDENTS = 1  # the data is synthetic, so every group with students is shown
 UNKNOWN = "UNKNOWN"  # how the data model stores a value nobody knows
 
 
 def min_students() -> int:
-    """The smallest group whose numbers are shown, from UNCF_MIN_STUDENTS. 1 shows every group with students."""
-    raw = os.environ.get(MIN_STUDENTS_SETTING, "").strip()
-    if not raw:
-        return DEFAULT_MIN_STUDENTS
-    if not raw.isdigit() or int(raw) < 1:
-        raise ValueError(f"{MIN_STUDENTS_SETTING} must be a whole number of 1 or more, not {raw!r}")
-    return int(raw)
+    """Keep API metadata compatible: every nonempty group is eligible for display."""
+    return 1
 
 
 class Measure(str, Enum):
@@ -40,7 +31,7 @@ class Status(str, Enum):
     """Whether a row's numbers are shown, and if not, why."""
 
     OK = "ok"
-    SUPPRESSED = "suppressed"  # fewer students than min_students(), or none, so the group has no numbers
+    SUPPRESSED = "suppressed"  # no eligible students, so the group has no rate
     NOT_YET_OBSERVABLE = "not_yet_observable"  # nobody in the cohort has an answer yet
 
 

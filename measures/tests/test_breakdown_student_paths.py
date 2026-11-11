@@ -79,12 +79,12 @@ def test_statuses_moves_and_transfers(tmp_path):
     assert paths["context"]["terms"] == {"entered": "Fall 2023", "next": "Spring 2024", "year2": "Fall 2024"}
     assert counts(paths["columns"]["next"]) == {"here": 15, "elsewhere": 10, "anywhere": 25, "stopped": 10, "not_observed": 0}
     # 3 stopped out by year 2: hidden, never 0.
-    assert counts(paths["columns"]["year2"]) == {"here": 22, "elsewhere": 10, "anywhere": 32, "stopped": None, "not_observed": 0}
+    assert counts(paths["columns"]["year2"]) == {"here": 22, "elsewhere": 10, "anywhere": 32, "stopped": 3, "not_observed": 0}
     moves = {(m["from"], m["to"]): m["students"] for m in paths["moves"]}
     assert moves[("here", "here")] == 12
     assert moves[("stopped", "here")] == 10
     assert moves[("elsewhere", "elsewhere")] == 10
-    assert moves[("here", "stopped")] is None
+    assert moves[("here", "stopped")] == 3
     assert moves[("here", "elsewhere")] == 0
     assert paths["transfers"] == {"students": 10, "four_year": 0, "two_year": 10, "other": 0}
 
@@ -104,13 +104,13 @@ def test_enrollment_type_is_a_filter_and_filters_combine(tmp_path):
     assert student_paths(**ask("2023-24", pell="N", gender="M"), database=database)["status"] == "suppressed"
 
 
-def test_fewer_than_ten_students_hides_everything(tmp_path):
-    """Nine students: no numbers at all, not even the count."""
+def test_fewer_than_ten_students_remain_visible(tmp_path):
+    """Nine students keep their term counts and paths."""
     database = build(tmp_path, fall_starters("few", 9, "here", "here", "here"))
     paths = student_paths(**ask("2023-24"), database=database)
-    assert paths["status"] == "suppressed"
-    assert paths["students"] is None
-    assert paths["columns"] is None
+    assert paths["status"] == "ok"
+    assert paths["students"] == 9
+    assert counts(paths["columns"]["next"])["here"] == 9
 
 
 def test_course_here_counts_even_when_also_elsewhere(tmp_path):
@@ -159,7 +159,7 @@ def test_credential_earned_counts_from_the_next_year(tmp_path):
 
 
 def test_more_terms_and_group_breakdowns(tmp_path):
-    """terms follows students further; group_by gives each value's own path, small groups hidden."""
+    """terms follows students further; group_by preserves each nonempty group's path."""
     pell = fall_starters("pell", 12, "here", "here", "here", pell="Y")
     nopell = fall_starters("nopell", 5, "here", "here", "here", pell="N")
     paths = student_paths(**ask("2023-24"), terms=4, group_by=GroupDimension.PELL, database=build(tmp_path, pell, nopell))
@@ -167,7 +167,7 @@ def test_more_terms_and_group_breakdowns(tmp_path):
     assert paths["path"][2]["not_observed"] == 17  # Spring 2025 isn't in the data
     groups = {group["value"]: group for group in paths["groups"]}
     assert groups["Y"]["students"] == 12
-    assert groups["N"]["students"] is None
+    assert groups["N"]["students"] == 5
     with pytest.raises(ValueError):
         student_paths(**ask("2023-24"), terms=9, database=build(tmp_path / "..", pell))
 

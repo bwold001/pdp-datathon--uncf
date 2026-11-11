@@ -78,7 +78,7 @@ def test_page_wrappers_preserve_values_and_borrow_snapshot(database, page, extra
 
 
 @pytest.mark.parametrize("page", [credit_momentum, gateway_courses, student_paths, dfw_courses])
-@pytest.mark.parametrize("threshold,status", [(None, "ok"), ("10", "suppressed")])
+@pytest.mark.parametrize("threshold,status", [(None, "ok"), ("10", "ok")])
 def test_small_groups_follow_setting_inside_borrowed_snapshot(database, monkeypatch, page, threshold, status):
     """Three synthetic students stay visible by default without losing snapshot ownership or configured hiding."""
     monkeypatch.delenv("UNCF_MIN_STUDENTS", raising=False)
@@ -96,7 +96,7 @@ def test_small_groups_follow_setting_inside_borrowed_snapshot(database, monkeypa
         if status == "ok":
             if page is dfw_courses:
                 assert result["everyone"]["students"] == 3
-                assert result["courses"] == []  # The list still requires ten final grades.
+                assert result["courses"][0]["students"] == 3
             else:
                 assert result["students"] == 3
             if page is credit_momentum:
@@ -105,7 +105,7 @@ def test_small_groups_follow_setting_inside_borrowed_snapshot(database, monkeypa
                 assert result["progress"] is not None
             if page is gateway_courses:
                 assert result["courses"][0]["students"] == 3
-                assert result["context"]["min_pair_students"] == 10
+                assert result["context"]["min_pair_students"] == 1
         elif page is credit_momentum:
             assert result["progress"] is None
         assert snapshot.positional.execute("SELECT SUM(retention) FROM cohort_membership").fetchone() == (6,)

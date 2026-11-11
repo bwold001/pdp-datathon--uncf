@@ -170,7 +170,7 @@ def _page(
         limitations=limitations
         + (
             "Components have different counting units and denominators; do not combine them into one rate.",
-            "All evidence is synthetic. Existing dashboard display suppression is not plan-level disclosure accounting.",
+            "All evidence is synthetic. Small nonempty groups are visible; no minimum-size privacy protection is applied.",
         ),
         units=(
             "students",
@@ -223,7 +223,7 @@ _OPERATIONS = (
         ("dfw_rate",),
         "All observed terms for the entry cohort",
         (
-            "Course rates count final-grade enrollments; suppression counts distinct students.",
+            "Course rates count final-grade enrollments; distinct student counts remain explicit.",
         ),
     ),
     _page(
@@ -237,7 +237,7 @@ _OPERATIONS = (
         "All observed terms for the entry cohort",
         (
             "Each course/term/delivery/group rate has its own classifiable-enrollment denominator.",
-            "Distinct students determine suppression, not enrollment counts.",
+            "Every nonempty course population is visible, including a single student.",
         ),
     ),
     _page(
