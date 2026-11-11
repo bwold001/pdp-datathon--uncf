@@ -89,11 +89,11 @@ SAMPLE_INPUT = dict(
 )
 
 # Made-up output: everyone, each enrollment type, then each Pell x intensity pair.
-# Re-admit has 8 students, under 10, so it is hidden.
+# Re-admit has eight students; its count and rate remain visible.
 SAMPLE_OUTPUT = [
     sample_row(COHORT_2022_23, EVERYONE, 610, 1000, 0.61),
     sample_row(COHORT_2022_23, Group.of((ENROLLMENT_TYPE, "First-time")), 380, 600, 0.6333),
-    sample_row(COHORT_2022_23, Group.of((ENROLLMENT_TYPE, "Re-admit")), None, None, None),
+    sample_row(COHORT_2022_23, Group.of((ENROLLMENT_TYPE, "Re-admit")), 5, 8, 0.625),
     sample_row(COHORT_2022_23, Group.of((ENROLLMENT_TYPE, "Transfer-in")), 225, 392, 0.574),
     sample_row(COHORT_2022_23, Group.of((PELL, "N"), (INTENSITY, "Full-time")), 190, 250, 0.76),
     sample_row(COHORT_2022_23, Group.of((PELL, "N"), (INTENSITY, "Part-time")), 150, 250, 0.6),
@@ -110,8 +110,8 @@ POOLED_INPUT = dict(
     group_by=[GroupBy.of(ENROLLMENT_TYPE)],
 )
 
-# Made-up output. Re-admit had 6 students in 2021-22 and 8 in 2022-23, both hidden on their own.
-# Together that is 14, so it is shown: 3 + 5 = 8 came back.
+# Made-up output. Both small Re-admit cohorts are visible individually.
+# Together they have 14 students: 3 + 5 = 8 came back.
 POOLED_OUTPUT = [
     sample_row(POOLED_COHORT, EVERYONE, 1163, 1950, 0.5964),
     sample_row(POOLED_COHORT, Group.of((ENROLLMENT_TYPE, "First-time")), 730, 1170, 0.6239),
@@ -175,12 +175,12 @@ DFW_COURSE_INPUT = dict(
     group_by=[GroupBy.of(COURSE)],
 )
 
-# Made-up output: everyone, then three of the courses. BIOL 1101 has fewer than 10 students, so it is hidden.
+# Made-up output: everyone, then three courses, including a three-enrollment course.
 DFW_COURSE_OUTPUT = [
     sample_row(COHORT_2023_24, EVERYONE, 5200, 21000, 0.2476, Measure.DFW_RATE, DFW_NOTE, 1300, 0, ExclusionReason.OTHER_GRADE),
     sample_row(COHORT_2023_24, Group.of((COURSE, "ENGL 1302")), 900, 3000, 0.3, Measure.DFW_RATE, DFW_NOTE, 120, 0, ExclusionReason.OTHER_GRADE),
     sample_row(COHORT_2023_24, Group.of((COURSE, "MATH 1314")), 700, 1500, 0.4667, Measure.DFW_RATE, DFW_NOTE, 60, 0, ExclusionReason.OTHER_GRADE),
-    sample_row(COHORT_2023_24, Group.of((COURSE, "BIOL 1101")), None, None, None, Measure.DFW_RATE, DFW_NOTE),
+    sample_row(COHORT_2023_24, Group.of((COURSE, "BIOL 1101")), 1, 3, 0.3333, Measure.DFW_RATE, DFW_NOTE),
 ]
 
 
@@ -320,7 +320,7 @@ def main() -> None:
         print()
 
     if args.input:
-        print("A hidden group (status suppressed, under 10 students) has no numbers, only a blank (None), never 0.")
+        print("Every nonempty group is shown; missing evidence has no rate, never a fabricated zero.")
         print("The data is mock, so the numbers mean nothing.")
     else:
         print("These rows are made up. Add --input path/to/pdp.sqlite to run on a loaded database.")

@@ -9,10 +9,9 @@ from __future__ import annotations
 from dataclasses import dataclass, fields
 from enum import Enum
 
-# The shared measures' setting (UNCF_MIN_STUDENTS): groups with fewer students are hidden. 1 shows every group.
+# Compatibility metadata: every nonempty group is eligible for display.
 from measures.models import min_students
 
-GAP_RANK_MIN_N = 30  # smaller groups are still tested, but not ranked by gap size, since their gaps swing a lot
 NOISE_Q = 0.05  # a gap whose q-value is at or above this is likely noise
 GROUP_JOIN = " x "  # how two-way groups are written in files, as in the shared measures' table
 
@@ -75,7 +74,7 @@ class GapResult:
     q_value: float | None  # Benjamini-Hochberg, over the compared rows of the same measure and cohort in one call
     likely_noise: bool | None
     rank_by_affected: int | None  # 1 is the most students behind
-    rank_by_gap: int | None  # 1 is the largest gap behind; blank under GAP_RANK_MIN_N students
+    rank_by_gap: int | None  # 1 is the largest gap behind; every nonempty comparison is ranked
 
     def __post_init__(self) -> None:
         self.check_group()
@@ -123,8 +122,8 @@ class GapResult:
         """An ok row has every comparison column, and they agree with each other."""
         if any(getattr(self, name) is None for name in COMPARISON_FIELDS):
             raise ValueError("an ok row needs every comparison column")
-        if (self.rank_by_gap is None) != (self.denominator < GAP_RANK_MIN_N):
-            raise ValueError(f"rank_by_gap is blank exactly when there are fewer than {GAP_RANK_MIN_N} students")
+        if self.rank_by_gap is None:
+            raise ValueError("rank_by_gap is required for every comparison")
         if self.comparison_denominator < min_students():
             raise ValueError(f"everyone else needs at least {min_students()} students")
         if not 0 <= self.p_value <= self.q_value <= 1:

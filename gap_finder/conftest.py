@@ -1,6 +1,6 @@
 """Test settings for the gap finder. Tests marked `slow` load the full mock data; make check-fast leaves them out.
 
-These tests check the hiding rules, so they run with groups under 10 hidden (UNCF_MIN_STUDENTS=10).
+The obsolete minimum is set to 10 to prove it cannot hide small results.
 """
 import pytest
 
@@ -11,6 +11,6 @@ def pytest_configure(config):
 
 
 @pytest.fixture(autouse=True)
-def hide_groups_under_ten(monkeypatch):
-    """Run each test as a real-data deployment would. Tests of the default unset UNCF_MIN_STUDENTS themselves."""
+def legacy_threshold_is_ignored(monkeypatch):
+    """Prove an old environment setting cannot reenable size-based suppression."""
     monkeypatch.setenv("UNCF_MIN_STUDENTS", "10")

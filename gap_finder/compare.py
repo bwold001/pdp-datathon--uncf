@@ -10,7 +10,7 @@ from dataclasses import dataclass
 
 from measures.models import UNKNOWN, Status
 
-from .models import GAP_RANK_MIN_N, NOISE_Q, GapResult, GapStatus, check_table, min_students, sort_key
+from .models import NOISE_Q, GapResult, GapStatus, check_table, min_students, sort_key
 
 Z_95 = 1.96  # for the 95% interval
 UNKNOWN_VALUES = frozenset({UNKNOWN, ""})  # the shared measures' unknown value, or a blank
@@ -91,7 +91,7 @@ def compare_family(everyone: CountRow, groups: list[CountRow]) -> list[GapResult
     stats = {g: group_stats(everyone, g) for g in groups if statuses[g] == GapStatus.OK}
     q_values = benjamini_hochberg({g: s.p_value for g, s in stats.items()})
     by_affected = ranks(stats, lambda g: stats[g].students_affected)
-    by_gap = ranks({g: s for g, s in stats.items() if g.denominator >= GAP_RANK_MIN_N}, lambda g: stats[g].gap_pts)
+    by_gap = ranks(stats, lambda g: stats[g].gap_pts)
     return [
         build_result(g, statuses[g], stats.get(g), q_values.get(g), by_affected.get(g), by_gap.get(g))
         for g in groups

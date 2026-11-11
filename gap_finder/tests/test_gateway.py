@@ -23,12 +23,12 @@ def test_no_filter_means_no_group(tmp_path):
     assert [course["group"] for course in page["courses"]] == [None]
 
 
-def test_too_few_others_is_hidden(tmp_path):
-    """12 Pell recipients and only 5 other students in the course: too few others to compare, so it's hidden."""
+def test_small_comparison_population_is_visible(tmp_path):
+    """Twelve Pell recipients can be compared with five other course takers."""
     pell = takers("p", 12, ["4"], back=0, pell="Y")
     other = takers("n", 5, ["F"], back=0, pell="N")
     page = add_gateway_gaps(gateway_courses(**ask("2023-24", "federal", pell="Y"), database=build(tmp_path, pell, other)))
-    assert page["courses"][0]["group"] == {"status": "hidden", "rate": None, "others_rate": None, "gap": None, "likely_noise": None}
+    assert page["courses"][0]["group"] == {"status": "ok", "rate": 1.0, "others_rate": 0.0, "gap": 100.0, "likely_noise": False}
 
 
 def test_pairs_behind_everyone_else(tmp_path):
