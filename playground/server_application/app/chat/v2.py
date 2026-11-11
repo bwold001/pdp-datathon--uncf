@@ -80,6 +80,8 @@ Release A supports only the fourteen registered defined/legacy operations. Never
 another definition or broaden filters. Keep every requested step and filter in one plan.
 For missing cohort, retention_type, course, terms, credential or program, use an unresolved
 choice with a valid placeholder option; the server replaces choices with its current choices.
+An unresolved choice is an object, never a string like "<choice>": {"unresolved": true,
+"question": "Which cohort?", "choices": [{"value": "2023-24", "label": "2023-24"}]}.
 Do not assume a cohort or dashboard context absent from this conversation. Context explicitly
 provided by the application may be inherited; question-specific scope overrides it visibly.
 School and federal retention differ. Credit-tier retention uses credit_momentum.summary.
@@ -222,7 +224,7 @@ async def answer_v2(payload, client, model, runtime):
                     ):
                         return refusal("unsupported_operation")
                     proposal = ReleaseAProposal.model_validate(
-                        {**args, **context_without_dashboard(context)}
+                        {**with_choices(args, catalog), **context_without_dashboard(context)}
                     )
                     output = {"proposed": True, "executed": False}
                 else:
@@ -237,6 +239,57 @@ async def answer_v2(payload, client, model, runtime):
         if proposal is not None:
             return await review(service, proposal)
     return refusal("invalid_plan" if rejected else "limit_exceeded")
+
+
+# Parameters the server offers its own choices for when the question doesn't say.
+CHOICE_KEYS = ("cohort", "retention_type", "credential", "program", "course", "terms")
+
+
+def is_placeholder(value) -> bool:
+    """A value the model left open: empty, null, or a placeholder such as "<choice>"."""
+    if value is None:
+        return True
+    if not isinstance(value, str):
+        return False
+    text = value.strip()
+    return not text or (text.startswith("<") and text.endswith(">"))
+
+
+def server_options(catalog, key: str) -> list[dict]:
+    """Up to 100 of the server's current options for one parameter, as choices."""
+    choices = catalog.choices
+    options = {
+        "cohort": [{"value": c, "label": c} for c in choices.cohorts],
+        "retention_type": [c.model_dump() for c in choices.retention_types],
+        "credential": [c.model_dump() for c in choices.credentials],
+        "program": [c.model_dump() for c in choices.programs],
+        "course": [{"value": c, "label": c} for c in choices.courses],
+        "terms": [{"value": n, "label": f"{n} terms"} for n in range(2, 7)],
+    }[key]
+    return options[:100]
+
+
+def with_choices(args, catalog):
+    """Turn placeholder parameters into unresolved choices that the server asks the user about."""
+    steps = args.get("steps")
+    if not isinstance(steps, list):
+        return args
+    fixed = []
+    for step in steps:
+        parameters = step.get("parameters") if isinstance(step, dict) else None
+        if isinstance(parameters, dict):
+            parameters = dict(parameters)
+            for key in CHOICE_KEYS:
+                options = server_options(catalog, key) if key in parameters else []
+                if options and is_placeholder(parameters[key]):
+                    parameters[key] = {
+                        "unresolved": True,
+                        "question": f"Which {key.replace('_', ' ')}?",
+                        "choices": options,
+                    }
+            step = {**step, "parameters": parameters}
+        fixed.append(step)
+    return {**args, "steps": fixed}
 
 
 def rejection(error: Exception) -> str:

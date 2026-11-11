@@ -287,7 +287,7 @@ def test_confirmation_dependency_needs_no_provider_configuration(monkeypatch):
 def test_a_rejected_proposal_is_explained_and_corrected(runtime):
     """A proposal that misses the schema goes back with the reason; the correction is reviewed."""
     good = proposal(runtime, request("dfw.rate", filters={"pell": "Y"}))
-    bad = {**good, "steps": [{**good["steps"][0], "parameters": {"cohort": None}}]}
+    bad = {**good, "steps": [{**good["steps"][0], "parameters": {"cohort": "2023"}}]}
     model = ScriptedModel(
         [ToolCall("1", "propose_plan", bad)], [ToolCall("2", "propose_plan", good)]
     )
@@ -304,3 +304,13 @@ def test_a_proposal_that_stays_invalid_ends_as_invalid_plan(runtime):
     script = [[ToolCall(str(i), "propose_plan", bad)] for i in range(6)]
     result = run(runtime, ScriptedModel(*script))
     assert result.issues[0].code == "invalid_plan" and not result.receipts
+
+
+def test_placeholder_values_become_questions_for_the_user(runtime):
+    """A model that writes "<choice>" for an open cohort gets a cohort question instead."""
+    good = proposal(runtime, request("dfw.rate"))
+    open_cohort = {**good["steps"][0], "parameters": {"cohort": "<choice>"}}
+    model = ScriptedModel([ToolCall("1", "propose_plan", {**good, "steps": [open_cohort]})])
+    result = run(runtime, model)
+    assert result.status == "clarification" and not result.receipts
+    assert result.clarification.parameter == "cohort"
