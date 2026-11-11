@@ -64,6 +64,7 @@ export function CreditsView({ data, filters, linkQuery = "" }: CreditsViewProps)
           </span>
           <button
             type="button"
+            data-pdf-skip
             onClick={filters.onClear}
             className="min-h-9 cursor-pointer rounded-lg border border-(--uncf-blue) bg-(--uncf-surface) px-3 font-semibold text-(--uncf-blue)"
           >
