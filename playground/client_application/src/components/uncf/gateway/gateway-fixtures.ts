@@ -23,88 +23,29 @@ export const gateway2023: GatewayResponse = {
     "grade_scale": {
       "grades": [
         {
-          "grade": "A",
-          "points": "4.0",
-          "dfw": false,
-          "gateway_pass": true
-        },
-        {
-          "grade": "A-",
-          "points": "3.7 to under 4.0",
-          "dfw": false,
-          "gateway_pass": true
-        },
-        {
-          "grade": "B+",
-          "points": "3.3 to under 3.7",
-          "dfw": false,
-          "gateway_pass": true
-        },
-        {
-          "grade": "B",
-          "points": "3.0 to under 3.3",
-          "dfw": false,
-          "gateway_pass": true
-        },
-        {
-          "grade": "B-",
-          "points": "2.7 to under 3.0",
-          "dfw": false,
-          "gateway_pass": true
-        },
-        {
-          "grade": "C+",
-          "points": "2.3 to under 2.7",
-          "dfw": false,
-          "gateway_pass": true
-        },
-        {
-          "grade": "C",
-          "points": "2.0 to under 2.3",
-          "dfw": false,
-          "gateway_pass": true
-        },
-        {
-          "grade": "C-",
-          "points": "1.7 to under 2.0",
-          "dfw": false,
-          "gateway_pass": true
-        },
-        {
-          "grade": "D+",
-          "points": "1.3 to under 1.7",
-          "dfw": true,
-          "gateway_pass": true
+          "grade": "C or higher",
+          "points": "1.7 and up",
+          "counted": true
         },
         {
           "grade": "D",
-          "points": "1.0 to under 1.3",
-          "dfw": true,
-          "gateway_pass": true
+          "points": "1.0 to under 1.7 (D, D+)",
+          "counted": true
         },
         {
-          "grade": "D-",
-          "points": "0.7 to under 1.0",
-          "dfw": true,
-          "gateway_pass": false
-        },
-        {
-          "grade": "F",
-          "points": "under 0.7, or the code F",
-          "dfw": true,
-          "gateway_pass": false
+          "grade": "Under 1.0",
+          "points": "under 1.0 (D- or F), or the code F",
+          "counted": false
         },
         {
           "grade": "P",
           "points": "the code P (pass)",
-          "dfw": false,
-          "gateway_pass": true
+          "counted": true
         },
         {
           "grade": "W",
           "points": "the code W (withdrew)",
-          "dfw": true,
-          "gateway_pass": false
+          "counted": false
         }
       ],
       "left_out": "I (incomplete), A (audit), M or MIS (missing), O or OTH (other), and any code the PDP dictionary doesn't list, such as UW, aren't final grades, so neither page counts them."
@@ -138,18 +79,9 @@ export const gateway2023: GatewayResponse = {
         "no_retake": 64
       },
       "grades": {
-        "A": 120,
-        "A-": 13,
-        "B+": 10,
-        "B": 53,
-        "B-": 6,
-        "C+": 7,
-        "C": 40,
-        "C-": 2,
-        "D+": 2,
-        "D": 13,
-        "D-": 1,
-        "F": 64,
+        "C or higher": 251,
+        "D": 15,
+        "Under 1.0": 65,
         "P": 50,
         "W": 31
       },
@@ -179,20 +111,11 @@ export const gateway2023: GatewayResponse = {
         "no_retake": 10
       },
       "grades": {
-        "A": 21,
-        "A-": 0,
-        "B+": 0,
-        "B": 15,
-        "B-": 0,
-        "C+": 0,
-        "C": 12,
-        "C-": 0,
-        "D+": 0,
-        "D": 6,
-        "D-": 0,
-        "F": 6,
+        "C or higher": 48,
+        "D": null,
+        "Under 1.0": null,
         "P": 0,
-        "W": 8
+        "W": null
       },
       "retained_if_passed": {
         "students": 52,
@@ -220,20 +143,11 @@ export const gateway2023: GatewayResponse = {
         "no_retake": 14
       },
       "grades": {
-        "A": 14,
-        "A-": 0,
-        "B+": 0,
-        "B": 15,
-        "B-": 0,
-        "C+": 0,
-        "C": 13,
-        "C-": 0,
-        "D+": 0,
+        "C or higher": 42,
         "D": 0,
-        "D-": 0,
-        "F": 14,
+        "Under 1.0": 14,
         "P": 0,
-        "W": 4
+        "W": null
       },
       "retained_if_passed": {
         "students": 41,
@@ -261,20 +175,11 @@ export const gateway2023: GatewayResponse = {
         "no_retake": 15
       },
       "grades": {
-        "A": 0,
-        "A-": 0,
-        "B+": 0,
-        "B": 0,
-        "B-": 0,
-        "C+": 0,
-        "C": 0,
-        "C-": 0,
-        "D+": 0,
+        "C or higher": 0,
         "D": 0,
-        "D-": 0,
-        "F": 8,
+        "Under 1.0": null,
         "P": 36,
-        "W": 7
+        "W": null
       },
       "retained_if_passed": {
         "students": 36,
@@ -302,20 +207,11 @@ export const gateway2023: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 18,
-        "A-": 0,
-        "B+": 0,
-        "B": 7,
-        "B-": 0,
-        "C+": 0,
-        "C": 4,
-        "C-": 0,
-        "D+": 0,
-        "D": 1,
-        "D-": 0,
-        "F": 3,
+        "C or higher": 29,
+        "D": null,
+        "Under 1.0": null,
         "P": 0,
-        "W": 5
+        "W": null
       },
       "retained_if_passed": {
         "students": 30,
@@ -343,20 +239,11 @@ export const gateway2023: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 7,
-        "A-": 0,
-        "B+": 0,
-        "B": 3,
-        "B-": 0,
-        "C+": 0,
-        "C": 5,
-        "C-": 0,
-        "D+": 0,
-        "D": 2,
-        "D-": 0,
-        "F": 2,
+        "C or higher": 15,
+        "D": null,
+        "Under 1.0": null,
         "P": 0,
-        "W": 5
+        "W": null
       },
       "retained_if_passed": {
         "students": 17,
@@ -384,18 +271,9 @@ export const gateway2023: GatewayResponse = {
         "no_retake": 0
       },
       "grades": {
-        "A": 5,
-        "A-": 2,
-        "B+": 1,
-        "B": 9,
-        "B-": 2,
-        "C+": 0,
-        "C": 3,
-        "C-": 0,
-        "D+": 0,
+        "C or higher": 22,
         "D": 0,
-        "D-": 0,
-        "F": 0,
+        "Under 1.0": 0,
         "P": 0,
         "W": 0
       },
@@ -425,18 +303,9 @@ export const gateway2023: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 7,
-        "A-": 0,
-        "B+": 0,
-        "B": 4,
-        "B-": 1,
-        "C+": 0,
-        "C": 5,
-        "C-": 2,
-        "D+": 0,
-        "D": 3,
-        "D-": 0,
-        "F": 2,
+        "C or higher": 19,
+        "D": null,
+        "Under 1.0": null,
         "P": 0,
         "W": 0
       },
@@ -466,18 +335,9 @@ export const gateway2023: GatewayResponse = {
         "no_retake": 0
       },
       "grades": {
-        "A": 10,
-        "A-": 0,
-        "B+": 0,
-        "B": 10,
-        "B-": 0,
-        "C+": 0,
-        "C": 1,
-        "C-": 0,
-        "D+": 0,
+        "C or higher": 21,
         "D": 0,
-        "D-": 0,
-        "F": 0,
+        "Under 1.0": 0,
         "P": 0,
         "W": 0
       },
@@ -507,20 +367,11 @@ export const gateway2023: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 1,
-        "A-": 0,
-        "B+": 0,
-        "B": 4,
-        "B-": 0,
-        "C+": 0,
-        "C": 5,
-        "C-": 0,
-        "D+": 0,
-        "D": 1,
-        "D-": 0,
-        "F": 6,
+        "C or higher": 10,
+        "D": null,
+        "Under 1.0": null,
         "P": 0,
-        "W": 4
+        "W": null
       },
       "retained_if_passed": {
         "students": 11,
@@ -548,20 +399,11 @@ export const gateway2023: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 3,
-        "A-": 0,
-        "B+": 0,
-        "B": 7,
-        "B-": 0,
-        "C+": 0,
-        "C": 4,
-        "C-": 0,
-        "D+": 0,
-        "D": 1,
-        "D-": 0,
-        "F": 4,
+        "C or higher": 14,
+        "D": null,
+        "Under 1.0": null,
         "P": 0,
-        "W": 2
+        "W": null
       },
       "retained_if_passed": {
         "students": 15,
@@ -589,18 +431,9 @@ export const gateway2023: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 9,
-        "A-": 0,
-        "B+": 0,
-        "B": 5,
-        "B-": 0,
-        "C+": 0,
-        "C": 1,
-        "C-": 0,
-        "D+": 0,
-        "D": 1,
-        "D-": 0,
-        "F": 1,
+        "C or higher": 15,
+        "D": null,
+        "Under 1.0": null,
         "P": 0,
         "W": 0
       },
@@ -630,20 +463,11 @@ export const gateway2023: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 2,
-        "A-": 0,
-        "B+": 0,
-        "B": 5,
-        "B-": 0,
-        "C+": 0,
-        "C": 2,
-        "C-": 0,
-        "D+": 0,
-        "D": 3,
-        "D-": 0,
-        "F": 2,
+        "C or higher": null,
+        "D": null,
+        "Under 1.0": null,
         "P": 0,
-        "W": 6
+        "W": null
       },
       "retained_if_passed": {
         "students": 12,
@@ -671,20 +495,11 @@ export const gateway2023: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 3,
-        "A-": 0,
-        "B+": 0,
-        "B": 2,
-        "B-": 0,
-        "C+": 0,
-        "C": 2,
-        "C-": 0,
-        "D+": 0,
+        "C or higher": null,
         "D": 0,
-        "D-": 0,
-        "F": 5,
+        "Under 1.0": null,
         "P": 0,
-        "W": 2
+        "W": null
       },
       "retained_if_passed": {
         "students": null,
@@ -712,18 +527,9 @@ export const gateway2023: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 6,
-        "A-": 1,
-        "B+": 1,
-        "B": 0,
-        "B-": 0,
-        "C+": 0,
-        "C": 2,
-        "C-": 0,
-        "D+": 0,
-        "D": 3,
-        "D-": 0,
-        "F": 2,
+        "C or higher": 10,
+        "D": null,
+        "Under 1.0": null,
         "P": 0,
         "W": 0
       },
@@ -753,18 +559,9 @@ export const gateway2023: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 2,
-        "A-": 0,
-        "B+": 0,
-        "B": 4,
-        "B-": 0,
-        "C+": 0,
-        "C": 5,
-        "C-": 0,
-        "D+": 0,
-        "D": 1,
-        "D-": 0,
-        "F": 2,
+        "C or higher": 11,
+        "D": null,
+        "Under 1.0": null,
         "P": 0,
         "W": 0
       },
@@ -794,20 +591,11 @@ export const gateway2023: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 2,
-        "A-": 0,
-        "B+": 0,
-        "B": 0,
-        "B-": 0,
-        "C+": 0,
-        "C": 4,
-        "C-": 0,
-        "D+": 0,
-        "D": 2,
-        "D-": 0,
-        "F": 2,
+        "C or higher": null,
+        "D": null,
+        "Under 1.0": null,
         "P": 0,
-        "W": 3
+        "W": null
       },
       "retained_if_passed": {
         "students": null,
@@ -835,20 +623,11 @@ export const gateway2023: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 6,
-        "A-": 0,
-        "B+": 0,
-        "B": 2,
-        "B-": 0,
-        "C+": 0,
-        "C": 1,
-        "C-": 0,
-        "D+": 0,
-        "D": 2,
-        "D-": 0,
-        "F": 2,
+        "C or higher": null,
+        "D": null,
+        "Under 1.0": null,
         "P": 0,
-        "W": 1
+        "W": null
       },
       "retained_if_passed": {
         "students": 11,
@@ -876,20 +655,11 @@ export const gateway2023: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 0,
-        "A-": 0,
-        "B+": 0,
-        "B": 0,
-        "B-": 0,
-        "C+": 0,
-        "C": 0,
-        "C-": 0,
-        "D+": 0,
+        "C or higher": 0,
         "D": 0,
-        "D-": 0,
-        "F": 3,
-        "P": 9,
-        "W": 1
+        "Under 1.0": null,
+        "P": null,
+        "W": null
       },
       "retained_if_passed": {
         "students": null,
@@ -917,20 +687,11 @@ export const gateway2023: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 0,
-        "A-": 0,
-        "B+": 0,
-        "B": 5,
-        "B-": 0,
-        "C+": 0,
-        "C": 3,
-        "C-": 0,
-        "D+": 0,
-        "D": 1,
-        "D-": 0,
-        "F": 1,
-        "P": 2,
-        "W": 2
+        "C or higher": null,
+        "D": null,
+        "Under 1.0": null,
+        "P": null,
+        "W": null
       },
       "retained_if_passed": {
         "students": 10,
@@ -958,20 +719,11 @@ export const gateway2023: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 2,
-        "A-": 0,
-        "B+": 0,
-        "B": 4,
-        "B-": 0,
-        "C+": 0,
-        "C": 2,
-        "C-": 0,
-        "D+": 0,
-        "D": 1,
-        "D-": 0,
-        "F": 0,
+        "C or higher": null,
+        "D": null,
+        "Under 1.0": 0,
         "P": 0,
-        "W": 4
+        "W": null
       },
       "retained_if_passed": {
         "students": null,
@@ -999,18 +751,9 @@ export const gateway2023: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 4,
-        "A-": 0,
-        "B+": 0,
-        "B": 3,
-        "B-": 0,
-        "C+": 0,
-        "C": 2,
-        "C-": 0,
-        "D+": 0,
+        "C or higher": null,
         "D": 0,
-        "D-": 0,
-        "F": 3,
+        "Under 1.0": null,
         "P": 0,
         "W": 0
       },
@@ -1040,18 +783,9 @@ export const gateway2023: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 3,
-        "A-": 0,
-        "B+": 1,
-        "B": 0,
-        "B-": 0,
-        "C+": 0,
-        "C": 0,
-        "C-": 0,
-        "D+": 1,
-        "D": 3,
-        "D-": 0,
-        "F": 3,
+        "C or higher": null,
+        "D": null,
+        "Under 1.0": null,
         "P": 0,
         "W": 0
       },
@@ -1081,20 +815,11 @@ export const gateway2023: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 0,
-        "A-": 3,
-        "B+": 1,
-        "B": 3,
-        "B-": 0,
-        "C+": 0,
-        "C": 1,
-        "C-": 0,
-        "D+": 1,
-        "D": 2,
-        "D-": 0,
-        "F": 1,
+        "C or higher": null,
+        "D": null,
+        "Under 1.0": null,
         "P": 0,
-        "W": 2
+        "W": null
       },
       "retained_if_passed": {
         "students": null,
@@ -1122,18 +847,9 @@ export const gateway2023: GatewayResponse = {
         "no_retake": 0
       },
       "grades": {
-        "A": 3,
-        "A-": 0,
-        "B+": 0,
-        "B": 2,
-        "B-": 0,
-        "C+": 0,
-        "C": 5,
-        "C-": 0,
-        "D+": 0,
+        "C or higher": 10,
         "D": 0,
-        "D-": 0,
-        "F": 0,
+        "Under 1.0": 0,
         "P": 0,
         "W": 0
       },
@@ -1163,18 +879,9 @@ export const gateway2023: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 3,
-        "A-": 0,
-        "B+": 0,
-        "B": 0,
-        "B-": 0,
-        "C+": 0,
-        "C": 2,
-        "C-": 0,
-        "D+": 0,
-        "D": 2,
-        "D-": 0,
-        "F": 3,
+        "C or higher": null,
+        "D": null,
+        "Under 1.0": null,
         "P": 0,
         "W": 0
       },
@@ -1204,18 +911,9 @@ export const gateway2023: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 1,
-        "A-": 0,
-        "B+": 0,
-        "B": 3,
-        "B-": 0,
-        "C+": 0,
-        "C": 3,
-        "C-": 0,
-        "D+": 0,
+        "C or higher": null,
         "D": 0,
-        "D-": 0,
-        "F": 3,
+        "Under 1.0": null,
         "P": 0,
         "W": 0
       },
@@ -1298,88 +996,29 @@ export const gatewayFederal2023: GatewayResponse = {
     "grade_scale": {
       "grades": [
         {
-          "grade": "A",
-          "points": "4.0",
-          "dfw": false,
-          "gateway_pass": true
-        },
-        {
-          "grade": "A-",
-          "points": "3.7 to under 4.0",
-          "dfw": false,
-          "gateway_pass": true
-        },
-        {
-          "grade": "B+",
-          "points": "3.3 to under 3.7",
-          "dfw": false,
-          "gateway_pass": true
-        },
-        {
-          "grade": "B",
-          "points": "3.0 to under 3.3",
-          "dfw": false,
-          "gateway_pass": true
-        },
-        {
-          "grade": "B-",
-          "points": "2.7 to under 3.0",
-          "dfw": false,
-          "gateway_pass": true
-        },
-        {
-          "grade": "C+",
-          "points": "2.3 to under 2.7",
-          "dfw": false,
-          "gateway_pass": true
-        },
-        {
-          "grade": "C",
-          "points": "2.0 to under 2.3",
-          "dfw": false,
-          "gateway_pass": true
-        },
-        {
-          "grade": "C-",
-          "points": "1.7 to under 2.0",
-          "dfw": false,
-          "gateway_pass": true
-        },
-        {
-          "grade": "D+",
-          "points": "1.3 to under 1.7",
-          "dfw": true,
-          "gateway_pass": true
+          "grade": "C or higher",
+          "points": "1.7 and up",
+          "counted": true
         },
         {
           "grade": "D",
-          "points": "1.0 to under 1.3",
-          "dfw": true,
-          "gateway_pass": true
+          "points": "1.0 to under 1.7 (D, D+)",
+          "counted": true
         },
         {
-          "grade": "D-",
-          "points": "0.7 to under 1.0",
-          "dfw": true,
-          "gateway_pass": false
-        },
-        {
-          "grade": "F",
-          "points": "under 0.7, or the code F",
-          "dfw": true,
-          "gateway_pass": false
+          "grade": "Under 1.0",
+          "points": "under 1.0 (D- or F), or the code F",
+          "counted": false
         },
         {
           "grade": "P",
           "points": "the code P (pass)",
-          "dfw": false,
-          "gateway_pass": true
+          "counted": true
         },
         {
           "grade": "W",
           "points": "the code W (withdrew)",
-          "dfw": true,
-          "gateway_pass": false
+          "counted": false
         }
       ],
       "left_out": "I (incomplete), A (audit), M or MIS (missing), O or OTH (other), and any code the PDP dictionary doesn't list, such as UW, aren't final grades, so neither page counts them."
@@ -1413,18 +1052,9 @@ export const gatewayFederal2023: GatewayResponse = {
         "no_retake": 64
       },
       "grades": {
-        "A": 120,
-        "A-": 13,
-        "B+": 10,
-        "B": 53,
-        "B-": 6,
-        "C+": 7,
-        "C": 40,
-        "C-": 2,
-        "D+": 2,
-        "D": 13,
-        "D-": 1,
-        "F": 64,
+        "C or higher": 251,
+        "D": 15,
+        "Under 1.0": 65,
         "P": 50,
         "W": 31
       },
@@ -1454,20 +1084,11 @@ export const gatewayFederal2023: GatewayResponse = {
         "no_retake": 10
       },
       "grades": {
-        "A": 21,
-        "A-": 0,
-        "B+": 0,
-        "B": 15,
-        "B-": 0,
-        "C+": 0,
-        "C": 12,
-        "C-": 0,
-        "D+": 0,
-        "D": 6,
-        "D-": 0,
-        "F": 6,
+        "C or higher": 48,
+        "D": null,
+        "Under 1.0": null,
         "P": 0,
-        "W": 8
+        "W": null
       },
       "retained_if_passed": {
         "students": 52,
@@ -1495,20 +1116,11 @@ export const gatewayFederal2023: GatewayResponse = {
         "no_retake": 14
       },
       "grades": {
-        "A": 14,
-        "A-": 0,
-        "B+": 0,
-        "B": 15,
-        "B-": 0,
-        "C+": 0,
-        "C": 13,
-        "C-": 0,
-        "D+": 0,
+        "C or higher": 42,
         "D": 0,
-        "D-": 0,
-        "F": 14,
+        "Under 1.0": 14,
         "P": 0,
-        "W": 4
+        "W": null
       },
       "retained_if_passed": {
         "students": 41,
@@ -1536,20 +1148,11 @@ export const gatewayFederal2023: GatewayResponse = {
         "no_retake": 15
       },
       "grades": {
-        "A": 0,
-        "A-": 0,
-        "B+": 0,
-        "B": 0,
-        "B-": 0,
-        "C+": 0,
-        "C": 0,
-        "C-": 0,
-        "D+": 0,
+        "C or higher": 0,
         "D": 0,
-        "D-": 0,
-        "F": 8,
+        "Under 1.0": null,
         "P": 36,
-        "W": 7
+        "W": null
       },
       "retained_if_passed": {
         "students": 36,
@@ -1577,20 +1180,11 @@ export const gatewayFederal2023: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 18,
-        "A-": 0,
-        "B+": 0,
-        "B": 7,
-        "B-": 0,
-        "C+": 0,
-        "C": 4,
-        "C-": 0,
-        "D+": 0,
-        "D": 1,
-        "D-": 0,
-        "F": 3,
+        "C or higher": 29,
+        "D": null,
+        "Under 1.0": null,
         "P": 0,
-        "W": 5
+        "W": null
       },
       "retained_if_passed": {
         "students": 30,
@@ -1618,20 +1212,11 @@ export const gatewayFederal2023: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 7,
-        "A-": 0,
-        "B+": 0,
-        "B": 3,
-        "B-": 0,
-        "C+": 0,
-        "C": 5,
-        "C-": 0,
-        "D+": 0,
-        "D": 2,
-        "D-": 0,
-        "F": 2,
+        "C or higher": 15,
+        "D": null,
+        "Under 1.0": null,
         "P": 0,
-        "W": 5
+        "W": null
       },
       "retained_if_passed": {
         "students": 17,
@@ -1659,18 +1244,9 @@ export const gatewayFederal2023: GatewayResponse = {
         "no_retake": 0
       },
       "grades": {
-        "A": 5,
-        "A-": 2,
-        "B+": 1,
-        "B": 9,
-        "B-": 2,
-        "C+": 0,
-        "C": 3,
-        "C-": 0,
-        "D+": 0,
+        "C or higher": 22,
         "D": 0,
-        "D-": 0,
-        "F": 0,
+        "Under 1.0": 0,
         "P": 0,
         "W": 0
       },
@@ -1700,18 +1276,9 @@ export const gatewayFederal2023: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 7,
-        "A-": 0,
-        "B+": 0,
-        "B": 4,
-        "B-": 1,
-        "C+": 0,
-        "C": 5,
-        "C-": 2,
-        "D+": 0,
-        "D": 3,
-        "D-": 0,
-        "F": 2,
+        "C or higher": 19,
+        "D": null,
+        "Under 1.0": null,
         "P": 0,
         "W": 0
       },
@@ -1741,18 +1308,9 @@ export const gatewayFederal2023: GatewayResponse = {
         "no_retake": 0
       },
       "grades": {
-        "A": 10,
-        "A-": 0,
-        "B+": 0,
-        "B": 10,
-        "B-": 0,
-        "C+": 0,
-        "C": 1,
-        "C-": 0,
-        "D+": 0,
+        "C or higher": 21,
         "D": 0,
-        "D-": 0,
-        "F": 0,
+        "Under 1.0": 0,
         "P": 0,
         "W": 0
       },
@@ -1782,20 +1340,11 @@ export const gatewayFederal2023: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 1,
-        "A-": 0,
-        "B+": 0,
-        "B": 4,
-        "B-": 0,
-        "C+": 0,
-        "C": 5,
-        "C-": 0,
-        "D+": 0,
-        "D": 1,
-        "D-": 0,
-        "F": 6,
+        "C or higher": 10,
+        "D": null,
+        "Under 1.0": null,
         "P": 0,
-        "W": 4
+        "W": null
       },
       "retained_if_passed": {
         "students": 11,
@@ -1823,20 +1372,11 @@ export const gatewayFederal2023: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 3,
-        "A-": 0,
-        "B+": 0,
-        "B": 7,
-        "B-": 0,
-        "C+": 0,
-        "C": 4,
-        "C-": 0,
-        "D+": 0,
-        "D": 1,
-        "D-": 0,
-        "F": 4,
+        "C or higher": 14,
+        "D": null,
+        "Under 1.0": null,
         "P": 0,
-        "W": 2
+        "W": null
       },
       "retained_if_passed": {
         "students": 15,
@@ -1864,18 +1404,9 @@ export const gatewayFederal2023: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 9,
-        "A-": 0,
-        "B+": 0,
-        "B": 5,
-        "B-": 0,
-        "C+": 0,
-        "C": 1,
-        "C-": 0,
-        "D+": 0,
-        "D": 1,
-        "D-": 0,
-        "F": 1,
+        "C or higher": 15,
+        "D": null,
+        "Under 1.0": null,
         "P": 0,
         "W": 0
       },
@@ -1905,20 +1436,11 @@ export const gatewayFederal2023: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 2,
-        "A-": 0,
-        "B+": 0,
-        "B": 5,
-        "B-": 0,
-        "C+": 0,
-        "C": 2,
-        "C-": 0,
-        "D+": 0,
-        "D": 3,
-        "D-": 0,
-        "F": 2,
+        "C or higher": null,
+        "D": null,
+        "Under 1.0": null,
         "P": 0,
-        "W": 6
+        "W": null
       },
       "retained_if_passed": {
         "students": 12,
@@ -1946,20 +1468,11 @@ export const gatewayFederal2023: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 3,
-        "A-": 0,
-        "B+": 0,
-        "B": 2,
-        "B-": 0,
-        "C+": 0,
-        "C": 2,
-        "C-": 0,
-        "D+": 0,
+        "C or higher": null,
         "D": 0,
-        "D-": 0,
-        "F": 5,
+        "Under 1.0": null,
         "P": 0,
-        "W": 2
+        "W": null
       },
       "retained_if_passed": {
         "students": null,
@@ -1987,18 +1500,9 @@ export const gatewayFederal2023: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 6,
-        "A-": 1,
-        "B+": 1,
-        "B": 0,
-        "B-": 0,
-        "C+": 0,
-        "C": 2,
-        "C-": 0,
-        "D+": 0,
-        "D": 3,
-        "D-": 0,
-        "F": 2,
+        "C or higher": 10,
+        "D": null,
+        "Under 1.0": null,
         "P": 0,
         "W": 0
       },
@@ -2028,18 +1532,9 @@ export const gatewayFederal2023: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 2,
-        "A-": 0,
-        "B+": 0,
-        "B": 4,
-        "B-": 0,
-        "C+": 0,
-        "C": 5,
-        "C-": 0,
-        "D+": 0,
-        "D": 1,
-        "D-": 0,
-        "F": 2,
+        "C or higher": 11,
+        "D": null,
+        "Under 1.0": null,
         "P": 0,
         "W": 0
       },
@@ -2069,20 +1564,11 @@ export const gatewayFederal2023: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 2,
-        "A-": 0,
-        "B+": 0,
-        "B": 0,
-        "B-": 0,
-        "C+": 0,
-        "C": 4,
-        "C-": 0,
-        "D+": 0,
-        "D": 2,
-        "D-": 0,
-        "F": 2,
+        "C or higher": null,
+        "D": null,
+        "Under 1.0": null,
         "P": 0,
-        "W": 3
+        "W": null
       },
       "retained_if_passed": {
         "students": null,
@@ -2110,20 +1596,11 @@ export const gatewayFederal2023: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 6,
-        "A-": 0,
-        "B+": 0,
-        "B": 2,
-        "B-": 0,
-        "C+": 0,
-        "C": 1,
-        "C-": 0,
-        "D+": 0,
-        "D": 2,
-        "D-": 0,
-        "F": 2,
+        "C or higher": null,
+        "D": null,
+        "Under 1.0": null,
         "P": 0,
-        "W": 1
+        "W": null
       },
       "retained_if_passed": {
         "students": 11,
@@ -2151,20 +1628,11 @@ export const gatewayFederal2023: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 0,
-        "A-": 0,
-        "B+": 0,
-        "B": 0,
-        "B-": 0,
-        "C+": 0,
-        "C": 0,
-        "C-": 0,
-        "D+": 0,
+        "C or higher": 0,
         "D": 0,
-        "D-": 0,
-        "F": 3,
-        "P": 9,
-        "W": 1
+        "Under 1.0": null,
+        "P": null,
+        "W": null
       },
       "retained_if_passed": {
         "students": null,
@@ -2192,20 +1660,11 @@ export const gatewayFederal2023: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 0,
-        "A-": 0,
-        "B+": 0,
-        "B": 5,
-        "B-": 0,
-        "C+": 0,
-        "C": 3,
-        "C-": 0,
-        "D+": 0,
-        "D": 1,
-        "D-": 0,
-        "F": 1,
-        "P": 2,
-        "W": 2
+        "C or higher": null,
+        "D": null,
+        "Under 1.0": null,
+        "P": null,
+        "W": null
       },
       "retained_if_passed": {
         "students": 10,
@@ -2233,20 +1692,11 @@ export const gatewayFederal2023: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 2,
-        "A-": 0,
-        "B+": 0,
-        "B": 4,
-        "B-": 0,
-        "C+": 0,
-        "C": 2,
-        "C-": 0,
-        "D+": 0,
-        "D": 1,
-        "D-": 0,
-        "F": 0,
+        "C or higher": null,
+        "D": null,
+        "Under 1.0": 0,
         "P": 0,
-        "W": 4
+        "W": null
       },
       "retained_if_passed": {
         "students": null,
@@ -2274,18 +1724,9 @@ export const gatewayFederal2023: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 4,
-        "A-": 0,
-        "B+": 0,
-        "B": 3,
-        "B-": 0,
-        "C+": 0,
-        "C": 2,
-        "C-": 0,
-        "D+": 0,
+        "C or higher": null,
         "D": 0,
-        "D-": 0,
-        "F": 3,
+        "Under 1.0": null,
         "P": 0,
         "W": 0
       },
@@ -2315,18 +1756,9 @@ export const gatewayFederal2023: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 3,
-        "A-": 0,
-        "B+": 1,
-        "B": 0,
-        "B-": 0,
-        "C+": 0,
-        "C": 0,
-        "C-": 0,
-        "D+": 1,
-        "D": 3,
-        "D-": 0,
-        "F": 3,
+        "C or higher": null,
+        "D": null,
+        "Under 1.0": null,
         "P": 0,
         "W": 0
       },
@@ -2356,20 +1788,11 @@ export const gatewayFederal2023: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 0,
-        "A-": 3,
-        "B+": 1,
-        "B": 3,
-        "B-": 0,
-        "C+": 0,
-        "C": 1,
-        "C-": 0,
-        "D+": 1,
-        "D": 2,
-        "D-": 0,
-        "F": 1,
+        "C or higher": null,
+        "D": null,
+        "Under 1.0": null,
         "P": 0,
-        "W": 2
+        "W": null
       },
       "retained_if_passed": {
         "students": null,
@@ -2397,18 +1820,9 @@ export const gatewayFederal2023: GatewayResponse = {
         "no_retake": 0
       },
       "grades": {
-        "A": 3,
-        "A-": 0,
-        "B+": 0,
-        "B": 2,
-        "B-": 0,
-        "C+": 0,
-        "C": 5,
-        "C-": 0,
-        "D+": 0,
+        "C or higher": 10,
         "D": 0,
-        "D-": 0,
-        "F": 0,
+        "Under 1.0": 0,
         "P": 0,
         "W": 0
       },
@@ -2438,18 +1852,9 @@ export const gatewayFederal2023: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 3,
-        "A-": 0,
-        "B+": 0,
-        "B": 0,
-        "B-": 0,
-        "C+": 0,
-        "C": 2,
-        "C-": 0,
-        "D+": 0,
-        "D": 2,
-        "D-": 0,
-        "F": 3,
+        "C or higher": null,
+        "D": null,
+        "Under 1.0": null,
         "P": 0,
         "W": 0
       },
@@ -2479,18 +1884,9 @@ export const gatewayFederal2023: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 1,
-        "A-": 0,
-        "B+": 0,
-        "B": 3,
-        "B-": 0,
-        "C+": 0,
-        "C": 3,
-        "C-": 0,
-        "D+": 0,
+        "C or higher": null,
         "D": 0,
-        "D-": 0,
-        "F": 3,
+        "Under 1.0": null,
         "P": 0,
         "W": 0
       },
@@ -2562,88 +1958,29 @@ export const gatewayPell2023: GatewayResponse = {
     "grade_scale": {
       "grades": [
         {
-          "grade": "A",
-          "points": "4.0",
-          "dfw": false,
-          "gateway_pass": true
-        },
-        {
-          "grade": "A-",
-          "points": "3.7 to under 4.0",
-          "dfw": false,
-          "gateway_pass": true
-        },
-        {
-          "grade": "B+",
-          "points": "3.3 to under 3.7",
-          "dfw": false,
-          "gateway_pass": true
-        },
-        {
-          "grade": "B",
-          "points": "3.0 to under 3.3",
-          "dfw": false,
-          "gateway_pass": true
-        },
-        {
-          "grade": "B-",
-          "points": "2.7 to under 3.0",
-          "dfw": false,
-          "gateway_pass": true
-        },
-        {
-          "grade": "C+",
-          "points": "2.3 to under 2.7",
-          "dfw": false,
-          "gateway_pass": true
-        },
-        {
-          "grade": "C",
-          "points": "2.0 to under 2.3",
-          "dfw": false,
-          "gateway_pass": true
-        },
-        {
-          "grade": "C-",
-          "points": "1.7 to under 2.0",
-          "dfw": false,
-          "gateway_pass": true
-        },
-        {
-          "grade": "D+",
-          "points": "1.3 to under 1.7",
-          "dfw": true,
-          "gateway_pass": true
+          "grade": "C or higher",
+          "points": "1.7 and up",
+          "counted": true
         },
         {
           "grade": "D",
-          "points": "1.0 to under 1.3",
-          "dfw": true,
-          "gateway_pass": true
+          "points": "1.0 to under 1.7 (D, D+)",
+          "counted": true
         },
         {
-          "grade": "D-",
-          "points": "0.7 to under 1.0",
-          "dfw": true,
-          "gateway_pass": false
-        },
-        {
-          "grade": "F",
-          "points": "under 0.7, or the code F",
-          "dfw": true,
-          "gateway_pass": false
+          "grade": "Under 1.0",
+          "points": "under 1.0 (D- or F), or the code F",
+          "counted": false
         },
         {
           "grade": "P",
           "points": "the code P (pass)",
-          "dfw": false,
-          "gateway_pass": true
+          "counted": true
         },
         {
           "grade": "W",
           "points": "the code W (withdrew)",
-          "dfw": true,
-          "gateway_pass": false
+          "counted": false
         }
       ],
       "left_out": "I (incomplete), A (audit), M or MIS (missing), O or OTH (other), and any code the PDP dictionary doesn't list, such as UW, aren't final grades, so neither page counts them."
@@ -2677,18 +2014,9 @@ export const gatewayPell2023: GatewayResponse = {
         "no_retake": 37
       },
       "grades": {
-        "A": 51,
-        "A-": 9,
-        "B+": 6,
-        "B": 29,
-        "B-": 5,
-        "C+": 4,
-        "C": 25,
-        "C-": 1,
-        "D+": 2,
-        "D": 4,
-        "D-": 1,
-        "F": 38,
+        "C or higher": 130,
+        "D": null,
+        "Under 1.0": 39,
         "P": 19,
         "W": 20
       },
@@ -2724,20 +2052,11 @@ export const gatewayPell2023: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 8,
-        "A-": 0,
-        "B+": 0,
-        "B": 9,
-        "B-": 0,
-        "C+": 0,
-        "C": 9,
-        "C-": 0,
-        "D+": 0,
+        "C or higher": 26,
         "D": 0,
-        "D-": 0,
-        "F": 8,
+        "Under 1.0": null,
         "P": 0,
-        "W": 2
+        "W": null
       },
       "retained_if_passed": {
         "students": 26,
@@ -2771,20 +2090,11 @@ export const gatewayPell2023: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 9,
-        "A-": 0,
-        "B+": 0,
-        "B": 7,
-        "B-": 0,
-        "C+": 0,
-        "C": 7,
-        "C-": 0,
-        "D+": 0,
-        "D": 3,
-        "D-": 0,
-        "F": 1,
+        "C or higher": 23,
+        "D": null,
+        "Under 1.0": null,
         "P": 0,
-        "W": 6
+        "W": null
       },
       "retained_if_passed": {
         "students": 25,
@@ -2818,20 +2128,11 @@ export const gatewayPell2023: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 0,
-        "A-": 0,
-        "B+": 0,
-        "B": 0,
-        "B-": 0,
-        "C+": 0,
-        "C": 0,
-        "C-": 0,
-        "D+": 0,
+        "C or higher": 0,
         "D": 0,
-        "D-": 0,
-        "F": 6,
+        "Under 1.0": null,
         "P": 14,
-        "W": 3
+        "W": null
       },
       "retained_if_passed": {
         "students": 14,
@@ -2865,18 +2166,9 @@ export const gatewayPell2023: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 6,
-        "A-": 0,
-        "B+": 0,
-        "B": 3,
-        "B-": 1,
-        "C+": 0,
-        "C": 5,
-        "C-": 2,
-        "D+": 0,
-        "D": 3,
-        "D-": 0,
-        "F": 2,
+        "C or higher": 17,
+        "D": null,
+        "Under 1.0": null,
         "P": 0,
         "W": 0
       },
@@ -2912,20 +2204,11 @@ export const gatewayPell2023: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 6,
-        "A-": 0,
-        "B+": 0,
-        "B": 3,
-        "B-": 0,
-        "C+": 0,
-        "C": 1,
-        "C-": 0,
-        "D+": 0,
-        "D": 1,
-        "D-": 0,
-        "F": 1,
+        "C or higher": 10,
+        "D": null,
+        "Under 1.0": null,
         "P": 0,
-        "W": 4
+        "W": null
       },
       "retained_if_passed": {
         "students": 11,
@@ -2959,18 +2242,9 @@ export const gatewayPell2023: GatewayResponse = {
         "no_retake": 0
       },
       "grades": {
-        "A": 7,
-        "A-": 0,
-        "B+": 0,
-        "B": 2,
-        "B-": 0,
-        "C+": 0,
-        "C": 1,
-        "C-": 0,
-        "D+": 0,
-        "D": 1,
-        "D-": 0,
-        "F": 0,
+        "C or higher": 10,
+        "D": null,
+        "Under 1.0": 0,
         "P": 0,
         "W": 0
       },
@@ -3006,18 +2280,9 @@ export const gatewayPell2023: GatewayResponse = {
         "no_retake": 0
       },
       "grades": {
-        "A": 4,
-        "A-": 0,
-        "B+": 0,
-        "B": 4,
-        "B-": 0,
-        "C+": 0,
-        "C": 2,
-        "C-": 0,
-        "D+": 0,
+        "C or higher": 10,
         "D": 0,
-        "D-": 0,
-        "F": 0,
+        "Under 1.0": 0,
         "P": 0,
         "W": 0
       },
@@ -3106,88 +2371,29 @@ export const gateway2024: GatewayResponse = {
     "grade_scale": {
       "grades": [
         {
-          "grade": "A",
-          "points": "4.0",
-          "dfw": false,
-          "gateway_pass": true
-        },
-        {
-          "grade": "A-",
-          "points": "3.7 to under 4.0",
-          "dfw": false,
-          "gateway_pass": true
-        },
-        {
-          "grade": "B+",
-          "points": "3.3 to under 3.7",
-          "dfw": false,
-          "gateway_pass": true
-        },
-        {
-          "grade": "B",
-          "points": "3.0 to under 3.3",
-          "dfw": false,
-          "gateway_pass": true
-        },
-        {
-          "grade": "B-",
-          "points": "2.7 to under 3.0",
-          "dfw": false,
-          "gateway_pass": true
-        },
-        {
-          "grade": "C+",
-          "points": "2.3 to under 2.7",
-          "dfw": false,
-          "gateway_pass": true
-        },
-        {
-          "grade": "C",
-          "points": "2.0 to under 2.3",
-          "dfw": false,
-          "gateway_pass": true
-        },
-        {
-          "grade": "C-",
-          "points": "1.7 to under 2.0",
-          "dfw": false,
-          "gateway_pass": true
-        },
-        {
-          "grade": "D+",
-          "points": "1.3 to under 1.7",
-          "dfw": true,
-          "gateway_pass": true
+          "grade": "C or higher",
+          "points": "1.7 and up",
+          "counted": true
         },
         {
           "grade": "D",
-          "points": "1.0 to under 1.3",
-          "dfw": true,
-          "gateway_pass": true
+          "points": "1.0 to under 1.7 (D, D+)",
+          "counted": true
         },
         {
-          "grade": "D-",
-          "points": "0.7 to under 1.0",
-          "dfw": true,
-          "gateway_pass": false
-        },
-        {
-          "grade": "F",
-          "points": "under 0.7, or the code F",
-          "dfw": true,
-          "gateway_pass": false
+          "grade": "Under 1.0",
+          "points": "under 1.0 (D- or F), or the code F",
+          "counted": false
         },
         {
           "grade": "P",
           "points": "the code P (pass)",
-          "dfw": false,
-          "gateway_pass": true
+          "counted": true
         },
         {
           "grade": "W",
           "points": "the code W (withdrew)",
-          "dfw": true,
-          "gateway_pass": false
+          "counted": false
         }
       ],
       "left_out": "I (incomplete), A (audit), M or MIS (missing), O or OTH (other), and any code the PDP dictionary doesn't list, such as UW, aren't final grades, so neither page counts them."
@@ -3221,18 +2427,9 @@ export const gateway2024: GatewayResponse = {
         "no_retake": 66
       },
       "grades": {
-        "A": 115,
-        "A-": 8,
-        "B+": 7,
-        "B": 44,
-        "B-": 5,
-        "C+": 6,
-        "C": 45,
-        "C-": 3,
-        "D+": 2,
-        "D": 10,
-        "D-": 1,
-        "F": 63,
+        "C or higher": 233,
+        "D": 12,
+        "Under 1.0": 64,
         "P": 53,
         "W": 20
       },
@@ -3262,20 +2459,11 @@ export const gateway2024: GatewayResponse = {
         "no_retake": 17
       },
       "grades": {
-        "A": 29,
-        "A-": 0,
-        "B+": 0,
-        "B": 19,
-        "B-": 0,
-        "C+": 0,
-        "C": 6,
-        "C-": 0,
-        "D+": 0,
-        "D": 5,
-        "D-": 0,
-        "F": 13,
+        "C or higher": 54,
+        "D": null,
+        "Under 1.0": 13,
         "P": 0,
-        "W": 4
+        "W": null
       },
       "retained_if_passed": {
         "students": 59,
@@ -3303,20 +2491,11 @@ export const gateway2024: GatewayResponse = {
         "no_retake": 17
       },
       "grades": {
-        "A": 13,
-        "A-": 0,
-        "B+": 0,
-        "B": 14,
-        "B-": 0,
-        "C+": 0,
-        "C": 9,
-        "C-": 0,
-        "D+": 0,
+        "C or higher": 36,
         "D": 0,
-        "D-": 0,
-        "F": 16,
+        "Under 1.0": 16,
         "P": 0,
-        "W": 2
+        "W": null
       },
       "retained_if_passed": {
         "students": 36,
@@ -3344,20 +2523,11 @@ export const gateway2024: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 9,
-        "A-": 0,
-        "B+": 0,
-        "B": 4,
-        "B-": 0,
-        "C+": 0,
-        "C": 7,
-        "C-": 0,
-        "D+": 0,
+        "C or higher": 20,
         "D": 0,
-        "D-": 0,
-        "F": 9,
+        "Under 1.0": null,
         "P": 0,
-        "W": 3
+        "W": null
       },
       "retained_if_passed": {
         "students": 20,
@@ -3385,18 +2555,9 @@ export const gateway2024: GatewayResponse = {
         "no_retake": 0
       },
       "grades": {
-        "A": 13,
-        "A-": 0,
-        "B+": 0,
-        "B": 7,
-        "B-": 0,
-        "C+": 0,
-        "C": 8,
-        "C-": 0,
-        "D+": 0,
+        "C or higher": 28,
         "D": 0,
-        "D-": 0,
-        "F": 0,
+        "Under 1.0": 0,
         "P": 0,
         "W": 0
       },
@@ -3426,18 +2587,9 @@ export const gateway2024: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 5,
-        "A-": 7,
-        "B+": 0,
-        "B": 5,
-        "B-": 1,
-        "C+": 0,
-        "C": 3,
-        "C-": 0,
-        "D+": 0,
+        "C or higher": 21,
         "D": 0,
-        "D-": 0,
-        "F": 2,
+        "Under 1.0": null,
         "P": 0,
         "W": 0
       },
@@ -3467,20 +2619,11 @@ export const gateway2024: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 9,
-        "A-": 1,
-        "B+": 0,
-        "B": 0,
-        "B-": 1,
-        "C+": 1,
-        "C": 2,
-        "C-": 1,
-        "D+": 0,
-        "D": 1,
-        "D-": 0,
-        "F": 7,
+        "C or higher": 15,
+        "D": null,
+        "Under 1.0": null,
         "P": 0,
-        "W": 2
+        "W": null
       },
       "retained_if_passed": {
         "students": 15,
@@ -3508,18 +2651,9 @@ export const gateway2024: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 11,
-        "A-": 0,
-        "B+": 0,
-        "B": 4,
-        "B-": 0,
-        "C+": 0,
-        "C": 1,
-        "C-": 0,
-        "D+": 0,
-        "D": 1,
-        "D-": 0,
-        "F": 2,
+        "C or higher": 16,
+        "D": null,
+        "Under 1.0": null,
         "P": 0,
         "W": 0
       },
@@ -3549,20 +2683,11 @@ export const gateway2024: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 8,
-        "A-": 0,
-        "B+": 0,
-        "B": 3,
-        "B-": 0,
-        "C+": 0,
-        "C": 4,
-        "C-": 0,
-        "D+": 0,
-        "D": 1,
-        "D-": 0,
-        "F": 3,
+        "C or higher": 15,
+        "D": null,
+        "Under 1.0": null,
         "P": 0,
-        "W": 3
+        "W": null
       },
       "retained_if_passed": {
         "students": 15,
@@ -3590,20 +2715,11 @@ export const gateway2024: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 1,
-        "A-": 1,
-        "B+": 1,
-        "B": 2,
-        "B-": 1,
-        "C+": 0,
-        "C": 5,
-        "C-": 0,
-        "D+": 0,
-        "D": 2,
-        "D-": 1,
-        "F": 5,
+        "C or higher": 11,
+        "D": null,
+        "Under 1.0": null,
         "P": 0,
-        "W": 3
+        "W": null
       },
       "retained_if_passed": {
         "students": 13,
@@ -3631,20 +2747,11 @@ export const gateway2024: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 9,
-        "A-": 0,
-        "B+": 0,
-        "B": 3,
-        "B-": 0,
-        "C+": 0,
-        "C": 0,
-        "C-": 0,
-        "D+": 0,
-        "D": 1,
-        "D-": 0,
-        "F": 2,
+        "C or higher": 12,
+        "D": null,
+        "Under 1.0": null,
         "P": 0,
-        "W": 3
+        "W": null
       },
       "retained_if_passed": {
         "students": 13,
@@ -3672,20 +2779,11 @@ export const gateway2024: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 2,
-        "A-": 0,
-        "B+": 0,
-        "B": 4,
-        "B-": 0,
-        "C+": 0,
-        "C": 2,
-        "C-": 0,
-        "D+": 0,
+        "C or higher": null,
         "D": 0,
-        "D-": 0,
-        "F": 11,
+        "Under 1.0": 11,
         "P": 0,
-        "W": 1
+        "W": null
       },
       "retained_if_passed": {
         "students": null,
@@ -3713,20 +2811,11 @@ export const gateway2024: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 9,
-        "A-": 0,
-        "B+": 0,
-        "B": 3,
-        "B-": 0,
-        "C+": 0,
-        "C": 0,
-        "C-": 0,
-        "D+": 0,
-        "D": 1,
-        "D-": 0,
-        "F": 3,
+        "C or higher": 12,
+        "D": null,
+        "Under 1.0": null,
         "P": 0,
-        "W": 2
+        "W": null
       },
       "retained_if_passed": {
         "students": 13,
@@ -3754,20 +2843,11 @@ export const gateway2024: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 5,
-        "A-": 1,
-        "B+": 0,
-        "B": 2,
-        "B-": 2,
-        "C+": 2,
-        "C": 0,
-        "C-": 1,
-        "D+": 0,
-        "D": 1,
-        "D-": 0,
-        "F": 2,
+        "C or higher": 13,
+        "D": null,
+        "Under 1.0": null,
         "P": 0,
-        "W": 1
+        "W": null
       },
       "retained_if_passed": {
         "students": 14,
@@ -3795,20 +2875,11 @@ export const gateway2024: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 1,
-        "A-": 0,
-        "B+": 0,
-        "B": 5,
-        "B-": 0,
-        "C+": 0,
-        "C": 3,
-        "C-": 0,
-        "D+": 0,
+        "C or higher": null,
         "D": 0,
-        "D-": 0,
-        "F": 4,
+        "Under 1.0": null,
         "P": 0,
-        "W": 4
+        "W": null
       },
       "retained_if_passed": {
         "students": null,
@@ -3836,20 +2907,11 @@ export const gateway2024: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 6,
-        "A-": 0,
-        "B+": 0,
-        "B": 5,
-        "B-": 0,
-        "C+": 0,
-        "C": 0,
-        "C-": 0,
-        "D+": 0,
+        "C or higher": 11,
         "D": 0,
-        "D-": 0,
-        "F": 1,
+        "Under 1.0": null,
         "P": 0,
-        "W": 2
+        "W": null
       },
       "retained_if_passed": {
         "students": 11,
@@ -3877,20 +2939,11 @@ export const gateway2024: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 5,
-        "A-": 0,
-        "B+": 0,
-        "B": 0,
-        "B-": 0,
-        "C+": 0,
-        "C": 2,
-        "C-": 0,
-        "D+": 0,
-        "D": 1,
-        "D-": 0,
-        "F": 4,
+        "C or higher": null,
+        "D": null,
+        "Under 1.0": null,
         "P": 0,
-        "W": 1
+        "W": null
       },
       "retained_if_passed": {
         "students": null,
@@ -3918,20 +2971,11 @@ export const gateway2024: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 2,
-        "A-": 0,
-        "B+": 0,
-        "B": 1,
-        "B-": 0,
-        "C+": 0,
-        "C": 7,
-        "C-": 0,
-        "D+": 0,
+        "C or higher": 10,
         "D": 0,
-        "D-": 0,
-        "F": 0,
+        "Under 1.0": 0,
         "P": 0,
-        "W": 3
+        "W": null
       },
       "retained_if_passed": {
         "students": 10,
@@ -3959,18 +3003,9 @@ export const gateway2024: GatewayResponse = {
         "no_retake": 0
       },
       "grades": {
-        "A": 5,
-        "A-": 4,
-        "B+": 1,
-        "B": 0,
-        "B-": 0,
-        "C+": 0,
-        "C": 1,
-        "C-": 1,
-        "D+": 0,
+        "C or higher": 12,
         "D": 0,
-        "D-": 0,
-        "F": 0,
+        "Under 1.0": 0,
         "P": 0,
         "W": 0
       },
@@ -4000,18 +3035,9 @@ export const gateway2024: GatewayResponse = {
         "no_retake": 0
       },
       "grades": {
-        "A": 11,
-        "A-": 0,
-        "B+": 0,
-        "B": 1,
-        "B-": 0,
-        "C+": 0,
-        "C": 0,
-        "C-": 0,
-        "D+": 0,
+        "C or higher": 12,
         "D": 0,
-        "D-": 0,
-        "F": 0,
+        "Under 1.0": 0,
         "P": 0,
         "W": 0
       },
@@ -4041,20 +3067,11 @@ export const gateway2024: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 3,
-        "A-": 0,
-        "B+": 0,
-        "B": 1,
-        "B-": 0,
-        "C+": 0,
-        "C": 2,
-        "C-": 0,
-        "D+": 0,
+        "C or higher": null,
         "D": 0,
-        "D-": 0,
-        "F": 5,
+        "Under 1.0": null,
         "P": 0,
-        "W": 3
+        "W": null
       },
       "retained_if_passed": {
         "students": null,
@@ -4082,20 +3099,11 @@ export const gateway2024: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 2,
-        "A-": 0,
-        "B+": 0,
-        "B": 2,
-        "B-": 0,
-        "C+": 0,
-        "C": 4,
-        "C-": 0,
-        "D+": 0,
-        "D": 1,
-        "D-": 0,
-        "F": 1,
+        "C or higher": null,
+        "D": null,
+        "Under 1.0": null,
         "P": 0,
-        "W": 4
+        "W": null
       },
       "retained_if_passed": {
         "students": null,
@@ -4123,19 +3131,10 @@ export const gateway2024: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 0,
-        "A-": 0,
-        "B+": 0,
-        "B": 0,
-        "B-": 0,
-        "C+": 0,
-        "C": 0,
-        "C-": 0,
-        "D+": 0,
+        "C or higher": 0,
         "D": 0,
-        "D-": 0,
-        "F": 3,
-        "P": 8,
+        "Under 1.0": null,
+        "P": null,
         "W": 0
       },
       "retained_if_passed": {
@@ -4164,20 +3163,11 @@ export const gateway2024: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 2,
-        "A-": 0,
-        "B+": 0,
-        "B": 2,
-        "B-": 0,
-        "C+": 0,
-        "C": 1,
-        "C-": 0,
-        "D+": 0,
-        "D": 1,
-        "D-": 0,
-        "F": 2,
+        "C or higher": null,
+        "D": null,
+        "Under 1.0": null,
         "P": 0,
-        "W": 6
+        "W": null
       },
       "retained_if_passed": {
         "students": null,
@@ -4205,20 +3195,11 @@ export const gateway2024: GatewayResponse = {
         "no_retake": null
       },
       "grades": {
-        "A": 2,
-        "A-": 0,
-        "B+": 0,
-        "B": 2,
-        "B-": 0,
-        "C+": 0,
-        "C": 2,
-        "C-": 0,
-        "D+": 0,
-        "D": 1,
-        "D-": 0,
-        "F": 2,
+        "C or higher": null,
+        "D": null,
+        "Under 1.0": null,
         "P": 0,
-        "W": 1
+        "W": null
       },
       "retained_if_passed": {
         "students": null,
@@ -4302,88 +3283,29 @@ export const gatewayTooFew: GatewayResponse = {
     "grade_scale": {
       "grades": [
         {
-          "grade": "A",
-          "points": "4.0",
-          "dfw": false,
-          "gateway_pass": true
-        },
-        {
-          "grade": "A-",
-          "points": "3.7 to under 4.0",
-          "dfw": false,
-          "gateway_pass": true
-        },
-        {
-          "grade": "B+",
-          "points": "3.3 to under 3.7",
-          "dfw": false,
-          "gateway_pass": true
-        },
-        {
-          "grade": "B",
-          "points": "3.0 to under 3.3",
-          "dfw": false,
-          "gateway_pass": true
-        },
-        {
-          "grade": "B-",
-          "points": "2.7 to under 3.0",
-          "dfw": false,
-          "gateway_pass": true
-        },
-        {
-          "grade": "C+",
-          "points": "2.3 to under 2.7",
-          "dfw": false,
-          "gateway_pass": true
-        },
-        {
-          "grade": "C",
-          "points": "2.0 to under 2.3",
-          "dfw": false,
-          "gateway_pass": true
-        },
-        {
-          "grade": "C-",
-          "points": "1.7 to under 2.0",
-          "dfw": false,
-          "gateway_pass": true
-        },
-        {
-          "grade": "D+",
-          "points": "1.3 to under 1.7",
-          "dfw": true,
-          "gateway_pass": true
+          "grade": "C or higher",
+          "points": "1.7 and up",
+          "counted": true
         },
         {
           "grade": "D",
-          "points": "1.0 to under 1.3",
-          "dfw": true,
-          "gateway_pass": true
+          "points": "1.0 to under 1.7 (D, D+)",
+          "counted": true
         },
         {
-          "grade": "D-",
-          "points": "0.7 to under 1.0",
-          "dfw": true,
-          "gateway_pass": false
-        },
-        {
-          "grade": "F",
-          "points": "under 0.7, or the code F",
-          "dfw": true,
-          "gateway_pass": false
+          "grade": "Under 1.0",
+          "points": "under 1.0 (D- or F), or the code F",
+          "counted": false
         },
         {
           "grade": "P",
           "points": "the code P (pass)",
-          "dfw": false,
-          "gateway_pass": true
+          "counted": true
         },
         {
           "grade": "W",
           "points": "the code W (withdrew)",
-          "dfw": true,
-          "gateway_pass": false
+          "counted": false
         }
       ],
       "left_out": "I (incomplete), A (audit), M or MIS (missing), O or OTH (other), and any code the PDP dictionary doesn't list, such as UW, aren't final grades, so neither page counts them."

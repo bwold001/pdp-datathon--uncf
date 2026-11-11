@@ -17,88 +17,29 @@ export const dfwList2023: DfwList = {
     "grade_scale": {
       "grades": [
         {
-          "grade": "A",
-          "points": "4.0",
-          "dfw": false,
-          "gateway_pass": true
-        },
-        {
-          "grade": "A-",
-          "points": "3.7 to under 4.0",
-          "dfw": false,
-          "gateway_pass": true
-        },
-        {
-          "grade": "B+",
-          "points": "3.3 to under 3.7",
-          "dfw": false,
-          "gateway_pass": true
-        },
-        {
-          "grade": "B",
-          "points": "3.0 to under 3.3",
-          "dfw": false,
-          "gateway_pass": true
-        },
-        {
-          "grade": "B-",
-          "points": "2.7 to under 3.0",
-          "dfw": false,
-          "gateway_pass": true
-        },
-        {
-          "grade": "C+",
-          "points": "2.3 to under 2.7",
-          "dfw": false,
-          "gateway_pass": true
-        },
-        {
-          "grade": "C",
-          "points": "2.0 to under 2.3",
-          "dfw": false,
-          "gateway_pass": true
-        },
-        {
-          "grade": "C-",
-          "points": "1.7 to under 2.0",
-          "dfw": false,
-          "gateway_pass": true
-        },
-        {
-          "grade": "D+",
-          "points": "1.3 to under 1.7",
-          "dfw": true,
-          "gateway_pass": true
+          "grade": "C or higher",
+          "points": "1.7 and up (C- and up)",
+          "counted": false
         },
         {
           "grade": "D",
-          "points": "1.0 to under 1.3",
-          "dfw": true,
-          "gateway_pass": true
-        },
-        {
-          "grade": "D-",
-          "points": "0.7 to under 1.0",
-          "dfw": true,
-          "gateway_pass": false
+          "points": "0.7 to under 1.7 (D-, D, D+)",
+          "counted": true
         },
         {
           "grade": "F",
           "points": "under 0.7, or the code F",
-          "dfw": true,
-          "gateway_pass": false
+          "counted": true
         },
         {
           "grade": "P",
           "points": "the code P (pass)",
-          "dfw": false,
-          "gateway_pass": true
+          "counted": false
         },
         {
           "grade": "W",
           "points": "the code W (withdrew)",
-          "dfw": true,
-          "gateway_pass": false
+          "counted": true
         }
       ],
       "left_out": "I (incomplete), A (audit), M or MIS (missing), O or OTH (other), and any code the PDP dictionary doesn't list, such as UW, aren't final grades, so neither page counts them."
@@ -112,9 +53,7 @@ export const dfwList2023: DfwList = {
     "rate": 0.227,
     "split": {
       "grades": {
-        "D+": 38,
-        "D": 486,
-        "D-": 24,
+        "D": 548,
         "F": 2262,
         "W": 1477
       },
@@ -122,9 +61,7 @@ export const dfwList2023: DfwList = {
       "W": 1477,
       "total": 18883,
       "shares": {
-        "D+": 0.002,
-        "D": 0.0257,
-        "D-": 0.0013,
+        "D": 0.029,
         "F": 0.1198,
         "W": 0.0782
       }
@@ -138,9 +75,7 @@ export const dfwList2023: DfwList = {
       "rate": 0.2703,
       "split": {
         "grades": {
-          "D+": 2,
-          "D": 14,
-          "D-": 1,
+          "D": 17,
           "F": 69,
           "W": 47
         },
@@ -148,9 +83,7 @@ export const dfwList2023: DfwList = {
         "W": 47,
         "total": 492,
         "shares": {
-          "D+": 0.0041,
-          "D": 0.0285,
-          "D-": 0.002,
+          "D": 0.0346,
           "F": 0.1402,
           "W": 0.0955
         }
@@ -176,9 +109,7 @@ export const dfwList2023: DfwList = {
       "rate": 0.219,
       "split": {
         "grades": {
-          "D+": 0,
-          "D": 10,
-          "D-": 2,
+          "D": 12,
           "F": 34,
           "W": 30
         },
@@ -186,9 +117,7 @@ export const dfwList2023: DfwList = {
         "W": 30,
         "total": 347,
         "shares": {
-          "D+": 0.0,
-          "D": 0.0288,
-          "D-": 0.0058,
+          "D": 0.0346,
           "F": 0.098,
           "W": 0.0865
         }
@@ -214,9 +143,7 @@ export const dfwList2023: DfwList = {
       "rate": 0.3476,
       "split": {
         "grades": {
-          "D+": 0,
           "D": 7,
-          "D-": 0,
           "F": 40,
           "W": 26
         },
@@ -224,9 +151,7 @@ export const dfwList2023: DfwList = {
         "W": 26,
         "total": 210,
         "shares": {
-          "D+": 0.0,
           "D": 0.0333,
-          "D-": 0.0,
           "F": 0.1905,
           "W": 0.1238
         }
@@ -251,9 +176,7 @@ export const dfwList2023: DfwList = {
       "rate": 0.4757,
       "split": {
         "grades": {
-          "D+": 0,
           "D": 0,
-          "D-": 0,
           "F": 29,
           "W": 20
         },
@@ -261,9 +184,7 @@ export const dfwList2023: DfwList = {
         "W": 20,
         "total": 103,
         "shares": {
-          "D+": 0.0,
           "D": 0.0,
-          "D-": 0.0,
           "F": 0.2816,
           "W": 0.1942
         }
@@ -287,9 +208,7 @@ export const dfwList2023: DfwList = {
       "rate": 0.374,
       "split": {
         "grades": {
-          "D+": 2,
-          "D": 1,
-          "D-": 1,
+          "D": 4,
           "F": 32,
           "W": 13
         },
@@ -297,9 +216,7 @@ export const dfwList2023: DfwList = {
         "W": 13,
         "total": 131,
         "shares": {
-          "D+": 0.0153,
-          "D": 0.0076,
-          "D-": 0.0076,
+          "D": 0.0305,
           "F": 0.2443,
           "W": 0.0992
         }
@@ -325,9 +242,7 @@ export const dfwList2023: DfwList = {
       "rate": 0.3667,
       "split": {
         "grades": {
-          "D+": 0,
           "D": 0,
-          "D-": 0,
           "F": 18,
           "W": 26
         },
@@ -335,9 +250,7 @@ export const dfwList2023: DfwList = {
         "W": 26,
         "total": 120,
         "shares": {
-          "D+": 0.0,
           "D": 0.0,
-          "D-": 0.0,
           "F": 0.15,
           "W": 0.2167
         }
@@ -361,9 +274,7 @@ export const dfwList2023: DfwList = {
       "rate": 0.3308,
       "split": {
         "grades": {
-          "D+": 0,
           "D": 7,
-          "D-": 0,
           "F": 25,
           "W": 11
         },
@@ -371,9 +282,7 @@ export const dfwList2023: DfwList = {
         "W": 11,
         "total": 130,
         "shares": {
-          "D+": 0.0,
           "D": 0.0538,
-          "D-": 0.0,
           "F": 0.1923,
           "W": 0.0846
         }
@@ -398,9 +307,7 @@ export const dfwList2023: DfwList = {
       "rate": 0.185,
       "split": {
         "grades": {
-          "D+": 1,
-          "D": 1,
-          "D-": 0,
+          "D": 2,
           "F": 32,
           "W": 8
         },
@@ -408,9 +315,7 @@ export const dfwList2023: DfwList = {
         "W": 8,
         "total": 227,
         "shares": {
-          "D+": 0.0044,
-          "D": 0.0044,
-          "D-": 0.0,
+          "D": 0.0088,
           "F": 0.141,
           "W": 0.0352
         }
@@ -436,9 +341,7 @@ export const dfwList2023: DfwList = {
       "rate": 0.2881,
       "split": {
         "grades": {
-          "D+": 0,
           "D": 0,
-          "D-": 0,
           "F": 23,
           "W": 11
         },
@@ -446,9 +349,7 @@ export const dfwList2023: DfwList = {
         "W": 11,
         "total": 118,
         "shares": {
-          "D+": 0.0,
           "D": 0.0,
-          "D-": 0.0,
           "F": 0.1949,
           "W": 0.0932
         }
@@ -473,9 +374,7 @@ export const dfwList2023: DfwList = {
       "rate": 0.5,
       "split": {
         "grades": {
-          "D+": 0,
           "D": 2,
-          "D-": 0,
           "F": 20,
           "W": 10
         },
@@ -483,9 +382,7 @@ export const dfwList2023: DfwList = {
         "W": 10,
         "total": 64,
         "shares": {
-          "D+": 0.0,
           "D": 0.0312,
-          "D-": 0.0,
           "F": 0.3125,
           "W": 0.1562
         }
@@ -509,9 +406,7 @@ export const dfwList2023: DfwList = {
       "rate": 0.2667,
       "split": {
         "grades": {
-          "D+": 0,
           "D": 0,
-          "D-": 0,
           "F": 32,
           "W": 0
         },
@@ -519,9 +414,7 @@ export const dfwList2023: DfwList = {
         "W": 0,
         "total": 120,
         "shares": {
-          "D+": 0.0,
           "D": 0.0,
-          "D-": 0.0,
           "F": 0.2667,
           "W": 0.0
         }
@@ -546,9 +439,7 @@ export const dfwList2023: DfwList = {
       "rate": 0.3733,
       "split": {
         "grades": {
-          "D+": 0,
-          "D": 1,
-          "D-": 1,
+          "D": 2,
           "F": 18,
           "W": 8
         },
@@ -556,9 +447,7 @@ export const dfwList2023: DfwList = {
         "W": 8,
         "total": 75,
         "shares": {
-          "D+": 0.0,
-          "D": 0.0133,
-          "D-": 0.0133,
+          "D": 0.0267,
           "F": 0.24,
           "W": 0.1067
         }
@@ -584,9 +473,7 @@ export const dfwList2023: DfwList = {
       "rate": 0.2295,
       "split": {
         "grades": {
-          "D+": 2,
-          "D": 1,
-          "D-": 0,
+          "D": 3,
           "F": 20,
           "W": 5
         },
@@ -594,9 +481,7 @@ export const dfwList2023: DfwList = {
         "W": 5,
         "total": 122,
         "shares": {
-          "D+": 0.0164,
-          "D": 0.0082,
-          "D-": 0.0,
+          "D": 0.0246,
           "F": 0.1639,
           "W": 0.041
         }
@@ -622,9 +507,7 @@ export const dfwList2023: DfwList = {
       "rate": 0.268,
       "split": {
         "grades": {
-          "D+": 0,
           "D": 0,
-          "D-": 0,
           "F": 14,
           "W": 12
         },
@@ -632,9 +515,7 @@ export const dfwList2023: DfwList = {
         "W": 12,
         "total": 97,
         "shares": {
-          "D+": 0.0,
           "D": 0.0,
-          "D-": 0.0,
           "F": 0.1443,
           "W": 0.1237
         }
@@ -658,9 +539,7 @@ export const dfwList2023: DfwList = {
       "rate": 0.3125,
       "split": {
         "grades": {
-          "D+": 0,
-          "D": 1,
-          "D-": 1,
+          "D": 2,
           "F": 18,
           "W": 5
         },
@@ -668,9 +547,7 @@ export const dfwList2023: DfwList = {
         "W": 5,
         "total": 80,
         "shares": {
-          "D+": 0.0,
-          "D": 0.0125,
-          "D-": 0.0125,
+          "D": 0.025,
           "F": 0.225,
           "W": 0.0625
         }
@@ -696,9 +573,7 @@ export const dfwList2023: DfwList = {
       "rate": 0.2155,
       "split": {
         "grades": {
-          "D+": 0,
           "D": 0,
-          "D-": 0,
           "F": 8,
           "W": 17
         },
@@ -706,9 +581,7 @@ export const dfwList2023: DfwList = {
         "W": 17,
         "total": 116,
         "shares": {
-          "D+": 0.0,
           "D": 0.0,
-          "D-": 0.0,
           "F": 0.069,
           "W": 0.1466
         }
@@ -732,9 +605,7 @@ export const dfwList2023: DfwList = {
       "rate": 0.3067,
       "split": {
         "grades": {
-          "D+": 0,
-          "D": 0,
-          "D-": 2,
+          "D": 2,
           "F": 14,
           "W": 7
         },
@@ -742,9 +613,7 @@ export const dfwList2023: DfwList = {
         "W": 7,
         "total": 75,
         "shares": {
-          "D+": 0.0,
-          "D": 0.0,
-          "D-": 0.0267,
+          "D": 0.0267,
           "F": 0.1867,
           "W": 0.0933
         }
@@ -769,9 +638,7 @@ export const dfwList2023: DfwList = {
       "rate": 0.2614,
       "split": {
         "grades": {
-          "D+": 0,
           "D": 3,
-          "D-": 0,
           "F": 7,
           "W": 13
         },
@@ -779,9 +646,7 @@ export const dfwList2023: DfwList = {
         "W": 13,
         "total": 88,
         "shares": {
-          "D+": 0.0,
           "D": 0.0341,
-          "D-": 0.0,
           "F": 0.0795,
           "W": 0.1477
         }
@@ -807,9 +672,7 @@ export const dfwList2023: DfwList = {
       "rate": 0.2933,
       "split": {
         "grades": {
-          "D+": 0,
           "D": 0,
-          "D-": 0,
           "F": 15,
           "W": 7
         },
@@ -817,9 +680,7 @@ export const dfwList2023: DfwList = {
         "W": 7,
         "total": 75,
         "shares": {
-          "D+": 0.0,
           "D": 0.0,
-          "D-": 0.0,
           "F": 0.2,
           "W": 0.0933
         }
@@ -844,9 +705,7 @@ export const dfwList2023: DfwList = {
       "rate": 0.1913,
       "split": {
         "grades": {
-          "D+": 0,
           "D": 4,
-          "D-": 0,
           "F": 14,
           "W": 4
         },
@@ -854,9 +713,7 @@ export const dfwList2023: DfwList = {
         "W": 4,
         "total": 115,
         "shares": {
-          "D+": 0.0,
           "D": 0.0348,
-          "D-": 0.0,
           "F": 0.1217,
           "W": 0.0348
         }
@@ -882,9 +739,7 @@ export const dfwList2023: DfwList = {
       "rate": 0.4872,
       "split": {
         "grades": {
-          "D+": 0,
           "D": 3,
-          "D-": 0,
           "F": 15,
           "W": 1
         },
@@ -892,9 +747,7 @@ export const dfwList2023: DfwList = {
         "W": 1,
         "total": 39,
         "shares": {
-          "D+": 0.0,
           "D": 0.0769,
-          "D-": 0.0,
           "F": 0.3846,
           "W": 0.0256
         }
@@ -919,9 +772,7 @@ export const dfwList2023: DfwList = {
       "rate": 0.2754,
       "split": {
         "grades": {
-          "D+": 0,
           "D": 1,
-          "D-": 0,
           "F": 7,
           "W": 11
         },
@@ -929,9 +780,7 @@ export const dfwList2023: DfwList = {
         "W": 11,
         "total": 69,
         "shares": {
-          "D+": 0.0,
           "D": 0.0145,
-          "D-": 0.0,
           "F": 0.1014,
           "W": 0.1594
         }
@@ -957,9 +806,7 @@ export const dfwList2023: DfwList = {
       "rate": 0.5143,
       "split": {
         "grades": {
-          "D+": 0,
           "D": 1,
-          "D-": 0,
           "F": 10,
           "W": 7
         },
@@ -967,9 +814,7 @@ export const dfwList2023: DfwList = {
         "W": 7,
         "total": 35,
         "shares": {
-          "D+": 0.0,
           "D": 0.0286,
-          "D-": 0.0,
           "F": 0.2857,
           "W": 0.2
         }
@@ -994,9 +839,7 @@ export const dfwList2023: DfwList = {
       "rate": 0.45,
       "split": {
         "grades": {
-          "D+": 0,
           "D": 2,
-          "D-": 0,
           "F": 5,
           "W": 11
         },
@@ -1004,9 +847,7 @@ export const dfwList2023: DfwList = {
         "W": 11,
         "total": 40,
         "shares": {
-          "D+": 0.0,
           "D": 0.05,
-          "D-": 0.0,
           "F": 0.125,
           "W": 0.275
         }
@@ -1032,9 +873,7 @@ export const dfwList2023: DfwList = {
       "rate": 0.3214,
       "split": {
         "grades": {
-          "D+": 0,
-          "D": 7,
-          "D-": 1,
+          "D": 8,
           "F": 4,
           "W": 6
         },
@@ -1042,9 +881,7 @@ export const dfwList2023: DfwList = {
         "W": 6,
         "total": 56,
         "shares": {
-          "D+": 0.0,
-          "D": 0.125,
-          "D-": 0.0179,
+          "D": 0.1429,
           "F": 0.0714,
           "W": 0.1071
         }
@@ -1070,9 +907,7 @@ export const dfwList2023: DfwList = {
       "rate": 0.5152,
       "split": {
         "grades": {
-          "D+": 0,
           "D": 0,
-          "D-": 0,
           "F": 7,
           "W": 10
         },
@@ -1080,9 +915,7 @@ export const dfwList2023: DfwList = {
         "W": 10,
         "total": 33,
         "shares": {
-          "D+": 0.0,
           "D": 0.0,
-          "D-": 0.0,
           "F": 0.2121,
           "W": 0.303
         }
@@ -1106,9 +939,7 @@ export const dfwList2023: DfwList = {
       "rate": 0.4857,
       "split": {
         "grades": {
-          "D+": 0,
           "D": 5,
-          "D-": 0,
           "F": 3,
           "W": 9
         },
@@ -1116,9 +947,7 @@ export const dfwList2023: DfwList = {
         "W": 9,
         "total": 35,
         "shares": {
-          "D+": 0.0,
           "D": 0.1429,
-          "D-": 0.0,
           "F": 0.0857,
           "W": 0.2571
         }
@@ -1143,9 +972,7 @@ export const dfwList2023: DfwList = {
       "rate": 0.425,
       "split": {
         "grades": {
-          "D+": 0,
           "D": 0,
-          "D-": 0,
           "F": 13,
           "W": 4
         },
@@ -1153,9 +980,7 @@ export const dfwList2023: DfwList = {
         "W": 4,
         "total": 40,
         "shares": {
-          "D+": 0.0,
           "D": 0.0,
-          "D-": 0.0,
           "F": 0.325,
           "W": 0.1
         }
@@ -1180,9 +1005,7 @@ export const dfwList2023: DfwList = {
       "rate": 0.3846,
       "split": {
         "grades": {
-          "D+": 0,
           "D": 1,
-          "D-": 0,
           "F": 11,
           "W": 3
         },
@@ -1190,9 +1013,7 @@ export const dfwList2023: DfwList = {
         "W": 3,
         "total": 39,
         "shares": {
-          "D+": 0.0,
           "D": 0.0256,
-          "D-": 0.0,
           "F": 0.2821,
           "W": 0.0769
         }
@@ -1221,9 +1042,7 @@ export const eng101Detail2023: DfwCourseDetail = {
   "rate": 0.2703,
   "split": {
     "grades": {
-      "D+": 2,
-      "D": 14,
-      "D-": 1,
+      "D": 17,
       "F": 69,
       "W": 47
     },
@@ -1231,9 +1050,7 @@ export const eng101Detail2023: DfwCourseDetail = {
     "W": 47,
     "total": 492,
     "shares": {
-      "D+": 0.0041,
-      "D": 0.0285,
-      "D-": 0.002,
+      "D": 0.0346,
       "F": 0.1402,
       "W": 0.0955
     }
@@ -1249,88 +1066,29 @@ export const eng101Detail2023: DfwCourseDetail = {
     "grade_scale": {
       "grades": [
         {
-          "grade": "A",
-          "points": "4.0",
-          "dfw": false,
-          "gateway_pass": true
-        },
-        {
-          "grade": "A-",
-          "points": "3.7 to under 4.0",
-          "dfw": false,
-          "gateway_pass": true
-        },
-        {
-          "grade": "B+",
-          "points": "3.3 to under 3.7",
-          "dfw": false,
-          "gateway_pass": true
-        },
-        {
-          "grade": "B",
-          "points": "3.0 to under 3.3",
-          "dfw": false,
-          "gateway_pass": true
-        },
-        {
-          "grade": "B-",
-          "points": "2.7 to under 3.0",
-          "dfw": false,
-          "gateway_pass": true
-        },
-        {
-          "grade": "C+",
-          "points": "2.3 to under 2.7",
-          "dfw": false,
-          "gateway_pass": true
-        },
-        {
-          "grade": "C",
-          "points": "2.0 to under 2.3",
-          "dfw": false,
-          "gateway_pass": true
-        },
-        {
-          "grade": "C-",
-          "points": "1.7 to under 2.0",
-          "dfw": false,
-          "gateway_pass": true
-        },
-        {
-          "grade": "D+",
-          "points": "1.3 to under 1.7",
-          "dfw": true,
-          "gateway_pass": true
+          "grade": "C or higher",
+          "points": "1.7 and up (C- and up)",
+          "counted": false
         },
         {
           "grade": "D",
-          "points": "1.0 to under 1.3",
-          "dfw": true,
-          "gateway_pass": true
-        },
-        {
-          "grade": "D-",
-          "points": "0.7 to under 1.0",
-          "dfw": true,
-          "gateway_pass": false
+          "points": "0.7 to under 1.7 (D-, D, D+)",
+          "counted": true
         },
         {
           "grade": "F",
           "points": "under 0.7, or the code F",
-          "dfw": true,
-          "gateway_pass": false
+          "counted": true
         },
         {
           "grade": "P",
           "points": "the code P (pass)",
-          "dfw": false,
-          "gateway_pass": true
+          "counted": false
         },
         {
           "grade": "W",
           "points": "the code W (withdrew)",
-          "dfw": true,
-          "gateway_pass": false
+          "counted": true
         }
       ],
       "left_out": "I (incomplete), A (audit), M or MIS (missing), O or OTH (other), and any code the PDP dictionary doesn't list, such as UW, aren't final grades, so neither page counts them."
@@ -1354,9 +1112,7 @@ export const eng101Detail2023: DfwCourseDetail = {
       "rate": 0.3119,
       "split": {
         "grades": {
-          "D+": 1,
-          "D": 10,
-          "D-": 1,
+          "D": 12,
           "F": 53,
           "W": 27
         },
@@ -1364,9 +1120,7 @@ export const eng101Detail2023: DfwCourseDetail = {
         "W": 27,
         "total": 295,
         "shares": {
-          "D+": 0.0034,
-          "D": 0.0339,
-          "D-": 0.0034,
+          "D": 0.0407,
           "F": 0.1797,
           "W": 0.0915
         }
@@ -1382,9 +1136,7 @@ export const eng101Detail2023: DfwCourseDetail = {
       "rate": 0.2148,
       "split": {
         "grades": {
-          "D+": 0,
           "D": 3,
-          "D-": 0,
           "F": 12,
           "W": 17
         },
@@ -1392,9 +1144,7 @@ export const eng101Detail2023: DfwCourseDetail = {
         "W": 17,
         "total": 149,
         "shares": {
-          "D+": 0.0,
           "D": 0.0201,
-          "D-": 0.0,
           "F": 0.0805,
           "W": 0.1141
         }
@@ -1410,9 +1160,7 @@ export const eng101Detail2023: DfwCourseDetail = {
       "rate": 0.1875,
       "split": {
         "grades": {
-          "D+": 1,
-          "D": 1,
-          "D-": 0,
+          "D": 2,
           "F": 4,
           "W": 3
         },
@@ -1420,9 +1168,7 @@ export const eng101Detail2023: DfwCourseDetail = {
         "W": 3,
         "total": 48,
         "shares": {
-          "D+": 0.0208,
-          "D": 0.0208,
-          "D-": 0.0,
+          "D": 0.0417,
           "F": 0.0833,
           "W": 0.0625
         }
@@ -1440,9 +1186,7 @@ export const eng101Detail2023: DfwCourseDetail = {
       "rate": 0.2703,
       "split": {
         "grades": {
-          "D+": 0,
-          "D": 5,
-          "D-": 1,
+          "D": 6,
           "F": 25,
           "W": 19
         },
@@ -1450,9 +1194,7 @@ export const eng101Detail2023: DfwCourseDetail = {
         "W": 19,
         "total": 185,
         "shares": {
-          "D+": 0.0,
-          "D": 0.027,
-          "D-": 0.0054,
+          "D": 0.0324,
           "F": 0.1351,
           "W": 0.1027
         }
@@ -1468,9 +1210,7 @@ export const eng101Detail2023: DfwCourseDetail = {
       "rate": 0.1803,
       "split": {
         "grades": {
-          "D+": 0,
           "D": 1,
-          "D-": 0,
           "F": 6,
           "W": 4
         },
@@ -1478,9 +1218,7 @@ export const eng101Detail2023: DfwCourseDetail = {
         "W": 4,
         "total": 61,
         "shares": {
-          "D+": 0.0,
           "D": 0.0164,
-          "D-": 0.0,
           "F": 0.0984,
           "W": 0.0656
         }
@@ -1496,9 +1234,7 @@ export const eng101Detail2023: DfwCourseDetail = {
       "rate": 0.3577,
       "split": {
         "grades": {
-          "D+": 2,
-          "D": 7,
-          "D-": 0,
+          "D": 9,
           "F": 25,
           "W": 15
         },
@@ -1506,9 +1242,7 @@ export const eng101Detail2023: DfwCourseDetail = {
         "W": 15,
         "total": 137,
         "shares": {
-          "D+": 0.0146,
-          "D": 0.0511,
-          "D-": 0.0,
+          "D": 0.0657,
           "F": 0.1825,
           "W": 0.1095
         }
@@ -1524,9 +1258,7 @@ export const eng101Detail2023: DfwCourseDetail = {
       "rate": 0.211,
       "split": {
         "grades": {
-          "D+": 0,
           "D": 1,
-          "D-": 0,
           "F": 13,
           "W": 9
         },
@@ -1534,9 +1266,7 @@ export const eng101Detail2023: DfwCourseDetail = {
         "W": 9,
         "total": 109,
         "shares": {
-          "D+": 0.0,
           "D": 0.0092,
-          "D-": 0.0,
           "F": 0.1193,
           "W": 0.0826
         }
@@ -1555,9 +1285,7 @@ export const eng101Detail2023: DfwCourseDetail = {
         "rate": 0.2442,
         "split": {
           "grades": {
-            "D+": 0,
             "D": 7,
-            "D-": 0,
             "F": 26,
             "W": 20
           },
@@ -1565,9 +1293,7 @@ export const eng101Detail2023: DfwCourseDetail = {
           "W": 20,
           "total": 217,
           "shares": {
-            "D+": 0.0,
             "D": 0.0323,
-            "D-": 0.0,
             "F": 0.1198,
             "W": 0.0922
           }
@@ -1583,9 +1309,7 @@ export const eng101Detail2023: DfwCourseDetail = {
         "rate": 0.2941,
         "split": {
           "grades": {
-            "D+": 0,
             "D": 2,
-            "D-": 0,
             "F": 2,
             "W": 1
           },
@@ -1593,9 +1317,7 @@ export const eng101Detail2023: DfwCourseDetail = {
           "W": 1,
           "total": 17,
           "shares": {
-            "D+": 0.0,
             "D": 0.1176,
-            "D-": 0.0,
             "F": 0.1176,
             "W": 0.0588
           }
@@ -1611,9 +1333,7 @@ export const eng101Detail2023: DfwCourseDetail = {
         "rate": 0.2907,
         "split": {
           "grades": {
-            "D+": 2,
-            "D": 5,
-            "D-": 1,
+            "D": 8,
             "F": 41,
             "W": 26
           },
@@ -1621,9 +1341,7 @@ export const eng101Detail2023: DfwCourseDetail = {
           "W": 26,
           "total": 258,
           "shares": {
-            "D+": 0.0078,
-            "D": 0.0194,
-            "D-": 0.0039,
+            "D": 0.031,
             "F": 0.1589,
             "W": 0.1008
           }
@@ -1641,9 +1359,7 @@ export const eng101Detail2023: DfwCourseDetail = {
         "rate": 0.2698,
         "split": {
           "grades": {
-            "D+": 0,
             "D": 6,
-            "D-": 0,
             "F": 44,
             "W": 25
           },
@@ -1651,9 +1367,7 @@ export const eng101Detail2023: DfwCourseDetail = {
           "W": 25,
           "total": 278,
           "shares": {
-            "D+": 0.0,
             "D": 0.0216,
-            "D-": 0.0,
             "F": 0.1583,
             "W": 0.0899
           }
@@ -1669,9 +1383,7 @@ export const eng101Detail2023: DfwCourseDetail = {
         "rate": 0.2591,
         "split": {
           "grades": {
-            "D+": 2,
-            "D": 8,
-            "D-": 1,
+            "D": 11,
             "F": 17,
             "W": 22
           },
@@ -1679,9 +1391,7 @@ export const eng101Detail2023: DfwCourseDetail = {
           "W": 22,
           "total": 193,
           "shares": {
-            "D+": 0.0104,
-            "D": 0.0415,
-            "D-": 0.0052,
+            "D": 0.057,
             "F": 0.0881,
             "W": 0.114
           }
@@ -1697,9 +1407,7 @@ export const eng101Detail2023: DfwCourseDetail = {
         "rate": 0.381,
         "split": {
           "grades": {
-            "D+": 0,
             "D": 0,
-            "D-": 0,
             "F": 8,
             "W": 0
           },
@@ -1707,9 +1415,7 @@ export const eng101Detail2023: DfwCourseDetail = {
           "W": 0,
           "total": 21,
           "shares": {
-            "D+": 0.0,
             "D": 0.0,
-            "D-": 0.0,
             "F": 0.381,
             "W": 0.0
           }
@@ -1737,9 +1443,7 @@ export const eng101Detail2023: DfwCourseDetail = {
         "rate": 0.1579,
         "split": {
           "grades": {
-            "D+": 0,
             "D": 1,
-            "D-": 0,
             "F": 3,
             "W": 2
           },
@@ -1747,9 +1451,7 @@ export const eng101Detail2023: DfwCourseDetail = {
           "W": 2,
           "total": 38,
           "shares": {
-            "D+": 0.0,
             "D": 0.0263,
-            "D-": 0.0,
             "F": 0.0789,
             "W": 0.0526
           }
@@ -1765,9 +1467,7 @@ export const eng101Detail2023: DfwCourseDetail = {
         "rate": 0.3678,
         "split": {
           "grades": {
-            "D+": 1,
-            "D": 0,
-            "D-": 0,
+            "D": 1,
             "F": 21,
             "W": 10
           },
@@ -1775,9 +1475,7 @@ export const eng101Detail2023: DfwCourseDetail = {
           "W": 10,
           "total": 87,
           "shares": {
-            "D+": 0.0115,
-            "D": 0.0,
-            "D-": 0.0,
+            "D": 0.0115,
             "F": 0.2414,
             "W": 0.1149
           }
@@ -1793,9 +1491,7 @@ export const eng101Detail2023: DfwCourseDetail = {
         "rate": 0.2837,
         "split": {
           "grades": {
-            "D+": 1,
-            "D": 7,
-            "D-": 0,
+            "D": 8,
             "F": 19,
             "W": 13
           },
@@ -1803,9 +1499,7 @@ export const eng101Detail2023: DfwCourseDetail = {
           "W": 13,
           "total": 141,
           "shares": {
-            "D+": 0.0071,
-            "D": 0.0496,
-            "D-": 0.0,
+            "D": 0.0567,
             "F": 0.1348,
             "W": 0.0922
           }
@@ -1831,9 +1525,7 @@ export const eng101Detail2023: DfwCourseDetail = {
         "rate": 0.3846,
         "split": {
           "grades": {
-            "D+": 0,
             "D": 1,
-            "D-": 0,
             "F": 1,
             "W": 3
           },
@@ -1841,9 +1533,7 @@ export const eng101Detail2023: DfwCourseDetail = {
           "W": 3,
           "total": 13,
           "shares": {
-            "D+": 0.0,
             "D": 0.0769,
-            "D-": 0.0,
             "F": 0.0769,
             "W": 0.2308
           }
@@ -1859,9 +1549,7 @@ export const eng101Detail2023: DfwCourseDetail = {
         "rate": 0.3077,
         "split": {
           "grades": {
-            "D+": 0,
             "D": 0,
-            "D-": 0,
             "F": 2,
             "W": 2
           },
@@ -1869,9 +1557,7 @@ export const eng101Detail2023: DfwCourseDetail = {
           "W": 2,
           "total": 13,
           "shares": {
-            "D+": 0.0,
             "D": 0.0,
-            "D-": 0.0,
             "F": 0.1538,
             "W": 0.1538
           }
@@ -1887,9 +1573,7 @@ export const eng101Detail2023: DfwCourseDetail = {
         "rate": 0.2105,
         "split": {
           "grades": {
-            "D+": 0,
-            "D": 0,
-            "D-": 1,
+            "D": 1,
             "F": 2,
             "W": 1
           },
@@ -1897,9 +1581,7 @@ export const eng101Detail2023: DfwCourseDetail = {
           "W": 1,
           "total": 19,
           "shares": {
-            "D+": 0.0,
-            "D": 0.0,
-            "D-": 0.0526,
+            "D": 0.0526,
             "F": 0.1053,
             "W": 0.0526
           }
@@ -1915,9 +1597,7 @@ export const eng101Detail2023: DfwCourseDetail = {
         "rate": 0.2229,
         "split": {
           "grades": {
-            "D+": 0,
             "D": 5,
-            "D-": 0,
             "F": 18,
             "W": 16
           },
@@ -1925,9 +1605,7 @@ export const eng101Detail2023: DfwCourseDetail = {
           "W": 16,
           "total": 175,
           "shares": {
-            "D+": 0.0,
             "D": 0.0286,
-            "D-": 0.0,
             "F": 0.1029,
             "W": 0.0914
           }
@@ -1945,9 +1623,7 @@ export const eng101Detail2023: DfwCourseDetail = {
         "rate": 0.2895,
         "split": {
           "grades": {
-            "D+": 1,
-            "D": 8,
-            "D-": 0,
+            "D": 9,
             "F": 19,
             "W": 16
           },
@@ -1955,9 +1631,7 @@ export const eng101Detail2023: DfwCourseDetail = {
           "W": 16,
           "total": 152,
           "shares": {
-            "D+": 0.0066,
-            "D": 0.0526,
-            "D-": 0.0,
+            "D": 0.0592,
             "F": 0.125,
             "W": 0.1053
           }
@@ -1973,9 +1647,7 @@ export const eng101Detail2023: DfwCourseDetail = {
         "rate": 0.4444,
         "split": {
           "grades": {
-            "D+": 1,
-            "D": 0,
-            "D-": 0,
+            "D": 1,
             "F": 21,
             "W": 10
           },
@@ -1983,9 +1655,7 @@ export const eng101Detail2023: DfwCourseDetail = {
           "W": 10,
           "total": 72,
           "shares": {
-            "D+": 0.0139,
-            "D": 0.0,
-            "D-": 0.0,
+            "D": 0.0139,
             "F": 0.2917,
             "W": 0.1389
           }
@@ -2001,9 +1671,7 @@ export const eng101Detail2023: DfwCourseDetail = {
         "rate": 0.2127,
         "split": {
           "grades": {
-            "D+": 0,
-            "D": 6,
-            "D-": 1,
+            "D": 7,
             "F": 29,
             "W": 21
           },
@@ -2011,9 +1679,7 @@ export const eng101Detail2023: DfwCourseDetail = {
           "W": 21,
           "total": 268,
           "shares": {
-            "D+": 0.0,
-            "D": 0.0224,
-            "D-": 0.0037,
+            "D": 0.0261,
             "F": 0.1082,
             "W": 0.0784
           }
@@ -2031,9 +1697,7 @@ export const eng101Detail2023: DfwCourseDetail = {
         "rate": 0.2988,
         "split": {
           "grades": {
-            "D+": 2,
-            "D": 9,
-            "D-": 1,
+            "D": 12,
             "F": 53,
             "W": 36
           },
@@ -2041,9 +1705,7 @@ export const eng101Detail2023: DfwCourseDetail = {
           "W": 36,
           "total": 338,
           "shares": {
-            "D+": 0.0059,
-            "D": 0.0266,
-            "D-": 0.003,
+            "D": 0.0355,
             "F": 0.1568,
             "W": 0.1065
           }
@@ -2059,9 +1721,7 @@ export const eng101Detail2023: DfwCourseDetail = {
         "rate": 0.2703,
         "split": {
           "grades": {
-            "D+": 0,
             "D": 2,
-            "D-": 0,
             "F": 12,
             "W": 6
           },
@@ -2069,9 +1729,7 @@ export const eng101Detail2023: DfwCourseDetail = {
           "W": 6,
           "total": 74,
           "shares": {
-            "D+": 0.0,
             "D": 0.027,
-            "D-": 0.0,
             "F": 0.1622,
             "W": 0.0811
           }
@@ -2087,9 +1745,7 @@ export const eng101Detail2023: DfwCourseDetail = {
         "rate": 0.15,
         "split": {
           "grades": {
-            "D+": 0,
             "D": 3,
-            "D-": 0,
             "F": 4,
             "W": 5
           },
@@ -2097,9 +1753,7 @@ export const eng101Detail2023: DfwCourseDetail = {
           "W": 5,
           "total": 80,
           "shares": {
-            "D+": 0.0,
             "D": 0.0375,
-            "D-": 0.0,
             "F": 0.05,
             "W": 0.0625
           }
@@ -2117,9 +1771,7 @@ export const eng101Detail2023: DfwCourseDetail = {
         "rate": 0.2459,
         "split": {
           "grades": {
-            "D+": 1,
-            "D": 9,
-            "D-": 1,
+            "D": 11,
             "F": 35,
             "W": 29
           },
@@ -2127,9 +1779,7 @@ export const eng101Detail2023: DfwCourseDetail = {
           "W": 29,
           "total": 305,
           "shares": {
-            "D+": 0.0033,
-            "D": 0.0295,
-            "D-": 0.0033,
+            "D": 0.0361,
             "F": 0.1148,
             "W": 0.0951
           }
@@ -2145,9 +1795,7 @@ export const eng101Detail2023: DfwCourseDetail = {
         "rate": 0.3102,
         "split": {
           "grades": {
-            "D+": 1,
-            "D": 5,
-            "D-": 0,
+            "D": 6,
             "F": 34,
             "W": 18
           },
@@ -2155,9 +1803,7 @@ export const eng101Detail2023: DfwCourseDetail = {
           "W": 18,
           "total": 187,
           "shares": {
-            "D+": 0.0053,
-            "D": 0.0267,
-            "D-": 0.0,
+            "D": 0.0321,
             "F": 0.1818,
             "W": 0.0963
           }
@@ -2175,9 +1821,7 @@ export const eng101Detail2023: DfwCourseDetail = {
         "rate": 0.262,
         "split": {
           "grades": {
-            "D+": 2,
-            "D": 11,
-            "D-": 1,
+            "D": 14,
             "F": 54,
             "W": 36
           },
@@ -2185,9 +1829,7 @@ export const eng101Detail2023: DfwCourseDetail = {
           "W": 36,
           "total": 397,
           "shares": {
-            "D+": 0.005,
-            "D": 0.0277,
-            "D-": 0.0025,
+            "D": 0.0353,
             "F": 0.136,
             "W": 0.0907
           }
@@ -2203,9 +1845,7 @@ export const eng101Detail2023: DfwCourseDetail = {
         "rate": 0.3053,
         "split": {
           "grades": {
-            "D+": 0,
             "D": 3,
-            "D-": 0,
             "F": 15,
             "W": 11
           },
@@ -2213,9 +1853,7 @@ export const eng101Detail2023: DfwCourseDetail = {
           "W": 11,
           "total": 95,
           "shares": {
-            "D+": 0.0,
             "D": 0.0316,
-            "D-": 0.0,
             "F": 0.1579,
             "W": 0.1158
           }
@@ -2233,9 +1871,7 @@ export const eng101Detail2023: DfwCourseDetail = {
         "rate": 0.2997,
         "split": {
           "grades": {
-            "D+": 2,
-            "D": 12,
-            "D-": 1,
+            "D": 15,
             "F": 65,
             "W": 39
           },
@@ -2243,9 +1879,7 @@ export const eng101Detail2023: DfwCourseDetail = {
           "W": 39,
           "total": 397,
           "shares": {
-            "D+": 0.005,
-            "D": 0.0302,
-            "D-": 0.0025,
+            "D": 0.0378,
             "F": 0.1637,
             "W": 0.0982
           }
@@ -2261,9 +1895,7 @@ export const eng101Detail2023: DfwCourseDetail = {
         "rate": 0.1605,
         "split": {
           "grades": {
-            "D+": 0,
             "D": 1,
-            "D-": 0,
             "F": 4,
             "W": 8
           },
@@ -2271,9 +1903,7 @@ export const eng101Detail2023: DfwCourseDetail = {
           "W": 8,
           "total": 81,
           "shares": {
-            "D+": 0.0,
             "D": 0.0123,
-            "D-": 0.0,
             "F": 0.0494,
             "W": 0.0988
           }
@@ -2289,9 +1919,7 @@ export const eng101Detail2023: DfwCourseDetail = {
         "rate": 0.0714,
         "split": {
           "grades": {
-            "D+": 0,
             "D": 1,
-            "D-": 0,
             "F": 0,
             "W": 0
           },
@@ -2299,9 +1927,7 @@ export const eng101Detail2023: DfwCourseDetail = {
           "W": 0,
           "total": 14,
           "shares": {
-            "D+": 0.0,
             "D": 0.0714,
-            "D-": 0.0,
             "F": 0.0,
             "W": 0.0
           }

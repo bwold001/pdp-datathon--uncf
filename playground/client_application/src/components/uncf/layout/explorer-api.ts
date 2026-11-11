@@ -12,18 +12,17 @@ export type ExplorerMeta = {
   loaded_at: string;
 };
 
-/** One final grade on the shared letter scale, and whether each page counts it (measures/breakdowns/grade_scale.py). */
+/** One grade group a page shows, its grade points, and whether the page's rule counts it. */
 export type GradeScaleRow = {
+  /** The group a page shows, e.g. "D" or "C or higher". */
   grade: string;
-  /** The grade points or code that earn it, e.g. "1.3 to under 1.7" or "the code W (withdrew)". */
+  /** The grade points or code in it, e.g. "0.7 to under 1.7 (D-, D, D+)" or "the code W (withdrew)". */
   points: string;
-  /** Counts as a D, F or W on the DFW page. */
-  dfw: boolean;
-  /** Passes a gateway course on the Gateway page. */
-  gateway_pass: boolean;
+  /** Under the page's rule: a DFW on the DFW page, a pass on the Gateway page. */
+  counted: boolean;
 };
 
-/** The grade scale an answer used: every final grade, best first, and the codes left out. */
+/** The grade groups a page shows (measures/breakdowns/grade_scale.py), best first, and the codes left out. */
 export type GradeScale = { grades: GradeScaleRow[]; left_out: string };
 
 /** school: the PDP retention flag ("Returned here"). federal: fall to fall ("Back next fall"). */

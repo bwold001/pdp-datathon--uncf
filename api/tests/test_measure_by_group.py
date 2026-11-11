@@ -111,7 +111,7 @@ def test_filters_narrow_every_row(data_file, client) -> None:
 
 
 def test_dfw_rate_rows_split_each_dfw_grade(tmp_path, monkeypatch, client) -> None:
-    """dfw_rate counts final grades, with D+, D, D-, F and W apart."""
+    """dfw_rate counts final grades, with D, F and W apart."""
     students = [student(f"s{n}", "2022-23") for n in range(12)]
     grades = ["3.0"] * 6 + ["1.5", "0.5", "F", "W", "W", "I"]
     records = [here(f"s{n}", "2022-23", "FALL", cohort="2022-23", grade=grade) for n, grade in enumerate(grades)]
@@ -121,7 +121,7 @@ def test_dfw_rate_rows_split_each_dfw_grade(tmp_path, monkeypatch, client) -> No
     row = get(client, measure="dfw_rate", cohort="2022-23").json()["rows"][0]
     assert row["status"] == "ok"
     assert (row["numerator"], row["denominator"], row["n_excluded"]) == (5, 11, 1)
-    assert row["split"] == {"D+": 1, "D": 0, "D-": 0, "F": 2, "W": 2}  # 1.5 is a D+, 0.5 an F
+    assert row["split"] == {"D": 1, "F": 2, "W": 2}  # 1.5 is a D+, so a D; 0.5 an F
 
 
 def test_no_group_by_returns_only_everyone(data_file, client) -> None:

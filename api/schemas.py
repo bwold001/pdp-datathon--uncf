@@ -66,7 +66,7 @@ class GroupRow(BaseModel):
     n_excluded: int | None
     n_out_of_scope: int | None
     note: str
-    split: dict[str, int] | None = None  # dfw_rate only: D+, D, D-, F and W counts
+    split: dict[str, int] | None = None  # dfw_rate only: D, F and W counts
 
 
 class MeasureByGroupMeta(BaseModel):
@@ -120,7 +120,7 @@ class Retention(BaseModel):
 
 
 class DfwSplit(BaseModel):
-    """Each DFW grade apart (D+, D, D-, F, W), the D and F grades together (DF), W, every final grade, and shares."""
+    """D, F and W apart (grades; every D letter is a D), D and F together (DF), W, every final grade, and shares."""
 
     grades: dict[str, int]
     DF: int

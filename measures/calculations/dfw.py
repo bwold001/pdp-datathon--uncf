@@ -2,8 +2,8 @@
 
 Unlike the student measures, each row here is a course enrollment, not a student. The shared counting
 in sql_counts.py works the same way: a row is in the denominator when its grade is one we can classify,
-and it counts toward the numerator when that grade is a D+, D, D-, F or withdrawal. The letters come from
-the shared grade scale (grades.py), so a C- (1.7) is a C and passes.
+and it counts toward the numerator when that grade is a D (D+, D or D-), an F or a withdrawal. The letters come
+from the shared grade scale (grades.py), so a C- (1.7) is a C and passes. Pages count D, F and W, not + and -.
 """
 from __future__ import annotations
 
@@ -19,16 +19,18 @@ from ..models import (
 from .grades import LETTER_SCALE, grade_letter, known_letters, lowest_points
 from .sql_counts import cohort_values_sql, count_in_sql
 
-# The grades that count as a DFW, in the order pages show them. Every one is counted apart in the split.
+# The letters that count as a DFW: every D, F and W. A C- is a C and passes.
 DFW_GRADES = ("D+", "D", "D-", "F", "W")
-SPLIT = DFW_GRADES
+# How the split counts them: every D letter is a D, so + and - aren't counted apart.
+DFW_GROUPS = {"D+": "D", "D": "D", "D-": "D", "F": "F", "W": "W"}
+SPLIT = ("D", "F", "W")
 # A numeric grade under this many points is a DFW: the lowest points of the lowest letter that passes (C-, 1.7).
 DFW_BELOW = min(lowest_points(letter) for letter, _ in LETTER_SCALE if letter not in DFW_GRADES)
 
 NOTE = (
-    "Course enrollments of the cohort's students that ended in a D+, D, D-, F or withdrawal, out of those with a "
-    f"final grade. A numeric grade under {DFW_BELOW:.1f} counts, so a C- passes. Incomplete, audit, missing and "
-    "other grades are left out."
+    "Course enrollments of the cohort's students that ended in a D, F or withdrawal, out of those with a final "
+    f"grade. A numeric grade under {DFW_BELOW:.1f} counts, so a C- passes. Incomplete, audit, missing and other "
+    "grades are left out."
 )
 
 # DFW can also be grouped by course (prefix and number, e.g. ENGL 1302), by the season the course was taken
@@ -58,11 +60,11 @@ def grade_result(grade: str | None) -> str | None:
 
 
 def grade_values_sql() -> str:
-    """VALUES rows pairing each classifiable grade with 1 for a DFW (0 otherwise) and its letter."""
+    """VALUES rows pairing each classifiable grade with 1 for a DFW (0 otherwise) and its split group (D, F, W or pass)."""
     # The grades come from the scale in grades.py, never from the data, so they are safe to write into the query.
     rows = []
     for grade, letter in known_letters().items():
-        rows.append(f"('{grade}', {1 if letter in DFW_GRADES else 0}, '{letter}')")
+        rows.append(f"('{grade}', {1 if letter in DFW_GRADES else 0}, '{DFW_GROUPS.get(letter, 'pass')}')")
     return ", ".join(rows)
 
 
@@ -123,5 +125,5 @@ def open_values(connection, dimension: GroupDimension, cohorts: list[Cohort]) ->
 
 
 def count(connection, cohorts: list[Cohort], groups: list[Group], filters: Group = EVERYONE) -> dict[tuple[Cohort, Group], Counts]:
-    """Count DFW enrollments in the database for every cohort and group, with D+, D, D-, F and W apart."""
+    """Count DFW enrollments in the database for every cohort and group, with D, F and W apart."""
     return count_in_sql(connection, ENROLLMENT_SQL, cohorts, groups, filters, SPLIT)

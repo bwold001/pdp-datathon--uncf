@@ -84,11 +84,11 @@ def test_federal_retention_waits_for_the_next_fall(tmp_path):
 
 
 def test_dfw_rows_split_each_dfw_grade(database):
-    """D+, D, D-, F and W add up to the DFW numerator, and the term and delivery groups add up to everyone."""
+    """D, F and W add up to the DFW numerator, and the term and delivery groups add up to everyone."""
     rows = run_measure(Measure.DFW_RATE, [Cohort.of("2022-23")], [GroupBy.of(GroupDimension.TERM), GroupBy.of(GroupDimension.DELIVERY)], database=database)
     total = rows[0]
-    # The fixture's 1.5s are D+ and its 0.5s are F.
-    assert total.split == {"D+": 3, "D": 0, "D-": 0, "F": 3, "W": 3}
+    # The fixture's 1.5s are a D+, so a D; its 0.5s are an F.
+    assert total.split == {"D": 3, "F": 3, "W": 3}
     assert (total.numerator, total.denominator, total.n_students) == (9, 35, 24)
     terms = {r.group.label: r.denominator for r in rows[1:] if r.group.parts and next(iter(r.group.parts)).dimension == GroupDimension.TERM}
     assert terms == {"term=FALL": 23, "term=SPRING": 12}
@@ -121,7 +121,7 @@ def test_known_answers_on_the_real_data():
     assert (federal.numerator, federal.denominator) == (926, 2617)
     # A C- passes, so the 60 C- grades that counted under the old 2.0 line (4,347) don't.
     assert (dfw.numerator, dfw.denominator) == (4287, 18883)
-    assert dfw.split == {"D+": 38, "D": 486, "D-": 24, "F": 2262, "W": 1477}
+    assert dfw.split == {"D": 548, "F": 2262, "W": 1477}  # D: 38 D+, 486 D and 24 D-
 
 
 @pytest.mark.slow

@@ -73,7 +73,7 @@ def test_gateway(client):
 
 
 def test_dfw_and_gateway_carry_each_grade_and_the_scale(tmp_path, monkeypatch):
-    """The DFW split has each DFW grade, gateway courses have every grade, and both answers carry the grade scale."""
+    """DFW splits D, F and W; gateway courses count grade groups; each answer carries its page's grade table."""
     monkeypatch.setenv("UNCF_MIN_STUDENTS", "1")  # show every count; hiding is checked in measures/tests
     students = [student(f"s{n}") for n in range(12)]
     grades = ["1.5", "1.0", "0.7", "0.3", "W", "1.7"] * 2
@@ -84,19 +84,20 @@ def test_dfw_and_gateway_carry_each_grade_and_the_scale(tmp_path, monkeypatch):
     client = TestClient(create_app())
 
     dfw = client.get("/api/v1/uncf/dfw", params={"cohort": "2023-24"}).json()
-    assert dfw["everyone"]["split"]["grades"] == {"D+": 2, "D": 2, "D-": 2, "F": 2, "W": 2}  # the two C- pass
+    assert dfw["everyone"]["split"]["grades"] == {"D": 6, "F": 2, "W": 2}  # 1.5, 1.0 and 0.7 are a D; the C- pass
     assert (dfw["everyone"]["split"]["DF"], dfw["everyone"]["split"]["W"], dfw["everyone"]["num"]) == (8, 2, 10)
-    scale = dfw["meta"]["grade_scale"]
-    assert {row["grade"]: row["dfw"] for row in scale["grades"]}["C-"] is False
+    assert {row["grade"]: row["counted"] for row in dfw["meta"]["grade_scale"]["grades"]}["C or higher"] is False
 
     gateway = client.get("/api/v1/uncf/gateway", params={"cohort": "2023-24"}).json()
     (course,) = gateway["courses"]
-    assert {grade: count for grade, count in course["grades"].items() if count} == {"C-": 2, "D+": 2, "D": 2, "D-": 2, "F": 2, "W": 2}
-    assert gateway["meta"]["grade_scale"] == scale
+    # On the gateway page a D- (0.7) doesn't pass, so it sits with the F under 1.0.
+    assert course["grades"] == {"C or higher": 2, "D": 4, "Under 1.0": 4, "P": 0, "W": 2}
+    assert [row["grade"] for row in gateway["meta"]["grade_scale"]["grades"] if row["counted"]] == ["C or higher", "D", "P"]
 
-    # The CSV has one column per DFW grade.
+    # The CSV has one column each for D, F and W, and no + or - letters.
     header = client.get("/api/v1/uncf/dfw", params={"cohort": "2023-24", "format": "csv"}).text.splitlines()[0]
-    assert all(f"split.grades.{grade}" in header for grade in ("D+", "D", "D-", "F", "W"))
+    assert all(f"split.grades.{grade}" in header for grade in ("D", "F", "W"))
+    assert "split.grades.D+" not in header
 
 
 def test_credit_momentum(client):

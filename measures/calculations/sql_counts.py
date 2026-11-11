@@ -6,7 +6,7 @@ in query parameters: cohort years are checked, then written into the query text.
 
 filters narrows the students before grouping (every condition holds), e.g. only Pell students. Filter values
 are checked by GroupPart, then written into the query text. A measure whose rows have an `outcome` column can
-ask for split, the numerator counted by outcome (DFW: D+, D, D-, F and W).
+ask for split, the numerator counted by outcome (DFW: D, F and W).
 """
 from __future__ import annotations
 
@@ -146,12 +146,8 @@ members AS (
 def group_query(student_sql: str, cohort_values: str, dimensions: tuple[GroupDimension, ...], filters: Group = EVERYONE, split: tuple[str, ...] = ()) -> str:
     """The query that counts one kind of group: one GROUP BY over the students of every requested cohort."""
     outer = "".join(f", {d.value}" for d in dimensions)
-    # Split values come from a measure's file (e.g. D+, F, W), never from the data or a request. Columns are numbered
-    # because a value like D+ can't be a column name; read_tallies reads them back by position.
-    splits = "".join(
-        f",\n       SUM(CASE WHEN has_answer = 1 AND outcome = '{value}' THEN 1 ELSE 0 END) AS split_{index}"
-        for index, value in enumerate(split)
-    )
+    # Split values come from a measure's file (e.g. D, F, W), never from the data or a request.
+    splits = "".join(f",\n       SUM(CASE WHEN has_answer = 1 AND outcome = '{value}' THEN 1 ELSE 0 END) AS split_{value}" for value in split)
     return members_sql(student_sql, cohort_values, dimensions, filters, split) + f"""
 SELECT cohort_no{outer},
        SUM(CASE WHEN in_scope = 1 THEN 1 ELSE 0 END) AS n_members,

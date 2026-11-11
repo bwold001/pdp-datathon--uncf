@@ -249,9 +249,9 @@ function CourseDetail({ course, compared, groupLabel, minStudents, scale }: Cour
           </p>
           <PathBar course={course} />
         </Section>
-        <Section title="Every grade in year 1">
+        <Section title="Grades in year 1">
           <p className="text-[13px] text-(--uncf-ink-3)">
-            Each try’s grade, one per student per term. Blue grades pass (D or higher, or P); orange ones don’t.
+            Each try’s grade, one per student per term. Blue grades pass (a D or higher, or P); orange ones don’t.
           </p>
           <GradeBar grades={course.grades} scale={scale} minStudents={minStudents} />
         </Section>
@@ -323,7 +323,7 @@ function GradeBar({ grades, scale, minStudents }: GradeBarProps) {
   const counts = Object.values(grades);
   const total = counts.every((count) => count !== null) ? counts.reduce<number>((sum, count) => sum + count!, 0) : 0;
   const color = (row: GradeScale["grades"][number]) =>
-    row.grade === "W" ? "var(--uncf-grey)" : row.gateway_pass ? "var(--uncf-blue)" : "var(--uncf-f)";
+    row.grade === "W" ? "var(--uncf-grey)" : row.counted ? "var(--uncf-blue)" : "var(--uncf-f)";
   const label = scale.grades.map((row) => `${row.grade}: ${grades[row.grade] ?? "hidden"}`).join(", ");
   return (
     <>

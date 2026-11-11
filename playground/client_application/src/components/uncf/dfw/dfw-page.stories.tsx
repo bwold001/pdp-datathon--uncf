@@ -41,17 +41,17 @@ export const RealCourses: Story = {
   play: async ({ canvas, userEvent }) => {
     await expect(await canvas.findByText("4,287 of 18,883 final grades were a D, F or W")).toBeVisible();
     await expect(canvas.getByText("22.7%")).toBeVisible();
-    await expect(canvas.getByText("2,810 final grades of D+ or lower")).toBeVisible();
+    await expect(canvas.getByText("2,810 final grades of D or F")).toBeVisible();
     await expect(canvas.getByText("1,477 withdrawals")).toBeVisible();
 
-    // Each DFW grade apart: 38 D+, 486 D, 24 D-, 2,262 F and 1,477 W. A C- passes, and the scale says so.
-    await expect(canvas.getByText("Each DFW grade")).toBeVisible();
-    for (const count of ["38", "486", "24", "2,262", "1,477"]) {
+    // D, F and W apart: 548 D (every D letter), 2,262 F and 1,477 W. A C- passes, and the table says so.
+    await expect(canvas.getByText("D, F and W")).toBeVisible();
+    for (const count of ["548", "2,262", "1,477"]) {
       await expect(canvas.getAllByText(count, { exact: true }).length).toBeGreaterThan(0);
     }
     await userEvent.click(canvas.getByText("How grades are counted"));
-    await expect(canvas.getByRole("row", { name: /^C- 1\.7 to under 2\.0/ })).toHaveTextContent("No, passed");
-    await expect(canvas.getByRole("row", { name: /^D\+ 1\.3 to under 1\.7/ })).toHaveTextContent("Yes, a DFW");
+    await expect(canvas.getByRole("row", { name: /^C or higher 1\.7 and up/ })).toHaveTextContent("No, passed");
+    await expect(canvas.getByRole("row", { name: /^D 0\.7 to under 1\.7 \(D-, D, D\+\)/ })).toHaveTextContent("Yes, a DFW");
     await expect(canvas.getByRole("row", { name: /^F under 0\.7, or the code F/ })).toHaveTextContent("Yes, a DFW");
 
     const list = within(canvas.getByRole("list"));

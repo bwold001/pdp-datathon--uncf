@@ -35,7 +35,7 @@ export function DfwKpis({ everyone }: { everyone: DfwTally }) {
         tone="warn"
         note={`${fmt(everyone.num!)} of ${fmt(everyone.den!)} final grades were a D, F or W`}
       />
-      <Kpi label="D or F" value={percent(dfShare(split))} note={`${fmt(split.DF)} final grades of D+ or lower`} />
+      <Kpi label="D or F" value={percent(dfShare(split))} note={`${fmt(split.DF)} final grades of D or F`} />
       <Kpi label="Withdrew" value={percent(split.shares.W)} note={`${fmt(split.W)} withdrawals`} />
     </KpiGrid>
   );
@@ -47,8 +47,8 @@ export function DfwGradeCard({ everyone }: { everyone: DfwTally }) {
     <Card>
       <CardHead
         className="mb-3.5"
-        title="Each DFW grade"
-        subtitle={`Share of all ${fmt(everyone.den!)} final grades. A C- passes, so it isn’t counted here.`}
+        title="D, F and W"
+        subtitle={`Share of all ${fmt(everyone.den!)} final grades. A D is any D (D+, D or D-); a C- passes.`}
         aside={<Legend items={legend} />}
       />
       <DfwBar split={everyone.split} tall />
@@ -340,9 +340,9 @@ export function DfwCounted({ scale, minStudents }: { scale: GradeScale; minStude
   return (
     <div className="border-t border-(--uncf-line) pt-4.5 text-sm text-(--uncf-ink-2)">
       <b className="font-semibold text-(--uncf-ink)">What the numbers mean:</b> a final grade is one student finishing one
-      course. The DFW rate is the share of final grades that were a D+, D, D-, F or W; a C- passes. F is the letter F or
-      any grade under the lowest D (0.7), whatever the number, so a 0.0 and the code F are both an F. Incomplete, audit
-      and missing grades aren’t counted. “Everyone else” is all the other students in the same course. A gap shows a
+      course. The DFW rate is the share of final grades that were a D, F or W. A D is any D (D+, D or D-); a C- passes.
+      F is the letter F or any grade under the lowest D (0.7), whatever the number, so a 0.0 and the code F are both an
+      F. Incomplete, audit and missing grades aren’t counted. “Everyone else” is all the other students in the same course. A gap shows a
       difference between groups, not its cause.
       {hidesSmallGroups(minStudents) && ` Courses and groups with fewer than ${minStudents} students are hidden to protect privacy.`} One course code can appear
       under several names in the catalog. Some classes are listed twice in this data, so a few grades count twice.

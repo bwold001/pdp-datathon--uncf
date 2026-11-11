@@ -61,17 +61,17 @@ def test_first_try_path_and_retention(tmp_path):
 
 
 def test_every_grade_is_counted_apart(tmp_path):
-    """Each try's letter, one per student per term: all letters from A to W, zeros included; under 10 is hidden."""
+    """Each try's grade group, one per student per term, zeros included; under 10 is hidden."""
     first = takers("first", 12, ["4", "1.5", "P", "0.3"], back=0)
     retake(*first, grade="2.0")
     page = gateway_courses(**FEDERAL, database=build(tmp_path, first))
     (course,) = page["courses"]
     grades = course["grades"]
-    assert list(grades) == ["A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D+", "D", "D-", "F", "P", "W"]
-    # First tries: 3 each of A, D+ (1.5), P and F (0.3), hidden under UNCF_MIN_STUDENTS=10 like the path; then a C
-    # for all 12 on the retake.
-    assert {grade: count for grade, count in grades.items() if count != 0} == {"A": None, "D+": None, "P": None, "F": None, "C": 12}
-    assert page["context"]["grade_scale"]["grades"][-1] == {"grade": "W", "points": "the code W (withdrew)", "dfw": True, "gateway_pass": False}
+    assert list(grades) == ["C or higher", "D", "Under 1.0", "P", "W"]
+    # First tries: 3 each of A, D+ (1.5), P and F (0.3); then a C for all 12 on the retake. So C or higher is 3 + 12,
+    # and the groups of 3 are hidden under UNCF_MIN_STUDENTS=10, like the path.
+    assert grades == {"C or higher": 15, "D": None, "Under 1.0": None, "P": None, "W": 0}
+    assert page["context"]["grade_scale"]["grades"][-1] == {"grade": "W", "points": "the code W (withdrew)", "counted": False}
 
 
 def test_a_term_listed_twice_keeps_the_better_grade():
@@ -89,7 +89,7 @@ def test_one_try_per_term(tmp_path):
     page = gateway_courses(**FEDERAL, database=make_database(tmp_path / "pdp.sqlite", students, records))
     (course,) = page["courses"]
     assert (course["first_pass"], course["path"]["first"], course["path"]["retook_passed"]) == (10, 10, 0)
-    assert (course["grades"]["B"], course["grades"]["F"]) == (10, 0)  # the B wins over the F in the same term
+    assert (course["grades"]["C or higher"], course["grades"]["Under 1.0"]) == (10, 0)  # the B wins over the F
 
 
 def test_only_year_one_counts(tmp_path):

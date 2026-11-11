@@ -34,7 +34,7 @@ export type GatewayCourse = {
   /** Passed on any try in year 1. */
   passed: number;
   path: GatewayPath;
-  /** How many tries ended in each grade (A to F, P, W), one per student per term, in the scale's order. Null when hidden. */
+  /** How many tries ended in each grade group (C or higher, D, Under 1.0, P, W), one per student per term. Null when hidden. */
   grades: Record<string, number | null>;
   retained_if_passed: Retention;
   retained_if_not_passed: Retention;

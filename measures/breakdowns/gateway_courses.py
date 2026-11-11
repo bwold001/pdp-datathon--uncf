@@ -10,8 +10,8 @@ CompletedGatewayMathYear1 and CompletedGatewayEnglishYear1). F and W don't pass.
 
 A try is a term: several rows in one term (duplicate class rows, data finding 9) are one try, passed if any passed.
 Each student's path through a course: passed on the first try, failed and passed on a later try, failed and failed
-again, or failed and didn't retake (all within year 1). Each course also lists its grades, one per student per try,
-on the shared letter scale (calculations/grades.py), and the answer carries that scale.
+again, or failed and didn't retake (all within year 1). Each course also counts its grades, one per student per try,
+in the groups of grade_scale.py (C or higher, D, under 1.0, P, W), and the answer carries that table.
 
 This module only counts. The comparisons (the filtered students against everyone else who took a course, and each
 course pair against everyone else) are the gap finder's job, which sits on top of measures: gap_finder/gateway.py
@@ -40,7 +40,7 @@ from .common import (
     shown,
     term_label,
 )
-from .grade_scale import grade_scale
+from .grade_scale import GATEWAY_GROUPS, gateway_group, gateway_scale
 
 SUBJECTS = ("E", "M")
 PATH_STEPS = ("first", "retook_passed", "retook_not", "no_retake")
@@ -89,7 +89,7 @@ def _gateway_courses(cohort: str, filters: Group = EVERYONE, retention_measure: 
         "first_term": first_term,
         "compared": filters != EVERYONE,
         "min_pair_students": max(MIN_PAIR_STUDENTS, min_students()),
-        "grade_scale": grade_scale(),
+        "grade_scale": gateway_scale(),
     }
     if len(students) < min_students():
         return {"context": context, "status": "suppressed", "students": None, "cohort_retention": None, "courses": [], "hidden_courses": 0, "left_out": None, "pair_counts": [], "pairs_considered": 0}
@@ -145,9 +145,9 @@ def best_grade(grades: list[str]) -> str:
 
 
 def grade_counts(grades: dict[str, list[str]]) -> dict[str, int | None]:
-    """How many tries ended in each grade, in the scale's order (0 when none did). Hidden under min_students(), like the path."""
-    counted = Counter(grade for tries in grades.values() for grade in tries)
-    return {grade: shown(counted[grade]) for grade in GRADE_ORDER}
+    """How many tries ended in each gateway group, best first (0 when none did). Hidden under min_students(), like the path."""
+    counted = Counter(gateway_group(grade) for tries in grades.values() for grade in tries)
+    return {group: shown(counted[group]) for group in GATEWAY_GROUPS}
 
 
 def path_counts(tries: dict[str, list[bool]]) -> dict:
@@ -191,7 +191,7 @@ def course_paths(rows: list[dict], students: set[str], compared: bool, answers: 
                 # A course flagged both ways takes the subject most of its grades carry.
                 "subject": flags[course].most_common(1)[0][0],
                 **path_counts(mine),
-                # Every try's grade, one per student per term: all the letters, not just pass or fail.
+                # Every try's grade, one per student per term, in the page's groups.
                 "grades": grade_counts({sid: grades[course][sid] for sid in mine}),
                 "retained_if_passed": retained_share(answers, passed),
                 "retained_if_not_passed": retained_share(answers, set(mine) - passed),

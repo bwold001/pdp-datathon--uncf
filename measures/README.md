@@ -144,28 +144,34 @@ dictionary the code `A` means audit, not an A. So the letter is inferred from th
 [calculations/grades.py](calculations/grades.py): the standard 4.0 plus/minus scale, where each letter covers its
 grade points up to the next letter's.
 
-| Letter | Grade points | DFW? | Passes a gateway course? |
-| --- | --- | --- | --- |
-| A, A-, B+, B, B-, C+, C | 2.0 and up (A is 4.0, A- 3.7 to under 4.0, ... C 2.0 to under 2.3) | no | yes |
-| C- | 1.7 to under 2.0 | no | yes |
-| D+ | 1.3 to under 1.7 | yes | yes |
-| D | 1.0 to under 1.3 | yes | yes |
-| D- | 0.7 to under 1.0 | yes | no |
-| F | under 0.7, or the code `F` | yes | no |
-| P | the code `P` | no | yes |
-| W | the code `W` | yes | no |
-
 A number between steps takes the letter below it: 1.5 is a D+, 2.5 a C+, 3.6 a B+. F is general, not tied to the
 numbers one file uses: any number under the lowest D is an F. The PDP has no DFW measure of its own, so DFW means
 what it says: a D (any D), an F or a W. A C- is a C and passes. `DFW_BELOW` (1.7) is worked out from the scale and
 `DFW_GRADES` in [calculations/dfw.py](calculations/dfw.py); a school that counts a C- adds it to `DFW_GRADES`. The
-gateway page keeps the PDP's own line, 1.0 or a P (`GATEWAY_PASS_AT` in grades.py). Each page's answer carries the
-scale as `meta.grade_scale` (measures/breakdowns/grade_scale.py), and the page shows it under "How grades are
-counted".
+gateway page keeps the PDP's own line, 1.0 or a P (`GATEWAY_PASS_AT` in grades.py).
+
+**Pages show groups, not + and - letters.** The letters only decide which group a grade falls in. The groups are cut
+only where a rule draws a line, so each one means the same thing whatever grades a school's data holds
+([breakdowns/grade_scale.py](breakdowns/grade_scale.py)):
+
+| Page | Group | Grade points | Counted |
+| --- | --- | --- | --- |
+| DFW | C or higher | 1.7 and up (C- and up) | passed |
+| DFW | D | 0.7 to under 1.7 (D-, D, D+) | a DFW |
+| DFW | F | under 0.7, or the code `F` | a DFW |
+| DFW | W | the code `W` | a DFW |
+| Gateway | C or higher | 1.7 and up | passed |
+| Gateway | D | 1.0 to under 1.7 (D, D+) | passed |
+| Gateway | Under 1.0 | under 1.0 (D- or F), or the code `F` | didn't pass |
+| Gateway | P / W | the codes | passed / didn't pass |
+
+"D" differs between the pages on purpose: a D- is a D for DFW but fails a gateway course, so on the gateway page it
+sits in "Under 1.0". Each answer carries its page's table as `meta.grade_scale`, and the page shows it under "How
+grades are counted".
 
 | Grade in the course file | Counted as | Reason it is left out |
 | --- | --- | --- |
-| A number from 0 to 4 (written `1` or `1.0`) below 1.7 | D+, D, D- or F: in the numerator and the denominator | |
+| A number from 0 to 4 (written `1` or `1.0`) below 1.7 | D or F: in the numerator and the denominator | |
 | A number from 1.7 to 4.0 (C- and up) | passed: in the denominator only | |
 | `F` or `W` | D or F: in the numerator and the denominator | |
 | `P` | passed: in the denominator only | |
@@ -296,8 +302,8 @@ every condition, so "everyone" means every Pell student and `group_by` splits th
 dimension the measure supports works as a filter, including `course` for DFW. Filtered rows can't be
 saved, since the results table has no column for the filters.
 
-**Each DFW grade:** `dfw_rate` rows carry `split`, the numerator as D+, D, D-, F and W counts (the letters
-from the scale above). They always add up to the numerator. Every row also carries `n_students`, the
+**D, F and W:** `dfw_rate` rows carry `split`, the numerator as D (any D), F and W counts. They always add
+up to the numerator. Every row also carries `n_students`, the
 distinct students counted.
 
 **Per student answers:** `read_answers(measure, cohort)` returns each in scope student's answer (1, 0, a

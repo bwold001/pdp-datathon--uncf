@@ -1,14 +1,14 @@
 import type { ExplorerMeta, GradeScale } from "@/components/uncf/layout/explorer-api";
 import { cohortFilters } from "@/components/uncf/layout/explorer-config";
 
-/** The grades that count as a DFW, in the order the API sends and the page shows them. A C- passes. */
-export const dfwGrades = ["D+", "D", "D-", "F", "W"] as const;
+/** The grades that count as a DFW, in the order the API sends and the page shows them. Every D letter is a D; a C- passes. */
+export const dfwGrades = ["D", "F", "W"] as const;
 export type DfwGrade = (typeof dfwGrades)[number];
 
-/** Each DFW grade among a set of final grades, and each one's share of them, from the API. */
+/** D, F and W among a set of final grades, and each one's share of them, from the API. */
 export type DfwSplit = {
   grades: Record<DfwGrade, number>;
-  /** The D+, D, D- and F grades together. */
+  /** The D and F grades together. */
   DF: number;
   W: number;
   /** Final grades. */
@@ -16,11 +16,9 @@ export type DfwSplit = {
   shares: Record<DfwGrade, number>;
 };
 
-/** Each DFW grade's label and color: lightest for D+, darker toward F, grey for a withdrawal. */
+/** Each DFW grade's label and color: D lighter than F, grey for a withdrawal. */
 export const dfwGradeStyles: Record<DfwGrade, { label: string; color: string }> = {
-  "D+": { label: "D+", color: "var(--uncf-peach)" },
   D: { label: "D", color: "var(--uncf-d)" },
-  "D-": { label: "D-", color: "var(--uncf-orange)" },
   F: { label: "F", color: "var(--uncf-f)" },
   W: { label: "W", color: "var(--uncf-grey)" },
 };
@@ -144,7 +142,7 @@ export function groupRows(detail: DfwCourseDetail, dimension: string): GroupComp
   }));
 }
 
-/** The share of final grades that were a D+, D, D- or F (the D or F tile; the API sends each grade apart). */
+/** The share of final grades that were a D or an F (the D or F tile; the API sends them apart). */
 export function dfShare(split: DfwSplit): number {
-  return split.shares["D+"] + split.shares.D + split.shares["D-"] + split.shares.F;
+  return split.shares.D + split.shares.F;
 }

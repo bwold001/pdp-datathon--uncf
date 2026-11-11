@@ -3,7 +3,7 @@
 Every rate comes from run_measure's dfw_rate (the course, term, delivery and student group splits included), so
 the page, /measures/dfw_rate and the chat agree. This module adds what isn't a rate: each course's catalog names and
 gateway flags, which values exist, and each group next to everyone else in the course. Fewer than min_students()
-is hidden. Each DFW grade (D+, D, D-, F, W) is counted apart, and every answer carries the grade scale it used.
+is hidden. D, F and W are counted apart (every D letter is a D), and every answer carries the table that says so.
 """
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ import sqlite3
 from collections import Counter, defaultdict
 from pathlib import Path
 
-from ..calculations.dfw import DFW_GRADES, grade_result
+from ..calculations.dfw import SPLIT, grade_result
 from ..calculations.sql_counts import normalize
 from ..data_access import ReadSnapshot
 from ..models import (
@@ -28,7 +28,7 @@ from ..models import (
 )
 from ..run_measures import run_measure
 from .common import check_cohort, page_source, select_students, share
-from .grade_scale import grade_scale
+from .grade_scale import dfw_scale
 
 # The student groups a course can be split by, besides delivery and the term it was taken.
 GROUP_DIMENSIONS = (
@@ -53,10 +53,10 @@ class UnknownCourse(LookupError):
 
 
 def tally(row: MeasureResult) -> dict:
-    """A dfw_rate row as the page shows it, with each DFW grade apart. Every number is None under min_students()."""
+    """A dfw_rate row as the page shows it, with D, F and W apart. Every number is None under min_students()."""
     if row.numerator is None:
         return {"students": None, "num": None, "den": None, "rate": None, "split": None}
-    grades = {grade: row.split[grade] for grade in DFW_GRADES}
+    grades = {grade: row.split[grade] for grade in SPLIT}
     return {
         "students": row.n_students,
         "num": row.numerator,
@@ -126,7 +126,7 @@ def _dfw_courses(cohort: str, filters: Group = EVERYONE, database: str | Path | 
     courses.sort(key=lambda c: (-c["num"], -c["rate"], c["course"]))
     shown_any = everyone["den"] is not None
     return {
-        "context": {"grade_scale": grade_scale()},
+        "context": {"grade_scale": dfw_scale()},
         "status": "ok" if shown_any else "suppressed",
         "everyone": everyone,
         "courses": courses if shown_any else [],
@@ -188,7 +188,7 @@ def _dfw_course(cohort: str, course: str, filters: Group = EVERYONE, database: s
         return parts
 
     return {
-        "context": {"grade_scale": grade_scale()},
+        "context": {"grade_scale": dfw_scale()},
         "course": code,
         "names": names_of(fact),
         **numbers,

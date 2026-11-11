@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import pytest
 
-from measures.breakdowns.grade_scale import grade_scale
-from measures.calculations.dfw import DFW_BELOW, DFW_GRADES, grade_outcomes
+from measures.breakdowns.grade_scale import GATEWAY_GROUPS, dfw_scale, gateway_group, gateway_scale
+from measures.calculations.dfw import DFW_BELOW, DFW_GRADES, DFW_GROUPS, SPLIT, grade_outcomes
 from measures.calculations.grades import GRADE_ORDER, LETTER_SCALE, grade_letter, letter_for, letter_passes_gateway
 
 
@@ -38,17 +38,37 @@ def test_gateway_pass_is_a_d_or_better():
     assert passing == ["A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D+", "D", "P"]
 
 
-def test_the_scale_table_follows_the_rules():
-    """Every final grade appears once, in order, with points staff can read and the same rules the numbers use."""
-    scale = grade_scale()
-    rows = scale["grades"]
-    assert [row["grade"] for row in rows] == list(GRADE_ORDER)
-    assert [row["grade"] for row in rows if row["dfw"]] == list(DFW_GRADES)
-    assert all(row["gateway_pass"] == letter_passes_gateway(row["grade"]) for row in rows)
-    points = {row["grade"]: row["points"] for row in rows}
-    assert (points["A"], points["C-"], points["D-"]) == ("4.0", "1.7 to under 2.0", "0.7 to under 1.0")
-    assert points["F"] == "under 0.7, or the code F"
-    assert "UW" in scale["left_out"]
-    # The bands meet with no gap: each letter's lowest points are the next letter's upper end.
-    for (_, lowest), (letter, _) in zip(LETTER_SCALE, LETTER_SCALE[1:]):
-        assert points[letter].endswith(f"under {lowest:.1f}")
+def test_every_dfw_letter_has_a_group():
+    """The split counts D, F and W: D+, D and D- are all a D."""
+    assert set(DFW_GROUPS) == set(DFW_GRADES)
+    assert SPLIT == ("D", "F", "W")
+    assert [DFW_GROUPS[letter] for letter in ("D+", "D", "D-", "F", "W")] == ["D", "D", "D", "F", "W"]
+
+
+def test_gateway_groups_follow_the_two_lines():
+    """C or higher from the DFW line (1.7), D down to the pass line (1.0), and everything under it together."""
+    groups = {letter: gateway_group(letter) for letter in GRADE_ORDER}
+    assert {letter for letter, group in groups.items() if group == "C or higher"} == {"A", "A-", "B+", "B", "B-", "C+", "C", "C-"}
+    assert {letter for letter, group in groups.items() if group == "D"} == {"D+", "D"}
+    assert {letter for letter, group in groups.items() if group == "Under 1.0"} == {"D-", "F"}
+    assert (groups["P"], groups["W"]) == ("P", "W")
+    # Every group passes or fails as a whole, so its label is honest whatever grades the data holds.
+    for group in GATEWAY_GROUPS:
+        assert len({letter_passes_gateway(letter) for letter, g in groups.items() if g == group}) == 1
+
+
+def test_the_tables_follow_the_rules():
+    """Each page's table lists its groups in order, with points staff can read and the rule the numbers use."""
+    dfw = {row["grade"]: row for row in dfw_scale()["grades"]}
+    assert list(dfw) == ["C or higher", "D", "F", "P", "W"]
+    assert [grade for grade, row in dfw.items() if row["counted"]] == ["D", "F", "W"]
+    assert dfw["D"]["points"] == "0.7 to under 1.7 (D-, D, D+)"
+    assert dfw["C or higher"]["points"] == "1.7 and up (C- and up)"
+    assert dfw["F"]["points"] == "under 0.7, or the code F"
+
+    gateway = {row["grade"]: row for row in gateway_scale()["grades"]}
+    assert list(gateway) == list(GATEWAY_GROUPS)
+    assert [grade for grade, row in gateway.items() if row["counted"]] == ["C or higher", "D", "P"]
+    assert gateway["D"]["points"] == "1.0 to under 1.7 (D, D+)"
+    assert gateway["Under 1.0"]["points"] == "under 1.0 (D- or F), or the code F"
+    assert "UW" in dfw_scale()["left_out"]

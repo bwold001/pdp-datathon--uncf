@@ -299,7 +299,7 @@ def get_student_paths(bar: Annotated[Bar, Depends()], terms: int = DEFAULT_TERMS
 
 @router.get("/dfw", response_model=DfwResponse, responses=ERRORS)
 def get_dfw(bar: Annotated[Bar, Depends()]):
-    """DFW list: everyone's DFW rate with each DFW grade apart, then each course with min_students() or more students."""
+    """DFW list: everyone's DFW rate with D, F and W apart, then each course with min_students() or more students."""
     return answer(bar, "dfw")
 
 

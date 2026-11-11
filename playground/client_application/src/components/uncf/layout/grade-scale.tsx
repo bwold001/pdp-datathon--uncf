@@ -8,11 +8,6 @@ const columns: Record<GradeRule, { title: string; yes: string; no: string }> = {
   gateway: { title: "Passes the course?", yes: "Yes, passed", no: "No, didn’t pass" },
 };
 
-/** Whether a grade counts under the page's rule. */
-function counts(row: Scale["grades"][number], rule: GradeRule): boolean {
-  return rule === "dfw" ? row.dfw : row.gateway_pass;
-}
-
 /** The grade scale the numbers use, as a table under "How grades are counted": each grade's points and the page's rule. */
 export function GradeScaleTable({ scale, rule }: { scale: Scale; rule: GradeRule }) {
   const column = columns[rule];
@@ -21,8 +16,9 @@ export function GradeScaleTable({ scale, rule }: { scale: Scale; rule: GradeRule
       <summary className="cursor-pointer px-3.5 py-2.5 text-sm font-semibold text-(--uncf-ink)">How grades are counted</summary>
       <div className="border-t border-(--uncf-line) px-3.5 pt-2.5 pb-3.5">
         <p className="mb-2.5 text-[13px] text-(--uncf-ink-3)">
-          The data has grade points (0 to 4) and a few codes, not letters. Each letter covers its grade points up to the
-          next letter, so a 1.5 is a D+ and a 3.6 is a B+. Anything under the lowest D, whatever the number, is an F.
+          The data has grade points (0 to 4) and a few codes, not letters. The groups below are cut only where the rule
+          draws a line, so each grade point falls in exactly one group. A number between letters takes the letter below
+          it: 1.5 is a D+, so it’s a D.
         </p>
         <table className="w-full text-left text-sm">
           <thead>
@@ -34,7 +30,7 @@ export function GradeScaleTable({ scale, rule }: { scale: Scale; rule: GradeRule
           </thead>
           <tbody>
             {scale.grades.map((row) => {
-              const yes = counts(row, rule);
+              const yes = row.counted;
               // The grades a page warns about stand out: a DFW, or a gateway grade that didn't pass.
               const warn = rule === "dfw" ? yes : !yes;
               return (
