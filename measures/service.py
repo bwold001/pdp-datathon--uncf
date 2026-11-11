@@ -4,7 +4,7 @@ from measures.breakdowns.credit_momentum import credit_momentum
 from measures.breakdowns.dfw_courses import dfw_course, dfw_courses
 from measures.breakdowns.gateway_courses import gateway_courses
 from measures.breakdowns.student_paths import student_paths
-from measures.models import Cohort, GroupBy, GroupDimension
+from measures.models import Cohort, GroupBy, GroupDimension, Measure
 from measures.registry import OPERATIONS
 from measures.requests import RETENTION_MEASURES, filter_group
 from measures.run_measures import run_measure
@@ -54,3 +54,11 @@ def execute(operation_id, parameters, snapshot):
             else None,
         )
     return _PAGES[operation_id](**options)
+
+
+def operation_for_measure(measure):
+    """Resolve a dashboard scalar's existing name to its registered operation ID."""
+    selected = Measure(measure)
+    if selected == Measure.FEDERAL_RETENTION:
+        return "retention.rate"
+    return next(spec.id for spec in OPERATIONS.values() if spec.measure == selected)
