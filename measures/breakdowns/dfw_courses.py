@@ -13,6 +13,7 @@ from pathlib import Path
 
 from ..calculations.dfw import grade_result
 from ..calculations.sql_counts import normalize
+from ..data_access import ReadSnapshot
 from ..models import (
     ALLOWED_VALUES,
     EVERYONE,
@@ -25,7 +26,7 @@ from ..models import (
     MeasureResult,
 )
 from ..run_measures import run_measure
-from .common import MIN_STUDENTS, check_cohort, connect, select_students, share
+from .common import MIN_STUDENTS, check_cohort, page_source, select_students, share
 
 # The student groups a course can be split by, besides delivery and the term it was taken.
 GROUP_DIMENSIONS = (
@@ -98,14 +99,16 @@ def names_of(fact: dict) -> dict:
     return {"top": [name for name, _ in fact["names"].most_common(TOP_NAMES)], "distinct": len(fact["names"])}
 
 
-def dfw_courses(cohort: str, filters: Group = EVERYONE, database: str | Path | None = None) -> dict:
+def dfw_courses(cohort: str, filters: Group = EVERYONE, database: str | Path | None = None, *, snapshot: ReadSnapshot | None = None) -> dict:
+    """Run the page with a borrowed snapshot, or own one local read transaction."""
+    with page_source(database, snapshot) as source:
+        return _dfw_courses(cohort, filters, database=source.positional, connection=source.named)
+
+
+def _dfw_courses(cohort: str, filters: Group = EVERYONE, database: str | Path | None = None, *, connection) -> dict:
     """The DFW page's list: everyone's DFW rate, then each course with 10 or more students."""
     rows = run_measure(Measure.DFW_RATE, [Cohort.of(cohort)], [GroupBy.of(GroupDimension.COURSE)], database=database, filters=filters)
-    connection = connect(database)
-    try:
-        facts = course_facts(connection, cohort, select_students(connection, cohort, filters))
-    finally:
-        connection.close()
+    facts = course_facts(connection, cohort, select_students(connection, cohort, filters))
 
     everyone = tally(rows[0])
     by_course = {row.group.label.split("=", 1)[1]: row for row in rows[1:]}
@@ -137,15 +140,17 @@ def compare(part: dict, course: dict) -> dict:
     return {**part, "rest_rate": round(rest_rate, 4), "gap": round((part["num"] / part["den"] - rest_rate) * 100, 1)}
 
 
-def dfw_course(cohort: str, course: str, filters: Group = EVERYONE, database: str | Path | None = None) -> dict:
+def dfw_course(cohort: str, course: str, filters: Group = EVERYONE, database: str | Path | None = None, *, snapshot: ReadSnapshot | None = None) -> dict:
+    """Run the page with a borrowed snapshot, or own one local read transaction."""
+    with page_source(database, snapshot) as source:
+        return _dfw_course(cohort, course, filters, database=source.positional, connection=source.named)
+
+
+def _dfw_course(cohort: str, course: str, filters: Group = EVERYONE, database: str | Path | None = None, *, connection) -> dict:
     """One course in detail: its numbers, then each term, delivery method and group next to everyone else."""
     code = " ".join(course.upper().split())
-    connection = connect(database)
-    try:
-        students = select_students(connection, cohort, filters)
-        fact = course_facts(connection, cohort, students).get(code)
-    finally:
-        connection.close()
+    students = select_students(connection, cohort, filters)
+    fact = course_facts(connection, cohort, students).get(code)
     if fact is None:
         raise UnknownCourse(f"No course {code!r} with 10 or more students for these filters.")
 

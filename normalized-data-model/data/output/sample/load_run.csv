@@ -1,2 +1,2 @@
-run_id,started_at,finished_at,backend,load_report,validation_reports,staging_folder,file_format,credit_cutoff
-sample,2026-10-25T00:00:00,2026-10-25T00:00:00,,,,,csv,2025-26
+build_manifest,run_id,started_at,finished_at,backend,load_report,validation_reports,staging_folder,file_format,credit_cutoff
+,sample,2026-10-25T00:00:00,2026-10-25T00:00:00,,,,,csv,2025-26

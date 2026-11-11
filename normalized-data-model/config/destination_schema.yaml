@@ -689,6 +689,7 @@ institution_event:
   source: {type: str, nullable: true}
 
 load_run:   # one row: the run that built this database. No file maps to it; the loader writes it.
+  build_manifest: {type: str, nullable: true}  # v1 JSON: generation, pipeline version and normalization digest; blank on legacy samples
   run_id: {type: str, nullable: false, primary_key: true}
   started_at: {type: datetime, nullable: false}    # when the load started (UTC): the same moment as every data_provider.loaded_at
   finished_at: {type: datetime, nullable: false}   # when its rows were written, just before the commit

@@ -17,6 +17,7 @@ from collections import Counter
 from pathlib import Path
 
 from ..calculations.sql_counts import normalize
+from ..data_access import ReadSnapshot
 from ..models import (
     ALLOWED_VALUES,
     EVERYONE,
@@ -33,7 +34,7 @@ from .common import (
     SEASONS,
     STUDENT_DIMENSIONS,
     check_retention,
-    connect,
+    page_source,
     credential_years,
     next_main_term,
     observed_terms,
@@ -145,7 +146,19 @@ def student_paths(
     retention_measure: Measure = Measure.RETENTION,
     terms: int = DEFAULT_TERMS,
     group_by: GroupDimension | None = None,
-    database: str | Path | None = None,
+    database: str | Path | None = None, *, snapshot: ReadSnapshot | None = None) -> dict:
+    """Run the page with a borrowed snapshot, or own one local read transaction."""
+    with page_source(database, snapshot) as source:
+        return _student_paths(cohort, filters, retention_measure, terms, group_by, database=source.positional, connection=source.named)
+
+
+def _student_paths(
+    cohort: str,
+    filters: Group = EVERYONE,
+    retention_measure: Measure = Measure.RETENTION,
+    terms: int = DEFAULT_TERMS,
+    group_by: GroupDimension | None = None,
+    database: str | Path | None = None, *, connection
 ) -> dict:
     """The Student paths page: class size, status per term, moves between terms, transfers and retention.
 
@@ -156,14 +169,10 @@ def student_paths(
         raise ValueError(f"terms must be 2 to {MAX_TERMS}.")
     if group_by is not None and group_by not in STUDENT_DIMENSIONS:
         raise ValueError(f"Student paths can't be grouped by {group_by}.")
-    connection = connect(database)
-    try:
-        students = select_students(connection, cohort, filters)
-        records = term_records(connection, cohort)
-        credentials = credential_years(connection, cohort)
-        observed = observed_terms(connection)
-    finally:
-        connection.close()
+    students = select_students(connection, cohort, filters)
+    records = term_records(connection, cohort)
+    credentials = credential_years(connection, cohort)
+    observed = observed_terms(connection)
 
     paths = follow(students, cohort, terms, records, credentials, observed)
     total = len(paths)

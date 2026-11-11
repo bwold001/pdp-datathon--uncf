@@ -14,6 +14,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from ..data_access import ReadSnapshot
 from ..models import EVERYONE, Cohort, Group, Measure
 from ..run_measures import read_answers, run_measure
 from .credit_progress import credit_progress
@@ -21,7 +22,7 @@ from .common import (
     MIN_STUDENTS,
     SEASONS,
     check_retention,
-    connect,
+    page_source,
     next_main_term,
     retained_share,
     retention,
@@ -60,18 +61,20 @@ def term_credits(connection, cohort: str) -> dict[tuple[str, tuple[str, str]], t
     return {(row["student_id"], (row["year"], row["season"])): (row["attempted"], row["earned"]) for row in rows}
 
 
-def credit_momentum(cohort: str, filters: Group = EVERYONE, retention_measure: Measure = Measure.RETENTION, database: str | Path | None = None) -> dict:
+def credit_momentum(cohort: str, filters: Group = EVERYONE, retention_measure: Measure = Measure.RETENTION, database: str | Path | None = None, *, snapshot: ReadSnapshot | None = None) -> dict:
+    """Run the page with a borrowed snapshot, or own one local read transaction."""
+    with page_source(database, snapshot) as source:
+        return _credit_momentum(cohort, filters, retention_measure, database=source.positional, connection=source.named)
+
+
+def _credit_momentum(cohort: str, filters: Group = EVERYONE, retention_measure: Measure = Measure.RETENTION, database: str | Path | None = None, *, connection) -> dict:
     """The Credit momentum page: year 1 credits, completion, milestones, the first two terms, and tiers."""
     check_retention(retention_measure)
-    connection = connect(database)
-    try:
-        students = select_students(connection, cohort, filters)
-        year_one = year_one_credits(connection, cohort)
-        per_term = term_credits(connection, cohort)
-        answers, _ = read_answers(retention_measure, cohort, database)
-        progress = credit_progress(connection, cohort, students, answers) if len(students) >= MIN_STUDENTS else None
-    finally:
-        connection.close()
+    students = select_students(connection, cohort, filters)
+    year_one = year_one_credits(connection, cohort)
+    per_term = term_credits(connection, cohort)
+    answers, _ = read_answers(retention_measure, cohort, database)
+    progress = credit_progress(connection, cohort, students, answers) if len(students) >= MIN_STUDENTS else None
 
     known = {sid: year_one[sid] for sid in students if sid in year_one}
     context = {

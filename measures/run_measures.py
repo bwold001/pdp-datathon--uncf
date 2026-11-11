@@ -140,7 +140,9 @@ def open_database(database: str | Path | None):
     path = Path(database) if database is not None else DEFAULT_DATABASE
     if not path.exists():
         raise FileNotFoundError(f"{path} not found. Run the loader first (see the README).")
-    return sqlite3.connect(path), True
+    connection = sqlite3.connect(f"{path.resolve().as_uri()}?mode=ro", uri=True)
+    connection.execute("BEGIN")
+    return connection, True
 
 
 def read_sources(connection) -> list[tuple]:
