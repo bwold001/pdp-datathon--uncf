@@ -254,3 +254,6 @@ evidence and partial-result rules, and the focused test command for work on that
 
 The [shared snapshot and replay guide](docs/analysis-v2-snapshots.md) describes transaction ownership,
 configured database access, loader build identity, cancellation and reproducible computation inputs.
+
+The [defined operation catalog](docs/analysis-v2-defined-operations.md) registers the existing dashboard
+and legacy analyses with executable request schemas and typed result adapters. It remains inactive in HTTP/chat.

@@ -1,5 +1,9 @@
 # Success measures
 
+The [v2 catalog and adapter guide](../docs/analysis-v2-defined-operations.md) explains `requests.py`,
+`registry.py` and `service.py`: pure request validation and dispatch to existing calculation owners on
+a caller-owned snapshot, preserving gateway definitions, fractional credit numerators and DFW enrollment counts.
+
 The shared shape for the core student success measures ([#9](https://github.com/devcolor/pdp-datathon-starter/issues/9)).
 This folder holds the contract and the calculations for retention, federal (fall to fall) retention, persistence, gateway completion, DFW rate and credit completion, plus the Explorer pages' breakdowns ([breakdowns/](breakdowns/)).
 

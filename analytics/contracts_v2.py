@@ -6,8 +6,25 @@ import json
 from typing import Annotated, ClassVar, Literal, Union
 
 from pydantic import (
-    AfterValidator, AwareDatetime, BaseModel, ConfigDict, Field, StrictFloat,
+    AfterValidator, AwareDatetime, Field, StrictFloat,
     StrictInt, StrictStr, StringConstraints, TypeAdapter, create_model, model_validator,
+)
+
+from measures.requests import (
+    Contract as Contract,
+    Cohort as Cohort,
+    CourseParameters as CourseParameters,
+    Dimension as Dimension,
+    Dimensions as Dimensions,
+    Filters as Filters,
+    PathsParameters as PathsParameters,
+    RateParameters as RateParameters,
+    RetentionParameters as RetentionParameters,
+    RetentionScope as RetentionScope,
+    RetentionType as RetentionType,
+    Scope as Scope,
+    check_cohort as check_cohort,
+    unique_sorted as unique_sorted,
 )
 
 Text = Annotated[StrictStr, StringConstraints(strip_whitespace=True, min_length=1, max_length=500)]
@@ -17,8 +34,6 @@ Number = Annotated[StrictFloat, Field(allow_inf_nan=False)]
 Count = Annotated[StrictInt, Field(ge=0)]
 SampleSize = Annotated[StrictInt, Field(ge=1)]
 Precision = Annotated[StrictInt, Field(ge=0, le=10)]
-Dimension = Literal["cohort_term", "enrollment_intensity", "enrollment_type", "pell", "gender", "race", "ethnicity", "age_band"]
-RetentionType = Literal["school", "federal"]
 Grouping = Literal["online_count_0_1to2_3plus", "retention_outcome_school", "retention_outcome_federal"]
 Feature = Literal["credits_earned_y1", "credits_attempted_y1", "online_enrollment_count_y1", "online_enrollment_share_y1"]
 ParameterKey = Literal["cohort", "retention_type", "course", "terms", "credential", "program", "x", "y", "grouping", "variant_id"]
@@ -32,80 +47,7 @@ HiddenStatus = Literal["suppressed", "unknown", "unavailable", "not_yet_observab
 HiddenReason = Literal["small_group", "no_evidence", "zero_variance", "coverage_incomplete", "not_reported", "linked_disclosure", "unsupported_evidence"]
 
 
-def check_cohort(value: str) -> str:
-    """Require a consecutive academic year independently of the current catalog."""
-    if int(value[-2:]) != (int(value[:4]) + 1) % 100:
-        raise ValueError("cohort must name consecutive years")
-    return value
-
-
-def unique_sorted(values: tuple) -> tuple:
-    """Canonicalize set-like request fields while refusing duplicates."""
-    if len(values) != len(set(values)):
-        raise ValueError("values must be unique")
-    return tuple(sorted(values))
-
-
-Cohort = Annotated[StrictStr, StringConstraints(pattern=r"^\d{4}-\d{2}$"), AfterValidator(check_cohort)]
-Dimensions = Annotated[tuple[Dimension, ...], Field(max_length=2), AfterValidator(unique_sorted)]
 Dependencies = Annotated[tuple[Identifier, ...], Field(max_length=3), AfterValidator(unique_sorted)]
-
-
-class Contract(BaseModel):
-    """Reject unknown properties and freeze all nested typed records."""
-
-    model_config = ConfigDict(extra="forbid", frozen=True, allow_inf_nan=False, revalidate_instances="always")
-
-
-class Filters(Contract):
-    """Expose exactly the eight categorical dimensions of the existing HTTP cohort bar."""
-
-    cohort_term: Literal["Fall", "Winter", "Spring", "Summer", "UNKNOWN"] | None = None
-    enrollment_intensity: Literal["Full-time", "Part-time", "UNKNOWN"] | None = None
-    enrollment_type: Literal["First-time", "Re-admit", "Transfer-in", "UNKNOWN"] | None = None
-    pell: Literal["Y", "N", "UNKNOWN"] | None = None
-    gender: Literal["M", "F", "P", "X", "UNKNOWN"] | None = None
-    race: Literal["White", "Hispanic", "American Indian or Alaska Native", "Native Hawaiian or Other Pacific Islander", "Two or More Races", "Black or African American", "Nonresident alien", "Asian", "UNKNOWN"] | None = None
-    ethnicity: Literal["H", "N", "UNKNOWN"] | None = None
-    age_band: Literal["20 and younger", "> 20-24", "Older than 24", "UNKNOWN"] | None = None
-
-
-class Scope(Contract):
-    """Identify a cohort and explicit categorical filters."""
-
-    cohort: Cohort
-    filters: Filters = Field(default_factory=Filters)
-
-
-class RateParameters(Scope):
-    """Permit only supported categorical scalar breakdowns."""
-
-    group_by: Dimensions = ()
-
-
-class RetentionParameters(RateParameters):
-    """Require a resolved retention definition rather than silently choosing one."""
-
-    retention_type: RetentionType
-
-
-class RetentionScope(Scope):
-    """Name the retention definition for a fixed page breakdown."""
-
-    retention_type: RetentionType
-
-
-class CourseParameters(Scope):
-    """Require a concrete course for the fixed DFW detail breakdown."""
-
-    course: Text
-
-
-class PathsParameters(RetentionScope):
-    """Preserve the page's bounded term horizon and single optional grouping."""
-
-    terms: Annotated[StrictInt, Field(ge=2, le=6)] = 3
-    group_by: Dimension | None = None
 
 
 class GraduationParameters(Contract):
@@ -348,22 +290,66 @@ class CountPayload(Contract):
     unit: Text
 
 
-class RatePayload(Contract):
+class DfwSplit(Contract):
+    """Keep the owner's three grade counts immutable and separate from student counts."""
+
+    D: Count
+    F: Count
+    W: Count
+
+
+class RateValues(Contract):
     """Validate executed rates while allowing fractional student-ratio numerators."""
 
-    kind: Literal["rate"]
     numerator: Annotated[Number, Field(ge=0)]
     denominator: Annotated[Number, Field(gt=0)]
     value: Annotated[Number, Field(ge=0, le=1)]
     numerator_unit: Text
     denominator_unit: Text
     precision: Precision = 4
+    n_students: Count | None = None
+    n_excluded: Count | None = None
+    n_out_of_scope: Count | None = None
+    split: DfwSplit | None = None
 
     @model_validator(mode="after")
     def agrees(self):
         """Reject numerical values inconsistent with the disclosed formula inputs."""
         if self.numerator > self.denominator or self.value != round(self.numerator / self.denominator, self.precision):
             raise ValueError("rate must agree with numerator / denominator")
+        if self.split is not None and sum(self.split.model_dump().values()) != self.numerator:
+            raise ValueError("DFW split must agree with the numerator")
+        return self
+
+
+class VisibleRateBreakdown(RateValues):
+    """Preserve an existing visible categorical row with its own denominator and exclusions."""
+
+    status: Literal["ok", "provisional"]
+    group: Filters
+    exclusions: Annotated[tuple[Exclusion, ...], Field(max_length=32)] = ()
+
+
+class HiddenRateBreakdown(Contract):
+    """Name a categorical group without exposing any of its hidden numerical inputs."""
+
+    status: HiddenStatus
+    reason: HiddenReason
+    group: Filters
+
+
+class RatePayload(RateValues):
+    """Carry an overall rate and the explicitly requested categorical breakdown rows."""
+
+    kind: Literal["rate"]
+    breakdowns: Annotated[tuple[Annotated[Union[VisibleRateBreakdown, HiddenRateBreakdown], Field(discriminator="status")], ...], Field(max_length=200)] = ()
+
+    @model_validator(mode="after")
+    def unique_groups(self):
+        """Require distinct nonempty categorical groups rather than duplicating the overall rate."""
+        groups = [tuple(sorted(row.group.model_dump(exclude_none=True).items())) for row in self.breakdowns]
+        if any(not group for group in groups) or len(groups) != len(set(groups)):
+            raise ValueError("breakdowns require unique nonempty groups")
         return self
 
 
@@ -574,6 +560,11 @@ class Receipt(Contract):
             raise ValueError("completion precedes execution start")
         if isinstance(self.result, VisibleResult) and self.result.payload.kind != RESULT_KINDS[self.operation_id]:
             raise ValueError("result payload kind differs from the requested operation")
+        if isinstance(self.result, VisibleResult) and isinstance(self.result.payload, RatePayload):
+            requested = set(getattr(self.request.parameters, "group_by", ()))
+            for row in self.result.payload.breakdowns:
+                if set(row.group.model_dump(exclude_none=True)) != requested:
+                    raise ValueError("rate breakdown scope differs from the requested grouping")
         feature_ids = [v.id for v in self.versions.features]
         if len(feature_ids) != len(set(feature_ids)):
             raise ValueError("feature versions must be unique")

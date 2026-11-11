@@ -9,9 +9,14 @@ from dataclasses import dataclass, field
 
 from api import data
 from api.data import COHORTS, DEFAULT_COHORT
-from measures.breakdowns.common import STUDENT_DIMENSIONS, filter_options
+from measures.breakdowns.common import filter_options
+from measures.requests import (
+    FILTER_DIMENSIONS as FILTER_DIMENSIONS, FILTER_NAMES as FILTER_NAMES,
+    RETENTION_MEASURES, InvalidFilter as InvalidFilter,
+    validate_cohort, validate_filters, validate_retention_type,
+)
 from measures.models import (
-    ALLOWED_VALUES,
+    ALLOWED_VALUES as ALLOWED_VALUES,
     SUPPRESSION_THRESHOLD,
     Group,
     GroupDimension,
@@ -19,8 +24,6 @@ from measures.models import (
 )
 
 # The cohort bar's filters after the cohort year, in the bar's order. /measures/{measure} groups by the same list.
-FILTER_DIMENSIONS = STUDENT_DIMENSIONS
-FILTER_NAMES = tuple(dimension.value for dimension in FILTER_DIMENSIONS)
 FILTER_LABELS = {
     "cohort_term": "Starting term",
     "enrollment_intensity": "Full or part time",
@@ -32,14 +35,9 @@ FILTER_LABELS = {
     "age_band": "Age",
 }
 # school: the PDP retention flag. federal: fall to fall. Each is its own measure.
-RETENTION_MEASURES = {"school": Measure.RETENTION, "federal": Measure.FEDERAL_RETENTION}
 RETENTION_TYPES = tuple(RETENTION_MEASURES)
 DEFAULT_RETENTION_TYPE = "school"
 MIN_STUDENTS = SUPPRESSION_THRESHOLD
-
-
-class InvalidFilter(ValueError):
-    """A cohort, filter or retention type the Explorer doesn't offer."""
 
 
 @dataclass(frozen=True)
@@ -51,15 +49,10 @@ class CohortQuery:
     retention_type: str = DEFAULT_RETENTION_TYPE
 
     def __post_init__(self) -> None:
-        if self.cohort not in COHORTS:
-            raise InvalidFilter(f"Cohort has no value {self.cohort!r}.")
-        if self.retention_type not in RETENTION_TYPES:
-            raise InvalidFilter(f"retention_type has no value {self.retention_type!r}. Use school or federal.")
-        for name, value in self.filters:
-            if name not in FILTER_NAMES:
-                raise InvalidFilter(f"There is no filter called {name!r}.")
-            if value not in ALLOWED_VALUES[GroupDimension(name)]:
-                raise InvalidFilter(f"{name} has no value {value!r}.")
+        """Apply the domain validators while retaining the API's configured cohort set."""
+        validate_cohort(self.cohort, COHORTS)
+        validate_retention_type(self.retention_type)
+        validate_filters(self.filters)
 
     @classmethod
     def of(cls, cohort: str = DEFAULT_COHORT, retention_type: str = DEFAULT_RETENTION_TYPE, **filters: str | None) -> CohortQuery:
