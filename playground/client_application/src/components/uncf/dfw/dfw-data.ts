@@ -1,15 +1,26 @@
-import type { ExplorerMeta } from "@/components/uncf/layout/explorer-api";
+import type { ExplorerMeta, GradeScale } from "@/components/uncf/layout/explorer-api";
 import { cohortFilters } from "@/components/uncf/layout/explorer-config";
 
-/** The D, F and W grades among a set of final grades, and each one's share of them, from the API. */
+/** The grades that count as a DFW, in the order the API sends and the page shows them. Every D letter is a D; a C- passes. */
+export const dfwGrades = ["D", "F", "W"] as const;
+export type DfwGrade = (typeof dfwGrades)[number];
+
+/** D, F and W among a set of final grades, and each one's share of them, from the API. */
 export type DfwSplit = {
-  D: number;
-  F: number;
-  W: number;
+  grades: Record<DfwGrade, number>;
+  /** The D and F grades together. */
   DF: number;
+  W: number;
   /** Final grades. */
   total: number;
-  shares: { D: number; F: number; W: number };
+  shares: Record<DfwGrade, number>;
+};
+
+/** Each DFW grade's label and color: D lighter than F, grey for a withdrawal. */
+export const dfwGradeStyles: Record<DfwGrade, { label: string; color: string }> = {
+  D: { label: "D", color: "var(--uncf-d)" },
+  F: { label: "F", color: "var(--uncf-f)" },
+  W: { label: "W", color: "var(--uncf-grey)" },
 };
 
 /** D-or-F, W and pass counts for a set of final grades. Every number is null under meta.min_students. */
@@ -35,9 +46,12 @@ export type DfwCourseSummary = DfwTally & {
   split: DfwSplit;
 };
 
+/** The meta of a DFW answer: what every page says, plus the grade scale the numbers used. */
+export type DfwMeta = ExplorerMeta & { grade_scale: GradeScale };
+
 /** The answer from GET /uncf/dfw (measures/breakdowns/dfw_courses.py). */
 export type DfwList = {
-  meta: ExplorerMeta;
+  meta: DfwMeta;
   status: "ok" | "suppressed";
   everyone: DfwTally;
   courses: DfwCourseSummary[];
@@ -55,7 +69,7 @@ export type DfwPart = DfwTally & {
 
 /** The answer from GET /uncf/dfw/course: one course split by term, delivery method and student group. */
 export type DfwCourseDetail = DfwTally & {
-  meta: ExplorerMeta;
+  meta: DfwMeta;
   course: string;
   names: { top: string[]; distinct: number };
   terms: DfwPart[];
@@ -128,7 +142,7 @@ export function groupRows(detail: DfwCourseDetail, dimension: string): GroupComp
   }));
 }
 
-/** The share of final grades that were a D or an F (the design shows them together; the API sends them apart). */
+/** The share of final grades that were a D or an F (the D or F tile; the API sends them apart). */
 export function dfShare(split: DfwSplit): number {
   return split.shares.D + split.shares.F;
 }

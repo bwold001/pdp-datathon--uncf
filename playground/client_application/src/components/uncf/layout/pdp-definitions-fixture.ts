@@ -76,7 +76,7 @@ export const pdpDefinitions: DefinitionsResponse = {
       "how": "D, F and W grades, out of every final grade the entering class got here, in any term.",
       "who": "Every final grade of the students who entered that year. One student finishing one course counts once.",
       "limits": [
-        "F is an F or a numeric grade under 0.7. D is 0.7 to under 2.0, so a C minus counts. W is a withdrawal.",
+        "D is any grade from 0.7 to under 1.7 (D-, D or D+). F is the code F or any grade under 0.7. W is a withdrawal. A C- (1.7) passes.",
         "Incomplete, audit, missing and other grades aren't final, so they are left out.",
         "A course or group with fewer than 10 students is hidden."
       ]

@@ -120,12 +120,11 @@ class Retention(BaseModel):
 
 
 class DfwSplit(BaseModel):
-    """D, F and W apart, their sum D or F (DF), every final grade (total), and each share of the total."""
+    """D, F and W apart (grades; every D letter is a D), D and F together (DF), W, every final grade, and shares."""
 
-    D: int
-    F: int
-    W: int
+    grades: dict[str, int]
     DF: int
+    W: int
     total: int
     shares: dict[str, float | None]
 

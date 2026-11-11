@@ -24,11 +24,13 @@ needs_data = pytest.mark.skipif(not DEFAULT_DATABASE.exists(), reason="the norma
 
 @pytest.mark.parametrize(
     ("grade", "result"),
-    [("F", "F"), ("0", "F"), ("0.69", "F"), ("0.7", "D"), ("1.99", "D"), ("2.0", "pass"), ("4", "pass"), ("P", "pass"),
-     ("W", "W"), (" w ", "W"), ("I", None), ("A", None), ("UNKNOWN", None), (None, None), ("UW", None)],
+    [("F", "F"), ("0", "F"), ("0.3", "F"), ("0.69", "F"), ("0.7", "D-"), ("0.99", "D-"), ("1", "D"), ("1.3", "D+"),
+     ("1.5", "D+"), ("1.69", "D+"), ("1.7", "C-"), ("1.99", "C-"), ("2.0", "C"), ("2.5", "C+"), ("3.6", "B+"),
+     ("3.67", "B+"), ("4", "A"), ("4.00", "A"), ("P", "P"), ("W", "W"), (" w ", "W"), ("I", None), ("A", None),
+     ("UNKNOWN", None), (None, None), ("UW", None)],
 )
-def test_grade_result_splits_d_f_and_w(grade, result):
-    """F is an F or under 0.7, D is 0.7 to under 2.0, W is a W; grades that aren't final are None."""
+def test_grade_result_gives_each_grade_its_letter(grade, result):
+    """A number takes the highest letter it reaches (1.5 is a D+), under 0.7 is an F; grades that aren't final are None."""
     assert grade_result(grade) == result
 
 
@@ -81,10 +83,11 @@ def test_federal_retention_waits_for_the_next_fall(tmp_path):
     assert row.status == Status.NOT_YET_OBSERVABLE
 
 
-def test_dfw_rows_split_d_f_and_w(database):
+def test_dfw_rows_split_each_dfw_grade(database):
     """D, F and W add up to the DFW numerator, and the term and delivery groups add up to everyone."""
     rows = run_measure(Measure.DFW_RATE, [Cohort.of("2022-23")], [GroupBy.of(GroupDimension.TERM), GroupBy.of(GroupDimension.DELIVERY)], database=database)
     total = rows[0]
+    # The fixture's 1.5s are a D+, so a D; its 0.5s are an F.
     assert total.split == {"D": 3, "F": 3, "W": 3}
     assert (total.numerator, total.denominator, total.n_students) == (9, 35, 24)
     terms = {r.group.label: r.denominator for r in rows[1:] if r.group.parts and next(iter(r.group.parts)).dimension == GroupDimension.TERM}
@@ -110,13 +113,15 @@ def test_read_answers_match_run_measure(database):
 @pytest.mark.slow
 @needs_data
 def test_known_answers_on_the_real_data():
-    """Synthetic data: retention 2022-23 school 1,414/2,617, federal 926/2,617; DFW 2023-24 608 D, 2,262 F, 1,477 W."""
+    """Synthetic data: retention 2022-23 school 1,414/2,617, federal 926/2,617; DFW 2023-24 4,287 of 18,883."""
     school = run_measure(Measure.RETENTION, [Cohort.of("2022-23")])[0]
     federal = run_measure(Measure.FEDERAL_RETENTION, [Cohort.of("2022-23")])[0]
     dfw = run_measure(Measure.DFW_RATE, [Cohort.of("2023-24")])[0]
     assert (school.numerator, school.denominator) == (1414, 2617)
     assert (federal.numerator, federal.denominator) == (926, 2617)
-    assert (dfw.numerator, dfw.denominator, dfw.split) == (4347, 18883, {"D": 608, "F": 2262, "W": 1477})
+    # A C- passes, so the 60 C- grades that counted under the old 2.0 line (4,347) don't.
+    assert (dfw.numerator, dfw.denominator) == (4287, 18883)
+    assert dfw.split == {"D": 548, "F": 2262, "W": 1477}  # D: 38 D+, 486 D and 24 D-
 
 
 @pytest.mark.slow

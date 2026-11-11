@@ -14,7 +14,7 @@ export default function DfwPage() {
         title="DFW"
         whatThisShows="Every time a student finishes a course with a final grade, it counts once. This page shows how often that grade was a D, F or W, and in which courses."
         howToRead="Pick a course on the left. On the right, each student group in that course is compared with everyone else in the same course."
-        keyTerms="DFW rate: the share of final grades that were a D, F or W. Anything below a C counts, including a C minus. W: the student withdrew."
+        keyTerms="DFW rate: the share of final grades that were a D, F or W. A D is any D (D+, D or D-); a C minus passes. W: the student withdrew."
       >
         Which courses students don’t pass, and which students that hits hardest. Students who entered in the selected
         cohort, in every term they took courses.
