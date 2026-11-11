@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { Card, Counted, Legend, MessageCard, Notice, TrackBar, formatCount, formatShare, retentionWords } from "@/components/uncf/layout/explorer-parts";
+import { ShareInsightButton } from "@/components/uncf/layout/share-insight-button";
 import { hiddenCount, privacyNote, tooFew } from "@/components/uncf/layout/small-groups";
 import { routes } from "@/lib/routes";
 import { cn } from "@/lib/utils";
@@ -109,10 +110,15 @@ export function ProgressIntro({ data }: { data?: CreditsResponse }) {
   const which = !data ? null : first && first !== "First term" ? `class that started ${first}` : `class that entered in ${data.meta.cohort}`;
   return (
     <div className="flex flex-col gap-3">
-      <span className="text-sm font-semibold text-(--uncf-ink-3)">Credit momentum · year 1{which ? ` · ${which}` : ""}</span>
-      <h2 className="text-[28px] font-semibold tracking-[-0.01em] text-balance md:text-[32px]">
-        Are students making meaningful progress toward their degree?
-      </h2>
+      <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:gap-8">
+        <div className="flex flex-col gap-3">
+          <span className="text-sm font-semibold text-(--uncf-ink-3)">Credit momentum · year 1{which ? ` · ${which}` : ""}</span>
+          <h2 className="text-[28px] font-semibold tracking-[-0.01em] text-balance md:text-[32px]">
+            Are students making meaningful progress toward their degree?
+          </h2>
+        </div>
+        <ShareInsightButton name="Credit momentum" />
+      </div>
       {settings && (
         <div className="flex flex-wrap gap-2 text-sm">
           <span className="rounded-full border border-(--uncf-line) bg-(--uncf-surface) px-3 py-1.5">

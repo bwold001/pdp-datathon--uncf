@@ -2,9 +2,8 @@ import { cn } from "@/lib/utils";
 
 import { explorerHeader } from "./explorer-config";
 import { explorerWrap } from "./explorer-styles";
-import { ShareInsightButton } from "./share-insight-button";
 
-/** The white bar at the top: the Explorer's name, its data source, the sample-data badge and Share Insight. */
+/** The white bar at the top: the Explorer's name, its data source and the sample-data badge. */
 export function ExplorerHeader() {
   return (
     <header className="bg-(--uncf-surface)">
@@ -17,8 +16,6 @@ export function ExplorerHeader() {
         <span className="rounded-full bg-(--uncf-warn-bg) px-3 py-0.75 text-[13px] font-semibold text-(--uncf-orange-ink)">
           {explorerHeader.sampleBadge}
         </span>
-        <span className="flex-1" />
-        <ShareInsightButton />
       </div>
     </header>
   );

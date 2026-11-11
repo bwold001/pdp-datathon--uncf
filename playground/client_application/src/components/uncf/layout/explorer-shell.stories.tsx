@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { expect, spyOn, waitFor } from "storybook/test";
 
 import { ExplorerShell } from "./explorer-shell";
+import { ViewIntro } from "./view-intro";
 
 const meta = {
   component: ExplorerShell,
@@ -94,27 +95,29 @@ export const RendersTheTab: Story = {
   },
 };
 
-/** Share Insight draws the tab and hands the browser a PDF to download. */
+/** Share Insight, beside the tab's title, draws the tab and hands the browser a PDF to download. */
 export const SharesTheTabAsAPdf: Story = {
   name: "Shares the tab as a PDF",
+  args: {
+    children: (
+      <ViewIntro title="DFW" whatThisShows="Grades of D, F or W." howToRead="Longer bars, more students." keyTerms="DFW rate.">
+        Where students struggle.
+      </ViewIntro>
+    ),
+  },
   play: async ({ canvas, userEvent }) => {
+    const button = canvas.getByRole("button", { name: "Share Insight" });
+    await expect(canvas.getByRole("main")).toContainElement(button);
+    await expect(canvas.getByRole("banner")).not.toContainElement(button);
+
     const createObjectURL = spyOn(URL, "createObjectURL");
     try {
-      await userEvent.click(canvas.getByRole("button", { name: "Share Insight" }));
+      await userEvent.click(button);
       await waitFor(() => expect(createObjectURL).toHaveBeenCalled(), { timeout: 15000 });
       await expect((createObjectURL.mock.calls[0][0] as Blob).type).toBe("application/pdf");
       await expect(canvas.getByRole("button", { name: "Share Insight" })).toBeEnabled();
     } finally {
       createObjectURL.mockRestore();
     }
-  },
-};
-
-/** Chat has no Share Insight: its messages scroll inside a box. */
-export const NoShareInsightOnChat: Story = {
-  name: "No Share Insight on Chat",
-  parameters: { nextjs: { appDirectory: true, navigation: { pathname: "/uncf/chat" } } },
-  play: async ({ canvas }) => {
-    await expect(canvas.queryByRole("button", { name: "Share Insight" })).not.toBeInTheDocument();
   },
 };
