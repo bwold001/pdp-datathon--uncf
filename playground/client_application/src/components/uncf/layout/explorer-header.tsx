@@ -22,7 +22,7 @@ export function ExplorerHeader() {
 }
 
 /** The blue square logo from the design. */
-function ExplorerMark() {
+export function ExplorerMark() {
   return (
     <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden className="shrink-0">
       <rect width="34" height="34" rx="7" fill="var(--uncf-blue)" />

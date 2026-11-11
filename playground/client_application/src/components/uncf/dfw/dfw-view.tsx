@@ -115,7 +115,7 @@ export function CourseList({ courses, total, sort, minimum, selected, onSelect, 
         subtitle={`Showing ${Math.min(courses.length, total)} of ${fmt(total)} courses with at least ${minimum} final grades`}
         aside={<Legend items={legend} />}
       />
-      <div className="mb-4 flex flex-wrap items-center gap-x-5 gap-y-3 text-sm text-(--uncf-ink-2)">
+      <div data-pdf-skip className="mb-4 flex flex-wrap items-center gap-x-5 gap-y-3 text-sm text-(--uncf-ink-2)">
         <span>Rank by</span>
         <div role="group" aria-label="Rank courses by" className="inline-flex overflow-hidden rounded-md border border-(--uncf-line-2)">
           {(["count", "rate"] as const).map((option) => (
@@ -189,7 +189,7 @@ export function CourseList({ courses, total, sort, minimum, selected, onSelect, 
         </ul>
       )}
       {onMore && (
-        <button type="button" className={cn(explorerButton, "mt-3.5")} onClick={onMore}>
+        <button type="button" data-pdf-skip className={cn(explorerButton, "mt-3.5")} onClick={onMore}>
           Show 10 more
         </button>
       )}
@@ -242,7 +242,8 @@ export function CourseDetail({ detail, dimension, onDimension }: CourseDetailPro
             furthest above everyone else come first.
           </p>
         </div>
-        <div role="group" aria-label="Compare by" className="flex flex-wrap gap-1.5">
+        {/* Left out of a PDF: the rows below name their groups. */}
+        <div role="group" aria-label="Compare by" data-pdf-skip className="flex flex-wrap gap-1.5">
           {dfwDimensions.map((option) => (
             <button
               key={option.id}

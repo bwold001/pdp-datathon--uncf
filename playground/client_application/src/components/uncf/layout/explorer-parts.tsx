@@ -126,6 +126,7 @@ export function MessageCard({ title, children, onRetry }: MessageCardProps) {
       {onRetry && (
         <button
           type="button"
+          data-pdf-skip
           onClick={onRetry}
           className="mt-2 cursor-pointer rounded-md border border-(--uncf-line-2) bg-(--uncf-surface) px-4 py-2 font-medium hover:border-(--uncf-ink-3)"
         >
