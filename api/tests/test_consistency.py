@@ -40,5 +40,5 @@ def test_dfw_page_and_measure_route_agree():
         page = client.get("/api/v1/uncf/dfw", params=params).json()["everyone"]
         row = client.get("/api/v1/uncf/measures/dfw_rate", params=params).json()["rows"][0]
         assert (page["num"], page["den"]) == (row["numerator"], row["denominator"])
-        assert {key: page["split"][key] for key in ("D", "F", "W")} == row["split"]
+        assert page["split"]["grades"] == row["split"]
 

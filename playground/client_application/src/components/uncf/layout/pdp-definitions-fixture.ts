@@ -73,10 +73,10 @@ export const pdpDefinitions: DefinitionsResponse = {
       "name": "DFW rate",
       "pdp_name": "DFW rate",
       "what": "The share of final grades that were a D, an F or a withdrawal.",
-      "how": "D, F and W grades, out of every final grade the entering class got here, in any term.",
+      "how": "D+, D, D-, F and W grades, out of every final grade the entering class got here, in any term.",
       "who": "Every final grade of the students who entered that year. One student finishing one course counts once.",
       "limits": [
-        "F is an F or a numeric grade under 0.7. D is 0.7 to under 2.0, so a C minus counts. W is a withdrawal.",
+        "Grades are letters on a 4.0 scale: a number takes the highest letter it reaches, so 1.5 is a D+. D+, D and D- count, and so does F (the code F or any number under 0.7) and W (a withdrawal). A C- (1.7) passes.",
         "Incomplete, audit, missing and other grades aren't final, so they are left out.",
         "A course or group with fewer than 10 students is hidden."
       ]

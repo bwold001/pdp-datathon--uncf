@@ -112,8 +112,8 @@ api/load.py                builds pdp.sqlite when it's missing
   retention flag) or `federal` (the `federal_retention` measure: took a course here the fall
   after year 1). The rules still open with stakeholders (first time students only, credentials)
   are settings in `measures/calculations/federal_retention.py`.
-- **DFW** rows carry `split`: D (0.7 to under 2.0), F (an F or under 0.7) and W, adding up to the
-  numerator. DFW can also be grouped or filtered by `course`, `term` and `delivery`.
+- **DFW** rows carry `split`: each DFW grade (D+, D, D-, F and W) on the letter scale in
+  `measures/calculations/grades.py`, adding up to the numerator. A C- passes. DFW can also be grouped or filtered by `course`, `term` and `delivery`.
 - **Definitions** come from `measures/definitions.py`. A school's own metric names go in
   `LOCAL_NAMES`, picked with `UNCF_SCHOOL=fmu` or `benedict`.
 
@@ -123,13 +123,13 @@ Every page route and `/measures/{measure}` take the same query values: `cohort`,
 
 | Endpoint | What it returns |
 | --- | --- |
-| `GET /api/v1/uncf/measures/{measure}?cohort=&group_by=` | One measure split by group: the everyone row, then one row per group. `group_by` up to twice. `dfw_rate` rows carry the D, F, W split. No page calls it; it's for chat questions a page doesn't answer, such as a rate by race. The old `GET /results?measure=` URL still answers, hidden from the docs |
+| `GET /api/v1/uncf/measures/{measure}?cohort=&group_by=` | One measure split by group: the everyone row, then one row per group. `group_by` up to twice. `dfw_rate` rows carry the D+, D, D-, F, W split. No page calls it; it's for chat questions a page doesn't answer, such as a rate by race. The old `GET /results?measure=` URL still answers, hidden from the docs |
 | `GET /api/v1/uncf/options` | The measures, classes and groupings `/measures/{measure}` takes |
 | `GET /api/v1/uncf/health` | Whether the data is loaded, and `loaded_at` |
 | `GET /api/v1/uncf/cohort-options?cohort=` | Students per cohort year, and per filter value in the chosen cohort |
 | `GET /api/v1/uncf/definitions` | Every plain language definition |
 | `GET /api/v1/uncf/student-paths?…&terms=&group_by=` | Each student's status term by term (here, credential, elsewhere, stopped) with shares, moves, transfers, retention, and per group paths |
-| `GET /api/v1/uncf/dfw?…` | Everyone's DFW rate with D, F, W, then each course with 10 or more students |
+| `GET /api/v1/uncf/dfw?…` | Everyone's DFW rate with each DFW grade apart, then each course with 10 or more students. `meta.grade_scale` says which grades count |
 | `GET /api/v1/uncf/dfw/course?course=ENG%20101&…` | One course by term, delivery and group, each with `rest_rate` and `gap` against everyone else |
 | `GET /api/v1/uncf/gateway?…` | Each flagged gateway course in year 1: students, passed on the first try and in the end (the PDP's 1.0 line), the path after the first try, retention if passed / not, the filtered group's gap against everyone else, and the course pairs with lower retention |
 | `GET /api/v1/uncf/credit-momentum?…` | Year 1 credits, completion ratio, 12/24/30 milestones, first two terms, credit tiers with retention; `progress`: meaningful progress toward a degree (the 24-credit minimum, 4-year pace, year 1 groups with retention, why students fell below, year 2), settings in `measures/breakdowns/credit_progress.py` |

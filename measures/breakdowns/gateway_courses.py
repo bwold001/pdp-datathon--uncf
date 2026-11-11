@@ -10,7 +10,8 @@ CompletedGatewayMathYear1 and CompletedGatewayEnglishYear1). F and W don't pass.
 
 A try is a term: several rows in one term (duplicate class rows, data finding 9) are one try, passed if any passed.
 Each student's path through a course: passed on the first try, failed and passed on a later try, failed and failed
-again, or failed and didn't retake (all within year 1).
+again, or failed and didn't retake (all within year 1). Each course also lists its grades, one per student per try,
+on the shared letter scale (calculations/grades.py), and the answer carries that scale.
 
 This module only counts. The comparisons (the filtered students against everyone else who took a course, and each
 course pair against everyone else) are the gap finder's job, which sits on top of measures: gap_finder/gateway.py
@@ -23,6 +24,7 @@ from itertools import combinations
 from pathlib import Path
 
 from ..calculations.dfw import grade_result
+from ..calculations.grades import GATEWAY_PASS_AT, GRADE_ORDER, letter_passes_gateway
 from ..models import EVERYONE, Group, Measure
 from ..run_measures import read_answers
 from .common import (
@@ -37,10 +39,9 @@ from .common import (
     shown,
     term_label,
 )
+from .grade_scale import grade_scale
 
 SUBJECTS = ("E", "M")
-# The PDP's gateway pass line: a grade of 1.0 or higher (the DFW measure's line is 2.0).
-GATEWAY_PASS_AT = 1.0
 PATH_STEPS = ("first", "retook_passed", "retook_not", "no_retake")
 
 
@@ -82,6 +83,7 @@ def gateway_courses(cohort: str, filters: Group = EVERYONE, retention_measure: M
         "first_term": first_term,
         "compared": filters != EVERYONE,
         "min_pair_students": MIN_STUDENTS,
+        "grade_scale": grade_scale(),
     }
     if len(students) < MIN_STUDENTS:
         return {"context": context, "status": "suppressed", "students": None, "cohort_retention": None, "courses": [], "hidden_courses": 0, "left_out": None, "pair_counts": [], "pairs_considered": 0}
@@ -102,9 +104,10 @@ def is_first_term(row: dict) -> bool:
     return row["year"] == row["student"]["cohort"] and row["season"] == row["student"]["cohort_term"]
 
 
-def student_tries(rows: list[dict]) -> tuple[dict[str, dict[str, list[bool]]], dict[str, set[str]], dict[str, Counter], dict[str, Counter]]:
-    """Per course and student, a pass or fail per term in order; plus students with no final grade, names and flags."""
+def student_tries(rows: list[dict]) -> tuple[dict[str, dict[str, list[bool]]], dict[str, dict[str, list[str]]], dict[str, set[str]], dict[str, Counter], dict[str, Counter]]:
+    """Per course and student, a pass or fail and a grade per term in order; plus students with no final grade, names and flags."""
     by_term: dict[str, dict[str, dict[int, list[bool]]]] = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
+    letters: dict[str, dict[str, dict[int, list[str]]]] = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
     no_grade: dict[str, set[str]] = defaultdict(set)
     names: dict[str, Counter] = defaultdict(Counter)
     flags: dict[str, Counter] = defaultdict(Counter)
@@ -118,11 +121,27 @@ def student_tries(rows: list[dict]) -> tuple[dict[str, dict[str, list[bool]]], d
             no_grade[course].add(row["student_id"])
         else:
             by_term[course][row["student_id"]][row["sort_order"]].append(passed)
+            letters[course][row["student_id"]][row["sort_order"]].append(grade_result(row["grade"]))
     tries = {
         course: {sid: [any(terms[order]) for order in sorted(terms)] for sid, terms in takers.items()}
         for course, takers in by_term.items()
     }
-    return tries, no_grade, names, flags
+    grades = {
+        course: {sid: [best_grade(terms[order]) for order in sorted(terms)] for sid, terms in takers.items()}
+        for course, takers in letters.items()
+    }
+    return tries, grades, no_grade, names, flags
+
+
+def best_grade(grades: list[str]) -> str:
+    """One term's grade when a class is listed more than once: a passing grade first, then the higher letter."""
+    return min(grades, key=lambda grade: (not letter_passes_gateway(grade), GRADE_ORDER.index(grade)))
+
+
+def grade_counts(grades: dict[str, list[str]]) -> dict[str, int]:
+    """How many tries ended in each grade, for these students, in the scale's order (0 when none did)."""
+    counted = Counter(grade for tries in grades.values() for grade in tries)
+    return {grade: counted[grade] for grade in GRADE_ORDER}
 
 
 def path_counts(tries: dict[str, list[bool]]) -> dict:
@@ -147,7 +166,7 @@ def path_counts(tries: dict[str, list[bool]]) -> dict:
 
 def course_paths(rows: list[dict], students: set[str], compared: bool, answers: dict) -> dict:
     """Each gateway course with 10 or more of the filtered students: their path, retention, and the group gap."""
-    tries, no_grade, names, flags = student_tries(rows)
+    tries, grades, no_grade, names, flags = student_tries(rows)
     courses = []
     hidden = 0
     left_out = 0
@@ -166,6 +185,8 @@ def course_paths(rows: list[dict], students: set[str], compared: bool, answers: 
                 # A course flagged both ways takes the subject most of its grades carry.
                 "subject": flags[course].most_common(1)[0][0],
                 **path_counts(mine),
+                # Every try's grade, one per student per term: all the letters, not just pass or fail.
+                "grades": grade_counts({sid: grades[course][sid] for sid in mine}),
                 "retained_if_passed": retained_share(answers, passed),
                 "retained_if_not_passed": retained_share(answers, set(mine) - passed),
                 # Everyone who took the course, filtered or not: what the API compares the filtered students with.

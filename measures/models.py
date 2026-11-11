@@ -192,7 +192,7 @@ class MeasureResult:
     exclusion_reason: ExclusionReason | None  # the reason with the most students (or enrollments) left out
     note: str
     exclusions: dict[ExclusionReason, int] = field(default_factory=dict)  # students (or enrollments, for DFW) left out, by reason
-    split: dict[str, int] | None = None  # DFW only: how many of the numerator were a D, an F and a W
+    split: dict[str, int] | None = None  # DFW only: how many of the numerator were a D+, D, D-, F and W
     n_students: int | None = None  # distinct students counted (for DFW, a student with several grades counts once)
 
     @property
@@ -246,7 +246,7 @@ class Counts:
     exclusion_reason: ExclusionReason | None = None  # the reason with the most students (or enrollments) left out
     not_yet_observable: bool = False  # a year in the cohort has no answers yet
     exclusions: dict[ExclusionReason, int] = field(default_factory=dict)  # students (or enrollments, for DFW) left out, by reason
-    split: dict[str, int] | None = None  # DFW only: the numerator as D, F and W counts
+    split: dict[str, int] | None = None  # DFW only: the numerator as D+, D, D-, F and W counts
 
 
 def check_unique(results: list[MeasureResult]) -> None:

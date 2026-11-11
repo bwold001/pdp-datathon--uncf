@@ -3,7 +3,7 @@
 Every rate comes from run_measure's dfw_rate (the course, term, delivery and student group splits included), so
 the page, /measures/dfw_rate and the chat agree. This module adds what isn't a rate: each course's catalog names and
 gateway flags, which values exist, and each group next to everyone else in the course. Fewer than 10 students
-is hidden.
+is hidden. Each DFW grade (D+, D, D-, F, W) is counted apart, and every answer carries the grade scale it used.
 """
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ import sqlite3
 from collections import Counter, defaultdict
 from pathlib import Path
 
-from ..calculations.dfw import grade_result
+from ..calculations.dfw import DFW_GRADES, grade_result
 from ..calculations.sql_counts import normalize
 from ..models import (
     ALLOWED_VALUES,
@@ -26,6 +26,7 @@ from ..models import (
 )
 from ..run_measures import run_measure
 from .common import MIN_STUDENTS, check_cohort, connect, select_students, share
+from .grade_scale import grade_scale
 
 # The student groups a course can be split by, besides delivery and the term it was taken.
 GROUP_DIMENSIONS = (
@@ -48,20 +49,22 @@ class UnknownCourse(LookupError):
 
 
 def tally(row: MeasureResult) -> dict:
-    """A dfw_rate row as the page shows it, with D, F and W apart. Every number is None under 10 students."""
+    """A dfw_rate row as the page shows it, with each DFW grade apart. Every number is None under 10 students."""
     if row.numerator is None:
         return {"students": None, "num": None, "den": None, "rate": None, "split": None}
-    split = dict(row.split)
+    grades = {grade: row.split[grade] for grade in DFW_GRADES}
     return {
         "students": row.n_students,
         "num": row.numerator,
         "den": row.denominator,
         "rate": row.metric_rate,
         "split": {
-            **split,
-            "DF": split["D"] + split["F"],
+            "grades": grades,
+            # The D and F grades together, and the withdrawals: the page's two headline tiles.
+            "DF": sum(count for grade, count in grades.items() if grade != "W"),
+            "W": grades["W"],
             "total": row.denominator,
-            "shares": {key: share(value, row.denominator) for key, value in split.items()},
+            "shares": {grade: share(count, row.denominator) for grade, count in grades.items()},
         },
     }
 
@@ -117,7 +120,7 @@ def dfw_courses(cohort: str, filters: Group = EVERYONE, database: str | Path | N
     courses.sort(key=lambda c: (-c["num"], -c["rate"], c["course"]))
     shown_any = everyone["den"] is not None
     return {
-        "context": {},
+        "context": {"grade_scale": grade_scale()},
         "status": "ok" if shown_any else "suppressed",
         "everyone": everyone,
         "courses": courses if shown_any else [],
@@ -177,7 +180,7 @@ def dfw_course(cohort: str, course: str, filters: Group = EVERYONE, database: st
         return parts
 
     return {
-        "context": {},
+        "context": {"grade_scale": grade_scale()},
         "course": code,
         "names": names_of(fact),
         **numbers,

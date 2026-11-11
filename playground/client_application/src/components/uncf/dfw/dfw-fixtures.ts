@@ -13,22 +13,118 @@ export const dfwList2023: DfwList = {
     "provisional": false,
     "min_students": 10,
     "source": "PDP analysis-ready cohort and course files (synthetic sample)",
-    "loaded_at": "2026-11-10T06:18:59"
+    "loaded_at": "2026-11-07T17:01:14",
+    "grade_scale": {
+      "grades": [
+        {
+          "grade": "A",
+          "points": "4.0",
+          "dfw": false,
+          "gateway_pass": true
+        },
+        {
+          "grade": "A-",
+          "points": "3.7 to under 4.0",
+          "dfw": false,
+          "gateway_pass": true
+        },
+        {
+          "grade": "B+",
+          "points": "3.3 to under 3.7",
+          "dfw": false,
+          "gateway_pass": true
+        },
+        {
+          "grade": "B",
+          "points": "3.0 to under 3.3",
+          "dfw": false,
+          "gateway_pass": true
+        },
+        {
+          "grade": "B-",
+          "points": "2.7 to under 3.0",
+          "dfw": false,
+          "gateway_pass": true
+        },
+        {
+          "grade": "C+",
+          "points": "2.3 to under 2.7",
+          "dfw": false,
+          "gateway_pass": true
+        },
+        {
+          "grade": "C",
+          "points": "2.0 to under 2.3",
+          "dfw": false,
+          "gateway_pass": true
+        },
+        {
+          "grade": "C-",
+          "points": "1.7 to under 2.0",
+          "dfw": false,
+          "gateway_pass": true
+        },
+        {
+          "grade": "D+",
+          "points": "1.3 to under 1.7",
+          "dfw": true,
+          "gateway_pass": true
+        },
+        {
+          "grade": "D",
+          "points": "1.0 to under 1.3",
+          "dfw": true,
+          "gateway_pass": true
+        },
+        {
+          "grade": "D-",
+          "points": "0.7 to under 1.0",
+          "dfw": true,
+          "gateway_pass": false
+        },
+        {
+          "grade": "F",
+          "points": "under 0.7, or the code F",
+          "dfw": true,
+          "gateway_pass": false
+        },
+        {
+          "grade": "P",
+          "points": "the code P (pass)",
+          "dfw": false,
+          "gateway_pass": true
+        },
+        {
+          "grade": "W",
+          "points": "the code W (withdrew)",
+          "dfw": true,
+          "gateway_pass": false
+        }
+      ],
+      "left_out": "I (incomplete), A (audit), M or MIS (missing), O or OTH (other), and any code the PDP dictionary doesn't list, such as UW, aren't final grades, so neither page counts them."
+    }
   },
   "status": "ok",
   "everyone": {
     "students": 2332,
-    "num": 4347,
+    "num": 4287,
     "den": 18883,
-    "rate": 0.2302,
+    "rate": 0.227,
     "split": {
-      "D": 608,
-      "F": 2262,
+      "grades": {
+        "D+": 38,
+        "D": 486,
+        "D-": 24,
+        "F": 2262,
+        "W": 1477
+      },
+      "DF": 2810,
       "W": 1477,
-      "DF": 2870,
       "total": 18883,
       "shares": {
-        "D": 0.0322,
+        "D+": 0.002,
+        "D": 0.0257,
+        "D-": 0.0013,
         "F": 0.1198,
         "W": 0.0782
       }
@@ -37,17 +133,24 @@ export const dfwList2023: DfwList = {
   "courses": [
     {
       "students": 439,
-      "num": 135,
+      "num": 133,
       "den": 492,
-      "rate": 0.2744,
+      "rate": 0.2703,
       "split": {
-        "D": 19,
-        "F": 69,
+        "grades": {
+          "D+": 2,
+          "D": 14,
+          "D-": 1,
+          "F": 69,
+          "W": 47
+        },
+        "DF": 86,
         "W": 47,
-        "DF": 88,
         "total": 492,
         "shares": {
-          "D": 0.0386,
+          "D+": 0.0041,
+          "D": 0.0285,
+          "D-": 0.002,
           "F": 0.1402,
           "W": 0.0955
         }
@@ -68,17 +171,24 @@ export const dfwList2023: DfwList = {
     },
     {
       "students": 310,
-      "num": 79,
+      "num": 76,
       "den": 347,
-      "rate": 0.2277,
+      "rate": 0.219,
       "split": {
-        "D": 15,
-        "F": 34,
+        "grades": {
+          "D+": 0,
+          "D": 10,
+          "D-": 2,
+          "F": 34,
+          "W": 30
+        },
+        "DF": 46,
         "W": 30,
-        "DF": 49,
         "total": 347,
         "shares": {
-          "D": 0.0432,
+          "D+": 0.0,
+          "D": 0.0288,
+          "D-": 0.0058,
           "F": 0.098,
           "W": 0.0865
         }
@@ -103,13 +213,20 @@ export const dfwList2023: DfwList = {
       "den": 210,
       "rate": 0.3476,
       "split": {
-        "D": 7,
-        "F": 40,
-        "W": 26,
+        "grades": {
+          "D+": 0,
+          "D": 7,
+          "D-": 0,
+          "F": 40,
+          "W": 26
+        },
         "DF": 47,
+        "W": 26,
         "total": 210,
         "shares": {
+          "D+": 0.0,
           "D": 0.0333,
+          "D-": 0.0,
           "F": 0.1905,
           "W": 0.1238
         }
@@ -128,18 +245,61 @@ export const dfwList2023: DfwList = {
       }
     },
     {
-      "students": 127,
-      "num": 50,
-      "den": 131,
-      "rate": 0.3817,
+      "students": 76,
+      "num": 49,
+      "den": 103,
+      "rate": 0.4757,
       "split": {
-        "D": 5,
-        "F": 32,
+        "grades": {
+          "D+": 0,
+          "D": 0,
+          "D-": 0,
+          "F": 29,
+          "W": 20
+        },
+        "DF": 29,
+        "W": 20,
+        "total": 103,
+        "shares": {
+          "D+": 0.0,
+          "D": 0.0,
+          "D-": 0.0,
+          "F": 0.2816,
+          "W": 0.1942
+        }
+      },
+      "course": "MA 119",
+      "names": {
+        "top": [
+          "COLLEGE ALGEBRA"
+        ],
+        "distinct": 1
+      },
+      "gateway": {
+        "M": 0,
+        "E": 0
+      }
+    },
+    {
+      "students": 127,
+      "num": 49,
+      "den": 131,
+      "rate": 0.374,
+      "split": {
+        "grades": {
+          "D+": 2,
+          "D": 1,
+          "D-": 1,
+          "F": 32,
+          "W": 13
+        },
+        "DF": 36,
         "W": 13,
-        "DF": 37,
         "total": 131,
         "shares": {
-          "D": 0.0382,
+          "D+": 0.0153,
+          "D": 0.0076,
+          "D-": 0.0076,
           "F": 0.2443,
           "W": 0.0992
         }
@@ -159,47 +319,25 @@ export const dfwList2023: DfwList = {
       }
     },
     {
-      "students": 76,
-      "num": 49,
-      "den": 103,
-      "rate": 0.4757,
-      "split": {
-        "D": 0,
-        "F": 29,
-        "W": 20,
-        "DF": 29,
-        "total": 103,
-        "shares": {
-          "D": 0.0,
-          "F": 0.2816,
-          "W": 0.1942
-        }
-      },
-      "course": "MA 119",
-      "names": {
-        "top": [
-          "COLLEGE ALGEBRA"
-        ],
-        "distinct": 1
-      },
-      "gateway": {
-        "M": 0,
-        "E": 0
-      }
-    },
-    {
       "students": 94,
       "num": 44,
       "den": 120,
       "rate": 0.3667,
       "split": {
-        "D": 0,
-        "F": 18,
-        "W": 26,
+        "grades": {
+          "D+": 0,
+          "D": 0,
+          "D-": 0,
+          "F": 18,
+          "W": 26
+        },
         "DF": 18,
+        "W": 26,
         "total": 120,
         "shares": {
+          "D+": 0.0,
           "D": 0.0,
+          "D-": 0.0,
           "F": 0.15,
           "W": 0.2167
         }
@@ -217,18 +355,62 @@ export const dfwList2023: DfwList = {
       }
     },
     {
-      "students": 218,
-      "num": 44,
-      "den": 227,
-      "rate": 0.1938,
+      "students": 119,
+      "num": 43,
+      "den": 130,
+      "rate": 0.3308,
       "split": {
-        "D": 4,
-        "F": 32,
+        "grades": {
+          "D+": 0,
+          "D": 7,
+          "D-": 0,
+          "F": 25,
+          "W": 11
+        },
+        "DF": 32,
+        "W": 11,
+        "total": 130,
+        "shares": {
+          "D+": 0.0,
+          "D": 0.0538,
+          "D-": 0.0,
+          "F": 0.1923,
+          "W": 0.0846
+        }
+      },
+      "course": "PSYC 101",
+      "names": {
+        "top": [
+          "GENERAL PSYCHOLOGY",
+          "PSYCHOLOGY"
+        ],
+        "distinct": 2
+      },
+      "gateway": {
+        "M": 0,
+        "E": 0
+      }
+    },
+    {
+      "students": 218,
+      "num": 42,
+      "den": 227,
+      "rate": 0.185,
+      "split": {
+        "grades": {
+          "D+": 1,
+          "D": 1,
+          "D-": 0,
+          "F": 32,
+          "W": 8
+        },
+        "DF": 34,
         "W": 8,
-        "DF": 36,
         "total": 227,
         "shares": {
-          "D": 0.0176,
+          "D+": 0.0044,
+          "D": 0.0044,
+          "D-": 0.0,
           "F": 0.141,
           "W": 0.0352
         }
@@ -248,48 +430,25 @@ export const dfwList2023: DfwList = {
       }
     },
     {
-      "students": 119,
-      "num": 43,
-      "den": 130,
-      "rate": 0.3308,
-      "split": {
-        "D": 7,
-        "F": 25,
-        "W": 11,
-        "DF": 32,
-        "total": 130,
-        "shares": {
-          "D": 0.0538,
-          "F": 0.1923,
-          "W": 0.0846
-        }
-      },
-      "course": "PSYC 101",
-      "names": {
-        "top": [
-          "GENERAL PSYCHOLOGY",
-          "PSYCHOLOGY"
-        ],
-        "distinct": 2
-      },
-      "gateway": {
-        "M": 0,
-        "E": 0
-      }
-    },
-    {
       "students": 106,
       "num": 34,
       "den": 118,
       "rate": 0.2881,
       "split": {
-        "D": 0,
-        "F": 23,
-        "W": 11,
+        "grades": {
+          "D+": 0,
+          "D": 0,
+          "D-": 0,
+          "F": 23,
+          "W": 11
+        },
         "DF": 23,
+        "W": 11,
         "total": 118,
         "shares": {
+          "D+": 0.0,
           "D": 0.0,
+          "D-": 0.0,
           "F": 0.1949,
           "W": 0.0932
         }
@@ -308,49 +467,25 @@ export const dfwList2023: DfwList = {
       }
     },
     {
-      "students": 66,
-      "num": 33,
-      "den": 75,
-      "rate": 0.44,
-      "split": {
-        "D": 7,
-        "F": 18,
-        "W": 8,
-        "DF": 25,
-        "total": 75,
-        "shares": {
-          "D": 0.0933,
-          "F": 0.24,
-          "W": 0.1067
-        }
-      },
-      "course": "ENG 100",
-      "names": {
-        "top": [
-          "ENG-100",
-          "ENGLISH COMPOSITION SUPPORT",
-          "COMPOSITION SKILLS"
-        ],
-        "distinct": 3
-      },
-      "gateway": {
-        "M": 0,
-        "E": 0
-      }
-    },
-    {
       "students": 44,
       "num": 32,
       "den": 64,
       "rate": 0.5,
       "split": {
-        "D": 2,
-        "F": 20,
-        "W": 10,
+        "grades": {
+          "D+": 0,
+          "D": 2,
+          "D-": 0,
+          "F": 20,
+          "W": 10
+        },
         "DF": 22,
+        "W": 10,
         "total": 64,
         "shares": {
+          "D+": 0.0,
           "D": 0.0312,
+          "D-": 0.0,
           "F": 0.3125,
           "W": 0.1562
         }
@@ -373,13 +508,20 @@ export const dfwList2023: DfwList = {
       "den": 120,
       "rate": 0.2667,
       "split": {
-        "D": 0,
-        "F": 32,
-        "W": 0,
+        "grades": {
+          "D+": 0,
+          "D": 0,
+          "D-": 0,
+          "F": 32,
+          "W": 0
+        },
         "DF": 32,
+        "W": 0,
         "total": 120,
         "shares": {
+          "D+": 0.0,
           "D": 0.0,
+          "D-": 0.0,
           "F": 0.2667,
           "W": 0.0
         }
@@ -398,18 +540,63 @@ export const dfwList2023: DfwList = {
       }
     },
     {
+      "students": 66,
+      "num": 28,
+      "den": 75,
+      "rate": 0.3733,
+      "split": {
+        "grades": {
+          "D+": 0,
+          "D": 1,
+          "D-": 1,
+          "F": 18,
+          "W": 8
+        },
+        "DF": 20,
+        "W": 8,
+        "total": 75,
+        "shares": {
+          "D+": 0.0,
+          "D": 0.0133,
+          "D-": 0.0133,
+          "F": 0.24,
+          "W": 0.1067
+        }
+      },
+      "course": "ENG 100",
+      "names": {
+        "top": [
+          "ENG-100",
+          "ENGLISH COMPOSITION SUPPORT",
+          "COMPOSITION SKILLS"
+        ],
+        "distinct": 3
+      },
+      "gateway": {
+        "M": 0,
+        "E": 0
+      }
+    },
+    {
       "students": 116,
       "num": 28,
       "den": 122,
       "rate": 0.2295,
       "split": {
-        "D": 3,
-        "F": 20,
-        "W": 5,
+        "grades": {
+          "D+": 2,
+          "D": 1,
+          "D-": 0,
+          "F": 20,
+          "W": 5
+        },
         "DF": 23,
+        "W": 5,
         "total": 122,
         "shares": {
-          "D": 0.0246,
+          "D+": 0.0164,
+          "D": 0.0082,
+          "D-": 0.0,
           "F": 0.1639,
           "W": 0.041
         }
@@ -434,13 +621,20 @@ export const dfwList2023: DfwList = {
       "den": 97,
       "rate": 0.268,
       "split": {
-        "D": 0,
-        "F": 14,
-        "W": 12,
+        "grades": {
+          "D+": 0,
+          "D": 0,
+          "D-": 0,
+          "F": 14,
+          "W": 12
+        },
         "DF": 14,
+        "W": 12,
         "total": 97,
         "shares": {
+          "D+": 0.0,
           "D": 0.0,
+          "D-": 0.0,
           "F": 0.1443,
           "W": 0.1237
         }
@@ -463,13 +657,20 @@ export const dfwList2023: DfwList = {
       "den": 80,
       "rate": 0.3125,
       "split": {
-        "D": 2,
-        "F": 18,
-        "W": 5,
+        "grades": {
+          "D+": 0,
+          "D": 1,
+          "D-": 1,
+          "F": 18,
+          "W": 5
+        },
         "DF": 20,
+        "W": 5,
         "total": 80,
         "shares": {
-          "D": 0.025,
+          "D+": 0.0,
+          "D": 0.0125,
+          "D-": 0.0125,
           "F": 0.225,
           "W": 0.0625
         }
@@ -494,13 +695,20 @@ export const dfwList2023: DfwList = {
       "den": 116,
       "rate": 0.2155,
       "split": {
-        "D": 0,
-        "F": 8,
-        "W": 17,
+        "grades": {
+          "D+": 0,
+          "D": 0,
+          "D-": 0,
+          "F": 8,
+          "W": 17
+        },
         "DF": 8,
+        "W": 17,
         "total": 116,
         "shares": {
+          "D+": 0.0,
           "D": 0.0,
+          "D-": 0.0,
           "F": 0.069,
           "W": 0.1466
         }
@@ -519,17 +727,24 @@ export const dfwList2023: DfwList = {
     },
     {
       "students": 72,
-      "num": 24,
+      "num": 23,
       "den": 75,
-      "rate": 0.32,
+      "rate": 0.3067,
       "split": {
-        "D": 3,
-        "F": 14,
+        "grades": {
+          "D+": 0,
+          "D": 0,
+          "D-": 2,
+          "F": 14,
+          "W": 7
+        },
+        "DF": 16,
         "W": 7,
-        "DF": 17,
         "total": 75,
         "shares": {
-          "D": 0.04,
+          "D+": 0.0,
+          "D": 0.0,
+          "D-": 0.0267,
           "F": 0.1867,
           "W": 0.0933
         }
@@ -553,13 +768,20 @@ export const dfwList2023: DfwList = {
       "den": 88,
       "rate": 0.2614,
       "split": {
-        "D": 3,
-        "F": 7,
-        "W": 13,
+        "grades": {
+          "D+": 0,
+          "D": 3,
+          "D-": 0,
+          "F": 7,
+          "W": 13
+        },
         "DF": 10,
+        "W": 13,
         "total": 88,
         "shares": {
+          "D+": 0.0,
           "D": 0.0341,
+          "D-": 0.0,
           "F": 0.0795,
           "W": 0.1477
         }
@@ -579,18 +801,62 @@ export const dfwList2023: DfwList = {
       }
     },
     {
-      "students": 106,
-      "num": 23,
-      "den": 115,
-      "rate": 0.2,
+      "students": 65,
+      "num": 22,
+      "den": 75,
+      "rate": 0.2933,
       "split": {
-        "D": 5,
-        "F": 14,
+        "grades": {
+          "D+": 0,
+          "D": 0,
+          "D-": 0,
+          "F": 15,
+          "W": 7
+        },
+        "DF": 15,
+        "W": 7,
+        "total": 75,
+        "shares": {
+          "D+": 0.0,
+          "D": 0.0,
+          "D-": 0.0,
+          "F": 0.2,
+          "W": 0.0933
+        }
+      },
+      "course": "MAT 152",
+      "names": {
+        "top": [
+          "QUANTITATIVE REASONING",
+          "STATISTICAL METHODS I"
+        ],
+        "distinct": 2
+      },
+      "gateway": {
+        "M": 75,
+        "E": 0
+      }
+    },
+    {
+      "students": 106,
+      "num": 22,
+      "den": 115,
+      "rate": 0.1913,
+      "split": {
+        "grades": {
+          "D+": 0,
+          "D": 4,
+          "D-": 0,
+          "F": 14,
+          "W": 4
+        },
+        "DF": 18,
         "W": 4,
-        "DF": 19,
         "total": 115,
         "shares": {
-          "D": 0.0435,
+          "D+": 0.0,
+          "D": 0.0348,
+          "D-": 0.0,
           "F": 0.1217,
           "W": 0.0348
         }
@@ -610,48 +876,25 @@ export const dfwList2023: DfwList = {
       }
     },
     {
-      "students": 65,
-      "num": 22,
-      "den": 75,
-      "rate": 0.2933,
-      "split": {
-        "D": 0,
-        "F": 15,
-        "W": 7,
-        "DF": 15,
-        "total": 75,
-        "shares": {
-          "D": 0.0,
-          "F": 0.2,
-          "W": 0.0933
-        }
-      },
-      "course": "MAT 152",
-      "names": {
-        "top": [
-          "QUANTITATIVE REASONING",
-          "STATISTICAL METHODS I"
-        ],
-        "distinct": 2
-      },
-      "gateway": {
-        "M": 75,
-        "E": 0
-      }
-    },
-    {
       "students": 36,
       "num": 19,
       "den": 39,
       "rate": 0.4872,
       "split": {
-        "D": 3,
-        "F": 15,
-        "W": 1,
+        "grades": {
+          "D+": 0,
+          "D": 3,
+          "D-": 0,
+          "F": 15,
+          "W": 1
+        },
         "DF": 18,
+        "W": 1,
         "total": 39,
         "shares": {
+          "D+": 0.0,
           "D": 0.0769,
+          "D-": 0.0,
           "F": 0.3846,
           "W": 0.0256
         }
@@ -675,13 +918,20 @@ export const dfwList2023: DfwList = {
       "den": 69,
       "rate": 0.2754,
       "split": {
-        "D": 1,
-        "F": 7,
-        "W": 11,
+        "grades": {
+          "D+": 0,
+          "D": 1,
+          "D-": 0,
+          "F": 7,
+          "W": 11
+        },
         "DF": 8,
+        "W": 11,
         "total": 69,
         "shares": {
+          "D+": 0.0,
           "D": 0.0145,
+          "D-": 0.0,
           "F": 0.1014,
           "W": 0.1594
         }
@@ -706,13 +956,20 @@ export const dfwList2023: DfwList = {
       "den": 35,
       "rate": 0.5143,
       "split": {
-        "D": 1,
-        "F": 10,
-        "W": 7,
+        "grades": {
+          "D+": 0,
+          "D": 1,
+          "D-": 0,
+          "F": 10,
+          "W": 7
+        },
         "DF": 11,
+        "W": 7,
         "total": 35,
         "shares": {
+          "D+": 0.0,
           "D": 0.0286,
+          "D-": 0.0,
           "F": 0.2857,
           "W": 0.2
         }
@@ -736,13 +993,20 @@ export const dfwList2023: DfwList = {
       "den": 40,
       "rate": 0.45,
       "split": {
-        "D": 2,
-        "F": 5,
-        "W": 11,
+        "grades": {
+          "D+": 0,
+          "D": 2,
+          "D-": 0,
+          "F": 5,
+          "W": 11
+        },
         "DF": 7,
+        "W": 11,
         "total": 40,
         "shares": {
+          "D+": 0.0,
           "D": 0.05,
+          "D-": 0.0,
           "F": 0.125,
           "W": 0.275
         }
@@ -767,13 +1031,20 @@ export const dfwList2023: DfwList = {
       "den": 56,
       "rate": 0.3214,
       "split": {
-        "D": 8,
-        "F": 4,
-        "W": 6,
+        "grades": {
+          "D+": 0,
+          "D": 7,
+          "D-": 1,
+          "F": 4,
+          "W": 6
+        },
         "DF": 12,
+        "W": 6,
         "total": 56,
         "shares": {
-          "D": 0.1429,
+          "D+": 0.0,
+          "D": 0.125,
+          "D-": 0.0179,
           "F": 0.0714,
           "W": 0.1071
         }
@@ -798,13 +1069,20 @@ export const dfwList2023: DfwList = {
       "den": 33,
       "rate": 0.5152,
       "split": {
-        "D": 0,
-        "F": 7,
-        "W": 10,
+        "grades": {
+          "D+": 0,
+          "D": 0,
+          "D-": 0,
+          "F": 7,
+          "W": 10
+        },
         "DF": 7,
+        "W": 10,
         "total": 33,
         "shares": {
+          "D+": 0.0,
           "D": 0.0,
+          "D-": 0.0,
           "F": 0.2121,
           "W": 0.303
         }
@@ -827,13 +1105,20 @@ export const dfwList2023: DfwList = {
       "den": 35,
       "rate": 0.4857,
       "split": {
-        "D": 5,
-        "F": 3,
-        "W": 9,
+        "grades": {
+          "D+": 0,
+          "D": 5,
+          "D-": 0,
+          "F": 3,
+          "W": 9
+        },
         "DF": 8,
+        "W": 9,
         "total": 35,
         "shares": {
+          "D+": 0.0,
           "D": 0.1429,
+          "D-": 0.0,
           "F": 0.0857,
           "W": 0.2571
         }
@@ -857,13 +1142,20 @@ export const dfwList2023: DfwList = {
       "den": 40,
       "rate": 0.425,
       "split": {
-        "D": 0,
-        "F": 13,
-        "W": 4,
+        "grades": {
+          "D+": 0,
+          "D": 0,
+          "D-": 0,
+          "F": 13,
+          "W": 4
+        },
         "DF": 13,
+        "W": 4,
         "total": 40,
         "shares": {
+          "D+": 0.0,
           "D": 0.0,
+          "D-": 0.0,
           "F": 0.325,
           "W": 0.1
         }
@@ -887,13 +1179,20 @@ export const dfwList2023: DfwList = {
       "den": 39,
       "rate": 0.3846,
       "split": {
-        "D": 1,
-        "F": 11,
-        "W": 3,
+        "grades": {
+          "D+": 0,
+          "D": 1,
+          "D-": 0,
+          "F": 11,
+          "W": 3
+        },
         "DF": 12,
+        "W": 3,
         "total": 39,
         "shares": {
+          "D+": 0.0,
           "D": 0.0256,
+          "D-": 0.0,
           "F": 0.2821,
           "W": 0.0769
         }
@@ -917,17 +1216,24 @@ export const dfwList2023: DfwList = {
 /** 2023-24: ENG 101 in detail. */
 export const eng101Detail2023: DfwCourseDetail = {
   "students": 439,
-  "num": 135,
+  "num": 133,
   "den": 492,
-  "rate": 0.2744,
+  "rate": 0.2703,
   "split": {
-    "D": 19,
-    "F": 69,
+    "grades": {
+      "D+": 2,
+      "D": 14,
+      "D-": 1,
+      "F": 69,
+      "W": 47
+    },
+    "DF": 86,
     "W": 47,
-    "DF": 88,
     "total": 492,
     "shares": {
-      "D": 0.0386,
+      "D+": 0.0041,
+      "D": 0.0285,
+      "D-": 0.002,
       "F": 0.1402,
       "W": 0.0955
     }
@@ -939,7 +1245,96 @@ export const eng101Detail2023: DfwCourseDetail = {
     "provisional": false,
     "min_students": 10,
     "source": "PDP analysis-ready cohort and course files (synthetic sample)",
-    "loaded_at": "2026-11-10T06:18:59"
+    "loaded_at": "2026-11-07T17:01:14",
+    "grade_scale": {
+      "grades": [
+        {
+          "grade": "A",
+          "points": "4.0",
+          "dfw": false,
+          "gateway_pass": true
+        },
+        {
+          "grade": "A-",
+          "points": "3.7 to under 4.0",
+          "dfw": false,
+          "gateway_pass": true
+        },
+        {
+          "grade": "B+",
+          "points": "3.3 to under 3.7",
+          "dfw": false,
+          "gateway_pass": true
+        },
+        {
+          "grade": "B",
+          "points": "3.0 to under 3.3",
+          "dfw": false,
+          "gateway_pass": true
+        },
+        {
+          "grade": "B-",
+          "points": "2.7 to under 3.0",
+          "dfw": false,
+          "gateway_pass": true
+        },
+        {
+          "grade": "C+",
+          "points": "2.3 to under 2.7",
+          "dfw": false,
+          "gateway_pass": true
+        },
+        {
+          "grade": "C",
+          "points": "2.0 to under 2.3",
+          "dfw": false,
+          "gateway_pass": true
+        },
+        {
+          "grade": "C-",
+          "points": "1.7 to under 2.0",
+          "dfw": false,
+          "gateway_pass": true
+        },
+        {
+          "grade": "D+",
+          "points": "1.3 to under 1.7",
+          "dfw": true,
+          "gateway_pass": true
+        },
+        {
+          "grade": "D",
+          "points": "1.0 to under 1.3",
+          "dfw": true,
+          "gateway_pass": true
+        },
+        {
+          "grade": "D-",
+          "points": "0.7 to under 1.0",
+          "dfw": true,
+          "gateway_pass": false
+        },
+        {
+          "grade": "F",
+          "points": "under 0.7, or the code F",
+          "dfw": true,
+          "gateway_pass": false
+        },
+        {
+          "grade": "P",
+          "points": "the code P (pass)",
+          "dfw": false,
+          "gateway_pass": true
+        },
+        {
+          "grade": "W",
+          "points": "the code W (withdrew)",
+          "dfw": true,
+          "gateway_pass": false
+        }
+      ],
+      "left_out": "I (incomplete), A (audit), M or MIS (missing), O or OTH (other), and any code the PDP dictionary doesn't list, such as UW, aren't final grades, so neither page counts them."
+    }
   },
   "course": "ENG 101",
   "names": {
@@ -958,40 +1353,54 @@ export const eng101Detail2023: DfwCourseDetail = {
       "den": 295,
       "rate": 0.3119,
       "split": {
-        "D": 12,
-        "F": 53,
-        "W": 27,
+        "grades": {
+          "D+": 1,
+          "D": 10,
+          "D-": 1,
+          "F": 53,
+          "W": 27
+        },
         "DF": 65,
+        "W": 27,
         "total": 295,
         "shares": {
-          "D": 0.0407,
+          "D+": 0.0034,
+          "D": 0.0339,
+          "D-": 0.0034,
           "F": 0.1797,
           "W": 0.0915
         }
       },
-      "rest_rate": 0.2183,
-      "gap": 9.4
+      "rest_rate": 0.2081,
+      "gap": 10.4
     },
     {
       "value": "Spring",
       "students": 146,
-      "num": 34,
+      "num": 32,
       "den": 149,
-      "rate": 0.2282,
+      "rate": 0.2148,
       "split": {
-        "D": 5,
-        "F": 12,
+        "grades": {
+          "D+": 0,
+          "D": 3,
+          "D-": 0,
+          "F": 12,
+          "W": 17
+        },
+        "DF": 15,
         "W": 17,
-        "DF": 17,
         "total": 149,
         "shares": {
-          "D": 0.0336,
+          "D+": 0.0,
+          "D": 0.0201,
+          "D-": 0.0,
           "F": 0.0805,
           "W": 0.1141
         }
       },
       "rest_rate": 0.2945,
-      "gap": -6.6
+      "gap": -8.0
     },
     {
       "value": "Summer",
@@ -1000,19 +1409,26 @@ export const eng101Detail2023: DfwCourseDetail = {
       "den": 48,
       "rate": 0.1875,
       "split": {
-        "D": 2,
-        "F": 4,
-        "W": 3,
+        "grades": {
+          "D+": 1,
+          "D": 1,
+          "D-": 0,
+          "F": 4,
+          "W": 3
+        },
         "DF": 6,
+        "W": 3,
         "total": 48,
         "shares": {
-          "D": 0.0417,
+          "D+": 0.0208,
+          "D": 0.0208,
+          "D-": 0.0,
           "F": 0.0833,
           "W": 0.0625
         }
       },
-      "rest_rate": 0.2838,
-      "gap": -9.6
+      "rest_rate": 0.2793,
+      "gap": -9.2
     }
   ],
   "delivery": [
@@ -1023,19 +1439,26 @@ export const eng101Detail2023: DfwCourseDetail = {
       "den": 185,
       "rate": 0.2703,
       "split": {
-        "D": 6,
-        "F": 25,
-        "W": 19,
+        "grades": {
+          "D+": 0,
+          "D": 5,
+          "D-": 1,
+          "F": 25,
+          "W": 19
+        },
         "DF": 31,
+        "W": 19,
         "total": 185,
         "shares": {
-          "D": 0.0324,
+          "D+": 0.0,
+          "D": 0.027,
+          "D-": 0.0054,
           "F": 0.1351,
           "W": 0.1027
         }
       },
-      "rest_rate": 0.2769,
-      "gap": -0.7
+      "rest_rate": 0.2704,
+      "gap": -0.0
     },
     {
       "value": "Hybrid",
@@ -1044,19 +1467,26 @@ export const eng101Detail2023: DfwCourseDetail = {
       "den": 61,
       "rate": 0.1803,
       "split": {
-        "D": 1,
-        "F": 6,
-        "W": 4,
+        "grades": {
+          "D+": 0,
+          "D": 1,
+          "D-": 0,
+          "F": 6,
+          "W": 4
+        },
         "DF": 7,
+        "W": 4,
         "total": 61,
         "shares": {
+          "D+": 0.0,
           "D": 0.0164,
+          "D-": 0.0,
           "F": 0.0984,
           "W": 0.0656
         }
       },
-      "rest_rate": 0.2877,
-      "gap": -10.7
+      "rest_rate": 0.2831,
+      "gap": -10.3
     },
     {
       "value": "Online",
@@ -1065,40 +1495,54 @@ export const eng101Detail2023: DfwCourseDetail = {
       "den": 137,
       "rate": 0.3577,
       "split": {
-        "D": 9,
-        "F": 25,
-        "W": 15,
+        "grades": {
+          "D+": 2,
+          "D": 7,
+          "D-": 0,
+          "F": 25,
+          "W": 15
+        },
         "DF": 34,
+        "W": 15,
         "total": 137,
         "shares": {
-          "D": 0.0657,
+          "D+": 0.0146,
+          "D": 0.0511,
+          "D-": 0.0,
           "F": 0.1825,
           "W": 0.1095
         }
       },
-      "rest_rate": 0.2423,
-      "gap": 11.5
+      "rest_rate": 0.2366,
+      "gap": 12.1
     },
     {
       "value": "Blank",
       "students": 100,
-      "num": 25,
+      "num": 23,
       "den": 109,
-      "rate": 0.2294,
+      "rate": 0.211,
       "split": {
-        "D": 3,
-        "F": 13,
+        "grades": {
+          "D+": 0,
+          "D": 1,
+          "D-": 0,
+          "F": 13,
+          "W": 9
+        },
+        "DF": 14,
         "W": 9,
-        "DF": 16,
         "total": 109,
         "shares": {
-          "D": 0.0275,
+          "D+": 0.0,
+          "D": 0.0092,
+          "D-": 0.0,
           "F": 0.1193,
           "W": 0.0826
         }
       },
       "rest_rate": 0.2872,
-      "gap": -5.8
+      "gap": -7.6
     }
   ],
   "groups": {
@@ -1106,23 +1550,30 @@ export const eng101Detail2023: DfwCourseDetail = {
       {
         "value": "N",
         "students": 196,
-        "num": 54,
+        "num": 53,
         "den": 217,
-        "rate": 0.2488,
+        "rate": 0.2442,
         "split": {
-          "D": 8,
-          "F": 26,
+          "grades": {
+            "D+": 0,
+            "D": 7,
+            "D-": 0,
+            "F": 26,
+            "W": 20
+          },
+          "DF": 33,
           "W": 20,
-          "DF": 34,
           "total": 217,
           "shares": {
-            "D": 0.0369,
+            "D+": 0.0,
+            "D": 0.0323,
+            "D-": 0.0,
             "F": 0.1198,
             "W": 0.0922
           }
         },
-        "rest_rate": 0.2945,
-        "gap": -4.6
+        "rest_rate": 0.2909,
+        "gap": -4.7
       },
       {
         "value": "UNKNOWN",
@@ -1131,40 +1582,54 @@ export const eng101Detail2023: DfwCourseDetail = {
         "den": 17,
         "rate": 0.2941,
         "split": {
-          "D": 2,
-          "F": 2,
-          "W": 1,
+          "grades": {
+            "D+": 0,
+            "D": 2,
+            "D-": 0,
+            "F": 2,
+            "W": 1
+          },
           "DF": 4,
+          "W": 1,
           "total": 17,
           "shares": {
+            "D+": 0.0,
             "D": 0.1176,
+            "D-": 0.0,
             "F": 0.1176,
             "W": 0.0588
           }
         },
-        "rest_rate": 0.2737,
-        "gap": 2.0
+        "rest_rate": 0.2695,
+        "gap": 2.5
       },
       {
         "value": "Y",
         "students": 227,
-        "num": 76,
+        "num": 75,
         "den": 258,
-        "rate": 0.2946,
+        "rate": 0.2907,
         "split": {
-          "D": 9,
-          "F": 41,
+          "grades": {
+            "D+": 2,
+            "D": 5,
+            "D-": 1,
+            "F": 41,
+            "W": 26
+          },
+          "DF": 49,
           "W": 26,
-          "DF": 50,
           "total": 258,
           "shares": {
-            "D": 0.0349,
+            "D+": 0.0078,
+            "D": 0.0194,
+            "D-": 0.0039,
             "F": 0.1589,
             "W": 0.1008
           }
         },
-        "rest_rate": 0.2521,
-        "gap": 4.2
+        "rest_rate": 0.2479,
+        "gap": 4.3
       }
     ],
     "gender": [
@@ -1175,40 +1640,54 @@ export const eng101Detail2023: DfwCourseDetail = {
         "den": 278,
         "rate": 0.2698,
         "split": {
-          "D": 6,
-          "F": 44,
-          "W": 25,
+          "grades": {
+            "D+": 0,
+            "D": 6,
+            "D-": 0,
+            "F": 44,
+            "W": 25
+          },
           "DF": 50,
+          "W": 25,
           "total": 278,
           "shares": {
+            "D+": 0.0,
             "D": 0.0216,
+            "D-": 0.0,
             "F": 0.1583,
             "W": 0.0899
           }
         },
-        "rest_rate": 0.2804,
-        "gap": -1.1
+        "rest_rate": 0.271,
+        "gap": -0.1
       },
       {
         "value": "M",
         "students": 175,
-        "num": 52,
+        "num": 50,
         "den": 193,
-        "rate": 0.2694,
+        "rate": 0.2591,
         "split": {
-          "D": 13,
-          "F": 17,
+          "grades": {
+            "D+": 2,
+            "D": 8,
+            "D-": 1,
+            "F": 17,
+            "W": 22
+          },
+          "DF": 28,
           "W": 22,
-          "DF": 30,
           "total": 193,
           "shares": {
-            "D": 0.0674,
+            "D+": 0.0104,
+            "D": 0.0415,
+            "D-": 0.0052,
             "F": 0.0881,
             "W": 0.114
           }
         },
         "rest_rate": 0.2776,
-        "gap": -0.8
+        "gap": -1.9
       },
       {
         "value": "UNKNOWN",
@@ -1217,19 +1696,26 @@ export const eng101Detail2023: DfwCourseDetail = {
         "den": 21,
         "rate": 0.381,
         "split": {
-          "D": 0,
-          "F": 8,
-          "W": 0,
+          "grades": {
+            "D+": 0,
+            "D": 0,
+            "D-": 0,
+            "F": 8,
+            "W": 0
+          },
           "DF": 8,
+          "W": 0,
           "total": 21,
           "shares": {
+            "D+": 0.0,
             "D": 0.0,
+            "D-": 0.0,
             "F": 0.381,
             "W": 0.0
           }
         },
-        "rest_rate": 0.2696,
-        "gap": 11.1
+        "rest_rate": 0.2654,
+        "gap": 11.6
       }
     ],
     "race": [
@@ -1250,40 +1736,54 @@ export const eng101Detail2023: DfwCourseDetail = {
         "den": 38,
         "rate": 0.1579,
         "split": {
-          "D": 1,
-          "F": 3,
-          "W": 2,
+          "grades": {
+            "D+": 0,
+            "D": 1,
+            "D-": 0,
+            "F": 3,
+            "W": 2
+          },
           "DF": 4,
+          "W": 2,
           "total": 38,
           "shares": {
+            "D+": 0.0,
             "D": 0.0263,
+            "D-": 0.0,
             "F": 0.0789,
             "W": 0.0526
           }
         },
-        "rest_rate": 0.2841,
-        "gap": -12.6
+        "rest_rate": 0.2797,
+        "gap": -12.2
       },
       {
         "value": "Black or African American",
         "students": 73,
-        "num": 33,
+        "num": 32,
         "den": 87,
-        "rate": 0.3793,
+        "rate": 0.3678,
         "split": {
-          "D": 2,
-          "F": 21,
+          "grades": {
+            "D+": 1,
+            "D": 0,
+            "D-": 0,
+            "F": 21,
+            "W": 10
+          },
+          "DF": 22,
           "W": 10,
-          "DF": 23,
           "total": 87,
           "shares": {
-            "D": 0.023,
+            "D+": 0.0115,
+            "D": 0.0,
+            "D-": 0.0,
             "F": 0.2414,
             "W": 0.1149
           }
         },
-        "rest_rate": 0.2519,
-        "gap": 12.7
+        "rest_rate": 0.2494,
+        "gap": 11.8
       },
       {
         "value": "Hispanic",
@@ -1292,19 +1792,26 @@ export const eng101Detail2023: DfwCourseDetail = {
         "den": 141,
         "rate": 0.2837,
         "split": {
-          "D": 8,
-          "F": 19,
-          "W": 13,
+          "grades": {
+            "D+": 1,
+            "D": 7,
+            "D-": 0,
+            "F": 19,
+            "W": 13
+          },
           "DF": 27,
+          "W": 13,
           "total": 141,
           "shares": {
-            "D": 0.0567,
+            "D+": 0.0071,
+            "D": 0.0496,
+            "D-": 0.0,
             "F": 0.1348,
             "W": 0.0922
           }
         },
-        "rest_rate": 0.2707,
-        "gap": 1.3
+        "rest_rate": 0.265,
+        "gap": 1.9
       },
       {
         "value": "Native Hawaiian or Other Pacific Islander",
@@ -1323,19 +1830,26 @@ export const eng101Detail2023: DfwCourseDetail = {
         "den": 13,
         "rate": 0.3846,
         "split": {
-          "D": 1,
-          "F": 1,
-          "W": 3,
+          "grades": {
+            "D+": 0,
+            "D": 1,
+            "D-": 0,
+            "F": 1,
+            "W": 3
+          },
           "DF": 2,
+          "W": 3,
           "total": 13,
           "shares": {
+            "D+": 0.0,
             "D": 0.0769,
+            "D-": 0.0,
             "F": 0.0769,
             "W": 0.2308
           }
         },
-        "rest_rate": 0.2714,
-        "gap": 11.3
+        "rest_rate": 0.2672,
+        "gap": 11.7
       },
       {
         "value": "Two or More Races",
@@ -1344,40 +1858,54 @@ export const eng101Detail2023: DfwCourseDetail = {
         "den": 13,
         "rate": 0.3077,
         "split": {
-          "D": 0,
-          "F": 2,
-          "W": 2,
+          "grades": {
+            "D+": 0,
+            "D": 0,
+            "D-": 0,
+            "F": 2,
+            "W": 2
+          },
           "DF": 2,
+          "W": 2,
           "total": 13,
           "shares": {
+            "D+": 0.0,
             "D": 0.0,
+            "D-": 0.0,
             "F": 0.1538,
             "W": 0.1538
           }
         },
-        "rest_rate": 0.2735,
-        "gap": 3.4
+        "rest_rate": 0.2693,
+        "gap": 3.8
       },
       {
         "value": "UNKNOWN",
         "students": 16,
-        "num": 5,
+        "num": 4,
         "den": 19,
-        "rate": 0.2632,
+        "rate": 0.2105,
         "split": {
-          "D": 2,
-          "F": 2,
+          "grades": {
+            "D+": 0,
+            "D": 0,
+            "D-": 1,
+            "F": 2,
+            "W": 1
+          },
+          "DF": 3,
           "W": 1,
-          "DF": 4,
           "total": 19,
           "shares": {
-            "D": 0.1053,
+            "D+": 0.0,
+            "D": 0.0,
+            "D-": 0.0526,
             "F": 0.1053,
             "W": 0.0526
           }
         },
-        "rest_rate": 0.2748,
-        "gap": -1.2
+        "rest_rate": 0.2727,
+        "gap": -6.2
       },
       {
         "value": "White",
@@ -1386,19 +1914,26 @@ export const eng101Detail2023: DfwCourseDetail = {
         "den": 175,
         "rate": 0.2229,
         "split": {
-          "D": 5,
-          "F": 18,
-          "W": 16,
+          "grades": {
+            "D+": 0,
+            "D": 5,
+            "D-": 0,
+            "F": 18,
+            "W": 16
+          },
           "DF": 23,
+          "W": 16,
           "total": 175,
           "shares": {
+            "D+": 0.0,
             "D": 0.0286,
+            "D-": 0.0,
             "F": 0.1029,
             "W": 0.0914
           }
         },
-        "rest_rate": 0.3028,
-        "gap": -8.0
+        "rest_rate": 0.2965,
+        "gap": -7.4
       }
     ],
     "ethnicity": [
@@ -1409,19 +1944,26 @@ export const eng101Detail2023: DfwCourseDetail = {
         "den": 152,
         "rate": 0.2895,
         "split": {
-          "D": 9,
-          "F": 19,
-          "W": 16,
+          "grades": {
+            "D+": 1,
+            "D": 8,
+            "D-": 0,
+            "F": 19,
+            "W": 16
+          },
           "DF": 28,
+          "W": 16,
           "total": 152,
           "shares": {
-            "D": 0.0592,
+            "D+": 0.0066,
+            "D": 0.0526,
+            "D-": 0.0,
             "F": 0.125,
             "W": 0.1053
           }
         },
-        "rest_rate": 0.2676,
-        "gap": 2.2
+        "rest_rate": 0.2618,
+        "gap": 2.8
       },
       {
         "value": "N",
@@ -1430,63 +1972,84 @@ export const eng101Detail2023: DfwCourseDetail = {
         "den": 72,
         "rate": 0.4444,
         "split": {
-          "D": 1,
-          "F": 21,
-          "W": 10,
+          "grades": {
+            "D+": 1,
+            "D": 0,
+            "D-": 0,
+            "F": 21,
+            "W": 10
+          },
           "DF": 22,
+          "W": 10,
           "total": 72,
           "shares": {
-            "D": 0.0139,
+            "D+": 0.0139,
+            "D": 0.0,
+            "D-": 0.0,
             "F": 0.2917,
             "W": 0.1389
           }
         },
-        "rest_rate": 0.2452,
-        "gap": 19.9
+        "rest_rate": 0.2405,
+        "gap": 20.4
       },
       {
         "value": "UNKNOWN",
         "students": 237,
-        "num": 59,
+        "num": 57,
         "den": 268,
-        "rate": 0.2201,
+        "rate": 0.2127,
         "split": {
-          "D": 9,
-          "F": 29,
+          "grades": {
+            "D+": 0,
+            "D": 6,
+            "D-": 1,
+            "F": 29,
+            "W": 21
+          },
+          "DF": 36,
           "W": 21,
-          "DF": 38,
           "total": 268,
           "shares": {
-            "D": 0.0336,
+            "D+": 0.0,
+            "D": 0.0224,
+            "D-": 0.0037,
             "F": 0.1082,
             "W": 0.0784
           }
         },
         "rest_rate": 0.3393,
-        "gap": -11.9
+        "gap": -12.7
       }
     ],
     "age_band": [
       {
         "value": "20 and younger",
         "students": 293,
-        "num": 103,
+        "num": 101,
         "den": 338,
-        "rate": 0.3047,
+        "rate": 0.2988,
         "split": {
-          "D": 14,
-          "F": 53,
+          "grades": {
+            "D+": 2,
+            "D": 9,
+            "D-": 1,
+            "F": 53,
+            "W": 36
+          },
+          "DF": 65,
           "W": 36,
-          "DF": 67,
           "total": 338,
           "shares": {
-            "D": 0.0414,
+            "D+": 0.0059,
+            "D": 0.0266,
+            "D-": 0.003,
             "F": 0.1568,
             "W": 0.1065
           }
         },
         "rest_rate": 0.2078,
-        "gap": 9.7
+        "gap": 9.1
       },
       {
         "value": "> 20-24",
@@ -1495,19 +2058,26 @@ export const eng101Detail2023: DfwCourseDetail = {
         "den": 74,
         "rate": 0.2703,
         "split": {
-          "D": 2,
-          "F": 12,
-          "W": 6,
+          "grades": {
+            "D+": 0,
+            "D": 2,
+            "D-": 0,
+            "F": 12,
+            "W": 6
+          },
           "DF": 14,
+          "W": 6,
           "total": 74,
           "shares": {
+            "D+": 0.0,
             "D": 0.027,
+            "D-": 0.0,
             "F": 0.1622,
             "W": 0.0811
           }
         },
-        "rest_rate": 0.2751,
-        "gap": -0.5
+        "rest_rate": 0.2703,
+        "gap": -0.0
       },
       {
         "value": "Older than 24",
@@ -1516,42 +2086,56 @@ export const eng101Detail2023: DfwCourseDetail = {
         "den": 80,
         "rate": 0.15,
         "split": {
-          "D": 3,
-          "F": 4,
-          "W": 5,
+          "grades": {
+            "D+": 0,
+            "D": 3,
+            "D-": 0,
+            "F": 4,
+            "W": 5
+          },
           "DF": 7,
+          "W": 5,
           "total": 80,
           "shares": {
+            "D+": 0.0,
             "D": 0.0375,
+            "D-": 0.0,
             "F": 0.05,
             "W": 0.0625
           }
         },
-        "rest_rate": 0.2985,
-        "gap": -14.9
+        "rest_rate": 0.2937,
+        "gap": -14.4
       }
     ],
     "enrollment_intensity": [
       {
         "value": "Full-time",
         "students": 272,
-        "num": 77,
+        "num": 75,
         "den": 305,
-        "rate": 0.2525,
+        "rate": 0.2459,
         "split": {
-          "D": 13,
-          "F": 35,
+          "grades": {
+            "D+": 1,
+            "D": 9,
+            "D-": 1,
+            "F": 35,
+            "W": 29
+          },
+          "DF": 46,
           "W": 29,
-          "DF": 48,
           "total": 305,
           "shares": {
-            "D": 0.0426,
+            "D+": 0.0033,
+            "D": 0.0295,
+            "D-": 0.0033,
             "F": 0.1148,
             "W": 0.0951
           }
         },
         "rest_rate": 0.3102,
-        "gap": -5.8
+        "gap": -6.4
       },
       {
         "value": "Part-time",
@@ -1560,42 +2144,56 @@ export const eng101Detail2023: DfwCourseDetail = {
         "den": 187,
         "rate": 0.3102,
         "split": {
-          "D": 6,
-          "F": 34,
-          "W": 18,
+          "grades": {
+            "D+": 1,
+            "D": 5,
+            "D-": 0,
+            "F": 34,
+            "W": 18
+          },
           "DF": 40,
+          "W": 18,
           "total": 187,
           "shares": {
-            "D": 0.0321,
+            "D+": 0.0053,
+            "D": 0.0267,
+            "D-": 0.0,
             "F": 0.1818,
             "W": 0.0963
           }
         },
-        "rest_rate": 0.2525,
-        "gap": 5.8
+        "rest_rate": 0.2459,
+        "gap": 6.4
       }
     ],
     "enrollment_type": [
       {
         "value": "First-time",
         "students": 351,
-        "num": 106,
+        "num": 104,
         "den": 397,
-        "rate": 0.267,
+        "rate": 0.262,
         "split": {
-          "D": 16,
-          "F": 54,
+          "grades": {
+            "D+": 2,
+            "D": 11,
+            "D-": 1,
+            "F": 54,
+            "W": 36
+          },
+          "DF": 68,
           "W": 36,
-          "DF": 70,
           "total": 397,
           "shares": {
-            "D": 0.0403,
+            "D+": 0.005,
+            "D": 0.0277,
+            "D-": 0.0025,
             "F": 0.136,
             "W": 0.0907
           }
         },
         "rest_rate": 0.3053,
-        "gap": -3.8
+        "gap": -4.3
       },
       {
         "value": "Transfer-in",
@@ -1604,42 +2202,56 @@ export const eng101Detail2023: DfwCourseDetail = {
         "den": 95,
         "rate": 0.3053,
         "split": {
-          "D": 3,
-          "F": 15,
-          "W": 11,
+          "grades": {
+            "D+": 0,
+            "D": 3,
+            "D-": 0,
+            "F": 15,
+            "W": 11
+          },
           "DF": 18,
+          "W": 11,
           "total": 95,
           "shares": {
+            "D+": 0.0,
             "D": 0.0316,
+            "D-": 0.0,
             "F": 0.1579,
             "W": 0.1158
           }
         },
-        "rest_rate": 0.267,
-        "gap": 3.8
+        "rest_rate": 0.262,
+        "gap": 4.3
       }
     ],
     "cohort_term": [
       {
         "value": "Fall",
         "students": 349,
-        "num": 121,
+        "num": 119,
         "den": 397,
-        "rate": 0.3048,
+        "rate": 0.2997,
         "split": {
-          "D": 17,
-          "F": 65,
+          "grades": {
+            "D+": 2,
+            "D": 12,
+            "D-": 1,
+            "F": 65,
+            "W": 39
+          },
+          "DF": 80,
           "W": 39,
-          "DF": 82,
           "total": 397,
           "shares": {
-            "D": 0.0428,
+            "D+": 0.005,
+            "D": 0.0302,
+            "D-": 0.0025,
             "F": 0.1637,
             "W": 0.0982
           }
         },
         "rest_rate": 0.1474,
-        "gap": 15.7
+        "gap": 15.2
       },
       {
         "value": "Spring",
@@ -1648,19 +2260,26 @@ export const eng101Detail2023: DfwCourseDetail = {
         "den": 81,
         "rate": 0.1605,
         "split": {
-          "D": 1,
-          "F": 4,
-          "W": 8,
+          "grades": {
+            "D+": 0,
+            "D": 1,
+            "D-": 0,
+            "F": 4,
+            "W": 8
+          },
           "DF": 5,
+          "W": 8,
           "total": 81,
           "shares": {
+            "D+": 0.0,
             "D": 0.0123,
+            "D-": 0.0,
             "F": 0.0494,
             "W": 0.0988
           }
         },
-        "rest_rate": 0.2968,
-        "gap": -13.6
+        "rest_rate": 0.292,
+        "gap": -13.1
       },
       {
         "value": "Summer",
@@ -1669,19 +2288,26 @@ export const eng101Detail2023: DfwCourseDetail = {
         "den": 14,
         "rate": 0.0714,
         "split": {
-          "D": 1,
-          "F": 0,
-          "W": 0,
+          "grades": {
+            "D+": 0,
+            "D": 1,
+            "D-": 0,
+            "F": 0,
+            "W": 0
+          },
           "DF": 1,
+          "W": 0,
           "total": 14,
           "shares": {
+            "D+": 0.0,
             "D": 0.0714,
+            "D-": 0.0,
             "F": 0.0,
             "W": 0.0
           }
         },
-        "rest_rate": 0.2803,
-        "gap": -20.9
+        "rest_rate": 0.2762,
+        "gap": -20.5
       }
     ]
   }

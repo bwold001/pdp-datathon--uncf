@@ -20,8 +20,13 @@ def graded(prefix: str, count: int, grades: list[str], course=("ENG", "101"), **
 
 
 def split(tally: dict) -> dict:
-    """D, F, W, their D or F sum and the total, without the shares."""
-    return {key: tally["split"][key] for key in ("D", "F", "W", "DF", "total")}
+    """Each DFW grade, the D and F sum, W and the total, without the shares."""
+    return {**tally["split"]["grades"], **{key: tally["split"][key] for key in ("DF", "W", "total")}}
+
+
+def counts(d_plus=0, d=0, d_minus=0, f=0, w=0, total=0) -> dict:
+    """What split() gives for these DFW grade counts."""
+    return {"D+": d_plus, "D": d, "D-": d_minus, "F": f, "W": w, "DF": d_plus + d + d_minus + f, "total": total}
 
 
 def build(tmp_path, *groups):
@@ -30,13 +35,13 @@ def build(tmp_path, *groups):
 
 
 def test_grade_rules_follow_the_dfw_measure(tmp_path):
-    """Under 2.0 (a C minus too), F and W count; 2.0 and P pass; I, audit, unknown and unlisted grades are left out."""
-    database = build(tmp_path, graded("s", 20, ["1.7", "2.0", "F", "W", "P", "I", "A", "UNKNOWN", "UW", "4"]))
+    """D+ and below, F and W count; a C- (1.7), 2.0 and P pass; I, audit, unknown and unlisted grades are left out."""
+    database = build(tmp_path, graded("s", 20, ["1.7", "1.69", "F", "W", "P", "I", "A", "UNKNOWN", "UW", "4"]))
     everyone = dfw_courses(**pick("2023-24"), database=database)["everyone"]
-    # Final grades, twice each: 1.7, 2.0, F, W, P, 4. Of those, 1.7 is a D, F an F and W a withdrawal.
+    # Final grades, twice each: 1.7, 1.69, F, W, P, 4. Of those, 1.69 is a D+, F an F and W a withdrawal.
     assert everyone["den"] == 12
     assert everyone["students"] == 12
-    assert split(everyone) == {"D": 2, "F": 2, "W": 2, "DF": 4, "total": 12}
+    assert split(everyone) == counts(d_plus=2, f=2, w=2, total=12)
     assert everyone["rate"] == 0.5
 
 
@@ -52,7 +57,7 @@ def test_courses_are_listed_by_dfw_count_and_small_ones_hidden(tmp_path):
     assert [c["course"] for c in result["courses"]] == ["MATH 111", "ENG 101"]
     assert result["hidden_courses"] == 1
     math = result["courses"][0]
-    assert (math["num"], math["den"], split(math)) == (15, 20, {"D": 0, "F": 10, "W": 5, "DF": 10, "total": 20})
+    assert (math["num"], math["den"], split(math)) == (15, 20, counts(f=10, w=5, total=20))
     assert math["names"] == {"top": ["COMPOSITION I"], "distinct": 1}
 
 
@@ -76,13 +81,21 @@ def test_course_detail_splits_by_term_delivery_and_group(tmp_path):
     assert intensity == {"Full-time"}  # stored as Full-Time, answered with the listed spelling
 
 
-def test_numeric_f_and_d_follow_the_0_7_line(tmp_path):
-    """F is an F or under 0.7, D is 0.7 to under 2.0, and D + F + W is the DFW numerator."""
-    database = build(tmp_path, graded("s", 10, ["0.0", "0.67", "0.7", "1.99", "2.0", "W", "F", "3.3", "1.0", "0.69"]))
+def test_each_dfw_grade_is_counted_apart(tmp_path):
+    """F is an F or under 0.7, then D-, D and D+ by the letter scale; a 1.99 is a C-. They add up to the numerator."""
+    database = build(tmp_path, graded("s", 10, ["0.0", "0.67", "0.7", "1.99", "1.5", "W", "F", "3.3", "1.0", "0.69"]))
     everyone = dfw_courses(**pick("2023-24"), database=database)["everyone"]
-    assert split(everyone) == {"D": 3, "F": 4, "W": 1, "DF": 7, "total": 10}
+    assert split(everyone) == counts(d_plus=1, d=1, d_minus=1, f=4, w=1, total=10)
     assert everyone["num"] == 8
-    assert everyone["split"]["shares"] == {"D": 0.3, "F": 0.4, "W": 0.1}
+    assert everyone["split"]["shares"] == {"D+": 0.1, "D": 0.1, "D-": 0.1, "F": 0.4, "W": 0.1}
+
+
+def test_answers_carry_the_grade_scale(tmp_path):
+    """The list and the course detail both say which grades count, so the page's table matches its numbers."""
+    database = build(tmp_path, graded("s", 10, ["F", "4"]))
+    scale = dfw_courses(**pick("2023-24"), database=database)["context"]["grade_scale"]
+    assert dfw_course(**pick("2023-24"), course="ENG 101", database=database)["context"]["grade_scale"] == scale
+    assert [row["grade"] for row in scale["grades"] if row["dfw"]] == ["D+", "D", "D-", "F", "W"]
 
 
 def test_groups_are_compared_with_everyone_else_in_the_course(tmp_path):
@@ -116,7 +129,7 @@ def test_cohort_filters_pick_the_students(tmp_path):
 def test_real_data_known_answers():
     """2023-24, checked against the shared DFW measure's counts on pdp.sqlite (synthetic data)."""
     result = dfw_courses(**pick("2023-24"))
-    assert split(result["everyone"]) == {"D": 608, "F": 2262, "W": 1477, "DF": 2870, "total": 18883}
-    assert result["everyone"]["num"] == 4347  # the shared dfw_rate measure's numerator
+    assert split(result["everyone"]) == counts(d_plus=38, d=486, d_minus=24, f=2262, w=1477, total=18883)
+    assert result["everyone"]["num"] == 4287  # the shared dfw_rate measure's numerator
     eng = dfw_course(**pick("2023-24"), course="ENG 101")
-    assert (eng["num"], eng["den"]) == (135, 492)
+    assert (eng["num"], eng["den"]) == (133, 492)  # 135 under the old 2.0 line: two C- grades now pass

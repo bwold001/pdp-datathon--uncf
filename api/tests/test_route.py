@@ -72,6 +72,32 @@ def test_gateway(client):
     assert body["cohort_retention"]["students"] == 12
 
 
+def test_dfw_and_gateway_carry_each_grade_and_the_scale(tmp_path, monkeypatch):
+    """The DFW split has each DFW grade, gateway courses have every grade, and both answers carry the grade scale."""
+    students = [student(f"s{n}") for n in range(12)]
+    grades = ["1.5", "1.0", "0.7", "0.3", "W", "1.7"] * 2
+    records = [here(f"s{n}", "2023-24", "FALL", prefix="ENG", number="101", grade=grade, gateway="E") for n, grade in enumerate(grades)]
+    database = make_database(tmp_path / "pdp.sqlite", students, records)
+    monkeypatch.setattr(data, "data_path", lambda: database)
+    route.clear_cache()
+    client = TestClient(create_app())
+
+    dfw = client.get("/api/v1/uncf/dfw", params={"cohort": "2023-24"}).json()
+    assert dfw["everyone"]["split"]["grades"] == {"D+": 2, "D": 2, "D-": 2, "F": 2, "W": 2}  # the two C- pass
+    assert (dfw["everyone"]["split"]["DF"], dfw["everyone"]["split"]["W"], dfw["everyone"]["num"]) == (8, 2, 10)
+    scale = dfw["meta"]["grade_scale"]
+    assert {row["grade"]: row["dfw"] for row in scale["grades"]}["C-"] is False
+
+    gateway = client.get("/api/v1/uncf/gateway", params={"cohort": "2023-24"}).json()
+    (course,) = gateway["courses"]
+    assert {grade: count for grade, count in course["grades"].items() if count} == {"C-": 2, "D+": 2, "D": 2, "D-": 2, "F": 2, "W": 2}
+    assert gateway["meta"]["grade_scale"] == scale
+
+    # The CSV has one column per DFW grade.
+    header = client.get("/api/v1/uncf/dfw", params={"cohort": "2023-24", "format": "csv"}).text.splitlines()[0]
+    assert all(f"split.grades.{grade}" in header for grade in ("D+", "D", "D-", "F", "W"))
+
+
 def test_credit_momentum(client):
     """The Credit momentum page answers; the fixture has no year-1 credits, so its numbers are hidden."""
     body = client.get("/api/v1/uncf/credit-momentum", params={"cohort": "2023-24"}).json()

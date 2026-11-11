@@ -9,7 +9,7 @@ import { useCohortFilters } from "@/components/uncf/layout/use-cohort-filters";
 import { useApiResource } from "@/hooks/use-api-resource";
 
 import { type DfwCourseDetail, type DfwList, type DfwSort, rankCourses } from "./dfw-data";
-import { CourseDetail, CourseDetailError, CourseDetailLoading, CourseList, DfwCounted, DfwKpis } from "./dfw-view";
+import { CourseDetail, CourseDetailError, CourseDetailLoading, CourseList, DfwCounted, DfwGradeCard, DfwKpis } from "./dfw-view";
 
 const PAGE_SIZE = 10;
 
@@ -55,6 +55,7 @@ export function DfwPage() {
   return (
     <>
       <DfwKpis everyone={list.data.everyone} />
+      <DfwGradeCard everyone={list.data.everyone} />
       <div className="grid items-start gap-5 min-[961px]:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
         <CourseList
           courses={ranked.slice(0, shown)}
@@ -84,7 +85,7 @@ export function DfwPage() {
           <CourseDetailLoading />
         )}
       </div>
-      <DfwCounted />
+      <DfwCounted scale={list.data.meta.grade_scale} />
     </>
   );
 }
