@@ -6,7 +6,7 @@ import type { ExplorerMeta, RetentionBlock } from "@/components/uncf/layout/expl
  */
 export type PathStatus = "here" | "credential" | "elsewhere" | "stopped";
 
-/** One term's counts. null means a group under 10 students, hidden. */
+/** One term's counts. null means a group under meta.min_students, hidden. */
 export type TermCounts = {
   /** The term's place in the path (1 is the term after the start), and its name when every student shares it. */
   position: number;
@@ -23,7 +23,7 @@ export type TermCounts = {
   shares: Record<PathStatus | "anywhere", number | null>;
 };
 
-/** Students moving from one status to another between two terms. null under 10. */
+/** Students moving from one status to another between two terms. null under meta.min_students. */
 export type PathMove = { from: PathStatus; to: PathStatus; students: number | null };
 
 /** The answer from GET /uncf/student-paths (measures/breakdowns/student_paths.py). */

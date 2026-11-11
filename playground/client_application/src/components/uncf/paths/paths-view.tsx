@@ -14,6 +14,7 @@ import {
   shareOf,
   tableClasses,
 } from "@/components/uncf/layout/explorer-parts";
+import { hiddenCount, privacyNote, tooFew } from "@/components/uncf/layout/small-groups";
 import { cn } from "@/lib/utils";
 
 import { type PathsResponse, pathStatuses, statusStyle, studentsLabel, termNames } from "./paths-data";
@@ -23,8 +24,8 @@ import { PathsSankey } from "./paths-sankey";
 export function PathsView({ data }: { data: PathsResponse }) {
   if (data.status === "suppressed" || !data.students || !data.columns || !data.transfers) {
     return (
-      <MessageCard title="Fewer than 10 students match these filters.">
-        Remove a filter to see results. Groups under 10 students are hidden to protect privacy.
+      <MessageCard title={`${tooFew(data.meta.min_students)} match these filters.`}>
+        Remove a filter to see results. {privacyNote(data.meta.min_students)}
       </MessageCard>
     );
   }
@@ -54,7 +55,7 @@ export function PathsView({ data }: { data: PathsResponse }) {
           label={`Still here · ${names.year2Short}`}
           value={formatShare(year2.shares.here)}
           tone="blue"
-          note={`${formatCount(year2.here)} took a course here that term`}
+          note={`${formatCount(year2.here, data.meta.min_students)} took a course here that term`}
         />
         <Kpi
           label={`Enrolled anywhere · ${names.year2Short}`}
@@ -65,7 +66,7 @@ export function PathsView({ data }: { data: PathsResponse }) {
           label={`Stopped out by ${names.year2Short}`}
           value={formatShare(year2.shares.stopped)}
           tone="warn"
-          note={returnedNote(returned)}
+          note={returnedNote(returned, data.meta.min_students)}
         />
       </KpiGrid>
 
@@ -79,7 +80,7 @@ export function PathsView({ data }: { data: PathsResponse }) {
         </div>
         {notObserved ? (
           <p className="mt-3 text-[13px] text-(--uncf-ink-3)">
-            {formatCount(notObserved)} students’ later terms aren’t in the data yet, so they aren’t drawn there.
+            {formatCount(notObserved, data.meta.min_students)} students’ later terms aren’t in the data yet, so they aren’t drawn there.
           </p>
         ) : null}
         <Counted>
@@ -100,8 +101,8 @@ export function PathsView({ data }: { data: PathsResponse }) {
 }
 
 /** The stopped-out tile's note: how many came back after a term with no record. */
-function returnedNote(returned: number | null): string {
-  if (returned === null) return "Under 10 students returned after a term away";
+function returnedNote(returned: number | null, minStudents: number): string {
+  if (returned === null) return `${hiddenCount(minStudents)} students returned after a term away`;
   if (returned === 0) return "No students returned after a term away";
   return `${returned.toLocaleString("en-US")} students returned after a term away`;
 }
@@ -122,7 +123,7 @@ function TransfersCard({ data, year2 }: { data: PathsResponse; year2: string }) 
       <h3 className="text-[21px] font-semibold">Where transfers went</h3>
       <p className="mt-1 text-(--uncf-ink-3)">
         {moved === null
-          ? `Fewer than 10 students transferred out by ${year2}, so this is hidden.`
+          ? `${tooFew(data.meta.min_students)} transferred out by ${year2}, so this is hidden.`
           : moved === 0
             ? `No students transferred out by ${year2}.`
             : `Of ${moved.toLocaleString("en-US")} students who transferred out by ${year2}`}
@@ -137,11 +138,11 @@ function TransfersCard({ data, year2 }: { data: PathsResponse; year2: string }) 
                   <div className="flex justify-between gap-3">
                     <span>{row.label}</span>
                     <span className="uncf-num">
-                      {formatCount(row.count)}
+                      {formatCount(row.count, data.meta.min_students)}
                       {share !== null && ` · ${formatShare(share)}`}
                     </span>
                   </div>
-                  <TrackBar share={share} color="var(--uncf-grey)" label={`${row.label}: ${formatCount(row.count)}`} />
+                  <TrackBar share={share} color="var(--uncf-grey)" label={`${row.label}: ${formatCount(row.count, data.meta.min_students)}`} />
                 </div>
               );
             })}
@@ -158,16 +159,16 @@ function TermTableCard({ data }: { data: PathsResponse }) {
   const names = termNames(data);
   const columns = data.columns!;
   const rows = [
-    { term: names.entered ?? "Entering term", here: formatCount(data.students), credential: "–", elsewhere: "–", stopped: "–" },
+    { term: names.entered ?? "Entering term", here: formatCount(data.students, data.meta.min_students), credential: "–", elsewhere: "–", stopped: "–" },
     ...[
       { term: names.next, counts: columns.next },
       { term: names.year2, counts: columns.year2 },
     ].map(({ term, counts }) => ({
       term: capitalize(term),
-      here: formatCount(counts.here),
-      credential: formatCount(counts.credential),
-      elsewhere: formatCount(counts.elsewhere),
-      stopped: formatCount(counts.stopped),
+      here: formatCount(counts.here, data.meta.min_students),
+      credential: formatCount(counts.credential, data.meta.min_students),
+      elsewhere: formatCount(counts.elsewhere, data.meta.min_students),
+      stopped: formatCount(counts.stopped, data.meta.min_students),
     })),
   ];
 

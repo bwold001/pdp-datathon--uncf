@@ -7,7 +7,7 @@ in year 2. Retention by group uses the chosen retention measure's answers (read_
 Credits that count are earned credits in courses PDP marks college-level (CU) or developmental credit that applies
 (CC), from the course file, in every term of the year. One degree total for every student: this view doesn't use
 major. The minimum is checked year by year, not as a running total. Failed or withdrew uses the DFW measure's grade
-rule (dfw.grade_result). Every count of students goes through shown(): 1 to 9 is hidden (None), never shown as 0.
+rule (dfw.grade_result). Every count of students goes through shown(): under min_students() is hidden (None), never shown as 0.
 """
 from __future__ import annotations
 
@@ -116,7 +116,7 @@ def below_reason(credits: dict) -> str | None:
 
 
 def counted(students: Iterable[str], total: int | None) -> dict:
-    """How many of the students, and their share of total. 1 to 9 is hidden, and so is its share."""
+    """How many of the students, and their share of total. Under min_students() is hidden, and so is its share."""
     number = shown(len(set(students)))
     return {"students": number, "share": share(number, total)}
 

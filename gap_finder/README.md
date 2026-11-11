@@ -48,7 +48,7 @@ That saves the rows twice, neither of them committed:
   next to their `success_measures` table, so a query can join a measure to its gaps on measure, cohort and
   group. One column per column below, in the same order, with groups written as ` x ` text and booleans as
   0/1. It refuses a row that breaks the rules below, for example a hidden row with a number in it, or a
-  shown group under 10 students. If the table's columns have changed since it was saved, the next save
+  shown group under the minimum (`UNCF_MIN_STUDENTS`). If the table's columns have changed since it was saved, the next save
   rebuilds it, so rerun any other measures you need.
 - **`gap_finder/output/equity_gaps.csv`**, the same rows, for Excel or Power BI.
 
@@ -119,7 +119,7 @@ When more than one applies, the first one wins.
 | Status | When | What's shown |
 | --- | --- | --- |
 | `not_yet_observable` | the shared measures say the cohort is too new for the measure | every number blank |
-| `suppressed` | fewer than 10 students in the group, or in everyone else | every number blank |
+| `suppressed` | fewer students than `UNCF_MIN_STUDENTS` in the group, or in everyone else (1 by default, so only an empty group; 10 for real student data) | every number blank |
 | `unknown_group` | the value is unknown, e.g. race `UNKNOWN` | the group's own counts and rate. They stay in everyone else, but aren't compared or ranked |
 | `ok` | otherwise | everything |
 
@@ -156,7 +156,7 @@ group that's shown and known, `compare()` works out:
    group.
 
 Hidden and unknown groups aren't tested, so they don't change anyone's q-value or rank. A group is hidden
-when everyone else has fewer than 10 students too, since the comparison columns would then show a hidden
+when everyone else is under the minimum too, since the comparison columns would then show a hidden
 group's counts. That also covers a group that is everyone.
 
 `compare()` works on counts alone, so it can be used without a database:
@@ -194,7 +194,7 @@ make check          # includes it: it loads the full mock data into a temporary 
 or only these, from the repo root: `python -m pytest gap_finder/tests`.
 
 They cover #26's completion test: the table and CSV with a note on every row (1), the planted 15-point and
-2-point gaps (2, 3), hiding under 10 (4), no group under 30 in the gap-size order (5), and the Black or
+2-point gaps (2, 3), hiding under 10 with `UNCF_MIN_STUDENTS=10` (4), no group under 30 in the gap-size order (5), and the Black or
 African American retention gap reproduced by hand from the raw cohort file (6).
 
 ## The Explorer's Gateway page

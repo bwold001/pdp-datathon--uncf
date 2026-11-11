@@ -10,21 +10,22 @@ import { filterValueLabel } from "./cohort-filters";
 import type { CohortFilterDefinition } from "./explorer-config";
 import { explorerFontClass } from "./explorer-fonts";
 import { explorerLinkButton, explorerPrimaryButton } from "./explorer-styles";
+import { hiddenCount, privacyNote } from "./small-groups";
 
 type FilterSelectProps = {
   definition: CohortFilterDefinition;
   /** The applied value; null means "All". */
   value: string | null;
   onChange: (value: string | null) => void;
-  /** Students with each value, from the API: null is a group under 10. Left out while loading. */
+  /** Students with each value, from the API: null is a group under minStudents. Left out while loading. */
   counts?: Record<string, number | null>;
+  /** The API's min_students: groups with fewer students have no count. Left out while loading. */
+  minStudents?: number;
   disabled?: boolean;
 };
 
-const SMALL_GROUPS_HINT = "Groups under 10 students are hidden to protect privacy.";
-
 /** One cohort filter: a button that opens a list of values. A pick only counts once Apply is pressed. */
-export function FilterSelect({ definition, value, onChange, counts, disabled }: FilterSelectProps) {
+export function FilterSelect({ definition, value, onChange, counts, minStudents = 1, disabled }: FilterSelectProps) {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<string | null>(value);
   const [search, setSearch] = useState("");
@@ -95,14 +96,14 @@ export function FilterSelect({ definition, value, onChange, counts, disabled }: 
             )}
             {shownOptions.map((option) => {
               const count = counts?.[option.value];
-              // Under 10 students (or none): too small to show, so it can't be picked.
+              // Under minStudents (or none): too small to show, so it can't be picked.
               const tooSmall = counts !== undefined && (count === null || count === 0);
               return (
                 <FilterOptionRow
                   key={option.value}
                   name={radioName}
                   label={option.label}
-                  count={counts === undefined ? undefined : count === null ? "under 10" : (count ?? 0).toLocaleString("en-US")}
+                  count={counts === undefined ? undefined : count === null ? hiddenCount(minStudents).toLowerCase() : (count ?? 0).toLocaleString("en-US")}
                   checked={draft === option.value}
                   disabled={tooSmall && draft !== option.value}
                   onSelect={() => setDraft(option.value)}
@@ -111,7 +112,9 @@ export function FilterSelect({ definition, value, onChange, counts, disabled }: 
             })}
             {shownOptions.length === 0 && <p className="px-2 py-2.25 text-(--uncf-ink-3)">No matches.</p>}
           </fieldset>
-          <p className="mx-1.5 mt-1.5 text-[13px] text-(--uncf-ink-3)">{definition.hint ?? SMALL_GROUPS_HINT}</p>
+          {(definition.hint ?? privacyNote(minStudents)) && (
+            <p className="mx-1.5 mt-1.5 text-[13px] text-(--uncf-ink-3)">{definition.hint ?? privacyNote(minStudents)}</p>
+          )}
           <div className="mt-1 flex items-center justify-between border-t border-(--uncf-line) px-1.5 pt-2.5 pb-1">
             <button type="button" className={explorerLinkButton} onClick={() => setDraft(definition.defaultValue ?? null)}>
               Clear

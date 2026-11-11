@@ -1,5 +1,6 @@
 import { Card, CardHead, Kpi, KpiGrid, Legend, LoadingBlock, MessageCard } from "@/components/uncf/layout/explorer-parts";
 import { explorerButton } from "@/components/uncf/layout/explorer-styles";
+import { hidesSmallGroups } from "@/components/uncf/layout/small-groups";
 import { cn } from "@/lib/utils";
 
 import {
@@ -173,6 +174,7 @@ export function CourseDetail({ detail, dimension, onDimension }: CourseDetailPro
   const rows = groupRows(detail, dimension);
   const shown = rows.filter((row) => row.rate !== null).sort((a, b) => (b.gap ?? -999) - (a.gap ?? -999));
   const hidden = rows.filter((row) => row.rate === null);
+  const min = detail.meta.min_students;
   const more = detail.names.distinct - detail.names.top.length;
 
   return (
@@ -240,10 +242,13 @@ export function CourseDetail({ detail, dimension, onDimension }: CourseDetailPro
               <div className="mt-1 text-[13px] text-(--uncf-ink-3)">{gapText(row.gap, row.rest)}</div>
             </div>
           ))}
-          {shown.length === 0 && <p className="text-[13px] text-(--uncf-ink-3)">No group in this course has 10 or more students.</p>}
+          {shown.length === 0 && (
+            <p className="text-[13px] text-(--uncf-ink-3)">No group in this course has {min} or more students.</p>
+          )}
           {hidden.length > 0 && (
             <p className="text-[13px] text-(--uncf-ink-3)">
-              Hidden to protect privacy (under 10 students): {hidden.map((row) => row.label).join(", ")}
+              {hidesSmallGroups(min) ? `Hidden to protect privacy (under ${min} students)` : "No students with final grades"}:{" "}
+              {hidden.map((row) => row.label).join(", ")}
             </p>
           )}
         </div>
@@ -296,14 +301,15 @@ export function CourseDetailError({ message, onRetry }: { message: string; onRet
   );
 }
 
-/** The note under the page: what the numbers mean, in the design's words. */
-export function DfwCounted() {
+/** The note under the page: what the numbers mean, in the design's words. minStudents is the answer's meta.min_students. */
+export function DfwCounted({ minStudents }: { minStudents: number }) {
   return (
     <div className="border-t border-(--uncf-line) pt-4.5 text-sm text-(--uncf-ink-2)">
       <b className="font-semibold text-(--uncf-ink)">What the numbers mean:</b> a final grade is one student finishing one
       course. The DFW rate is the share of final grades that were a D, F or W; incomplete, audit and missing grades aren’t
       counted. “Everyone else” is all the other students in the same course. A gap shows a difference between groups, not
-      its cause. Courses and groups with fewer than 10 students are hidden to protect privacy. One course code can appear
+      its cause.
+      {hidesSmallGroups(minStudents) && ` Courses and groups with fewer than ${minStudents} students are hidden to protect privacy.`} One course code can appear
       under several names in the catalog. Some classes are listed twice in this data, so a few grades count twice.
       First-generation status isn’t shown because this data doesn’t record it consistently yet. The data is synthetic: it
       doesn’t describe real students.

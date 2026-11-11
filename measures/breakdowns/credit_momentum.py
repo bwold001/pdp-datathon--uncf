@@ -6,7 +6,7 @@ The numbers come from the measures:
 - retention by the chosen retention measure, from run_measure, as on every other page.
 
 This module only breaks them down: credit milestones, the first two terms (from the course file, averaged over the
-students who took a course here that term) and credit tiers. Groups under 10 students are hidden.
+students who took a course here that term) and credit tiers. Groups under min_students() are hidden.
 
 progress is the Credit momentum design's page (meaningful progress toward a degree), from credit_progress.py.
 """
@@ -14,11 +14,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from ..models import EVERYONE, Cohort, Group, Measure
+from ..models import EVERYONE, Cohort, Group, Measure, min_students
 from ..run_measures import read_answers, run_measure
 from .credit_progress import credit_progress
 from .common import (
-    MIN_STUDENTS,
     SEASONS,
     check_retention,
     connect,
@@ -69,7 +68,7 @@ def credit_momentum(cohort: str, filters: Group = EVERYONE, retention_measure: M
         year_one = year_one_credits(connection, cohort)
         per_term = term_credits(connection, cohort)
         answers, _ = read_answers(retention_measure, cohort, database)
-        progress = credit_progress(connection, cohort, students, answers) if len(students) >= MIN_STUDENTS else None
+        progress = credit_progress(connection, cohort, students, answers) if len(students) >= min_students() else None
     finally:
         connection.close()
 
@@ -77,7 +76,7 @@ def credit_momentum(cohort: str, filters: Group = EVERYONE, retention_measure: M
     context = {
         "retention_term": term_label(retention_term(cohort)) if retention_measure == Measure.FEDERAL_RETENTION else "next academic year",
     }
-    if len(students) < MIN_STUDENTS or len(known) < MIN_STUDENTS:
+    if len(students) < min_students() or len(known) < min_students():
         return {"context": context, "status": "suppressed", "students": None, "credits": None, "completion": None, "retention": None, "milestones": [], "terms": [], "tiers": [], "progress": None}
 
     # The completion ratio is the credit_completion measure's row for these students.
@@ -102,7 +101,7 @@ def credit_momentum(cohort: str, filters: Group = EVERYONE, retention_measure: M
 
 
 def milestone(credits: int, known: dict) -> dict:
-    """Students who earned at least this many credits in year 1, out of those with known credits. 1 to 9 is hidden."""
+    """Students who earned at least this many credits in year 1, out of those with known credits. Under min_students() is hidden."""
     reached = shown(sum(1 for _, earned in known.values() if earned >= credits))
     return {"credits": credits, "students": reached, "share": share(reached, len(known))}
 
@@ -125,7 +124,7 @@ def first_terms(cohort: str, students: dict, per_term: dict) -> list[dict]:
             if credits:
                 attempted.append(credits[0])
                 earned.append(credits[1])
-        hidden = len(attempted) < MIN_STUDENTS
+        hidden = len(attempted) < min_students()
         columns.append(
             {
                 "label": term_label(term) if named and term else label,
@@ -142,7 +141,7 @@ def tiers(known: dict, answers: dict) -> list[dict]:
     rows = []
     for key, label, lowest, highest in TIERS:
         members = {sid for sid, (_, earned) in known.items() if earned >= lowest and (highest is None or earned < highest)}
-        if len(members) < MIN_STUDENTS:
+        if len(members) < min_students():
             rows.append({"key": key, "label": label, "students": None, "share": None, "retained": None, "rate": None})
             continue
         retained = retained_share(answers, members)
