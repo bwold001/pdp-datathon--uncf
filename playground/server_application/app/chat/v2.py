@@ -18,7 +18,7 @@ from analytics.execution import run_sync
 from analytics.plan_contracts import CatalogResponse
 from analytics.plan_service import PlanService, refusal
 from measures.requests import Cohort, Filters, RetentionType
-from pydantic import Field, StrictInt, StrictStr, model_validator
+from pydantic import Field, StrictInt, StrictStr, ValidationError, model_validator
 
 from app.chat.provider import ProviderFailed
 from app.chat.service import MAX_TOOL_ROUNDS, MAX_TOOLS_PER_ROUND
@@ -187,6 +187,7 @@ async def answer_v2(payload, client, model, runtime):
         {"role": "user", "content": payload.prompt},
         {"role": "user", "content": "Application context: " + json.dumps(context)},
     ]
+    rejected = False
     for _ in range(MAX_TOOL_ROUNDS):
         try:
             response = await client.complete(
@@ -200,6 +201,7 @@ async def answer_v2(payload, client, model, runtime):
             return refusal("unsupported_operation")
         messages.append(response.message)
         proposal = None
+        rejected = False
         for call in response.calls:
             args = call.arguments
             try:
@@ -224,15 +226,28 @@ async def answer_v2(payload, client, model, runtime):
                     )
                     output = {"proposed": True, "executed": False}
                 else:
-                    return refusal("invalid_plan")
-            except ValueError, TypeError:
-                return refusal("invalid_plan")
+                    raise ValueError(f"{call.name} is not an available tool with these arguments")
+            except (ValueError, TypeError) as error:
+                # Tell the model what was wrong so it can correct the call in the next round.
+                rejected = True
+                output = {"accepted": False, "error": rejection(error)}
             messages.append(
                 {"role": "tool", "tool_call_id": call.id, "content": json.dumps(output)}
             )
         if proposal is not None:
             return await review(service, proposal)
-    return refusal("limit_exceeded")
+    return refusal("invalid_plan" if rejected else "limit_exceeded")
+
+
+def rejection(error: Exception) -> str:
+    """A short, data-free reason a tool call was rejected, so the model can correct it."""
+    if isinstance(error, ValidationError):
+        problems = [
+            f"{'.'.join(str(part) for part in item['loc'])}: {item['msg']}"
+            for item in error.errors(include_url=False, include_input=False)[:10]
+        ]
+        return "The proposal does not match the schema: " + "; ".join(problems)
+    return str(error)[:500]
 
 
 def context_without_dashboard(context):

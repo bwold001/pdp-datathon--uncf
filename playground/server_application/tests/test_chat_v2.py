@@ -282,3 +282,25 @@ def test_confirmation_dependency_needs_no_provider_configuration(monkeypatch):
         await dependency.aclose()
 
     asyncio.run(check())
+
+
+def test_a_rejected_proposal_is_explained_and_corrected(runtime):
+    """A proposal that misses the schema goes back with the reason; the correction is reviewed."""
+    good = proposal(runtime, request("dfw.rate", filters={"pell": "Y"}))
+    bad = {**good, "steps": [{**good["steps"][0], "parameters": {"cohort": None}}]}
+    model = ScriptedModel(
+        [ToolCall("1", "propose_plan", bad)], [ToolCall("2", "propose_plan", good)]
+    )
+    result = run(runtime, model)
+    assert result.status == "confirmation" and not result.receipts
+    feedback = [m["content"] for m in model.requests[1]["messages"] if m.get("role") == "tool"]
+    assert "does not match the schema" in feedback[0] and "parameters.cohort" in feedback[0]
+
+
+def test_a_proposal_that_stays_invalid_ends_as_invalid_plan(runtime):
+    """The model gets the round limit to correct itself, then the chat stops with invalid_plan."""
+    good = proposal(runtime, request("dfw.rate"))
+    bad = {**good, "steps": [{**good["steps"][0], "parameters": {}}]}
+    script = [[ToolCall(str(i), "propose_plan", bad)] for i in range(6)]
+    result = run(runtime, ScriptedModel(*script))
+    assert result.issues[0].code == "invalid_plan" and not result.receipts
