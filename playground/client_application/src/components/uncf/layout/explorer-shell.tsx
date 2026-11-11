@@ -22,7 +22,8 @@ import "./explorer-tokens.css";
 export function ExplorerShell({ children }: { children: React.ReactNode }) {
   return (
     <ExplorerProvider>
-      <div className={cn(explorerFontClass, "flex min-h-svh flex-col bg-(--uncf-bg) text-[15px] [color-scheme:light] leading-normal text-(--uncf-ink)")}>
+      {/* data-pdf-page: what Share Insight draws. */}
+      <div data-pdf-page className={cn(explorerFontClass, "flex min-h-svh flex-col bg-(--uncf-bg) text-[15px] [color-scheme:light] leading-normal text-(--uncf-ink)")}>
         <ExplorerHeader />
         <Suspense fallback={<ExplorerTabsFallback />}>
           <ExplorerTabs />

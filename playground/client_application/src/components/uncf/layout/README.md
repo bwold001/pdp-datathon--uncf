@@ -13,6 +13,12 @@ It replaces the app's left sidebar on these pages, so the pages live in their ow
 | Credit momentum | `src/app/(uncf-explorer)/uncf/credit-momentum/page.tsx` | `/uncf/credit-momentum` | `GET /api/v1/uncf/credit-momentum` |
 | Chat | `src/app/(uncf-explorer)/uncf/chat/page.tsx` | `/uncf/chat` | |
 
+**Share Insight** (the header's button, `share-insight-button.tsx`) downloads the current tab as it looks on screen, as one long
+PDF page with no page breaks. It draws the shell (`data-pdf-page`) to an image in the browser (`html-to-image`, then
+`jspdf`), so the server isn't involved; the PDF's text is part of the picture, not selectable. It doesn't print:
+print lays the page out again for the paper and splits it. Anything marked `data-pdf-skip` is left out. Chat has no
+button, since its messages scroll inside a box.
+
 The numbers come from the shared API (`api/route.py`), which takes every number from `measures/` and is mounted in
 the Playground server under `/api/v1`. The tabs do no counting. The numbers are calculated from the synthetic sample
 data, never typed in.
