@@ -1,6 +1,6 @@
 # Defined operation catalog and adapters
 
-[Issue #49](https://github.com/bwold001/pdp-datathon--uncf/issues/49) adds an inactive, provider-free catalog and single-operation adapter. All data/results are synthetic. Existing v1 URLs, formulas, response models and provider tools keep their behavior.
+[Issue #49](https://github.com/bwold001/pdp-datathon--uncf/issues/49) adds the provider-free catalog and single-operation adapters used by the [v2 plan API](analysis-v2-api.md). All data/results are synthetic. Existing v1 URLs, formulas, response models and provider tools keep their behavior.
 
 ## Owners and calls
 
@@ -26,9 +26,9 @@ with legacy_service.snapshot() as snapshot:
 
 `execute` borrows the snapshot without closing it. Invalid requests fail before reads; cancellation/database errors propagate to the outer owner. A course lacking disclosed evidence returns a legitimate unavailable result. `legacy_step(old_request)` maps a fully resolved old request; incomplete old requests still need the existing clarification flow.
 
-This is **internal single-operation evidence**, not a complete plan executor or HTTP endpoint. Catalog/snapshot freshness, version resolution, dependency scheduling, exploration, plan-wide disclosure and final receipts remain later work. Do not serialize this evidence as a final chat response before those checks. Small nonempty results are visible; this interface applies no minimum-size privacy protection.
+This is **internal single-operation evidence**. The [v2 plan API](analysis-v2-api.md) owns catalog/snapshot freshness, version resolution, dependency scheduling, plan-wide projection and final receipts. Do not serialize this internal evidence as a final chat response before those checks. Small nonempty results are visible; this interface applies no minimum-size privacy protection.
 
-The [disclosure boundary](analysis-v2-disclosure.md) now supplies versioned profiles, a policy stamp on staged evidence, shared API execution and a complete-plan validation and projection primitive without size or overlap suppression. The future plan executor must call that primitive on the actual returned set before constructing public receipts.
+The [disclosure boundary](analysis-v2-disclosure.md) now supplies versioned profiles, a policy stamp on staged evidence, shared API execution and a complete-plan validation and projection primitive without size or overlap suppression. The v2 plan executor calls that primitive on the actual returned set after transaction cleanup and before constructing public receipts.
 
 ## Registered meanings
 
@@ -63,4 +63,6 @@ The existing v2 bound is 200 table rows. Oversized pages/analyses return typed `
 
 The independent twelve-student fixture has 24 final-grade enrollments, twelve D grades, six retained students and a credit-ratio numerator of 35/6. Tests cover all eleven dashboard operations, separate retention definitions, gateway reporting, hidden/provisional/grouped results and bounded projection. Three-student fixtures exercise all legacy operations and original coverage. Serialized v1 JSON/CSV are checked against the same explicit expectations, including Gateway's shared gap-finder projection.
 
-Run registry, defined/legacy operation, rate-breakdown and API parity tests, then `make check-fast` and full `make check`. No browser/provider is needed for this inactive boundary. PostgreSQL parity still requires the configured integration environment from the [snapshot guide](analysis-v2-snapshots.md). Next planned work is [issue #50](https://github.com/bwold001/pdp-datathon--uncf/issues/50).
+Run registry, defined/legacy operation, rate-breakdown and API parity tests, then `make check-fast` and full `make check`. No browser/provider is needed for these deterministic operation checks. PostgreSQL parity still requires the configured integration environment from the [snapshot guide](analysis-v2-snapshots.md). Next planned work is [issue #52](https://github.com/bwold001/pdp-datathon--uncf/issues/52).
+
+The complete-plan owner now calls this adapter through the [v2 API](analysis-v2-api.md), including whole-plan validation, source/version checks, disclosure and receipt construction. Existing provider tools are still unchanged. Current dashboard minimum-group configuration comes from merged `main`; legacy/exploration policies remain independent.

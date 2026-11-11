@@ -116,6 +116,7 @@ class ReplaySpec(Contract):
     plan: ExecutablePlan
     versions: Versions
     operations: tuple[VersionReference, ...] = Field(min_length=1, max_length=4)
+    policies: tuple[VersionReference, ...] = Field(default=(), max_length=4)
     coverage_digest: Fingerprint
     normalization_digest: Fingerprint
     disclosure_context: tuple[Identifier, ...] = Field(default=(), max_length=16)
@@ -126,6 +127,7 @@ def _material(spec: ReplaySpec) -> dict:
     """Preserve meaningful plan order while canonicalizing version-reference sets."""
     raw = spec.model_dump(mode="json", exclude={"computation_fingerprint"})
     raw["operations"] = sorted(raw["operations"], key=lambda r: r["id"])
+    raw["policies"] = sorted(raw["policies"], key=lambda r: r["id"])
     raw["versions"]["features"] = sorted(raw["versions"]["features"], key=lambda r: r["id"])
     raw["disclosure_context"] = sorted(set(raw["disclosure_context"]))
     return raw
@@ -140,7 +142,7 @@ def _check_operations(plan, operations):
 
 
 def make_replay_spec(plan: ExecutablePlan, identity: SnapshotIdentity, versions: Versions,
-                     operations: tuple[VersionReference, ...], coverage: Coverage, disclosure_context=()) -> ReplaySpec:
+                     operations: tuple[VersionReference, ...], coverage: Coverage, disclosure_context=(), policies=()) -> ReplaySpec:
     """Build a fingerprint from all computation inputs, never from a unique execution identity."""
     plan = ExecutablePlan.model_validate(plan)
     _check_operations(plan, operations)
@@ -157,19 +159,21 @@ def make_replay_spec(plan: ExecutablePlan, identity: SnapshotIdentity, versions:
         raise SnapshotUnavailable("The requested snapshot is unavailable.")
     if versions.catalog != plan.catalog_version or versions.pipeline != identity.pipeline_version:
         raise VersionUnavailable("The requested computation versions are unavailable.")
-    spec = ReplaySpec(plan=plan, versions=versions, operations=operations,
+    if len({p.id for p in policies}) != len(policies):
+        raise ValueError("policy versions must be unique")
+    spec = ReplaySpec(plan=plan, versions=versions, operations=operations, policies=policies,
         coverage_digest=coverage_digest(coverage), normalization_digest=identity.normalization_digest,
         disclosure_context=disclosure_context, computation_fingerprint="0" * 64)
     return spec.model_copy(update={"computation_fingerprint": digest(_material(spec))})
 
 
 def validate_replay(spec: ReplaySpec, identity: SnapshotIdentity, versions: Versions,
-                    operations: tuple[VersionReference, ...], coverage: Coverage) -> None:
+                    operations: tuple[VersionReference, ...], coverage: Coverage, policies=()) -> None:
     """Refuse stale data or absent versions without substituting current inputs."""
     spec = ReplaySpec.model_validate(spec)
     if spec.plan.snapshot_ref != identity.snapshot_ref:
         raise SnapshotUnavailable("The requested snapshot is unavailable.")
-    expected = make_replay_spec(spec.plan, identity, versions, operations, coverage, spec.disclosure_context)
+    expected = make_replay_spec(spec.plan, identity, versions, operations, coverage, spec.disclosure_context, policies)
     if digest(_material(spec)) != spec.computation_fingerprint:
         raise ValueError("replay specification fingerprint is inconsistent")
     if expected.computation_fingerprint != spec.computation_fingerprint:

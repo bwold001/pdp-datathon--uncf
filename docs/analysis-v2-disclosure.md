@@ -22,7 +22,7 @@ Dashboard page routes and both `/measures/{measure}` and legacy `/results` dispa
 
 DFW detail stores `groups` as dimension-keyed lists. Its exporter flattens those existing records with a `dimension` column rather than treating the dictionary as a flat list. Other page list exports retain their layout.
 
-Groups of one through nine, fractional credit numerators, DFW enrollment counts and one-of-twelve rates remain visible through JSON, CSV and v2 evidence. Missing values, unknown outcomes, incomplete coverage, provisional states and gateway nonreporting retain their existing meaning. Empty populations have no rate. The historical `suppressed` status remains in response contracts for compatibility and empty-population results; it no longer means a nonempty group failed a size threshold. No v2 HTTP route is enabled here.
+Groups of one through nine, fractional credit numerators, DFW enrollment counts and one-of-twelve rates remain visible through JSON, CSV and v2 evidence. Missing values, unknown outcomes, incomplete coverage, provisional states and gateway nonreporting retain their existing meaning. Empty populations have no rate. The historical `suppressed` status remains in response contracts for compatibility and empty-population results; it no longer means a nonempty group failed a size threshold. The v2 HTTP API uses these same operation adapters.
 
 ## Complete-plan projection
 
@@ -32,7 +32,7 @@ Exploration validation still rejects inconsistent evidence: missing or nonpositi
 
 Existing unavailable, unknown and unobservable results remain hidden because their values are not known. Historical hidden results are preserved without inventing payloads. `comparisons_allowed` is false for a result with hidden inputs; a hidden sibling does not suppress otherwise valid evidence. The projection contains no staged metadata or generated numerical narrative.
 
-The actual plan executor and exploratory registry remain later work. They must stage the actual returned response set after transaction cleanup, validate evidence, and bind policy/context versions into receipts and fingerprints. No new exploration endpoint is enabled by this change.
+The [v2 plan API](analysis-v2-api.md) stages the actual returned response set after transaction cleanup, validates evidence, and binds policy/context versions into receipts and fingerprints. Partial plans project the completed set. No exploratory executor is enabled.
 
 ## Impact and validation
 
@@ -40,4 +40,4 @@ Small groups can now appear in rankings and comparisons. Their rates can change 
 
 Tests cover groups of one through nine, small complements/exclusions, linked totals, recognized/unknown overlap, disjoint results, malformed metadata, policy-version binding, missing evidence, and JSON/CSV/final-receipt parity. Route spies verify shared service execution and cache reuse for export. Run `make check-fast` and full `make check`; PostgreSQL and live-provider checks remain environment-dependent.
 
-Next planned work is [issue #51](https://github.com/bwold001/pdp-datathon--uncf/issues/51).
+Next planned work is [issue #52](https://github.com/bwold001/pdp-datathon--uncf/issues/52).
