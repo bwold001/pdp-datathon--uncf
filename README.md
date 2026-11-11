@@ -268,3 +268,6 @@ Small, linked and overlapping results remain visible; no size-based privacy prot
 See the [deterministic v2 API guide](docs/analysis-v2-api.md) for `/api/v1/uncf/analysis-v2/catalog`,
 `/validate` and `/execute`, including configured sources, replay, deadlines and partial outcomes.
 The existing chat provider tools remain unchanged until the next integration task.
+
+Chat v2 planning, confirmation and immutable result pagination are documented in
+[the client contract](docs/chat-v2-client.md). All example results are synthetic.

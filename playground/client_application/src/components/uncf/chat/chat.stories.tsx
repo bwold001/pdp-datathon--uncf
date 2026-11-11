@@ -1,114 +1,148 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { expect, fn, waitFor } from "storybook/test";
-import type { AnalysisReceipt, ChatRequest, ChatResponse } from "@/services/student-success-chat";
+import type { ChatRequestV2, ChatResponseV2, Payload, Receipt } from "@/services/student-success-v2";
 import { StudentSuccessChat } from "./chat";
+import { Evidence, EvidenceCard } from "./evidence-card";
 import StudentSuccessChatPage from "@/app/(uncf-explorer)/uncf/chat/page";
 import { env } from "@/lib/env";
-import { CalculationCard } from "./calculation-card";
 
-const receipt: AnalysisReceipt = {
-  analysis: "retention", parameters: { analysis: "retention", cohort: "2022-23" },
-  definition: { name: "Retention overall and by entry program", version: "1", formula: "retained students / students with known outcomes", population: "Selected entry cohort", grain: "Student and cohort", exclusions: "Unknown retention outcomes", limitations: [] },
-  rows: [{ label: "Retention — All majors", kind: "rate", group: {}, horizon: null, status: "ok", numerator: 20, denominator: 40, rate: .5, count: null, exclusions: { unknown_outcome: 0 }, calculation: "20 / 40 = 50.00%", note: "Known outcomes only." }],
-  source: "synthetic", loaded_at: "2026-06-30", source_stamp: "synthetic-fixture", cutoff: "2026-06-30", coverage_provenance: "Story fixture only", academic_years: [], program_definition: "", attribution: "Entry major uses first-term program", limitations: ["Synthetic fixture, not a real campus result."],
+const step = { step_id: "dfw", kind: "defined_measure" as const, operation_id: "dfw.rate", depends_on: [], parameters: { cohort: "2023-24", filters: { pell: "Y" }, group_by: [] } };
+const plan = { kind: "executable" as const, catalog_version: "2", snapshot_ref: "a".repeat(64), steps: [step] };
+const receipt: Receipt = {
+  schema_version: 2, step_id: "dfw", request: step, operation_id: "dfw.rate", operation_version: "1",
+  disclosure_profile: { id: "dashboard_v1", version: "2" },
+  population: "Pell entry cohort with classifiable final grades", grain: "Course enrollment", time_window: "All observed terms",
+  definitions: [{ id: "dfw.rate", version: "1" }], assumptions: [], limitations: [], baseline_changes: [],
+  source: { label: "synthetic", snapshot_ref: "a".repeat(64), fingerprint: "b".repeat(64), loaded_at: "2026-11-11T00:00:00Z", coverage: "Story fixture only" },
+  versions: { catalog: "2", pipeline: "story", implementation: "story-build", configuration: "story-config", coverage: "story", disclosure: "2", features: [] },
+  computation_fingerprint: "c".repeat(64), execution_id: "story-run", started_at: "2026-11-11T00:00:00Z", completed_at: "2026-11-11T00:00:01Z",
+  result: { status: "ok", payload: { kind: "rate", value: .5, numerator: 1, denominator: 2, numerator_unit: "DFW enrollments", denominator_unit: "classifiable enrollments", n_students: 1, n_excluded: 1, breakdowns: [] }, exclusions: [{ reason: "unknown_grade", count: 1 }] },
 };
-const response: ChatResponse = { status: "answer", message: "Results and calculation details are below.", receipts: [receipt], clarification: null, source: "synthetic" };
-
-const proposed: ChatResponse = { status: "confirmation", message: "Review the complete scope.",
-  proposals: [{ analysis: "retention", cohort: "2022-23" }], receipts: [], clarification: null, source: "synthetic" };
-
+const base: ChatResponseV2 = { protocol_version: 2, status: "confirmation", message: "Review the complete explicit scope before execution.", plan, outcome: null, step_outcomes: [], clarification: null, receipts: [], issues: [] };
+const response: ChatResponseV2 = { ...base, status: "answer", message: "Synthetic results below.", outcome: "complete", step_outcomes: [{ step_id: "dfw", outcome: "completed", issue: null }], receipts: [receipt] };
 const meta = {
-  component: StudentSuccessChat,
-  title: "UNCF/Student success chat",
-  args: { request: fn<(payload: ChatRequest) => Promise<ChatResponse>>(async (payload) => payload.confirmed ? response : proposed) },
+  component: StudentSuccessChat, title: "UNCF/Student success chat",
+  args: { request: fn<(payload: ChatRequestV2) => Promise<ChatResponseV2>>(async (payload): Promise<ChatResponseV2> => payload.confirmed ? response : base) },
   decorators: [(Story) => <div className="mx-auto h-[44rem] max-w-3xl border"><Story /></div>],
-  parameters: { layout: "padded", docs: { description: { component: "Bounded student-success questions, explicit clarification and calculation evidence. Stories use invented interface fixtures; integration tests exercise the real normalized database." } } },
+  parameters: { layout: "padded" },
 } satisfies Meta<typeof StudentSuccessChat>;
 export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const AskAndInspectCalculation: Story = {
-  play: async ({ canvas, userEvent }) => {
-    await userEvent.type(canvas.getByRole("textbox", { name: "Your question" }), "Retention for 2022-23?");
+  play: async ({ canvas, userEvent, args }) => {
+    await userEvent.type(canvas.getByRole("textbox", { name: "Your question" }), "Pell DFW?");
     await userEvent.click(canvas.getByRole("button", { name: /^Send$/ }));
     await expect(canvas.getByRole("button", { name: "Confirm scope and calculate" })).toBeDisabled();
     await userEvent.click(canvas.getByRole("checkbox", { name: /I confirm this scope/ }));
     await userEvent.click(canvas.getByRole("button", { name: "Confirm scope and calculate" }));
     await expect(canvas.getByText("50.00%", { exact: true })).toBeVisible();
-    await expect(canvas.getByText("20 / 40 = 50.00%")).toBeVisible();
-    await userEvent.click(canvas.getByText("How these results were calculated"));
-    await expect(canvas.getByText("retained students / students with known outcomes")).toBeVisible();
-    await userEvent.click(canvas.getByRole("button", { name: "Start over" }));
-    await expect(canvas.queryByText("50.00%", { exact: true })).not.toBeInTheDocument();
+    await expect(canvas.getByText("Distinct students n=1")).toBeVisible();
+    await expect(args.request).toHaveBeenLastCalledWith({ protocol_version: 2, prompt: "Pell DFW?", confirmed: plan });
   },
 };
-
-export const ClarifyCohort: Story = {
-  args: { request: fn(async (payload: ChatRequest): Promise<ChatResponse> => payload.confirmed ? response : payload.selection ? proposed : {
-    status: "clarification", source: "synthetic", message: "Which entry cohort?", receipts: [],
-    clarification: { field: "cohort", message: "Which entry cohort?", pending: { analysis: "retention" }, choices: [{ value: "2022-23", label: "2022-23" }] },
-  }) },
-  play: async ({ canvas, userEvent, args }) => {
-    await userEvent.click(canvas.getByRole("button", { name: "What is the retention rate for all majors?" }));
-    await userEvent.click(canvas.getByRole("button", { name: /^2022-23$/ }));
-    await expect(canvas.getByRole("button", { name: "Confirm scope and calculate" })).toBeDisabled();
-    await userEvent.click(canvas.getByRole("checkbox", { name: /I confirm this scope/ }));
-    await userEvent.click(canvas.getByRole("button", { name: "Confirm scope and calculate" }));
-    await expect(canvas.getByText("50.00%", { exact: true })).toBeVisible();
-    await expect(args.request).toHaveBeenNthCalledWith(2, { prompt: "What is the retention rate for all majors?", pending: { analysis: "retention" }, selection: { field: "cohort", value: "2022-23" } });
-  },
-};
-
-export const ProviderFailure: Story = {
-  args: { request: fn<(payload: ChatRequest) => Promise<ChatResponse>>(async () => { throw new Error("Provider is unavailable"); }) },
-  play: async ({ canvas, userEvent }) => {
-    await userEvent.click(canvas.getByRole("button", { name: "What is the retention rate for all majors?" }));
-    await expect(canvas.getByRole("alert")).toHaveTextContent("Provider is unavailable");
-    await expect(canvas.getByRole("textbox", { name: "Your question" })).toBeEnabled();
-  },
-};
-
 export const ResetWhilePending: Story = {
   play: async ({ canvas, userEvent, args }) => {
-    let resolve!: (value: ChatResponse) => void;
-    const lateReply = new Promise<ChatResponse>((done) => { resolve = done; });
-    (args.request as typeof meta.args.request).mockReturnValueOnce(lateReply);
-    await userEvent.click(canvas.getByRole("button", { name: "What is the retention rate for all majors?" }));
-    await expect(canvas.getByRole("status")).toBeVisible();
+    let resolve!: (value: ChatResponseV2) => void;
+    (args.request as typeof meta.args.request).mockReturnValueOnce(new Promise((done) => { resolve = done; }));
+    await userEvent.type(canvas.getByRole("textbox", { name: "Your question" }), "Old question");
+    await userEvent.click(canvas.getByRole("button", { name: /^Send$/ }));
     await userEvent.click(canvas.getByRole("button", { name: "Start over" }));
     resolve(response);
     await waitFor(() => expect(canvas.queryByRole("status")).not.toBeInTheDocument());
     await expect(canvas.queryByText("50.00%", { exact: true })).not.toBeInTheDocument();
   },
 };
-
-export const DistinctOutcomeStates: Story = {
-  render: () => <CalculationCard receipt={{ ...receipt, rows: [
-    { ...receipt.rows[0], label: "Zero result", numerator: 0, denominator: 40, rate: 0, calculation: "0 / 40 = 0.00%" },
-    ...(["suppressed", "unknown", "unavailable", "not_yet_observable"] as const).map((status) => ({ ...receipt.rows[0], label: status, status, numerator: null, denominator: null, rate: null, exclusions: {}, calculation: "" })),
-  ] }} />,
-  play: async ({ canvas }) => {
-    await expect(canvas.getByText("0.00%", { exact: true })).toBeVisible();
-    for (const label of ["Suppressed", "Unknown", "Unavailable", "Not yet observable"]) {
-      await expect(canvas.getByText(label, { exact: true })).toBeVisible();
-    }
-  },
-};
-
-export const LongAnswerStaysInView: Story = {
+export const NewQuestionInvalidatesPending: Story = {
   play: async ({ canvas, userEvent, args }) => {
-    let resolve!: (value: ChatResponse) => void;
-    const lateReply = new Promise<ChatResponse>((done) => { resolve = done; });
-    (args.request as typeof meta.args.request).mockReturnValueOnce(lateReply);
-    await userEvent.click(canvas.getByRole("button", { name: "What is the retention rate for all majors?" }));
-    await expect(canvas.getByRole("status")).toBeVisible();
-    resolve({ ...response, receipts: [{ ...receipt, rows: Array.from({ length: 20 }, (_, index) => ({ ...receipt.rows[0], label: `Program ${index}` })) }] });
-    await expect(await canvas.findByText("Program 19")).toBeInTheDocument();
-    const scrollingRegion = canvas.getByRole("list", { name: "Conversation" }).parentElement!;
-    await waitFor(() => expect(scrollingRegion.scrollTop).toBeGreaterThan(0));
+    let resolve!: (value: ChatResponseV2) => void;
+    (args.request as typeof meta.args.request).mockReturnValueOnce(new Promise((done) => { resolve = done; }));
+    await userEvent.type(canvas.getByRole("textbox", { name: "Your question" }), "Old question");
+    await userEvent.click(canvas.getByRole("button", { name: /^Send$/ }));
+    await userEvent.type(canvas.getByRole("textbox", { name: "Your question" }), "New question");
+    await userEvent.click(canvas.getByRole("button", { name: /^Send$/ }));
+    await expect(canvas.getByRole("checkbox")).toBeVisible();
+    resolve(response);
+    await waitFor(() => expect(canvas.queryByText("50.00%", { exact: true })).not.toBeInTheDocument());
+  },
+};
+export const SmallGroupsAndZero: Story = {
+  render: () => <div>{Array.from({ length: 9 }, (_, i) => <EvidenceCard key={i} receipt={{ ...receipt, result: { status: "ok", payload: { kind: "rate", value: 0, numerator: 0, denominator: i + 1, numerator_unit: "retained students", denominator_unit: "known outcomes", n_students: i + 1, n_excluded: 1, breakdowns: [] }, exclusions: [{ reason: "unknown", count: 1 }] } }} />)}</div>,
+  play: async ({ canvas }) => {
+    for (let n = 1; n <= 9; n++) await expect(canvas.getByText(`Distinct students n=${n}`, { exact: true })).toBeInTheDocument();
+    await expect(canvas.getAllByText("0.00%", { exact: true })).toHaveLength(9);
+  },
+};
+export const EveryPayloadAndHistoricalStatus: Story = {
+  render: () => <div className="space-y-4">
+    {([
+      { kind: "count", count: 1, unit: "students" }, { kind: "mean", value: 2.5, n: 1, unit: "credits" },
+      { kind: "mean_comparison", unit: "credits", groups: [{ id: "a", mean: 1, n: 1 }, { id: "b", mean: 3, n: 2 }], differences: [{ minuend: "a", subtrahend: "b", value: -2 }] },
+      { kind: "correlation", coefficient: -1, n: 2, method: "pearson", x_unit: "enrollments", y_unit: "credits" },
+      { kind: "table", columns: [{ id: "path", type: "text", unit: "label" }, { id: "n", type: "integer", unit: "students" }], rows: [{ status: "ok", cells: ["small comparison", 1] }] },
+    ] satisfies Payload[]).map((payload, i) => <Evidence key={i} payload={payload} />)}
+    {(["suppressed", "unknown", "unavailable", "not_yet_observable", "not_reported"] as const).map((status) => <EvidenceCard key={status} receipt={{ ...receipt, result: { status, reason: "no_evidence" } }} />)}
+  </div>,
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText(/Pearson r=-1/)).toBeInTheDocument();
+    await expect(canvas.getByText("a − b: -2 credits")).toBeInTheDocument();
+    await expect(canvas.getByText(/Historical suppressed receipt/)).toBeInTheDocument();
+  },
+};
+export const PartialAnswer: Story = {
+  args: { request: fn<(payload: ChatRequestV2) => Promise<ChatResponseV2>>(async (): Promise<ChatResponseV2> => ({ ...response, plan: { ...plan, steps: [step, { ...step, step_id: "tiers" }] }, outcome: "partial", step_outcomes: [...response.step_outcomes, { step_id: "tiers", outcome: "not_executed", issue: { step_id: "tiers", code: "timeout", message: "The query timed out." } }] })) },
+  play: async ({ canvas, userEvent }) => {
+    await userEvent.type(canvas.getByRole("textbox", { name: "Your question" }), "Two steps");
+    await userEvent.click(canvas.getByRole("button", { name: /^Send$/ }));
+    await expect(canvas.getByRole("alert")).toHaveTextContent("Partial answer");
+    await expect(canvas.getByText(/tiers: not_executed/)).toBeVisible();
+  },
+};
+export const ImmutablePages: Story = {
+  render: () => <Evidence payload={{ kind: "table", columns: [{ id: "component", type: "text", unit: "path" }, { id: "value", type: "integer", unit: "students" }], rows: Array.from({ length: 200 }, (_, i) => ({ status: "ok", cells: [`group[${i}]`, i] })), pages: [{ rows: [{ status: "ok", cells: ["group[200]", 1] }] }] }} />,
+  play: async ({ canvas, userEvent }) => {
+    await userEvent.click(canvas.getByRole("button", { name: "Next evidence page" }));
+    await expect(canvas.getByText("group[200]", { exact: true })).toBeVisible();
+    await expect(canvas.getByText("Page 2 of 2 · 201 rows")).toBeVisible();
   },
 };
 
+export const ClarifyWholePlan: Story = {
+  args: { request: fn<(payload: ChatRequestV2) => Promise<ChatResponseV2>>(async (payload): Promise<ChatResponseV2> => payload.selection ? base : {
+    ...base, status: "clarification", plan: { ...plan, kind: "proposed", steps: [{ ...step, parameters: { ...step.parameters, cohort: { unresolved: true, question: "Which entry cohort?", choices: [{ value: "2023-24", label: "2023-24" }] } } }, { ...step, step_id: "tiers", operation_id: "credit_momentum.summary", parameters: { cohort: "2023-24", retention_type: "school", filters: { pell: "Y" } } }] },
+    clarification: { step_id: "dfw", parameter: "cohort", question: "Which entry cohort?", choices: [{ value: "2023-24", label: "2023-24" }] },
+  }) },
+  play: async ({ canvas, userEvent, args }) => {
+    await userEvent.type(canvas.getByRole("textbox", { name: "Your question" }), "Pell DFW and tiers?");
+    await userEvent.click(canvas.getByRole("button", { name: /^Send$/ }));
+    await expect(canvas.getByText("tiers: credit_momentum.summary")).toBeVisible();
+    await userEvent.click(canvas.getByRole("button", { name: /^2023-24$/ }));
+    const sent = (args.request as typeof meta.args.request).mock.calls[1][0];
+    await expect(sent.plan?.steps).toHaveLength(2);
+    await expect(sent.plan?.steps[0].parameters.filters).toEqual({ pell: "Y" });
+    await expect(sent.selection).toEqual({ step_id: "dfw", parameter: "cohort", value: "2023-24" });
+  },
+};
+export const ProviderFailure: Story = {
+  args: { request: fn<(payload: ChatRequestV2) => Promise<ChatResponseV2>>(async () => { throw new Error("Provider is unavailable"); }) },
+  play: async ({ canvas, userEvent }) => {
+    await userEvent.type(canvas.getByRole("textbox", { name: "Your question" }), "DFW?");
+    await userEvent.click(canvas.getByRole("button", { name: /^Send$/ }));
+    await expect(canvas.getByRole("alert")).toHaveTextContent("Provider is unavailable");
+  },
+};
+export const StalePlanNeedsReview: Story = {
+  args: { request: fn<(payload: ChatRequestV2) => Promise<ChatResponseV2>>(async (payload): Promise<ChatResponseV2> => payload.confirmed ? { ...base, plan: { ...plan, snapshot_ref: "updated-snapshot" }, message: "The source changed. Review this updated scope before confirming again." } : base) },
+  play: async ({ canvas, userEvent }) => {
+    await userEvent.type(canvas.getByRole("textbox", { name: "Your question" }), "DFW?");
+    await userEvent.click(canvas.getByRole("button", { name: /^Send$/ }));
+    await userEvent.click(canvas.getByRole("checkbox"));
+    await userEvent.click(canvas.getByRole("button", { name: "Confirm scope and calculate" }));
+    await expect(canvas.getByText(/The source changed/)).toBeVisible();
+    await expect(canvas.getByRole("checkbox")).not.toBeChecked();
+    await expect(canvas.getByRole("button", { name: "Confirm scope and calculate" })).toBeDisabled();
+  },
+};
 
 export const ProviderFreeDeployment: Story = {
   beforeEach: () => {

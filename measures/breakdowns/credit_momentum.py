@@ -60,13 +60,13 @@ def term_credits(connection, cohort: str) -> dict[tuple[str, tuple[str, str]], t
     return {(row["student_id"], (row["year"], row["season"])): (row["attempted"], row["earned"]) for row in rows}
 
 
-def credit_momentum(cohort: str, filters: Group = EVERYONE, retention_measure: Measure = Measure.RETENTION, database: str | Path | None = None, *, snapshot: ReadSnapshot | None = None) -> dict:
+def credit_momentum(cohort: str, filters: Group = EVERYONE, retention_measure: Measure = Measure.RETENTION, database: str | Path | None = None, *, snapshot: ReadSnapshot | None = None, include_evidence: bool = False) -> dict:
     """Run the page with a borrowed snapshot, or own one local read transaction."""
     with page_source(database, snapshot) as source:
-        return _credit_momentum(cohort, filters, retention_measure, database=source.positional, connection=source.named)
+        return _credit_momentum(cohort, filters, retention_measure, database=source.positional, connection=source.named, include_evidence=include_evidence)
 
 
-def _credit_momentum(cohort: str, filters: Group = EVERYONE, retention_measure: Measure = Measure.RETENTION, database: str | Path | None = None, *, connection) -> dict:
+def _credit_momentum(cohort: str, filters: Group = EVERYONE, retention_measure: Measure = Measure.RETENTION, database: str | Path | None = None, *, connection, include_evidence: bool = False) -> dict:
     """The Credit momentum page: year 1 credits, completion, milestones, the first two terms, and tiers."""
     check_retention(retention_measure)
     students = select_students(connection, cohort, filters)
@@ -96,9 +96,9 @@ def _credit_momentum(cohort: str, filters: Group = EVERYONE, retention_measure: 
         },
         "completion": {"counted": completion.denominator, "ratio": completion.metric_rate, "status": completion.status.value},
         "retention": retention(retention_measure, cohort, filters, database),
-        "milestones": [milestone(credits, known) for credits in MILESTONES],
+        "milestones": [dict(milestone(credits, known), **({"share_denominator": len(known)} if include_evidence else {})) for credits in MILESTONES],
         "terms": first_terms(cohort, students, per_term),
-        "tiers": tiers(known, answers),
+        "tiers": tiers(known, answers, include_evidence=include_evidence),
         "progress": progress,
     }
 
@@ -139,7 +139,7 @@ def first_terms(cohort: str, students: dict, per_term: dict) -> list[dict]:
     return columns
 
 
-def tiers(known: dict, answers: dict) -> list[dict]:
+def tiers(known: dict, answers: dict, *, include_evidence: bool = False) -> list[dict]:
     """Students by credits earned in year 1, and how many of each tier were retained."""
     rows = []
     for key, label, lowest, highest in TIERS:
@@ -149,4 +149,6 @@ def tiers(known: dict, answers: dict) -> list[dict]:
             continue
         retained = retained_share(answers, members)
         rows.append({"key": key, "label": label, "students": len(members), "share": share(len(members), len(known)), "retained": retained["retained"], "rate": retained["rate"]})
+        if include_evidence:
+            rows[-1].update(retention_denominator=retained["students"], share_denominator=len(known))
     return rows

@@ -15,6 +15,7 @@ from analytics.contracts_v2 import (
     Step,
     TableColumn,
     TablePayload,
+    TablePage,
     Text,
     VisibleResult,
     VisibleTableRow,
@@ -85,7 +86,9 @@ def _rate_values(row: MeasureResult, spec):
 
 def _row_status(row, spec, provisional):
     """Keep dashboard gateway nonreporting distinct from an unobservable follow-up window."""
-    return DASHBOARD_V1.dashboard_status(spec.measure.value, row.status.value, provisional=provisional)
+    return DASHBOARD_V1.dashboard_status(
+        spec.measure.value, row.status.value, provisional=provisional
+    )
 
 
 def _exclusions(row):
@@ -188,20 +191,20 @@ def _page_result(page, operation, provisional):
 
     def append(row):
         """Refuse oversized pages as a whole instead of silently dropping components."""
-        if len(rows) >= 200:
+        if len(rows) >= 12800:
             raise OperationError(
                 "limit_exceeded", "The page exceeds the result limit; narrow the scope."
             )
         rows.append(row)
 
-    def visit(value, path):
+    def visit(value, path, sample=None):
         """Copy the trusted aggregate owner tree, preserving order and explicit hidden states."""
         check_cancelled()
         if isinstance(value, (dict, list, tuple)) and not value:
             append(
                 VisibleTableRow(
                     status=visible_status,
-                    cells=(path, None, "no entries", "empty collection"),
+                    cells=(path, None, "no entries", "empty collection", None),
                 )
             )
             return
@@ -212,19 +215,40 @@ def _page_result(page, operation, provisional):
                     "The calculation returned an unsupported result shape.",
                 )
             if value.get("status") in _HIDDEN_REASONS:
-                append(HiddenTableRow(status=value["status"]))
+                append(HiddenTableRow(status=value["status"], path=path or "overall"))
                 return
             if value.get("status") == "hidden":
-                append(HiddenTableRow(status="suppressed"))
+                append(HiddenTableRow(status="suppressed", path=path or "overall"))
                 return
             for key, child in value.items():
                 if key != "status":
-                    visit(child, f"{path}.{key}" if path else key)
+                    denominator = None
+                    if key == "rate":
+                        denominator = next(
+                            (
+                                value[k]
+                                for k in (
+                                    "retention_denominator",
+                                    "denominator",
+                                    "den",
+                                    "students",
+                                )
+                                if k in value
+                            ),
+                            None,
+                        )
+                    elif key in ("ratio", "share"):
+                        denominator = value.get(
+                            "share_denominator", value.get("counted")
+                        )
+                    elif key in ("avg_attempted", "avg_earned"):
+                        denominator = value.get("counted", value.get("enrolled"))
+                    visit(child, f"{path}.{key}" if path else key, denominator)
         elif isinstance(value, (list, tuple)):
             for index, child in enumerate(value):
                 visit(child, f"{path}[{index}]")
         elif value is None:
-            append(HiddenTableRow(status="unknown"))
+            append(HiddenTableRow(status="unknown", path=path or "overall"))
         else:
             number = value if type(value) in (int, float) else None
             text = None
@@ -245,6 +269,7 @@ def _page_result(page, operation, provisional):
                         number,
                         text,
                         _unit(operation, path) if number is not None else "label",
+                        sample,
                     ),
                 )
             )
@@ -259,8 +284,17 @@ def _page_result(page, operation, provisional):
                 TableColumn(id="number", type="number", unit="specified by row unit"),
                 TableColumn(id="text", type="text", unit="label"),
                 TableColumn(id="unit", type="text", unit="counting unit"),
+                TableColumn(
+                    id="applicable_n",
+                    type="number",
+                    unit="denominator or observed sample for this statistic",
+                ),
             ),
-            rows=rows,
+            rows=rows[:200],
+            pages=tuple(
+                TablePage(rows=rows[start : start + 200])
+                for start in range(200, len(rows), 200)
+            ),
         ),
     )
 
@@ -418,8 +452,9 @@ class AnalysisService:
         check_cancelled()
         if spec.kind == "defined_measure":
             try:
+                options = {"include_evidence": True} if spec.id == "credit_momentum.summary" else {}
                 owner_result = measures_service.execute(
-                    spec.id, step.parameters, snapshot
+                    spec.id, step.parameters, snapshot, **options
                 )
             except UnknownCourse:
                 return OperationEvidence(
