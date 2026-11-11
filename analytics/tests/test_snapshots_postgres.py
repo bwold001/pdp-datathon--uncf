@@ -52,5 +52,22 @@ def test_postgres_mixed_readers_use_one_read_only_repeatable_read_transaction(da
                 assert connection.row_factory is factory
                 assert snapshot.named.execute("SELECT '?' AS marker, ? AS chosen", (7,)).fetchone() == {"marker": "?", "chosen": 7}
             assert connection.closed
+            from contextlib import contextmanager
+            from analytics.contracts_v2 import ExecutablePlan
+            from analytics.plan_service import PlanService
+
+            @contextmanager
+            def plan_source():
+                """Give each full-plan request its own actual PostgreSQL transaction owner."""
+                with connection_snapshot(psycopg.connect(url, options=f"-csearch_path={schema}"), postgres=True) as owned:
+                    yield owned
+
+            facade = PlanService(AnalyticsService(None, Coverage(), snapshot_factory=plan_source))
+            catalog = facade.catalog()
+            plan = ExecutablePlan.model_validate({"kind": "executable", "catalog_version": catalog.catalog_version,
+                "snapshot_ref": catalog.snapshot_ref, "steps": [{"kind": "defined_measure", "step_id": "retention",
+                "operation_id": "retention.rate", "parameters": {"cohort": "2023-24", "retention_type": "school"}}]})
+            executed = facade.execute_plan(plan)
+            assert executed.outcome == "complete" and executed.receipts[0].result.payload.value == .5
         finally:
             admin.execute(f'DROP SCHEMA "{schema}" CASCADE')

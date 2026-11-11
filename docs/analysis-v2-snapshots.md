@@ -28,7 +28,7 @@ Supported refreshes use the loader's atomic transaction boundary. Do not edit no
 
 ## Reproducible computation
 
-`make_replay_spec` exports the exact resolved `ExecutablePlan`, snapshot reference, operation/feature/method and catalog versions, executable implementation version, normalization and coverage digests, configuration/disclosure versions, and plan-level disclosure context. Required references are explicit; the caller must resolve them from its approved registry/configuration before calling. This helper does not attest to an arbitrary caller's version labels.
+`make_replay_spec` exports the exact resolved `ExecutablePlan`, snapshot reference, operation/feature/method and catalog versions, executable implementation version, normalization and coverage digests, configuration/disclosure versions, and ordered plan/dependency context (fingerprint schema 2). Obsolete suppression context and execution outcomes are excluded, as is the ignored legacy threshold setting. Schema-1 replays require recomputation. Required references are explicit; the caller must resolve them from its approved registry/configuration before calling. This helper does not attest to an arbitrary caller's version labels.
 
 The versioned canonical encoding sorts object keys and declared sets while preserving step/comparison order and dependency meaning. Fingerprints exclude execution IDs, timestamps and durations. `step_fingerprint` includes the whole plan fingerprint so a sibling or dependency that changes disclosure cannot reuse an isolated step's key. Future cache keys must use these stable computation inputs; no exploration-result cache is added here.
 

@@ -251,7 +251,7 @@ its key, chat returns a readable 503 configuration error.
 `NEXT_PUBLIC_STUDENT_SUCCESS_CHAT_ENABLED=false` disables the UI after a rebuild, and `UNCF_CHAT_ENABLED=false` disables backend chat routes.
 See the [deployment guide](docs/chat-deployment.md).
 
-The proposed v2 analysis boundary is currently inactive and does not change the routes above.
+The provider-free v2 analysis API adds catalog, validation and explicit plan execution alongside the routes above.
 See [v2 contracts and client fixtures](docs/analysis-v2-contracts.md) for typed plans, clarification,
 evidence and partial-result rules, and the focused test command for work on that boundary.
 
@@ -259,4 +259,12 @@ The [shared snapshot and replay guide](docs/analysis-v2-snapshots.md) describes 
 configured database access, loader build identity, cancellation and reproducible computation inputs.
 
 The [defined operation catalog](docs/analysis-v2-defined-operations.md) registers the existing dashboard
-and legacy analyses with executable request schemas and typed result adapters. It remains inactive in HTTP/chat.
+and legacy analyses with executable request schemas and typed result adapters. The v2 API uses these adapters; chat migration follows.
+
+The [disclosure and parity guide](docs/analysis-v2-disclosure.md) documents versioned dashboard/legacy
+profiles at version 2, shared API/CSV execution, and validation for mixed v2 plans.
+Small, linked and overlapping results remain visible; no size-based privacy protection applies.
+
+See the [deterministic v2 API guide](docs/analysis-v2-api.md) for `/api/v1/uncf/analysis-v2/catalog`,
+`/validate` and `/execute`, including configured sources, replay, deadlines and partial outcomes.
+The existing chat provider tools remain unchanged until the next integration task.

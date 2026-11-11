@@ -142,6 +142,7 @@ class Snapshot:
         """Create both row views before reading identity through the same transaction."""
         self.named = ReadView(session, True)
         self.positional = ReadView(session, False)
+        self.backend = "postgresql" if session.postgres else "sqlite"
         self.identity = read_snapshot_identity(self.named) if require_identity else None
 
 

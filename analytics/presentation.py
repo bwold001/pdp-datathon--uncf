@@ -1,6 +1,9 @@
 """Calculation text shared by browser and model."""
 
 from analytics.schemas import CalculationRow
+from analytics.disclosure import has_small_cell, suppress_legacy as suppress
+
+__all__ = ["rate_row", "has_small_cell", "suppress"]
 
 
 def rate_row(

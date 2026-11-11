@@ -1,7 +1,7 @@
 """Runs a measure and returns its result rows.
 
 Each measure's calculation lives in its own file in calculations/ and counts in SQL or in Python. This file
-builds the groups, asks the measure for its counts, hides small groups, works out the rate and checks the rows.
+builds the groups, asks the measure for its counts, preserves every nonempty group, works out the rate and checks the rows.
 
 The equity gap finder (#26) will call run_measure, so keep its inputs and rows stable.
 """
