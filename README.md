@@ -257,3 +257,6 @@ See the [deployment guide](docs/chat-deployment.md).
 The proposed v2 analysis boundary is currently inactive and does not change the routes above.
 See [v2 contracts and client fixtures](docs/analysis-v2-contracts.md) for typed plans, clarification,
 evidence and partial-result rules, and the focused test command for work on that boundary.
+
+The [shared snapshot and replay guide](docs/analysis-v2-snapshots.md) describes transaction ownership,
+configured database access, loader build identity, cancellation and reproducible computation inputs.

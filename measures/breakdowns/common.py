@@ -7,9 +7,12 @@ from __future__ import annotations
 
 import sqlite3
 from collections.abc import Iterable
+from contextlib import contextmanager
+from dataclasses import dataclass
 from pathlib import Path
 
 from ..calculations.dfw import grade_result
+from ..data_access import ReadConnection, ReadSnapshot
 from ..calculations.sql_counts import SAFE_YEAR, filters_sql, group_value_sql, normalize
 from ..models import (
     ALLOWED_VALUES,
@@ -49,6 +52,31 @@ def connect(database: str | Path | None = None) -> sqlite3.Connection:
     connection = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
     connection.row_factory = sqlite3.Row
     return connection
+
+
+@dataclass(frozen=True)
+class _LocalSnapshot:
+    """Share SQLite's named/indexable rows when a legacy page owns its transaction."""
+
+    named: ReadConnection
+    positional: ReadConnection
+
+
+@contextmanager
+def page_source(database=None, snapshot: ReadSnapshot | None = None):
+    """Borrow both views without closing them, or own one complete page transaction."""
+    if snapshot is not None:
+        yield snapshot
+        return
+    connection = connect(database)
+    try:
+        connection.execute("BEGIN")
+        yield _LocalSnapshot(connection, connection)
+    finally:
+        try:
+            connection.rollback()
+        finally:
+            connection.close()
 
 
 def check_cohort(cohort: str) -> None:
@@ -233,13 +261,10 @@ def course_rows(connection: sqlite3.Connection, cohort: str, students: dict) -> 
     return found
 
 
-def filter_options(cohorts: Iterable[str], cohort: str, database: str | Path | None = None) -> dict:
+def filter_options(cohorts: Iterable[str], cohort: str, database: str | Path | None = None, *, snapshot: ReadSnapshot | None = None) -> dict:
     """How many students entered in each cohort year, and in the chosen cohort, how many have each dimension value."""
-    connection = connect(database)
-    try:
-        rows = connection.execute(f"SELECT * FROM ({students_sql()})").fetchall()
-    finally:
-        connection.close()
+    with page_source(database, snapshot) as source:
+        rows = source.named.execute(f"SELECT * FROM ({students_sql()})").fetchall()
     per_cohort = {year: 0 for year in cohorts}
     per_value = {d.value: {value: 0 for value in ALLOWED_VALUES[d]} for d in STUDENT_DIMENSIONS}
     for row in rows:

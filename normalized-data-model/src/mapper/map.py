@@ -32,6 +32,7 @@ from pathlib import Path
 
 import yaml
 
+from src.build_identity import configuration_digest, pipeline_version
 from src.rules.rules import BLANK, DEFAULT, UNKNOWN, ConfigError, load_rules, read_value
 from src.tables.files import FORMATS, check_format, write_tables
 
@@ -106,6 +107,7 @@ def _map_file(rules, source_path, config_name, mode, folder, fmt):
         writer.writerows(problems)
     source = {"source_file": str(source_path), "name": source_path.name, "sha256": _sha256(source_path),
               "rows": rows, "config": config_name, "mode": mode, "format": fmt,
+              "mapping_identity": {"pipeline_version": pipeline_version(), "configuration_digest": configuration_digest(rules["files"])},
               "mapped_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
               "repairs": dict(sorted(repairs.items())), "unknown": dict(sorted(unknowns.items())),
               "no_value": dict(sorted(no_values.items()))}

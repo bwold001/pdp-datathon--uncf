@@ -10,7 +10,9 @@ from hashlib import sha256
 from pathlib import Path
 
 from analytics import enrollment, graduation, retention
-from analytics.execution import check_cancelled, watch_sqlite
+from analytics.data_access import sqlite_snapshot
+from analytics.execution import check_cancelled
+from analytics.provenance import DataUnavailable
 from analytics.definitions import DEFINITIONS
 from analytics.presentation import suppress
 from analytics.schemas import (
@@ -24,41 +26,49 @@ from analytics.coverage import Coverage
 from analytics.programs import PROGRAMS, resolve_program
 
 
-class DataUnavailable(Exception):
-    """A configured database failed without exposing connection details."""
-
-
 class AnalyticsService:
     """Own deterministic analyses and serialize evidence only after suppression."""
 
-    def __init__(self, database: Path | None, coverage: Coverage, *, connection_factory=None):
+    def __init__(self, database: Path | None, coverage: Coverage, *, connection_factory=None, snapshot_factory=None, bound_snapshot=None):
         """Use an explicit connection provider or the standalone normalized extract."""
         self.database = database
         self.coverage = coverage
         self.connection_factory = connection_factory
+        self.snapshot_factory = snapshot_factory
+        self.bound_snapshot = bound_snapshot
 
     @contextmanager
     def connect(self):
         """Read one snapshot from the explicit provider or the standalone extract."""
+        if self.bound_snapshot is not None:
+            yield self.bound_snapshot.named
+            return
         if self.connection_factory is not None:
             with self.connection_factory() as connection:
                 yield connection
             return
         if self.database is None:
             raise DataUnavailable("No database is configured")
-        db = sqlite3.connect(f"{self.database.resolve().as_uri()}?mode=ro", uri=True)
-        db.row_factory = sqlite3.Row
-        detach = None
-        try:
-            db.execute("PRAGMA query_only = ON")
-            db.execute("BEGIN")
-            detach = watch_sqlite(db)
-            yield db
-        finally:
-            if detach is not None:
-                detach()
-            db.rollback()
-            db.close()
+        with sqlite_snapshot(self.database, require_identity=False) as snapshot:
+            yield snapshot.named
+
+    @contextmanager
+    def snapshot(self):
+        """Open a v2 source with persisted build identity; never fall back across configured factories."""
+        if self.bound_snapshot is not None:
+            yield self.bound_snapshot
+        elif self.snapshot_factory is not None:
+            with self.snapshot_factory() as snapshot:
+                yield snapshot
+        elif self.connection_factory is not None:
+            raise DataUnavailable("The configured provider does not supply shared snapshots.")
+        else:
+            with sqlite_snapshot(self.database) as snapshot:
+                yield snapshot
+
+    def for_snapshot(self, snapshot):
+        """Bind legacy catalog, clarification and analysis calls without taking transaction ownership."""
+        return AnalyticsService(None, self.coverage, bound_snapshot=snapshot)
 
     def catalog(self) -> dict:
         """Advertise approved operations, parameter choices and evidence limitations."""
@@ -73,6 +83,8 @@ class AnalyticsService:
                 ]
         except (sqlite3.Error, OSError, DataUnavailable):
             check_cancelled()
+            if self.bound_snapshot is not None:
+                raise
             pass
         return {
             "analyses": {key: value.model_dump() for key, value in DEFINITIONS.items()},
@@ -225,6 +237,8 @@ class AnalyticsService:
                 )
         except (sqlite3.Error, OSError, DataUnavailable):
             check_cancelled()
+            if self.bound_snapshot is not None:
+                raise
             return self.unavailable(
                 receipt,
                 "Normalized data is missing or incompatible. Load cohort and course files into the configured database and check its schema.",

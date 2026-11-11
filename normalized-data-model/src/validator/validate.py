@@ -38,6 +38,7 @@ from src.fixer.fix import STAGE
 from src.mapper.map import SOURCE_ROW, _sha256, mapped_columns
 from src.rules.rules import describe_rule, ConfigError, check_value, key_is_blank, load_rules, optional_tables
 from src.tables.files import read_tables, write_tables
+from src.build_identity import configuration_digest, pipeline_version
 
 __all__ = ["validate"]
 
@@ -230,7 +231,8 @@ def _write_validated(rules, staging, meta, staged, passed, failed, folder, repor
     table_files = {p.name: _sha256(p) for p in sorted(out.iterdir()) if p.stem in rules["schema"]}
     with open(out / "source.yaml", "w") as f:
         yaml.safe_dump(dict(meta, validation_report=str(report_dir), rows_passed=len(passed), rows_failed=failed,
-                            table_files=table_files), f, sort_keys=False, allow_unicode=True, width=120)
+                            table_files=table_files,
+                            validation_identity={"pipeline_version": pipeline_version(), "configuration_digest": configuration_digest(rules["files"])}), f, sort_keys=False, allow_unicode=True, width=120)
     shutil.copyfile(folder / "fixes.yaml", out / "fixes.yaml")
     with open(folder / "problems.csv", newline="") as f, open(out / "problems.csv", "w", newline="") as g:
         reader, writer = csv.reader(f), csv.writer(g)

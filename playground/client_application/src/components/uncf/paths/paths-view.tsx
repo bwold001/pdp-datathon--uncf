@@ -15,13 +15,36 @@ import {
   tableClasses,
 } from "@/components/uncf/layout/explorer-parts";
 import { hiddenCount, privacyNote, tooFew } from "@/components/uncf/layout/small-groups";
+import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-import { type PathsResponse, pathStatuses, statusStyle, studentsLabel, termNames } from "./paths-data";
+import {
+  type FocusCounts,
+  type PathFocus,
+  type PathStatus,
+  type PathsResponse,
+  focusCounts,
+  focusPhrase,
+  pathStatuses,
+  statusStyle,
+  studentsLabel,
+  termNames,
+} from "./paths-data";
 import { PathsSankey } from "./paths-sankey";
 
-/** The Student paths tab drawn from the API's answer: tiles, the student flow, transfers and the term table. */
-export function PathsView({ data }: { data: PathsResponse }) {
+type PathsViewProps = {
+  data: PathsResponse;
+  /** The students clicked in the flow, or null for the whole cohort. */
+  focus?: PathFocus | null;
+  /** Called when someone clicks a band or bar, or clears the focus. Without it, the flow isn't clickable. */
+  onFocusChange?: (focus: PathFocus | null) => void;
+};
+
+/**
+ * The Student paths tab drawn from the API's answer: tiles, the student flow, transfers and the term table. With a
+ * focus, the tiles and the table count only the students in the band or bar someone clicked.
+ */
+export function PathsView({ data, focus = null, onFocusChange }: PathsViewProps) {
   if (data.status === "suppressed" || !data.students || !data.columns || !data.transfers) {
     return (
       <MessageCard title={`${tooFew(data.meta.min_students)} match these filters.`}>
@@ -31,12 +54,19 @@ export function PathsView({ data }: { data: PathsResponse }) {
   }
   const names = termNames(data);
   const total = data.students;
+  const focused = focus ? focusCounts(data, focus) : null;
   const year2 = data.columns.year2;
-  const returned = data.moves?.find((move) => move.from === "stopped" && move.to === "here")?.students ?? null;
+  const returned = focused ? focused.returned : (data.moves?.find((move) => move.from === "stopped" && move.to === "here")?.students ?? null);
   const notObserved = data.columns.next.not_observed || data.columns.year2.not_observed;
+  // A focused tile's share is of the focused students; otherwise the API's share of everyone who entered.
+  const share = (status: "here" | "stopped") => (focused ? shareOf(focused.year2[status], focused.students) : year2.shares[status]);
+  const count = (status: "here" | "stopped") => (focused ? focused.year2[status] : year2[status]);
 
   return (
     <>
+      {focus && focused && onFocusChange && (
+        <FocusBar phrase={focusPhrase(data, focus)} students={focused.students} total={total} minStudents={data.meta.min_students} onClear={() => onFocusChange(null)} />
+      )}
       {data.meta.provisional && (
         <Notice title={`The ${data.meta.cohort} class’s second year is still arriving.`}>
           Later terms are only partly in this PDP submission, so they show fewer students enrolled than the final count
@@ -44,27 +74,35 @@ export function PathsView({ data }: { data: PathsResponse }) {
         </Notice>
       )}
       <KpiGrid columns={4}>
-        <Kpi
-          label="Entering cohort"
-          value={total.toLocaleString("en-US")}
-          note={`${studentsLabel(data)}, ${names.entered ?? data.meta.cohort}`}
-        />
+        {focused ? (
+          <Kpi
+            label="Students in focus"
+            value={formatCount(focused.students, data.meta.min_students)}
+            note={`${formatShare(shareOf(focused.students, total))} of the ${total.toLocaleString("en-US")} who entered`}
+          />
+        ) : (
+          <Kpi
+            label="Entering cohort"
+            value={total.toLocaleString("en-US")}
+            note={`${studentsLabel(data)}, ${names.entered ?? data.meta.cohort}`}
+          />
+        )}
         {/* These two count one term from course records, not PDP retention or persistence (year-2 flags, defined in
             Key terms), so they name what they count. */}
         <Kpi
           label={`Still here · ${names.year2Short}`}
-          value={formatShare(year2.shares.here)}
+          value={formatShare(share("here"))}
           tone="blue"
-          note={`${formatCount(year2.here, data.meta.min_students)} took a course here that term`}
+          note={`${formatCount(count("here"), data.meta.min_students)} took a course here that term`}
         />
         <Kpi
           label={`Enrolled anywhere · ${names.year2Short}`}
-          value={formatShare(year2.shares.anywhere)}
+          value={formatShare(focused ? shareOf(anywhere(focused), focused.students) : year2.shares.anywhere)}
           note={`Here or at another college in ${names.year2Short}`}
         />
         <Kpi
           label={`Stopped out by ${names.year2Short}`}
-          value={formatShare(year2.shares.stopped)}
+          value={formatShare(share("stopped"))}
           tone="warn"
           note={returnedNote(returned, data.meta.min_students)}
         />
@@ -76,7 +114,7 @@ export function PathsView({ data }: { data: PathsResponse }) {
           aside={<Legend items={pathStatuses.map((status) => ({ label: statusStyle[status].label, color: statusStyle[status].node }))} />}
         />
         <div className="overflow-x-auto">
-          <PathsSankey data={data} />
+          <PathsSankey data={data} focus={focus} onFocusChange={onFocusChange} />
         </div>
         {notObserved ? (
           <p className="mt-3 text-[13px] text-(--uncf-ink-3)">
@@ -88,16 +126,46 @@ export function PathsView({ data }: { data: PathsResponse }) {
           record each term in the PDP course file. Enrolled here: took a course here that term. Earned a credential: no
           course here, but earned a credential here in an earlier year. Transferred out: neither, but the file records
           enrollment at another college that term. Stopped out: no record that term. These come from term records, so
-          they can differ from the cohort file’s retention and persistence flags. Hover a band to see its count.
+          they can differ from the cohort file’s retention and persistence flags. Hover a band to see its count
+          {onFocusChange ? "; click a band or bar to highlight it and count only its students in the tiles." : "."}
         </Counted>
       </Card>
 
       <TwoColumns>
         <TransfersCard data={data} year2={names.year2} />
-        <TermTableCard data={data} />
+        <TermTableCard data={data} focus={focus} />
       </TwoColumns>
     </>
   );
+}
+
+type FocusBarProps = { phrase: string; students: number | null; total: number; minStudents: number; onClear: () => void };
+
+/** Says which students the tiles and table count once someone clicks the flow, with a way back to everyone. */
+function FocusBar({ phrase, students, total, minStudents, onClear }: FocusBarProps) {
+  return (
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-2" role="status">
+      <span className="text-sm font-medium text-(--uncf-ink-2)">Focused on</span>
+      <span className="inline-flex items-center gap-1 rounded-full border border-(--uncf-ink-3) bg-(--uncf-surface) py-1 pr-1 pl-3.5 font-medium">
+        {phrase} · <span className="uncf-num">{formatCount(students, minStudents)}</span>
+        <button
+          type="button"
+          onClick={onClear}
+          aria-label="Show every student"
+          className="ml-1 inline-flex size-6 cursor-pointer items-center justify-center rounded-full text-(--uncf-ink-3) hover:bg-(--uncf-band) hover:text-(--uncf-ink)"
+        >
+          <X className="size-4" aria-hidden />
+        </button>
+      </span>
+      <span className="text-sm text-(--uncf-ink-3)">of {total.toLocaleString("en-US")} who entered. The tiles count only them. Click it again or press Esc to show everyone.</span>
+    </div>
+  );
+}
+
+/** Enrolled here or at another college in the third term: null when either count is hidden. */
+function anywhere(focused: FocusCounts): number | null {
+  const { here, elsewhere } = focused.year2;
+  return here === null || elsewhere === null ? null : here + elsewhere;
 }
 
 /** The stopped-out tile's note: how many came back after a term with no record. */
@@ -154,23 +222,36 @@ function TransfersCard({ data, year2 }: { data: PathsResponse; year2: string }) 
   );
 }
 
-/** Each term's counts as a table: the flow chart's numbers in rows. */
-function TermTableCard({ data }: { data: PathsResponse }) {
+/**
+ * Each term's counts as a table: the flow chart's numbers in rows, for the whole cohort. With a focus, the cells of the
+ * statuses clicked in the flow are highlighted in their color.
+ */
+function TermTableCard({ data, focus }: { data: PathsResponse; focus: PathFocus | null }) {
   const names = termNames(data);
   const columns = data.columns!;
   const rows = [
-    { term: names.entered ?? "Entering term", here: formatCount(data.students, data.meta.min_students), credential: "–", elsewhere: "–", stopped: "–" },
+    { term: names.entered ?? "Entering term", here: formatCount(data.students, data.meta.min_students), credential: "–", elsewhere: "–", stopped: "–", picked: null },
     ...[
-      { term: names.next, counts: columns.next },
-      { term: names.year2, counts: columns.year2 },
-    ].map(({ term, counts }) => ({
+      { term: names.next, counts: columns.next, picked: focus?.next ?? null },
+      { term: names.year2, counts: columns.year2, picked: focus?.year2 ?? null },
+    ].map(({ term, counts, picked }) => ({
       term: capitalize(term),
       here: formatCount(counts.here, data.meta.min_students),
       credential: formatCount(counts.credential, data.meta.min_students),
       elsewhere: formatCount(counts.elsewhere, data.meta.min_students),
       stopped: formatCount(counts.stopped, data.meta.min_students),
+      picked,
     })),
   ];
+  /** A number cell, tinted in its status's color when it's the one clicked in the flow. */
+  const cell = (status: PathStatus, picked: PathStatus | null, text: string) => (
+    <td
+      className={cn(tableClasses.td, tableClasses.right, "uncf-num", status === picked && "px-2 font-semibold")}
+      style={status === picked ? { background: statusStyle[status].band } : undefined}
+    >
+      {text}
+    </td>
+  );
 
   return (
     <Card>
@@ -190,10 +271,10 @@ function TermTableCard({ data }: { data: PathsResponse }) {
             {rows.map((row) => (
               <tr key={row.term}>
                 <td className={tableClasses.td}>{row.term}</td>
-                <td className={cn(tableClasses.td, tableClasses.right, "uncf-num")}>{row.here}</td>
-                <td className={cn(tableClasses.td, tableClasses.right, "uncf-num")}>{row.credential}</td>
-                <td className={cn(tableClasses.td, tableClasses.right, "uncf-num")}>{row.elsewhere}</td>
-                <td className={cn(tableClasses.td, tableClasses.right, "uncf-num")}>{row.stopped}</td>
+                {cell("here", row.picked, row.here)}
+                {cell("credential", row.picked, row.credential)}
+                {cell("elsewhere", row.picked, row.elsewhere)}
+                {cell("stopped", row.picked, row.stopped)}
               </tr>
             ))}
           </tbody>
