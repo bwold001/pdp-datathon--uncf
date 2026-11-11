@@ -1,5 +1,7 @@
+import type { GradeScale } from "@/components/uncf/layout/explorer-api";
 import { Card, CardHead, Kpi, KpiGrid, Legend, LoadingBlock, MessageCard } from "@/components/uncf/layout/explorer-parts";
 import { explorerButton } from "@/components/uncf/layout/explorer-styles";
+import { GradeScaleTable } from "@/components/uncf/layout/grade-scale";
 import { hidesSmallGroups } from "@/components/uncf/layout/small-groups";
 import { cn } from "@/lib/utils";
 
@@ -11,6 +13,8 @@ import {
   type DfwTally,
   dfShare,
   dfwDimensions,
+  dfwGradeStyles,
+  dfwGrades,
   groupRows,
   minimumGrades,
   percent,
@@ -18,10 +22,7 @@ import {
 } from "./dfw-data";
 
 const fmt = (n: number) => n.toLocaleString("en-US");
-const legend = [
-  { label: "D or F", color: "var(--uncf-f)" },
-  { label: "W", color: "var(--uncf-grey)" },
-];
+const legend = dfwGrades.map((grade) => dfwGradeStyles[grade]);
 
 /** The three tiles: the DFW rate, then D-or-F and W as shares of all final grades. */
 export function DfwKpis({ everyone }: { everyone: DfwTally }) {
@@ -34,24 +35,57 @@ export function DfwKpis({ everyone }: { everyone: DfwTally }) {
         tone="warn"
         note={`${fmt(everyone.num!)} of ${fmt(everyone.den!)} final grades were a D, F or W`}
       />
-      <Kpi label="D or F" value={percent(dfShare(split))} note={`${fmt(split.DF)} final grades below a C`} />
+      <Kpi label="D or F" value={percent(dfShare(split))} note={`${fmt(split.DF)} final grades of D or F`} />
       <Kpi label="Withdrew" value={percent(split.shares.W)} note={`${fmt(split.W)} withdrawals`} />
     </KpiGrid>
   );
 }
 
-/** D-or-F and W as parts of a course's final grades, on a grey track. */
-function DfwBar({ split }: { split: DfwSplit | null }) {
+/** Every DFW grade on one card: the bar, then each grade's count and share of final grades. */
+export function DfwGradeCard({ everyone }: { everyone: DfwTally }) {
+  return (
+    <Card>
+      <CardHead
+        className="mb-3.5"
+        title="D, F and W"
+        subtitle={`Share of all ${fmt(everyone.den!)} final grades. A D is any D (D+, D or D-); a C- passes.`}
+        aside={<Legend items={legend} />}
+      />
+      <DfwBar split={everyone.split} tall />
+      <GradeCounts split={everyone.split!} />
+    </Card>
+  );
+}
+
+/** Each DFW grade as a part of a set of final grades, on a grey track. */
+function DfwBar({ split, tall = false }: { split: DfwSplit | null; tall?: boolean }) {
   const width = (share: number) => `${share * 100}%`;
   return (
-    <div className="flex h-3 overflow-hidden rounded-[3px] bg-(--uncf-track)" aria-hidden>
-      {split && (
-        <>
-          <div style={{ width: width(dfShare(split)), background: "var(--uncf-f)" }} />
-          <div style={{ width: width(split.shares.W), background: "var(--uncf-grey)" }} />
-        </>
-      )}
+    <div className={cn("flex overflow-hidden rounded-[3px] bg-(--uncf-track)", tall ? "h-5" : "h-3")} aria-hidden>
+      {split &&
+        dfwGrades.map((grade) => (
+          <div key={grade} style={{ width: width(split.shares[grade]), background: dfwGradeStyles[grade].color }} />
+        ))}
     </div>
+  );
+}
+
+/** Each DFW grade's count and share, as many side by side as the card has room for. */
+function GradeCounts({ split }: { split: DfwSplit }) {
+  return (
+    <dl className="mt-3 grid grid-cols-[repeat(auto-fill,minmax(128px,1fr))] gap-x-5 gap-y-2 text-sm">
+      {dfwGrades.map((grade) => (
+        <div key={grade} className="flex flex-col gap-0.5">
+          <dt className="flex items-center gap-1.5 text-(--uncf-ink-2)">
+            <i className="size-3 flex-none rounded-[3px]" style={{ background: dfwGradeStyles[grade].color }} aria-hidden />
+            {grade === "W" ? "W (withdrew)" : grade}
+          </dt>
+          <dd className="uncf-num whitespace-nowrap">
+            {fmt(split.grades[grade])} <span className="text-(--uncf-ink-3)">· {percent(split.shares[grade])}</span>
+          </dd>
+        </div>
+      ))}
+    </dl>
   );
 }
 
@@ -116,7 +150,7 @@ export function CourseList({ courses, total, sort, minimum, selected, onSelect, 
       <div className={cn(rowGrid, "hidden border-b border-(--uncf-line-2) px-2.5 pb-2 text-[13px] font-semibold text-(--uncf-ink-3) sm:grid")}>
         <span>Course</span>
         <span className="text-right">Final grades</span>
-        <span>Share D or F · W</span>
+        <span>Share by DFW grade</span>
         <span className="text-right">DFW rate</span>
       </div>
       {courses.length === 0 ? (
@@ -197,10 +231,7 @@ export function CourseDetail({ detail, dimension, onDimension }: CourseDetailPro
       {detail.split && (
         <div>
           <DfwBar split={detail.split} />
-          <div className="mt-2 flex flex-wrap gap-4 text-sm text-(--uncf-ink-2)">
-            <span>D or F: {fmt(detail.split.DF)}</span>
-            <span>W: {fmt(detail.split.W)}</span>
-          </div>
+          <GradeCounts split={detail.split} />
         </div>
       )}
       <div className="flex flex-col gap-3.5 border-t border-(--uncf-line) pt-4">
@@ -302,18 +333,23 @@ export function CourseDetailError({ message, onRetry }: { message: string; onRet
   );
 }
 
-/** The note under the page: what the numbers mean, in the design's words. minStudents is the answer's meta.min_students. */
-export function DfwCounted({ minStudents }: { minStudents: number }) {
+/**
+ * The note under the page: what the numbers mean, in the design's words, and the grade scale they used.
+ * minStudents is the answer's meta.min_students.
+ */
+export function DfwCounted({ scale, minStudents }: { scale: GradeScale; minStudents: number }) {
   return (
     <div className="border-t border-(--uncf-line) pt-4.5 text-sm text-(--uncf-ink-2)">
       <b className="font-semibold text-(--uncf-ink)">What the numbers mean:</b> a final grade is one student finishing one
-      course. The DFW rate is the share of final grades that were a D, F or W; incomplete, audit and missing grades aren’t
-      counted. “Everyone else” is all the other students in the same course. A gap shows a difference between groups, not
-      its cause.
+      course. The DFW rate is the share of final grades that were a D, F or W. A D is any D (D+, D or D-); a C- passes.
+      F is the letter F or any grade under the lowest D (0.7), whatever the number, so a 0.0 and the code F are both an
+      F. Incomplete, audit and missing grades aren’t counted. “Everyone else” is all the other students in the same course. A gap shows a
+      difference between groups, not its cause.
       {hidesSmallGroups(minStudents) && ` Courses and groups with fewer than ${minStudents} students are hidden to protect privacy.`} One course code can appear
       under several names in the catalog. Some classes are listed twice in this data, so a few grades count twice.
       First-generation status isn’t shown because this data doesn’t record it consistently yet. The data is synthetic: it
       doesn’t describe real students.
+      <GradeScaleTable scale={scale} rule="dfw" />
     </div>
   );
 }

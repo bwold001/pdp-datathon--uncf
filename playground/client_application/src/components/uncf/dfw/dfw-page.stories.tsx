@@ -39,10 +39,20 @@ type Story = StoryObj<typeof meta>;
 export const RealCourses: Story = {
   name: "2023-24 courses",
   play: async ({ canvas, userEvent }) => {
-    await expect(await canvas.findByText("4,347 of 18,883 final grades were a D, F or W")).toBeVisible();
-    await expect(canvas.getByText("23.0%")).toBeVisible();
-    await expect(canvas.getByText("2,870 final grades below a C")).toBeVisible();
+    await expect(await canvas.findByText("4,287 of 18,883 final grades were a D, F or W")).toBeVisible();
+    await expect(canvas.getByText("22.7%")).toBeVisible();
+    await expect(canvas.getByText("2,810 final grades of D or F")).toBeVisible();
     await expect(canvas.getByText("1,477 withdrawals")).toBeVisible();
+
+    // D, F and W apart: 548 D (every D letter), 2,262 F and 1,477 W. A C- passes, and the table says so.
+    await expect(canvas.getByText("D, F and W")).toBeVisible();
+    for (const count of ["548", "2,262", "1,477"]) {
+      await expect(canvas.getAllByText(count, { exact: true }).length).toBeGreaterThan(0);
+    }
+    await userEvent.click(canvas.getByText("How grades are counted"));
+    await expect(canvas.getByRole("row", { name: /^C or higher 1\.7 and up/ })).toHaveTextContent("No, passed");
+    await expect(canvas.getByRole("row", { name: /^D 0\.7 to under 1\.7 \(D-, D, D\+\)/ })).toHaveTextContent("Yes, a DFW");
+    await expect(canvas.getByRole("row", { name: /^F under 0\.7, or the code F/ })).toHaveTextContent("Yes, a DFW");
 
     const list = within(canvas.getByRole("list"));
     const rows = list.getAllByRole("button");
@@ -52,9 +62,9 @@ export const RealCourses: Story = {
 
     // The detail card: ENG 101, and Pell recipients 4.2 points above everyone else in the course.
     await expect(await canvas.findByRole("heading", { name: "ENG 101" })).toBeVisible();
-    await expect(canvas.getByText("135 of 492 final grades were a D, F or W")).toBeVisible();
+    await expect(canvas.getByText("133 of 492 final grades were a D, F or W")).toBeVisible();
     await expect(canvas.getByText("Listed in the catalog as COMPOSITION I · ENG-101 · ENGLISH COMP 1 and 8 more")).toBeVisible();
-    await expect(canvas.getByText("+4.2 pts")).toBeVisible();
+    await expect(canvas.getByText("+4.3 pts")).toBeVisible();
 
     await userEvent.click(canvas.getByRole("button", { name: "Show 10 more" }));
     await expect(within(canvas.getByRole("list")).getAllByRole("button").length).toBeGreaterThan(10);
@@ -90,8 +100,8 @@ export const ComparedByTheApi: Story = {
     await canvas.findByRole("heading", { name: "ENG 101" });
     await userEvent.click(canvas.getByRole("button", { name: "Ethnicity" }));
     await expect(canvas.getByText(/^Not Hispanic/)).toBeVisible();
-    await expect(canvas.getByText("+19.9 pts").parentElement).toHaveTextContent("+19.9 pts vs. everyone else (24.5%)");
-    await expect(canvas.getByText("−11.9 pts").parentElement).toHaveTextContent("−11.9 pts vs. everyone else (33.9%)");
+    await expect(canvas.getByText("+20.4 pts").parentElement).toHaveTextContent("+20.4 pts vs. everyone else (24.1%)");
+    await expect(canvas.getByText("−12.7 pts").parentElement).toHaveTextContent("−12.7 pts vs. everyone else (33.9%)");
   },
 };
 

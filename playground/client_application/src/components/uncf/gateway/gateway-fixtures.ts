@@ -19,7 +19,37 @@ export const gateway2023: GatewayResponse = {
     "retention_observed": true,
     "first_term": null,
     "compared": false,
-    "min_pair_students": 10
+    "min_pair_students": 10,
+    "grade_scale": {
+      "grades": [
+        {
+          "grade": "C or higher",
+          "points": "1.7 and up",
+          "counted": true
+        },
+        {
+          "grade": "D",
+          "points": "1.0 to under 1.7 (D, D+)",
+          "counted": true
+        },
+        {
+          "grade": "Under 1.0",
+          "points": "under 1.0 (D- or F), or the code F",
+          "counted": false
+        },
+        {
+          "grade": "P",
+          "points": "the code P (pass)",
+          "counted": true
+        },
+        {
+          "grade": "W",
+          "points": "the code W (withdrew)",
+          "counted": false
+        }
+      ],
+      "left_out": "I (incomplete), A (audit), M or MIS (missing), O or OTH (other), and any code the PDP dictionary doesn't list, such as UW, aren't final grades, so neither page counts them."
+    }
   },
   "status": "ok",
   "students": 2580,
@@ -48,6 +78,13 @@ export const gateway2023: GatewayResponse = {
         "retook_not": null,
         "no_retake": 64
       },
+      "grades": {
+        "C or higher": 251,
+        "D": 15,
+        "Under 1.0": 65,
+        "P": 50,
+        "W": 31
+      },
       "retained_if_passed": {
         "students": 313,
         "retained": 244,
@@ -72,6 +109,13 @@ export const gateway2023: GatewayResponse = {
         "retook_passed": null,
         "retook_not": null,
         "no_retake": 10
+      },
+      "grades": {
+        "C or higher": 48,
+        "D": null,
+        "Under 1.0": null,
+        "P": 0,
+        "W": null
       },
       "retained_if_passed": {
         "students": 52,
@@ -98,6 +142,13 @@ export const gateway2023: GatewayResponse = {
         "retook_not": null,
         "no_retake": 14
       },
+      "grades": {
+        "C or higher": 42,
+        "D": 0,
+        "Under 1.0": 14,
+        "P": 0,
+        "W": null
+      },
       "retained_if_passed": {
         "students": 41,
         "retained": 30,
@@ -122,6 +173,13 @@ export const gateway2023: GatewayResponse = {
         "retook_passed": 0,
         "retook_not": 0,
         "no_retake": 15
+      },
+      "grades": {
+        "C or higher": 0,
+        "D": 0,
+        "Under 1.0": null,
+        "P": 36,
+        "W": null
       },
       "retained_if_passed": {
         "students": 36,
@@ -148,6 +206,13 @@ export const gateway2023: GatewayResponse = {
         "retook_not": 0,
         "no_retake": null
       },
+      "grades": {
+        "C or higher": 29,
+        "D": null,
+        "Under 1.0": null,
+        "P": 0,
+        "W": null
+      },
       "retained_if_passed": {
         "students": 30,
         "retained": 22,
@@ -172,6 +237,13 @@ export const gateway2023: GatewayResponse = {
         "retook_passed": null,
         "retook_not": 0,
         "no_retake": null
+      },
+      "grades": {
+        "C or higher": 15,
+        "D": null,
+        "Under 1.0": null,
+        "P": 0,
+        "W": null
       },
       "retained_if_passed": {
         "students": 17,
@@ -198,6 +270,13 @@ export const gateway2023: GatewayResponse = {
         "retook_not": 0,
         "no_retake": 0
       },
+      "grades": {
+        "C or higher": 22,
+        "D": 0,
+        "Under 1.0": 0,
+        "P": 0,
+        "W": 0
+      },
       "retained_if_passed": {
         "students": 22,
         "retained": 11,
@@ -222,6 +301,13 @@ export const gateway2023: GatewayResponse = {
         "retook_passed": 0,
         "retook_not": 0,
         "no_retake": null
+      },
+      "grades": {
+        "C or higher": 19,
+        "D": null,
+        "Under 1.0": null,
+        "P": 0,
+        "W": 0
       },
       "retained_if_passed": {
         "students": 19,
@@ -248,6 +334,13 @@ export const gateway2023: GatewayResponse = {
         "retook_not": 0,
         "no_retake": 0
       },
+      "grades": {
+        "C or higher": 21,
+        "D": 0,
+        "Under 1.0": 0,
+        "P": 0,
+        "W": 0
+      },
       "retained_if_passed": {
         "students": 21,
         "retained": 16,
@@ -272,6 +365,13 @@ export const gateway2023: GatewayResponse = {
         "retook_passed": 0,
         "retook_not": null,
         "no_retake": null
+      },
+      "grades": {
+        "C or higher": 10,
+        "D": null,
+        "Under 1.0": null,
+        "P": 0,
+        "W": null
       },
       "retained_if_passed": {
         "students": 11,
@@ -298,6 +398,13 @@ export const gateway2023: GatewayResponse = {
         "retook_not": null,
         "no_retake": null
       },
+      "grades": {
+        "C or higher": 14,
+        "D": null,
+        "Under 1.0": null,
+        "P": 0,
+        "W": null
+      },
       "retained_if_passed": {
         "students": 15,
         "retained": 14,
@@ -322,6 +429,13 @@ export const gateway2023: GatewayResponse = {
         "retook_passed": 0,
         "retook_not": 0,
         "no_retake": null
+      },
+      "grades": {
+        "C or higher": 15,
+        "D": null,
+        "Under 1.0": null,
+        "P": 0,
+        "W": 0
       },
       "retained_if_passed": {
         "students": 16,
@@ -348,6 +462,13 @@ export const gateway2023: GatewayResponse = {
         "retook_not": null,
         "no_retake": null
       },
+      "grades": {
+        "C or higher": null,
+        "D": null,
+        "Under 1.0": null,
+        "P": 0,
+        "W": null
+      },
       "retained_if_passed": {
         "students": 12,
         "retained": 9,
@@ -372,6 +493,13 @@ export const gateway2023: GatewayResponse = {
         "retook_passed": 0,
         "retook_not": 0,
         "no_retake": null
+      },
+      "grades": {
+        "C or higher": null,
+        "D": 0,
+        "Under 1.0": null,
+        "P": 0,
+        "W": null
       },
       "retained_if_passed": {
         "students": null,
@@ -398,6 +526,13 @@ export const gateway2023: GatewayResponse = {
         "retook_not": 0,
         "no_retake": null
       },
+      "grades": {
+        "C or higher": 10,
+        "D": null,
+        "Under 1.0": null,
+        "P": 0,
+        "W": 0
+      },
       "retained_if_passed": {
         "students": 12,
         "retained": 11,
@@ -422,6 +557,13 @@ export const gateway2023: GatewayResponse = {
         "retook_passed": 0,
         "retook_not": 0,
         "no_retake": null
+      },
+      "grades": {
+        "C or higher": 11,
+        "D": null,
+        "Under 1.0": null,
+        "P": 0,
+        "W": 0
       },
       "retained_if_passed": {
         "students": 12,
@@ -448,6 +590,13 @@ export const gateway2023: GatewayResponse = {
         "retook_not": 0,
         "no_retake": null
       },
+      "grades": {
+        "C or higher": null,
+        "D": null,
+        "Under 1.0": null,
+        "P": 0,
+        "W": null
+      },
       "retained_if_passed": {
         "students": null,
         "retained": null,
@@ -472,6 +621,13 @@ export const gateway2023: GatewayResponse = {
         "retook_passed": 0,
         "retook_not": 0,
         "no_retake": null
+      },
+      "grades": {
+        "C or higher": null,
+        "D": null,
+        "Under 1.0": null,
+        "P": 0,
+        "W": null
       },
       "retained_if_passed": {
         "students": 11,
@@ -498,6 +654,13 @@ export const gateway2023: GatewayResponse = {
         "retook_not": 0,
         "no_retake": null
       },
+      "grades": {
+        "C or higher": 0,
+        "D": 0,
+        "Under 1.0": null,
+        "P": null,
+        "W": null
+      },
       "retained_if_passed": {
         "students": null,
         "retained": null,
@@ -522,6 +685,13 @@ export const gateway2023: GatewayResponse = {
         "retook_passed": null,
         "retook_not": 0,
         "no_retake": null
+      },
+      "grades": {
+        "C or higher": null,
+        "D": null,
+        "Under 1.0": null,
+        "P": null,
+        "W": null
       },
       "retained_if_passed": {
         "students": 10,
@@ -548,6 +718,13 @@ export const gateway2023: GatewayResponse = {
         "retook_not": 0,
         "no_retake": null
       },
+      "grades": {
+        "C or higher": null,
+        "D": null,
+        "Under 1.0": 0,
+        "P": 0,
+        "W": null
+      },
       "retained_if_passed": {
         "students": null,
         "retained": null,
@@ -572,6 +749,13 @@ export const gateway2023: GatewayResponse = {
         "retook_passed": 0,
         "retook_not": 0,
         "no_retake": null
+      },
+      "grades": {
+        "C or higher": null,
+        "D": 0,
+        "Under 1.0": null,
+        "P": 0,
+        "W": 0
       },
       "retained_if_passed": {
         "students": null,
@@ -598,6 +782,13 @@ export const gateway2023: GatewayResponse = {
         "retook_not": 0,
         "no_retake": null
       },
+      "grades": {
+        "C or higher": null,
+        "D": null,
+        "Under 1.0": null,
+        "P": 0,
+        "W": 0
+      },
       "retained_if_passed": {
         "students": null,
         "retained": null,
@@ -622,6 +813,13 @@ export const gateway2023: GatewayResponse = {
         "retook_passed": null,
         "retook_not": 0,
         "no_retake": null
+      },
+      "grades": {
+        "C or higher": null,
+        "D": null,
+        "Under 1.0": null,
+        "P": 0,
+        "W": null
       },
       "retained_if_passed": {
         "students": null,
@@ -648,6 +846,13 @@ export const gateway2023: GatewayResponse = {
         "retook_not": 0,
         "no_retake": 0
       },
+      "grades": {
+        "C or higher": 10,
+        "D": 0,
+        "Under 1.0": 0,
+        "P": 0,
+        "W": 0
+      },
       "retained_if_passed": {
         "students": 10,
         "retained": 6,
@@ -673,6 +878,13 @@ export const gateway2023: GatewayResponse = {
         "retook_not": 0,
         "no_retake": null
       },
+      "grades": {
+        "C or higher": null,
+        "D": null,
+        "Under 1.0": null,
+        "P": 0,
+        "W": 0
+      },
       "retained_if_passed": {
         "students": null,
         "retained": null,
@@ -697,6 +909,13 @@ export const gateway2023: GatewayResponse = {
         "retook_passed": 0,
         "retook_not": 0,
         "no_retake": null
+      },
+      "grades": {
+        "C or higher": null,
+        "D": 0,
+        "Under 1.0": null,
+        "P": 0,
+        "W": 0
       },
       "retained_if_passed": {
         "students": null,
@@ -773,7 +992,37 @@ export const gatewayFederal2023: GatewayResponse = {
     "retention_observed": true,
     "first_term": null,
     "compared": false,
-    "min_pair_students": 10
+    "min_pair_students": 10,
+    "grade_scale": {
+      "grades": [
+        {
+          "grade": "C or higher",
+          "points": "1.7 and up",
+          "counted": true
+        },
+        {
+          "grade": "D",
+          "points": "1.0 to under 1.7 (D, D+)",
+          "counted": true
+        },
+        {
+          "grade": "Under 1.0",
+          "points": "under 1.0 (D- or F), or the code F",
+          "counted": false
+        },
+        {
+          "grade": "P",
+          "points": "the code P (pass)",
+          "counted": true
+        },
+        {
+          "grade": "W",
+          "points": "the code W (withdrew)",
+          "counted": false
+        }
+      ],
+      "left_out": "I (incomplete), A (audit), M or MIS (missing), O or OTH (other), and any code the PDP dictionary doesn't list, such as UW, aren't final grades, so neither page counts them."
+    }
   },
   "status": "ok",
   "students": 2580,
@@ -802,6 +1051,13 @@ export const gatewayFederal2023: GatewayResponse = {
         "retook_not": null,
         "no_retake": 64
       },
+      "grades": {
+        "C or higher": 251,
+        "D": 15,
+        "Under 1.0": 65,
+        "P": 50,
+        "W": 31
+      },
       "retained_if_passed": {
         "students": 313,
         "retained": 236,
@@ -826,6 +1082,13 @@ export const gatewayFederal2023: GatewayResponse = {
         "retook_passed": null,
         "retook_not": null,
         "no_retake": 10
+      },
+      "grades": {
+        "C or higher": 48,
+        "D": null,
+        "Under 1.0": null,
+        "P": 0,
+        "W": null
       },
       "retained_if_passed": {
         "students": 52,
@@ -852,6 +1115,13 @@ export const gatewayFederal2023: GatewayResponse = {
         "retook_not": null,
         "no_retake": 14
       },
+      "grades": {
+        "C or higher": 42,
+        "D": 0,
+        "Under 1.0": 14,
+        "P": 0,
+        "W": null
+      },
       "retained_if_passed": {
         "students": 41,
         "retained": 30,
@@ -876,6 +1146,13 @@ export const gatewayFederal2023: GatewayResponse = {
         "retook_passed": 0,
         "retook_not": 0,
         "no_retake": 15
+      },
+      "grades": {
+        "C or higher": 0,
+        "D": 0,
+        "Under 1.0": null,
+        "P": 36,
+        "W": null
       },
       "retained_if_passed": {
         "students": 36,
@@ -902,6 +1179,13 @@ export const gatewayFederal2023: GatewayResponse = {
         "retook_not": 0,
         "no_retake": null
       },
+      "grades": {
+        "C or higher": 29,
+        "D": null,
+        "Under 1.0": null,
+        "P": 0,
+        "W": null
+      },
       "retained_if_passed": {
         "students": 30,
         "retained": 4,
@@ -926,6 +1210,13 @@ export const gatewayFederal2023: GatewayResponse = {
         "retook_passed": null,
         "retook_not": 0,
         "no_retake": null
+      },
+      "grades": {
+        "C or higher": 15,
+        "D": null,
+        "Under 1.0": null,
+        "P": 0,
+        "W": null
       },
       "retained_if_passed": {
         "students": 17,
@@ -952,6 +1243,13 @@ export const gatewayFederal2023: GatewayResponse = {
         "retook_not": 0,
         "no_retake": 0
       },
+      "grades": {
+        "C or higher": 22,
+        "D": 0,
+        "Under 1.0": 0,
+        "P": 0,
+        "W": 0
+      },
       "retained_if_passed": {
         "students": 22,
         "retained": 9,
@@ -976,6 +1274,13 @@ export const gatewayFederal2023: GatewayResponse = {
         "retook_passed": 0,
         "retook_not": 0,
         "no_retake": null
+      },
+      "grades": {
+        "C or higher": 19,
+        "D": null,
+        "Under 1.0": null,
+        "P": 0,
+        "W": 0
       },
       "retained_if_passed": {
         "students": 19,
@@ -1002,6 +1307,13 @@ export const gatewayFederal2023: GatewayResponse = {
         "retook_not": 0,
         "no_retake": 0
       },
+      "grades": {
+        "C or higher": 21,
+        "D": 0,
+        "Under 1.0": 0,
+        "P": 0,
+        "W": 0
+      },
       "retained_if_passed": {
         "students": 21,
         "retained": 16,
@@ -1026,6 +1338,13 @@ export const gatewayFederal2023: GatewayResponse = {
         "retook_passed": 0,
         "retook_not": null,
         "no_retake": null
+      },
+      "grades": {
+        "C or higher": 10,
+        "D": null,
+        "Under 1.0": null,
+        "P": 0,
+        "W": null
       },
       "retained_if_passed": {
         "students": 11,
@@ -1052,6 +1371,13 @@ export const gatewayFederal2023: GatewayResponse = {
         "retook_not": null,
         "no_retake": null
       },
+      "grades": {
+        "C or higher": 14,
+        "D": null,
+        "Under 1.0": null,
+        "P": 0,
+        "W": null
+      },
       "retained_if_passed": {
         "students": 15,
         "retained": 14,
@@ -1076,6 +1402,13 @@ export const gatewayFederal2023: GatewayResponse = {
         "retook_passed": 0,
         "retook_not": 0,
         "no_retake": null
+      },
+      "grades": {
+        "C or higher": 15,
+        "D": null,
+        "Under 1.0": null,
+        "P": 0,
+        "W": 0
       },
       "retained_if_passed": {
         "students": 16,
@@ -1102,6 +1435,13 @@ export const gatewayFederal2023: GatewayResponse = {
         "retook_not": null,
         "no_retake": null
       },
+      "grades": {
+        "C or higher": null,
+        "D": null,
+        "Under 1.0": null,
+        "P": 0,
+        "W": null
+      },
       "retained_if_passed": {
         "students": 12,
         "retained": 8,
@@ -1126,6 +1466,13 @@ export const gatewayFederal2023: GatewayResponse = {
         "retook_passed": 0,
         "retook_not": 0,
         "no_retake": null
+      },
+      "grades": {
+        "C or higher": null,
+        "D": 0,
+        "Under 1.0": null,
+        "P": 0,
+        "W": null
       },
       "retained_if_passed": {
         "students": null,
@@ -1152,6 +1499,13 @@ export const gatewayFederal2023: GatewayResponse = {
         "retook_not": 0,
         "no_retake": null
       },
+      "grades": {
+        "C or higher": 10,
+        "D": null,
+        "Under 1.0": null,
+        "P": 0,
+        "W": 0
+      },
       "retained_if_passed": {
         "students": 12,
         "retained": 10,
@@ -1176,6 +1530,13 @@ export const gatewayFederal2023: GatewayResponse = {
         "retook_passed": 0,
         "retook_not": 0,
         "no_retake": null
+      },
+      "grades": {
+        "C or higher": 11,
+        "D": null,
+        "Under 1.0": null,
+        "P": 0,
+        "W": 0
       },
       "retained_if_passed": {
         "students": 12,
@@ -1202,6 +1563,13 @@ export const gatewayFederal2023: GatewayResponse = {
         "retook_not": 0,
         "no_retake": null
       },
+      "grades": {
+        "C or higher": null,
+        "D": null,
+        "Under 1.0": null,
+        "P": 0,
+        "W": null
+      },
       "retained_if_passed": {
         "students": null,
         "retained": null,
@@ -1226,6 +1594,13 @@ export const gatewayFederal2023: GatewayResponse = {
         "retook_passed": 0,
         "retook_not": 0,
         "no_retake": null
+      },
+      "grades": {
+        "C or higher": null,
+        "D": null,
+        "Under 1.0": null,
+        "P": 0,
+        "W": null
       },
       "retained_if_passed": {
         "students": 11,
@@ -1252,6 +1627,13 @@ export const gatewayFederal2023: GatewayResponse = {
         "retook_not": 0,
         "no_retake": null
       },
+      "grades": {
+        "C or higher": 0,
+        "D": 0,
+        "Under 1.0": null,
+        "P": null,
+        "W": null
+      },
       "retained_if_passed": {
         "students": null,
         "retained": null,
@@ -1276,6 +1658,13 @@ export const gatewayFederal2023: GatewayResponse = {
         "retook_passed": null,
         "retook_not": 0,
         "no_retake": null
+      },
+      "grades": {
+        "C or higher": null,
+        "D": null,
+        "Under 1.0": null,
+        "P": null,
+        "W": null
       },
       "retained_if_passed": {
         "students": 10,
@@ -1302,6 +1691,13 @@ export const gatewayFederal2023: GatewayResponse = {
         "retook_not": 0,
         "no_retake": null
       },
+      "grades": {
+        "C or higher": null,
+        "D": null,
+        "Under 1.0": 0,
+        "P": 0,
+        "W": null
+      },
       "retained_if_passed": {
         "students": null,
         "retained": null,
@@ -1326,6 +1722,13 @@ export const gatewayFederal2023: GatewayResponse = {
         "retook_passed": 0,
         "retook_not": 0,
         "no_retake": null
+      },
+      "grades": {
+        "C or higher": null,
+        "D": 0,
+        "Under 1.0": null,
+        "P": 0,
+        "W": 0
       },
       "retained_if_passed": {
         "students": null,
@@ -1352,6 +1755,13 @@ export const gatewayFederal2023: GatewayResponse = {
         "retook_not": 0,
         "no_retake": null
       },
+      "grades": {
+        "C or higher": null,
+        "D": null,
+        "Under 1.0": null,
+        "P": 0,
+        "W": 0
+      },
       "retained_if_passed": {
         "students": null,
         "retained": null,
@@ -1376,6 +1786,13 @@ export const gatewayFederal2023: GatewayResponse = {
         "retook_passed": null,
         "retook_not": 0,
         "no_retake": null
+      },
+      "grades": {
+        "C or higher": null,
+        "D": null,
+        "Under 1.0": null,
+        "P": 0,
+        "W": null
       },
       "retained_if_passed": {
         "students": null,
@@ -1402,6 +1819,13 @@ export const gatewayFederal2023: GatewayResponse = {
         "retook_not": 0,
         "no_retake": 0
       },
+      "grades": {
+        "C or higher": 10,
+        "D": 0,
+        "Under 1.0": 0,
+        "P": 0,
+        "W": 0
+      },
       "retained_if_passed": {
         "students": 10,
         "retained": 5,
@@ -1427,6 +1851,13 @@ export const gatewayFederal2023: GatewayResponse = {
         "retook_not": 0,
         "no_retake": null
       },
+      "grades": {
+        "C or higher": null,
+        "D": null,
+        "Under 1.0": null,
+        "P": 0,
+        "W": 0
+      },
       "retained_if_passed": {
         "students": null,
         "retained": null,
@@ -1451,6 +1882,13 @@ export const gatewayFederal2023: GatewayResponse = {
         "retook_passed": 0,
         "retook_not": 0,
         "no_retake": null
+      },
+      "grades": {
+        "C or higher": null,
+        "D": 0,
+        "Under 1.0": null,
+        "P": 0,
+        "W": 0
       },
       "retained_if_passed": {
         "students": null,
@@ -1516,7 +1954,37 @@ export const gatewayPell2023: GatewayResponse = {
     "retention_observed": true,
     "first_term": null,
     "compared": true,
-    "min_pair_students": 10
+    "min_pair_students": 10,
+    "grade_scale": {
+      "grades": [
+        {
+          "grade": "C or higher",
+          "points": "1.7 and up",
+          "counted": true
+        },
+        {
+          "grade": "D",
+          "points": "1.0 to under 1.7 (D, D+)",
+          "counted": true
+        },
+        {
+          "grade": "Under 1.0",
+          "points": "under 1.0 (D- or F), or the code F",
+          "counted": false
+        },
+        {
+          "grade": "P",
+          "points": "the code P (pass)",
+          "counted": true
+        },
+        {
+          "grade": "W",
+          "points": "the code W (withdrew)",
+          "counted": false
+        }
+      ],
+      "left_out": "I (incomplete), A (audit), M or MIS (missing), O or OTH (other), and any code the PDP dictionary doesn't list, such as UW, aren't final grades, so neither page counts them."
+    }
   },
   "status": "ok",
   "students": 873,
@@ -1544,6 +2012,13 @@ export const gatewayPell2023: GatewayResponse = {
         "retook_passed": null,
         "retook_not": null,
         "no_retake": 37
+      },
+      "grades": {
+        "C or higher": 130,
+        "D": null,
+        "Under 1.0": 39,
+        "P": 19,
+        "W": 20
       },
       "retained_if_passed": {
         "students": 155,
@@ -1576,6 +2051,13 @@ export const gatewayPell2023: GatewayResponse = {
         "retook_not": 0,
         "no_retake": null
       },
+      "grades": {
+        "C or higher": 26,
+        "D": 0,
+        "Under 1.0": null,
+        "P": 0,
+        "W": null
+      },
       "retained_if_passed": {
         "students": 26,
         "retained": 18,
@@ -1606,6 +2088,13 @@ export const gatewayPell2023: GatewayResponse = {
         "retook_passed": null,
         "retook_not": 0,
         "no_retake": null
+      },
+      "grades": {
+        "C or higher": 23,
+        "D": null,
+        "Under 1.0": null,
+        "P": 0,
+        "W": null
       },
       "retained_if_passed": {
         "students": 25,
@@ -1638,6 +2127,13 @@ export const gatewayPell2023: GatewayResponse = {
         "retook_not": 0,
         "no_retake": null
       },
+      "grades": {
+        "C or higher": 0,
+        "D": 0,
+        "Under 1.0": null,
+        "P": 14,
+        "W": null
+      },
       "retained_if_passed": {
         "students": 14,
         "retained": 13,
@@ -1668,6 +2164,13 @@ export const gatewayPell2023: GatewayResponse = {
         "retook_passed": 0,
         "retook_not": 0,
         "no_retake": null
+      },
+      "grades": {
+        "C or higher": 17,
+        "D": null,
+        "Under 1.0": null,
+        "P": 0,
+        "W": 0
       },
       "retained_if_passed": {
         "students": 17,
@@ -1700,6 +2203,13 @@ export const gatewayPell2023: GatewayResponse = {
         "retook_not": 0,
         "no_retake": null
       },
+      "grades": {
+        "C or higher": 10,
+        "D": null,
+        "Under 1.0": null,
+        "P": 0,
+        "W": null
+      },
       "retained_if_passed": {
         "students": 11,
         "retained": 9,
@@ -1731,6 +2241,13 @@ export const gatewayPell2023: GatewayResponse = {
         "retook_not": 0,
         "no_retake": 0
       },
+      "grades": {
+        "C or higher": 10,
+        "D": null,
+        "Under 1.0": 0,
+        "P": 0,
+        "W": 0
+      },
       "retained_if_passed": {
         "students": 11,
         "retained": 7,
@@ -1761,6 +2278,13 @@ export const gatewayPell2023: GatewayResponse = {
         "retook_passed": 0,
         "retook_not": 0,
         "no_retake": 0
+      },
+      "grades": {
+        "C or higher": 10,
+        "D": 0,
+        "Under 1.0": 0,
+        "P": 0,
+        "W": 0
       },
       "retained_if_passed": {
         "students": 10,
@@ -1843,7 +2367,37 @@ export const gateway2024: GatewayResponse = {
     "retention_observed": true,
     "first_term": null,
     "compared": false,
-    "min_pair_students": 10
+    "min_pair_students": 10,
+    "grade_scale": {
+      "grades": [
+        {
+          "grade": "C or higher",
+          "points": "1.7 and up",
+          "counted": true
+        },
+        {
+          "grade": "D",
+          "points": "1.0 to under 1.7 (D, D+)",
+          "counted": true
+        },
+        {
+          "grade": "Under 1.0",
+          "points": "under 1.0 (D- or F), or the code F",
+          "counted": false
+        },
+        {
+          "grade": "P",
+          "points": "the code P (pass)",
+          "counted": true
+        },
+        {
+          "grade": "W",
+          "points": "the code W (withdrew)",
+          "counted": false
+        }
+      ],
+      "left_out": "I (incomplete), A (audit), M or MIS (missing), O or OTH (other), and any code the PDP dictionary doesn't list, such as UW, aren't final grades, so neither page counts them."
+    }
   },
   "status": "ok",
   "students": 2612,
@@ -1872,6 +2426,13 @@ export const gateway2024: GatewayResponse = {
         "retook_not": null,
         "no_retake": 66
       },
+      "grades": {
+        "C or higher": 233,
+        "D": 12,
+        "Under 1.0": 64,
+        "P": 53,
+        "W": 20
+      },
       "retained_if_passed": {
         "students": 295,
         "retained": 211,
@@ -1896,6 +2457,13 @@ export const gateway2024: GatewayResponse = {
         "retook_passed": 0,
         "retook_not": 0,
         "no_retake": 17
+      },
+      "grades": {
+        "C or higher": 54,
+        "D": null,
+        "Under 1.0": 13,
+        "P": 0,
+        "W": null
       },
       "retained_if_passed": {
         "students": 59,
@@ -1922,6 +2490,13 @@ export const gateway2024: GatewayResponse = {
         "retook_not": 0,
         "no_retake": 17
       },
+      "grades": {
+        "C or higher": 36,
+        "D": 0,
+        "Under 1.0": 16,
+        "P": 0,
+        "W": null
+      },
       "retained_if_passed": {
         "students": 36,
         "retained": 27,
@@ -1946,6 +2521,13 @@ export const gateway2024: GatewayResponse = {
         "retook_passed": null,
         "retook_not": null,
         "no_retake": null
+      },
+      "grades": {
+        "C or higher": 20,
+        "D": 0,
+        "Under 1.0": null,
+        "P": 0,
+        "W": null
       },
       "retained_if_passed": {
         "students": 20,
@@ -1972,6 +2554,13 @@ export const gateway2024: GatewayResponse = {
         "retook_not": 0,
         "no_retake": 0
       },
+      "grades": {
+        "C or higher": 28,
+        "D": 0,
+        "Under 1.0": 0,
+        "P": 0,
+        "W": 0
+      },
       "retained_if_passed": {
         "students": 28,
         "retained": 20,
@@ -1996,6 +2585,13 @@ export const gateway2024: GatewayResponse = {
         "retook_passed": 0,
         "retook_not": 0,
         "no_retake": null
+      },
+      "grades": {
+        "C or higher": 21,
+        "D": 0,
+        "Under 1.0": null,
+        "P": 0,
+        "W": 0
       },
       "retained_if_passed": {
         "students": 21,
@@ -2022,6 +2618,13 @@ export const gateway2024: GatewayResponse = {
         "retook_not": 0,
         "no_retake": null
       },
+      "grades": {
+        "C or higher": 15,
+        "D": null,
+        "Under 1.0": null,
+        "P": 0,
+        "W": null
+      },
       "retained_if_passed": {
         "students": 15,
         "retained": 12,
@@ -2046,6 +2649,13 @@ export const gateway2024: GatewayResponse = {
         "retook_passed": 0,
         "retook_not": 0,
         "no_retake": null
+      },
+      "grades": {
+        "C or higher": 16,
+        "D": null,
+        "Under 1.0": null,
+        "P": 0,
+        "W": 0
       },
       "retained_if_passed": {
         "students": 17,
@@ -2072,6 +2682,13 @@ export const gateway2024: GatewayResponse = {
         "retook_not": null,
         "no_retake": null
       },
+      "grades": {
+        "C or higher": 15,
+        "D": null,
+        "Under 1.0": null,
+        "P": 0,
+        "W": null
+      },
       "retained_if_passed": {
         "students": 15,
         "retained": 10,
@@ -2096,6 +2713,13 @@ export const gateway2024: GatewayResponse = {
         "retook_passed": null,
         "retook_not": null,
         "no_retake": null
+      },
+      "grades": {
+        "C or higher": 11,
+        "D": null,
+        "Under 1.0": null,
+        "P": 0,
+        "W": null
       },
       "retained_if_passed": {
         "students": 13,
@@ -2122,6 +2746,13 @@ export const gateway2024: GatewayResponse = {
         "retook_not": 0,
         "no_retake": null
       },
+      "grades": {
+        "C or higher": 12,
+        "D": null,
+        "Under 1.0": null,
+        "P": 0,
+        "W": null
+      },
       "retained_if_passed": {
         "students": 13,
         "retained": 5,
@@ -2146,6 +2777,13 @@ export const gateway2024: GatewayResponse = {
         "retook_passed": 0,
         "retook_not": null,
         "no_retake": null
+      },
+      "grades": {
+        "C or higher": null,
+        "D": 0,
+        "Under 1.0": 11,
+        "P": 0,
+        "W": null
       },
       "retained_if_passed": {
         "students": null,
@@ -2172,6 +2810,13 @@ export const gateway2024: GatewayResponse = {
         "retook_not": null,
         "no_retake": null
       },
+      "grades": {
+        "C or higher": 12,
+        "D": null,
+        "Under 1.0": null,
+        "P": 0,
+        "W": null
+      },
       "retained_if_passed": {
         "students": 13,
         "retained": 9,
@@ -2196,6 +2841,13 @@ export const gateway2024: GatewayResponse = {
         "retook_passed": 0,
         "retook_not": 0,
         "no_retake": null
+      },
+      "grades": {
+        "C or higher": 13,
+        "D": null,
+        "Under 1.0": null,
+        "P": 0,
+        "W": null
       },
       "retained_if_passed": {
         "students": 14,
@@ -2222,6 +2874,13 @@ export const gateway2024: GatewayResponse = {
         "retook_not": null,
         "no_retake": null
       },
+      "grades": {
+        "C or higher": null,
+        "D": 0,
+        "Under 1.0": null,
+        "P": 0,
+        "W": null
+      },
       "retained_if_passed": {
         "students": null,
         "retained": null,
@@ -2246,6 +2905,13 @@ export const gateway2024: GatewayResponse = {
         "retook_passed": 0,
         "retook_not": 0,
         "no_retake": null
+      },
+      "grades": {
+        "C or higher": 11,
+        "D": 0,
+        "Under 1.0": null,
+        "P": 0,
+        "W": null
       },
       "retained_if_passed": {
         "students": 11,
@@ -2272,6 +2938,13 @@ export const gateway2024: GatewayResponse = {
         "retook_not": 0,
         "no_retake": null
       },
+      "grades": {
+        "C or higher": null,
+        "D": null,
+        "Under 1.0": null,
+        "P": 0,
+        "W": null
+      },
       "retained_if_passed": {
         "students": null,
         "retained": null,
@@ -2296,6 +2969,13 @@ export const gateway2024: GatewayResponse = {
         "retook_passed": 0,
         "retook_not": 0,
         "no_retake": null
+      },
+      "grades": {
+        "C or higher": 10,
+        "D": 0,
+        "Under 1.0": 0,
+        "P": 0,
+        "W": null
       },
       "retained_if_passed": {
         "students": 10,
@@ -2322,6 +3002,13 @@ export const gateway2024: GatewayResponse = {
         "retook_not": 0,
         "no_retake": 0
       },
+      "grades": {
+        "C or higher": 12,
+        "D": 0,
+        "Under 1.0": 0,
+        "P": 0,
+        "W": 0
+      },
       "retained_if_passed": {
         "students": 12,
         "retained": 6,
@@ -2346,6 +3033,13 @@ export const gateway2024: GatewayResponse = {
         "retook_passed": 0,
         "retook_not": 0,
         "no_retake": 0
+      },
+      "grades": {
+        "C or higher": 12,
+        "D": 0,
+        "Under 1.0": 0,
+        "P": 0,
+        "W": 0
       },
       "retained_if_passed": {
         "students": 12,
@@ -2372,6 +3066,13 @@ export const gateway2024: GatewayResponse = {
         "retook_not": null,
         "no_retake": null
       },
+      "grades": {
+        "C or higher": null,
+        "D": 0,
+        "Under 1.0": null,
+        "P": 0,
+        "W": null
+      },
       "retained_if_passed": {
         "students": null,
         "retained": null,
@@ -2396,6 +3097,13 @@ export const gateway2024: GatewayResponse = {
         "retook_passed": null,
         "retook_not": null,
         "no_retake": null
+      },
+      "grades": {
+        "C or higher": null,
+        "D": null,
+        "Under 1.0": null,
+        "P": 0,
+        "W": null
       },
       "retained_if_passed": {
         "students": null,
@@ -2422,6 +3130,13 @@ export const gateway2024: GatewayResponse = {
         "retook_not": 0,
         "no_retake": null
       },
+      "grades": {
+        "C or higher": 0,
+        "D": 0,
+        "Under 1.0": null,
+        "P": null,
+        "W": 0
+      },
       "retained_if_passed": {
         "students": null,
         "retained": null,
@@ -2447,6 +3162,13 @@ export const gateway2024: GatewayResponse = {
         "retook_not": null,
         "no_retake": null
       },
+      "grades": {
+        "C or higher": null,
+        "D": null,
+        "Under 1.0": null,
+        "P": 0,
+        "W": null
+      },
       "retained_if_passed": {
         "students": null,
         "retained": null,
@@ -2471,6 +3193,13 @@ export const gateway2024: GatewayResponse = {
         "retook_passed": 0,
         "retook_not": 0,
         "no_retake": null
+      },
+      "grades": {
+        "C or higher": null,
+        "D": null,
+        "Under 1.0": null,
+        "P": 0,
+        "W": null
       },
       "retained_if_passed": {
         "students": null,
@@ -2550,7 +3279,37 @@ export const gatewayTooFew: GatewayResponse = {
     "retention_observed": true,
     "first_term": "Fall 2023",
     "compared": true,
-    "min_pair_students": 10
+    "min_pair_students": 10,
+    "grade_scale": {
+      "grades": [
+        {
+          "grade": "C or higher",
+          "points": "1.7 and up",
+          "counted": true
+        },
+        {
+          "grade": "D",
+          "points": "1.0 to under 1.7 (D, D+)",
+          "counted": true
+        },
+        {
+          "grade": "Under 1.0",
+          "points": "under 1.0 (D- or F), or the code F",
+          "counted": false
+        },
+        {
+          "grade": "P",
+          "points": "the code P (pass)",
+          "counted": true
+        },
+        {
+          "grade": "W",
+          "points": "the code W (withdrew)",
+          "counted": false
+        }
+      ],
+      "left_out": "I (incomplete), A (audit), M or MIS (missing), O or OTH (other), and any code the PDP dictionary doesn't list, such as UW, aren't final grades, so neither page counts them."
+    }
   },
   "status": "suppressed",
   "students": null,

@@ -1,4 +1,4 @@
-import type { ExplorerMeta } from "@/components/uncf/layout/explorer-api";
+import type { ExplorerMeta, GradeScale } from "@/components/uncf/layout/explorer-api";
 
 /** Retention for a group of students. Every number is null when the group is under meta.min_students. */
 export type Retention = { students: number | null; retained: number | null; rate: number | null; [more: string]: unknown };
@@ -34,6 +34,8 @@ export type GatewayCourse = {
   /** Passed on any try in year 1. */
   passed: number;
   path: GatewayPath;
+  /** How many tries ended in each grade group (C or higher, D, Under 1.0, P, W), one per student per term. Null when hidden. */
+  grades: Record<string, number | null>;
   retained_if_passed: Retention;
   retained_if_not_passed: Retention;
   /** null when no filter is set, so there is no group to compare. */
@@ -68,6 +70,8 @@ export type GatewayResponse = {
     /** True when a filter is set, so each course has a group gap. */
     compared: boolean;
     min_pair_students: number;
+    /** Every final grade, its grade points, and whether it passes a gateway course. */
+    grade_scale: GradeScale;
   };
   status: "ok" | "suppressed";
   students: number | null;

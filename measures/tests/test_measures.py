@@ -176,7 +176,8 @@ def test_gateway_cohort_with_no_answers_is_not_yet_observable(database):
 def test_dfw_counts_enrollments_with_a_final_grade(database):
     row = find(run_measure(Measure.DFW_RATE, [C2022], database=database), "everyone")
     # 27 enrollments with a class. Incomplete and audit are left out, and so is the row with no class.
-    assert (row.numerator, row.denominator, row.metric_rate) == (10, 25, 0.4)
+    # Student 16's 1.7 is a C-, which passes, so 9 of the 25 are a DFW.
+    assert (row.numerator, row.denominator, row.metric_rate) == (9, 25, 0.36)
     # Student 22's grade is incomplete and 23 audited. Each is left out for its own reason.
     assert row.n_excluded == 2
     assert row.exclusions == {ExclusionReason.INCOMPLETE: 1, ExclusionReason.AUDIT: 1}
@@ -187,7 +188,7 @@ def test_dfw_counts_enrollments_with_a_final_grade(database):
 def test_dfw_groups_split_the_enrollments(database):
     results = run_measure(Measure.DFW_RATE, [C2022], [GroupBy.of(GroupDimension.PELL)], database=database)
     assert (find(results, "pell=Y").numerator, find(results, "pell=Y").denominator) == (3, 15)
-    assert (find(results, "pell=N").numerator, find(results, "pell=N").denominator) == (7, 10)
+    assert (find(results, "pell=N").numerator, find(results, "pell=N").denominator) == (6, 10)
 
 
 def test_dfw_cohort_with_no_final_grades_is_not_yet_observable(database):
@@ -203,9 +204,9 @@ def test_small_dfw_group_preserves_student_and_enrollment_counts(database):
 
 
 def test_dfw_pooled_cohort(database):
-    # 10 of 25 in 2022-23 and 0 of 12 in 2023-24.
+    # 9 of 25 in 2022-23 and 0 of 12 in 2023-24.
     row = find(run_measure(Measure.DFW_RATE, [Cohort.of("2022-23", "2023-24")], database=database), "everyone")
-    assert (row.numerator, row.denominator, row.metric_rate) == (10, 37, 0.2703)
+    assert (row.numerator, row.denominator, row.metric_rate) == (9, 37, 0.2432)
 
 
 def test_dfw_every_grade_that_is_left_out_has_a_reason():
@@ -260,7 +261,7 @@ def test_dfw_by_course_finds_the_courses_in_the_data(database):
     assert sorted(r.group.label for r in results) == ["course=ENGL 1302", "course=MATH 1314", "everyone"]
 
     english = find(results, "course=ENGL 1302")
-    assert (english.numerator, english.denominator, english.metric_rate) == (7, 22, 0.3182)
+    assert (english.numerator, english.denominator, english.metric_rate) == (6, 22, 0.2727)
     # Three students took MATH 1314, so it is hidden whatever its numbers are.
     assert find(results, "course=MATH 1314").status == Status.OK
 
@@ -270,7 +271,7 @@ def test_dfw_by_course_and_pell(database):
         Measure.DFW_RATE, [C2022], [GroupBy.of(GroupDimension.COURSE, GroupDimension.PELL)], database=database
     )
     assert (find(results, "course=ENGL 1302, pell=Y").numerator, find(results, "course=ENGL 1302, pell=Y").denominator) == (0, 12)
-    assert (find(results, "course=ENGL 1302, pell=N").numerator, find(results, "course=ENGL 1302, pell=N").denominator) == (7, 10)
+    assert (find(results, "course=ENGL 1302, pell=N").numerator, find(results, "course=ENGL 1302, pell=N").denominator) == (6, 10)
 
 
 def test_only_dfw_can_be_grouped_by_course(database):
@@ -326,9 +327,9 @@ def test_dfw_note_follows_the_cutoff():
 
 def test_dfw_grade_rules():
     outcomes = grade_outcomes()
-    # Below 2.0 is a D or F, written either way. Passing numbers, P, and a failing or withdrawn code are classified.
-    assert outcomes["1.9"] and outcomes["1"] and outcomes["1.0"] and outcomes["0"]
-    assert not outcomes["2"] and not outcomes["2.0"] and not outcomes["4.0"] and not outcomes["P"]
+    # Below 1.7 (a D+ or lower) is a DFW, written either way. A C- (1.7 to under 2.0) passes, as do P and higher numbers.
+    assert outcomes["1.69"] and outcomes["1.3"] and outcomes["1"] and outcomes["1.0"] and outcomes["0"]
+    assert not outcomes["1.7"] and not outcomes["1.9"] and not outcomes["2.0"] and not outcomes["4.0"] and not outcomes["P"]
     assert outcomes["F"] and outcomes["W"]
     # Grade points to two decimals, as an institution's own file may write them.
     assert outcomes["1.67"] and not outcomes["3.67"] and not outcomes["4.00"] and outcomes["0.07"]

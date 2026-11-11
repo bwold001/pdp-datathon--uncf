@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 
+import type { GradeScale } from "@/components/uncf/layout/explorer-api";
 import { Card, CardHead, MessageCard, Notice, formatShare, retentionWords } from "@/components/uncf/layout/explorer-parts";
 import { explorerButton } from "@/components/uncf/layout/explorer-styles";
-import { hidesSmallGroups, privacyNote, tooFew } from "@/components/uncf/layout/small-groups";
+import { GradeScaleTable } from "@/components/uncf/layout/grade-scale";
+import { hiddenCount, hidesSmallGroups, privacyNote, tooFew } from "@/components/uncf/layout/small-groups";
 import { cn } from "@/lib/utils";
 
 import {
@@ -73,7 +75,15 @@ export function GatewayView({ data, groupLabel = null }: GatewayViewProps) {
           }}
           onMore={courses.length > shown ? () => setShown(shown + PAGE) : undefined}
         />
-        {selected && <CourseDetail course={selected} compared={data.meta.compared} groupLabel={groupLabel} minStudents={data.meta.min_students} />}
+        {selected && (
+          <CourseDetail
+            course={selected}
+            compared={data.meta.compared}
+            groupLabel={groupLabel}
+            minStudents={data.meta.min_students}
+            scale={data.meta.grade_scale}
+          />
+        )}
       </div>
       <PairsCard data={data} />
       <GatewayCounted data={data} />
@@ -208,10 +218,16 @@ function signedPoints(gap: number): string {
   return `${gap < 0 ? "−" : "+"}${Math.abs(gap).toFixed(1)}`;
 }
 
-type CourseDetailProps = { course: GatewayCourse; compared: boolean; groupLabel: string | null; minStudents: number };
+type CourseDetailProps = {
+  course: GatewayCourse;
+  compared: boolean;
+  groupLabel: string | null;
+  minStudents: number;
+  scale: GradeScale;
+};
 
 /** The selected course: first try and in the end, what happened after the first try, and your group. */
-function CourseDetail({ course, compared, groupLabel, minStudents }: CourseDetailProps) {
+function CourseDetail({ course, compared, groupLabel, minStudents, scale }: CourseDetailProps) {
   return (
     <section aria-live="polite" className="min-[961px]:sticky min-[961px]:top-4">
       <Card className="flex flex-col gap-4.5">
@@ -232,6 +248,12 @@ function CourseDetail({ course, compared, groupLabel, minStudents }: CourseDetai
             be reached.
           </p>
           <PathBar course={course} />
+        </Section>
+        <Section title="Grades in year 1">
+          <p className="text-[13px] text-(--uncf-ink-3)">
+            Each try’s grade, one per student per term. Blue grades pass (a D or higher, or P); orange ones don’t.
+          </p>
+          <GradeBar grades={course.grades} scale={scale} minStudents={minStudents} />
         </Section>
         <Section title="Your group vs. everyone else">
           <p className="text-[13px] text-(--uncf-ink-3)">
@@ -291,8 +313,49 @@ function PathBar({ course }: { course: GatewayCourse }) {
   );
 }
 
+type GradeBarProps = { grades: Record<string, number | null>; scale: GradeScale; minStudents: number };
+
+/**
+ * Every grade the course's tries ended in: one bar, blue for passing and orange for not, then each grade's count.
+ * A hidden count (under minStudents) reads like a hidden path step; shares show only when nothing is hidden.
+ */
+function GradeBar({ grades, scale, minStudents }: GradeBarProps) {
+  const counts = Object.values(grades);
+  const total = counts.every((count) => count !== null) ? counts.reduce<number>((sum, count) => sum + count!, 0) : 0;
+  const color = (row: GradeScale["grades"][number]) =>
+    row.grade === "W" ? "var(--uncf-grey)" : row.counted ? "var(--uncf-blue)" : "var(--uncf-f)";
+  const label = scale.grades.map((row) => `${row.grade}: ${grades[row.grade] ?? "hidden"}`).join(", ");
+  return (
+    <>
+      <div className="flex h-7.5 gap-px overflow-hidden rounded-[4px] bg-(--uncf-track)" role="img" aria-label={label}>
+        {scale.grades.map((row) => {
+          const count = grades[row.grade];
+          return count ? <div key={row.grade} style={{ flex: count, background: color(row) }} title={`${row.grade}: ${fmt(count)}`} /> : null;
+        })}
+      </div>
+      <dl className="grid grid-cols-[repeat(auto-fill,minmax(118px,1fr))] gap-x-5 gap-y-1.5 text-sm">
+        {scale.grades.map((row) => {
+          const count = grades[row.grade];
+          return (
+            <div key={row.grade} className="flex items-center gap-2">
+              <dt className="flex flex-1 items-center gap-1.5">
+                <i className="size-3 flex-none rounded-[3px]" style={{ background: color(row) }} aria-hidden />
+                {row.grade}
+              </dt>
+              <dd className="uncf-num whitespace-nowrap">
+                {count === null ? hiddenCount(minStudents) : fmt(count)}
+                {count !== null && total > 0 && <span className="text-(--uncf-ink-3)"> · {formatShare(count / total)}</span>}
+              </dd>
+            </div>
+          );
+        })}
+      </dl>
+    </>
+  );
+}
+
 /** The filtered group's first-try pass rate next to everyone else's, or why it can't be shown. */
-function GroupCompare({ course, compared, groupLabel, minStudents }: CourseDetailProps) {
+function GroupCompare({ course, compared, groupLabel, minStudents }: Omit<CourseDetailProps, "scale">) {
   const group = course.group;
   if (!compared || !group) {
     return <p className="text-[13px] text-(--uncf-ink-3)">Pick a group in the filters above, such as Pell or Full / part-time.</p>;
@@ -398,13 +461,15 @@ function GatewayCounted({ data }: { data: GatewayResponse }) {
     <div className="border-t border-(--uncf-line) pt-4.5 text-sm text-(--uncf-ink-2)">
       <b className="font-semibold text-(--uncf-ink)">What the numbers mean:</b> every number counts students, once per course,
       in their first year ({data.meta.year_one}), the same window as the PDP’s gateway measure. Only grades the school marked
-      as gateway math or English count. Passed: a grade of 1.0 or higher, or a Pass; the DFW page uses 2.0. A try is a
-      term, and the first try is the earliest. Retention follows the Retention filter above: “
+      as gateway math or English count. Passed: a D (1.0) or higher, or a Pass, as in the PDP; a D- or F doesn’t pass.
+      The DFW page draws its line higher: there a D+, D or D- counts as a DFW. A try is a term, and the first try is the
+      earliest; a class listed twice in one term counts once, at the better grade. Retention follows the Retention filter above: “
       {retentionWords(data.meta.retention_type, data.meta.retention_term).name}” means{" "}
       {retentionWords(data.meta.retention_type, data.meta.retention_term).how}. Everyone else is all other students who took the same course. A gap shows a difference, not its cause.
       {hidesSmallGroups(data.meta.min_students) &&
         ` Courses and groups with fewer than ${data.meta.min_students} students are hidden to protect privacy${data.hidden_courses ? ` (${fmt(data.hidden_courses)} courses)` : ""}.`}{" "}
       The data is synthetic: it doesn’t describe real students.
+      <GradeScaleTable scale={data.meta.grade_scale} rule="gateway" />
     </div>
   );
 }
