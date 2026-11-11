@@ -26,6 +26,7 @@ from pathlib import Path
 
 import yaml
 
+from src.build_identity import file_digest, pipeline_version
 from src.mapper.map import SOURCE_ROW, mapped_columns
 from src.rules.rules import ConfigError, load_rules
 from src.tables.files import read_tables, write_tables
@@ -131,13 +132,15 @@ def fix(staging, sources=None, config_dir="config", fixes="config/data_fixes.yam
         raise ValueError(f"{staging} has already fixed {', '.join(done)}; map into a new run")
     changed = Counter()
     for name in sources:
-        result = _fix_source(rules, active, mapped / name, staging / STAGE / name, metas[name])
+        result = _fix_source(rules, active, mapped / name, staging / STAGE / name, metas[name],
+                             {"pipeline_version": pipeline_version(), "configuration_digest": file_digest(fixes)})
         changed.update(result["changed"])
     _record_sources(staging, sources)
     return {"staging": str(staging), "sources": sources, "fixed": str(staging / STAGE), "changed": dict(changed)}
 
 
-def _fix_source(rules, active, folder, out, meta):
+def _fix_source(rules, active, folder, out, meta, identity):
+    """Apply declared fixes and retain the configuration actually consumed by this stage."""
     columns = mapped_columns(rules, meta["config"])
     tables = read_tables(rules["schema"], folder, extra=SOURCE_ROW)
     changed, details = {}, {}
@@ -166,7 +169,7 @@ def _fix_source(rules, active, folder, out, meta):
     write_tables(rules["schema"], tables, out, meta["format"], extra=SOURCE_ROW, columns=columns)
     for name in ("source.yaml", "problems.csv"):
         shutil.copyfile(folder / name, out / name)
-    result = {"changed": changed, "changed_nothing": sorted(n for n, count in changed.items() if count == 0)}
+    result = {"changed": changed, "changed_nothing": sorted(n for n, count in changed.items() if count == 0), "build_identity": identity}
     if details:
         result["details"] = details
     with open(out / "fixes.yaml", "w") as f:
