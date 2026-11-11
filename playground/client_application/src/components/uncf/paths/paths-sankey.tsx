@@ -1,7 +1,21 @@
 import { formatShare } from "@/components/uncf/layout/explorer-parts";
 import { hiddenCount } from "@/components/uncf/layout/small-groups";
+import { cn } from "@/lib/utils";
 
-import { type PathStatus, type PathsResponse, type TermCounts, pathStatuses, statusStyle, studentsLabel, termNames } from "./paths-data";
+import {
+  type PathFocus,
+  type PathStatus,
+  type PathsResponse,
+  type TermCounts,
+  firstMovePhrase,
+  focusedMove,
+  pathStatuses,
+  sameFocus,
+  secondMovePhrase,
+  statusStyle,
+  studentsLabel,
+  termNames,
+} from "./paths-data";
 
 // The drawing's grid, in viewBox units: three columns, bars this wide, and this much room for the column titles.
 const COLUMN_X = [0, 440, 860];
@@ -12,10 +26,30 @@ const NODE_GAP = 14;
 const WIDTH = 1040;
 
 type Node = { status: PathStatus; count: number; share: number | null; top: number; height: number };
-type Band = { key: string; title: string; fill: string; opacity: number; from: [number, number, number]; to: [number, number, number] };
+type Band = {
+  key: string;
+  title: string;
+  fill: string;
+  opacity: number;
+  from: [number, number, number];
+  to: [number, number, number];
+  /** The students a click on it focuses on. */
+  focus: PathFocus;
+};
 
-/** The student flow from the design: everyone who entered, then each status in the next two terms. */
-export function PathsSankey({ data }: { data: PathsResponse }) {
+type PathsSankeyProps = {
+  data: PathsResponse;
+  /** The students the page is focused on, or null for everyone. */
+  focus?: PathFocus | null;
+  /** Called with a clicked band's or bar's students, or null to show everyone again. Without it, nothing is clickable. */
+  onFocusChange?: (focus: PathFocus | null) => void;
+};
+
+/**
+ * The student flow from the design: everyone who entered, then each status in the next two terms. Clicking a band or a
+ * bar focuses the page on its students, and clicking it again (or the entering bar, or Escape) shows everyone.
+ */
+export function PathsSankey({ data, focus = null, onFocusChange }: PathsSankeyProps) {
   if (!data.students || !data.columns || !data.moves) return null;
   const total = data.students;
   const scale = COHORT_HEIGHT / total;
@@ -34,6 +68,7 @@ export function PathsSankey({ data }: { data: PathsResponse }) {
       opacity: 0.75,
       from: [0, cohortTop, cohortTop + node.height],
       to: [1, node.top, node.top + node.height],
+      focus: { next: node.status, year2: null },
     });
     cohortTop += node.height;
   }
@@ -57,6 +92,7 @@ export function PathsSankey({ data }: { data: PathsResponse }) {
         opacity: returned ? 0.9 : 0.75,
         from: [1, from, from + height],
         to: [2, to, to + height],
+        focus: { next: before, year2: after },
       });
       leaving.set(before, from + height);
       arriving.set(after, to + height);
@@ -66,42 +102,108 @@ export function PathsSankey({ data }: { data: PathsResponse }) {
   const height = TOP + Math.max(COHORT_HEIGHT, columnHeight(next), columnHeight(year2)) + 12;
   const titles = [names.entered ? `Entered · ${names.entered}` : "Entered", capitalize(names.next), `${capitalize(names.year2)} · year 2`];
 
+  const nodes = [
+    ...next.map((node) => ({ node, column: 1, focus: { next: node.status, year2: null } })),
+    ...year2.map((node) => ({ node, column: 2, focus: { next: null, year2: node.status } })),
+  ];
+  const clickable = Boolean(onFocusChange);
+  /** Focus on these students, or show everyone again when they're already the focus. */
+  const pick = (target: PathFocus) => onFocusChange?.(sameFocus(focus, target) ? null : target);
+  /** Props that make a band or bar a toggle for its students. Its label (a text one) is clickable too, not focusable. */
+  const toggle = (target: PathFocus, label: string) =>
+    clickable
+      ? {
+          role: "button",
+          tabIndex: 0,
+          "aria-label": label,
+          "aria-pressed": sameFocus(focus, target),
+          onClick: () => pick(target),
+          onKeyDown: (event: React.KeyboardEvent) => {
+            if (event.key !== "Enter" && event.key !== " ") return;
+            event.preventDefault();
+            pick(target);
+          },
+        }
+      : {};
+
   return (
     <svg
       viewBox={`0 0 ${WIDTH} ${height}`}
-      role="img"
+      role={clickable ? "group" : "img"}
       aria-label={summary(data)}
-      className="group/sankey block h-auto w-full min-w-180"
+      className={cn("block h-auto w-full min-w-180", !focus && "group/sankey")}
+      onKeyDown={(event) => {
+        if (event.key === "Escape" && focus) onFocusChange?.(null);
+      }}
     >
       {titles.map((title, column) => (
         <text key={title} x={COLUMN_X[column]} y={18} className="fill-(--uncf-ink-2) text-[15px] font-semibold">
           {title}
         </text>
       ))}
-      {bands.map((band) => (
-        <path
-          key={band.key}
-          d={ribbon(band)}
-          fill={band.fill}
-          fillOpacity={band.opacity}
-          className="cursor-pointer transition-opacity group-hover/sankey:opacity-45 hover:opacity-100! motion-reduce:transition-none"
-        >
-          <title>{band.title}</title>
-        </path>
-      ))}
-      <rect x={COLUMN_X[0]} y={TOP} width={NODE_WIDTH} height={COHORT_HEIGHT} rx={2} fill="var(--uncf-ink)" />
-      {[...next.map((node) => ({ node, column: 1 })), ...year2.map((node) => ({ node, column: 2 }))].map(({ node, column }) => (
-        <rect
-          key={`${column}-${node.status}`}
-          x={COLUMN_X[column]}
-          y={TOP + node.top}
-          width={NODE_WIDTH}
-          height={Math.max(node.height, 1)}
-          rx={2}
-          fill={statusStyle[node.status].node}
-        />
-      ))}
-      <text x={24} y={TOP + COHORT_HEIGHT / 2 + 5} className={labelClass}>
+      {bands.map((band) => {
+        const picked = sameFocus(focus, band.focus);
+        return (
+          <path
+            key={band.key}
+            d={ribbon(band)}
+            fill={band.fill}
+            fillOpacity={band.opacity}
+            // A band from the entering class picks the same students as the bar it reaches, so only that bar is a button.
+            {...(band.focus.year2 ? toggle(band.focus, band.title) : { onClick: () => pick(band.focus) })}
+            className={cn(
+              "outline-none transition-opacity focus-visible:stroke-(--uncf-ink) focus-visible:[stroke-width:2px] motion-reduce:transition-none",
+              clickable && "cursor-pointer",
+              !focus && "group-hover/sankey:opacity-45 hover:opacity-100!",
+              focus && !bandInFocus(data, focus, band.focus) && "opacity-15 hover:opacity-45",
+              picked && "stroke-(--uncf-ink) [stroke-width:1.5px]",
+            )}
+          >
+            <title>{band.title}</title>
+          </path>
+        );
+      })}
+      <rect
+        x={COLUMN_X[0]}
+        y={TOP}
+        width={NODE_WIDTH}
+        height={COHORT_HEIGHT}
+        rx={2}
+        fill="var(--uncf-ink)"
+        className={cn(focus && "cursor-pointer")}
+        onClick={() => onFocusChange?.(null)}
+      />
+      {nodes.map(({ node, column, focus: target }) => {
+        const title = `${firstMovePhrase(node.status, column === 1 ? names.next : names.year2)} · ${node.count.toLocaleString("en-US")}`;
+        return (
+          <g
+            key={`${column}-${node.status}`}
+            {...toggle(target, title)}
+            className={cn(
+              "group/bar outline-none transition-opacity motion-reduce:transition-none",
+              clickable && "cursor-pointer",
+              focus && !barInFocus(data, focus, target) && "opacity-30",
+            )}
+          >
+            <title>{title}</title>
+            {/* A wider, invisible target, since the bar itself is thin. */}
+            <rect x={COLUMN_X[column] - 6} y={TOP + node.top} width={NODE_WIDTH + 12} height={Math.max(node.height, 12)} fill="transparent" />
+            <rect
+              x={COLUMN_X[column]}
+              y={TOP + node.top}
+              width={NODE_WIDTH}
+              height={Math.max(node.height, 1)}
+              rx={2}
+              fill={statusStyle[node.status].node}
+              className={cn(
+                "group-focus-visible/bar:stroke-(--uncf-ink) group-focus-visible/bar:[stroke-width:2px]",
+                sameFocus(focus, target) && "stroke-(--uncf-ink) [stroke-width:1.5px]",
+              )}
+            />
+          </g>
+        );
+      })}
+      <text x={24} y={TOP + COHORT_HEIGHT / 2 + 5} className={cn(labelClass, "pointer-events-none")}>
         {total.toLocaleString("en-US")} students
       </text>
       {spread(next, 20).map(({ node, y }, index) => (
@@ -109,14 +211,15 @@ export function PathsSankey({ data }: { data: PathsResponse }) {
           key={node.status}
           x={COLUMN_X[1] + NODE_WIDTH + 10}
           y={TOP + y + 5}
-          className={index === 0 ? labelClass : `${labelClass} text-[14px]! font-medium!`}
+          className={cn(labelClass, index !== 0 && "text-[14px]! font-medium!", clickable && "cursor-pointer")}
+          onClick={() => pick({ next: node.status, year2: null })}
         >
           {statusStyle[node.status].short} · {node.count.toLocaleString("en-US")}
           {index === 0 && node.share !== null ? ` (${formatShare(node.share)})` : ""}
         </text>
       ))}
       {spread(year2, 42).map(({ node, y }) => (
-        <g key={node.status}>
+        <g key={node.status} className={cn(clickable && "cursor-pointer")} onClick={() => pick({ next: null, year2: node.status })}>
           <text x={COLUMN_X[2] + NODE_WIDTH + 14} y={TOP + y} className={labelClass}>
             {statusStyle[node.status].short === "Transferred" ? "Transferred out" : statusStyle[node.status].short}
           </text>
@@ -181,32 +284,21 @@ function ribbon({ from, to }: Band): string {
   ].join(" ");
 }
 
-/** The hover text for a band from the entering class into the second term. */
-function firstMovePhrase(status: PathStatus, next: string): string {
-  if (status === "here") return `Enrolled in ${next}`;
-  if (status === "credential") return `Earned a credential by ${next}`;
-  if (status === "elsewhere") return `Transferred out by ${next}`;
-  return `Stopped out by ${next}`;
+/** Whether a band carries any of the focused students. */
+function bandInFocus(data: PathsResponse, focus: PathFocus, band: PathFocus): boolean {
+  if (band.year2) return focusedMove(data, focus, band.next!, band.year2) !== 0;
+  // A band from the entering class carries a second-term bar's students: in focus when any of them are.
+  return barInFocus(data, focus, band);
 }
 
-/** The hover text for a band from the second term into the third, in the design's words where it has them. */
-function secondMovePhrase(before: PathStatus, after: PathStatus, next: string, year2: string): string {
-  if (before === "here" && after === "here") return `Stayed enrolled to ${year2}`;
-  if (before === "here" && after === "elsewhere") return `Enrolled in ${next}, transferred by ${year2}`;
-  if (before === "here" && after === "stopped") return `Enrolled in ${next}, stopped out by ${year2}`;
-  if (before === "elsewhere" && after === "elsewhere") return "Still transferred out";
-  if (before === "elsewhere" && after === "here") return `Came back from another college by ${year2}`;
-  if (before === "elsewhere" && after === "stopped") return `Transferred out in ${next}, no record in ${year2}`;
-  if (before === "stopped" && after === "here") return "Returned after a term away";
-  if (before === "stopped" && after === "elsewhere") return `No record in ${next}, at another college in ${year2}`;
-  if (before === "here" && after === "credential") return `Enrolled in ${next}, earned a credential by ${year2}`;
-  if (before === "elsewhere" && after === "credential") return `Transferred out in ${next}, earned a credential here by ${year2}`;
-  if (before === "stopped" && after === "credential") return `No record in ${next}, earned a credential by ${year2}`;
-  if (before === "credential" && after === "credential") return "Still holds a credential";
-  if (before === "credential" && after === "here") return `Earned a credential, took a course here in ${year2}`;
-  if (before === "credential" && after === "elsewhere") return `Earned a credential, at another college in ${year2}`;
-  if (before === "credential") return `Earned a credential, no record in ${year2}`;
-  return "Still stopped out";
+/** Whether a bar holds any of the focused students. */
+function barInFocus(data: PathsResponse, focus: PathFocus, bar: PathFocus): boolean {
+  if (bar.next) {
+    if (focus.next) return focus.next === bar.next;
+    return focusedMove(data, focus, bar.next, focus.year2!) !== 0;
+  }
+  if (focus.year2) return focus.year2 === bar.year2;
+  return focusedMove(data, focus, focus.next!, bar.year2!) !== 0;
 }
 
 /** The chart's text alternative: who entered and where they were in the third term. */
