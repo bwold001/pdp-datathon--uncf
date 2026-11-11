@@ -6,7 +6,7 @@ The numbers come from the measures:
 - retention by the chosen retention measure, from run_measure, as on every other page.
 
 This module only breaks them down: credit milestones, the first two terms (from the course file, averaged over the
-students who took a course here that term) and credit tiers. Groups under min_students() are hidden.
+students who took a course here that term) and credit tiers. Every nonempty group is shown.
 
 progress is the Credit momentum design's page (meaningful progress toward a degree), from credit_progress.py.
 """
@@ -104,7 +104,7 @@ def _credit_momentum(cohort: str, filters: Group = EVERYONE, retention_measure: 
 
 
 def milestone(credits: int, known: dict) -> dict:
-    """Students who earned at least this many credits in year 1, out of those with known credits. Under min_students() is hidden."""
+    """Students who earned at least this many credits in year 1, out of those with known credits. Unknown evidence remains unavailable."""
     reached = shown(sum(1 for _, earned in known.values() if earned >= credits))
     return {"credits": credits, "students": reached, "share": share(reached, len(known))}
 

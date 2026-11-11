@@ -14,7 +14,7 @@ Use `service.for_snapshot(snapshot)` for legacy catalog, clarification and analy
 
 `run_snapshot_steps` is an internal sequential execution primitive, not a public plan executor. It accepts up to four uniquely named trusted callbacks. A database failure or deadline stops subsequent callbacks, preserves completed in-memory results, and returns only after rollback and close. Its execution ID and UTC start/completion times are unique execution evidence. Its result is **internal**: the later facade must enforce dependencies, map typed outcomes, apply plan-wide disclosure to the actual returned set, and construct safe receipts before serializing anything. Ordinary unavailable/suppressed calculation results remain completed steps.
 
-Page calculations retain the Explorer's `UNCF_MIN_STUDENTS` setting while borrowing a snapshot. The default of 1 shows small synthetic groups; an explicit setting of 10 still hides groups below 10. The DFW list still requires 10 final grades per listed course, and gateway course pairs still require 10 students. These eligibility cutoffs are separate from the configurable display threshold.
+Page calculations show every nonempty group while borrowing a snapshot. `UNCF_MIN_STUDENTS` no longer changes visibility. DFW lists include every course with a classifiable final grade; Gateway pairs with at least one known retention outcome are eligible for comparison. Missing evidence and empty denominators retain their unavailable statuses.
 
 ## Loaded data identity
 

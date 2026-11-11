@@ -1,7 +1,7 @@
 """What every page breakdown shares: the students a filter picks, small group hiding, terms and result rows.
 
 Rates come from run_measure; this module only picks students and counts within sets of them (a course's takers,
-a credit tier) with the same rule: fewer than min_students() (UNCF_MIN_STUDENTS) is hidden, never shown as 0.
+a credit tier) with the same rule: unknown counts stay missing; every known count is shown.
 """
 from __future__ import annotations
 
@@ -120,7 +120,7 @@ def listed_value(dimension: str, normalized: str) -> str:
 
 
 def shown(count: int | None) -> int | None:
-    """A count as a page may show it: a group smaller than min_students() is hidden (None), never shown as 0."""
+    """A count as a page may show it: every known count, including zero, is shown."""
     if count is None or 0 < count < min_students():
         return None
     return count
@@ -134,7 +134,7 @@ def share(count: int | None, total: int | None) -> float | None:
 
 
 def retained_share(answers: dict[str, int | None], students: Iterable[str]) -> dict:
-    """How many of these students were retained, for a breakdown (a course, a tier, a pair). Hidden under min_students()."""
+    """How many of these students were retained, for a breakdown (a course, a tier, a pair). Unavailable when no retention outcomes are known."""
     known = [sid for sid in students if answers.get(sid) is not None]
     if len(known) < min_students():
         return {"students": None, "retained": None, "rate": None}

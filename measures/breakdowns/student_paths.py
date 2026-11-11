@@ -9,7 +9,7 @@ five). In each term a student is:
 - stopped: no record at all that term.
 
 Retention comes from run_measure (school or federal), so it matches every other page and /measures/retention. The
-statuses come from term records, so they can differ from retention. Groups under min_students() are hidden.
+statuses come from term records, so they can differ from retention. Every nonempty group is shown.
 """
 from __future__ import annotations
 
@@ -131,7 +131,7 @@ def follow(students: dict, cohort: str, terms: int, records: dict, credentials: 
 
 
 def column(statuses: list[str], total: int) -> dict:
-    """One term's counts and shares of the students followed. Counts under min_students() are hidden."""
+    """One term's counts and shares of the students followed. Every known count is visible."""
     counts = Counter(statuses)
     numbers = {status: shown(counts[status]) for status in STATUSES}
     numbers["anywhere"] = shown(counts["here"] + counts["elsewhere"])

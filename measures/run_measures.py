@@ -214,7 +214,7 @@ def groups_for(group_by: list[GroupBy], open_values: dict[GroupDimension, list[s
 
 
 def build_result(measure: Measure, cohort: Cohort, group: Group, counts: Counts, note: str) -> MeasureResult:
-    """Turn counts into a result row, hiding the group if its cohort isn't observable yet or it has too few students."""
+    """Turn counts into a result row, preserving unavailable evidence and empty populations."""
     if counts.not_yet_observable:
         return hidden_result(measure, cohort, group, Status.NOT_YET_OBSERVABLE, note)
     if counts.n_students < min_students():
