@@ -24,10 +24,10 @@ from ..models import (
     GroupDimension,
     Measure,
     MeasureResult,
+    min_students,
 )
 from ..run_measures import DEFAULT_DATABASE, run_measure
 
-MIN_STUDENTS = SUPPRESSION_THRESHOLD
 SEASONS = ("FALL", "WINTER", "SPRING", "SUMMER")
 # The student dimensions a page can filter or group by, in the cohort bar's order.
 STUDENT_DIMENSIONS = (
@@ -136,7 +136,7 @@ def share(count: int | None, total: int | None) -> float | None:
 def retained_share(answers: dict[str, int | None], students: Iterable[str]) -> dict:
     """How many of these students were retained, for a breakdown (a course, a tier, a pair). Hidden under 10."""
     known = [sid for sid in students if answers.get(sid) is not None]
-    if len(known) < MIN_STUDENTS:
+    if len(known) < min_students():
         return {"students": None, "retained": None, "rate": None}
     back = sum(answers[sid] for sid in known)
     return {"students": len(known), "retained": back, "rate": share(back, len(known))}

@@ -56,7 +56,7 @@ def test_dashboard_single_success_remains_visible_in_api_csv_and_v2(
         )
         assert row["denominator"] == projected.result.payload.denominator == 12
         assert (
-            projected.profile.id == "dashboard_v1" and projected.profile.version == "1"
+            projected.profile.id == "dashboard_v1" and projected.profile.version == "2"
         )
         serialized = disclosed_receipt(service, snapshot, projected.result)
         assert (

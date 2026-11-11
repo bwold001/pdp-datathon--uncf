@@ -65,12 +65,24 @@ def test_retention_by_pell_matches_the_explorer_contract(data_file, client) -> N
         "source": "PDP analysis-ready cohort and course files (synthetic sample)",
         "loaded_at": LOADED_AT,
         "provisional": False,
+        "min_students": 10,
     }
     assert [row["group"] for row in body["rows"]] == [{}, {"pell": "N"}, {"pell": "UNKNOWN"}, {"pell": "Y"}]
     assert body["rows"][0] | {"note": None} == {
         "group": {}, "numerator": 20, "denominator": 33, "rate": 0.6061, "status": "ok",
         "n_excluded": 0, "n_out_of_scope": 0, "note": None, "split": None,
     }
+
+
+def test_small_groups_are_shown_by_default(data_file, client, monkeypatch) -> None:
+    """With UNCF_MIN_STUDENTS unset, the 3 students with an unknown Pell status get their own numbers."""
+    monkeypatch.delenv("UNCF_MIN_STUDENTS")
+    route.clear_cache()
+    body = get(client, "retention", cohort="2022-23", group_by="pell").json()
+    unknown = next(row for row in body["rows"] if row["group"] == {"pell": "UNKNOWN"})
+    assert (unknown["status"], unknown["numerator"], unknown["denominator"]) == ("ok", 3, 3)
+    assert body["meta"]["min_students"] == 1
+    assert client.get(f"{PREFIX}/gateway", params={"cohort": "2022-23"}).json()["meta"]["min_students"] == 1
 
 
 def test_hidden_group_is_null_with_its_status_never_zero(data_file, client) -> None:

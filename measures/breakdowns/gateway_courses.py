@@ -24,10 +24,9 @@ from pathlib import Path
 
 from ..calculations.dfw import grade_result
 from ..data_access import ReadSnapshot
-from ..models import EVERYONE, Group, Measure
+from ..models import EVERYONE, Group, Measure, min_students
 from ..run_measures import read_answers
 from .common import (
-    MIN_STUDENTS,
     check_retention,
     page_source,
     course_rows,
@@ -39,6 +38,7 @@ from .common import (
     term_label,
 )
 
+MIN_PAIR_STUDENTS = 10
 SUBJECTS = ("E", "M")
 # The PDP's gateway pass line: a grade of 1.0 or higher (the DFW measure's line is 2.0).
 GATEWAY_PASS_AT = 1.0
@@ -84,9 +84,9 @@ def _gateway_courses(cohort: str, filters: Group = EVERYONE, retention_measure: 
         "retention_observed": observable,
         "first_term": first_term,
         "compared": filters != EVERYONE,
-        "min_pair_students": MIN_STUDENTS,
+        "min_pair_students": MIN_PAIR_STUDENTS,
     }
-    if len(students) < MIN_STUDENTS:
+    if len(students) < min_students():
         return {"context": context, "status": "suppressed", "students": None, "cohort_retention": None, "courses": [], "hidden_courses": 0, "left_out": None, "pair_counts": [], "pairs_considered": 0}
 
     cohort_retention = retention(retention_measure, cohort, filters, database)
@@ -156,7 +156,7 @@ def course_paths(rows: list[dict], students: set[str], compared: bool, answers: 
     left_out = 0
     for course, takers in tries.items():
         mine = {sid: passes for sid, passes in takers.items() if sid in students}
-        if len(mine) < MIN_STUDENTS:
+        if len(mine) < min_students():
             hidden += 1
             continue
         # Filtered students whose only year 1 grades here weren't final (incomplete, audit, missing).
@@ -197,6 +197,6 @@ def course_pairs(rows: list[dict], answers: dict) -> dict:
     counted = []
     for pair, who in sorted(takers.items()):
         numbers = retained_share(answers, who)
-        if numbers["students"] is not None:
+        if numbers["students"] is not None and numbers["students"] >= MIN_PAIR_STUDENTS:
             counted.append({"courses": list(pair), "students": numbers["students"], "retained": numbers["retained"]})
     return {"pair_counts": counted, "pairs_considered": len(counted)}

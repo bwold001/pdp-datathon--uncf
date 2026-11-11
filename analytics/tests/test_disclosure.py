@@ -57,7 +57,7 @@ def test_profiles_are_versioned_and_dashboard_does_not_adopt_legacy_complements(
         "exploration_v1",
     }
     assert all(
-        p.version == "1" and p.minimum == 10
+        p.version in ("1", "2") and p.minimum == 10
         for p in (DASHBOARD_V1, LEGACY_ANALYTICS_V1, EXPLORATION_V1)
     )
     assert DASHBOARD_V1.sample_visible(12)

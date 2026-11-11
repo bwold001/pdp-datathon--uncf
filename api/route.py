@@ -58,6 +58,7 @@ from api.schemas import (
 from measures import service as measures_service
 from measures.breakdowns.common import page_source
 from measures.registry import OPERATIONS
+from measures.models import min_students
 from measures.breakdowns.dfw_courses import UnknownCourse
 from measures.breakdowns.student_paths import DEFAULT_TERMS
 
@@ -290,6 +291,7 @@ def measure_answer(measure: str, cohort: str, bar: Bar, dimensions: list[str]):
         source=data.SOURCE,
         loaded_at=loaded_at,
         provisional=is_provisional(measure, cohort),
+        min_students=min_students(),
     )
     return MeasureByGroupResponse(meta=meta, rows=rows)
 

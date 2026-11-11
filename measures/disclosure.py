@@ -1,7 +1,22 @@
 """Dependency-free, versioned disclosure rules shared by calculation and presentation owners."""
 
+import os
 from dataclasses import dataclass
 from types import MappingProxyType
+
+
+MIN_STUDENTS_SETTING = "UNCF_MIN_STUDENTS"
+DEFAULT_MIN_STUDENTS = 1
+
+
+def min_students() -> int:
+    """Use main's server-only display setting; synthetic groups default to one student."""
+    raw = os.environ.get(MIN_STUDENTS_SETTING, "").strip()
+    if not raw:
+        return DEFAULT_MIN_STUDENTS
+    if not raw.isdigit() or int(raw) < 1:
+        raise ValueError(f"{MIN_STUDENTS_SETTING} must be a whole number of 1 or more, not {raw!r}")
+    return int(raw)
 
 
 @dataclass(frozen=True)
@@ -10,7 +25,12 @@ class DisclosureProfile:
 
     id: str
     version: str = "1"
-    minimum: int = 10
+    minimum_size: int = 10
+
+    @property
+    def minimum(self):
+        """Keep dashboard settings dynamic while legacy/exploration retain their own fixed minimum."""
+        return min_students() if self.id == "dashboard_v1" else self.minimum_size
 
     def sample_visible(self, distinct_units):
         """Check the existing minimum sample boundary, including zero-sized populations."""
@@ -36,7 +56,7 @@ class DisclosureProfile:
         return "provisional" if status == "ok" and provisional else status
 
 
-DASHBOARD_V1 = DisclosureProfile("dashboard_v1")
+DASHBOARD_V1 = DisclosureProfile("dashboard_v1", version="2")
 LEGACY_ANALYTICS_V1 = DisclosureProfile("legacy_analytics_v1")
 EXPLORATION_V1 = DisclosureProfile("exploration_v1")
 PROFILES = MappingProxyType(
