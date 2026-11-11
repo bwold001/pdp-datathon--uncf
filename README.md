@@ -112,8 +112,8 @@ api/load.py                builds pdp.sqlite when it's missing
   retention flag) or `federal` (the `federal_retention` measure: took a course here the fall
   after year 1). The rules still open with stakeholders (first time students only, credentials)
   are settings in `measures/calculations/federal_retention.py`.
-- **DFW** rows carry `split`: D (0.7 to under 2.0), F (an F or under 0.7) and W, adding up to the
-  numerator. DFW can also be grouped or filtered by `course`, `term` and `delivery`.
+- **DFW** rows carry `split`: D (any D: 0.7 to under 1.7), F (the code F or under 0.7) and W, adding up to
+  the numerator. A C- passes. DFW can also be grouped or filtered by `course`, `term` and `delivery`.
 - **Definitions** come from `measures/definitions.py`. A school's own metric names go in
   `LOCAL_NAMES`, picked with `UNCF_SCHOOL=fmu` or `benedict`.
 
@@ -129,7 +129,7 @@ Every page route and `/measures/{measure}` take the same query values: `cohort`,
 | `GET /api/v1/uncf/cohort-options?cohort=` | Students per cohort year, and per filter value in the chosen cohort |
 | `GET /api/v1/uncf/definitions` | Every plain language definition |
 | `GET /api/v1/uncf/student-paths?…&terms=&group_by=` | Each student's status term by term (here, credential, elsewhere, stopped) with shares, moves, transfers, retention, and per group paths |
-| `GET /api/v1/uncf/dfw?…` | Everyone's DFW rate with D, F, W, then each course with `min_students` or more students |
+| `GET /api/v1/uncf/dfw?…` | Everyone's DFW rate with D, F and W apart, then each course with `min_students` or more students. `meta.grade_scale` says which grades count |
 | `GET /api/v1/uncf/dfw/course?course=ENG%20101&…` | One course by term, delivery and group, each with `rest_rate` and `gap` against everyone else |
 | `GET /api/v1/uncf/gateway?…` | Each flagged gateway course in year 1: students, passed on the first try and in the end (the PDP's 1.0 line), the path after the first try, retention if passed / not, the filtered group's gap against everyone else, and the course pairs with lower retention |
 | `GET /api/v1/uncf/credit-momentum?…` | Year 1 credits, completion ratio, 12/24/30 milestones, first two terms, credit tiers with retention; `progress`: meaningful progress toward a degree (the 24-credit minimum, 4-year pace, year 1 groups with retention, why students fell below, year 2), settings in `measures/breakdowns/credit_progress.py` |

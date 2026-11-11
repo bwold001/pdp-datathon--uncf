@@ -88,7 +88,7 @@ def test_gateway_on_postgres(pg_database):
 
 def test_dfw_on_postgres(pg_database):
     row = find(run_measure(Measure.DFW_RATE, [Cohort.of("2022-23")], database=pg_database), "everyone")
-    assert (row.numerator, row.denominator, row.n_excluded) == (10, 25, 2)
+    assert (row.numerator, row.denominator, row.n_excluded) == (9, 25, 2)  # the 1.7 is a C-, which passes
 
 
 def test_credit_completion_on_postgres(pg_database):
@@ -100,4 +100,4 @@ def test_credit_completion_on_postgres(pg_database):
 def test_dfw_by_course_on_postgres(pg_database):
     results = run_measure(Measure.DFW_RATE, [Cohort.of("2022-23")], [GroupBy.of(GroupDimension.COURSE)], database=pg_database)
     english = find(results, "course=ENGL 1302")
-    assert (english.numerator, english.denominator) == (7, 22)
+    assert (english.numerator, english.denominator) == (6, 22)  # the 1.7 is a C-, which passes

@@ -38,6 +38,12 @@ export const RealCourses: Story = {
     await expect(canvas.getByText("passed on the first try: 297 of 384 students")).toBeVisible();
     await expect(canvas.getByRole("img", { name: /Passed on the first try: 297, Retook it and passed: 16, Retook it, still didn’t pass: hidden, Didn’t pass, didn’t retake: 64/ })).toBeVisible();
 
+    // Its tries' grades in the page's groups, and the table: a D passes the gateway course, under 1.0 (D- or F) doesn't.
+    await expect(canvas.getByRole("img", { name: "C or higher: 251, D: 15, Under 1.0: 65, P: 50, W: 31" })).toBeVisible();
+    await userEvent.click(canvas.getByText("How grades are counted"));
+    await expect(canvas.getByRole("row", { name: /^D 1\.0 to under 1\.7/ })).toHaveTextContent("Yes, passed");
+    await expect(canvas.getByRole("row", { name: /^Under 1\.0 under 1\.0 \(D- or F\)/ })).toHaveTextContent("No, didn’t pass");
+
     // With no filter, there's no group to compare.
     await expect(canvas.getByText("Pick a group in the filters above to compare it with everyone else in each course.")).toBeVisible();
     await expect(canvas.getByRole("option", { name: "Group furthest behind" })).toBeDisabled();
