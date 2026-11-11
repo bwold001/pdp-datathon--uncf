@@ -1,8 +1,10 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
-import { expect, within } from "storybook/test";
+import { useState } from "react";
+import { expect, userEvent, within } from "storybook/test";
 
 import { ExplorerStoryFrame } from "@/components/uncf/layout/explorer-story-frame";
 
+import type { PathFocus } from "./paths-data";
 import { allStarters2023, everyEnrollmentType2023, fallStarters2023, fallStarters2024, tooFewStudents } from "./paths-fixtures";
 import { PathsView } from "./paths-view";
 
@@ -70,6 +72,57 @@ export const EveryEnrollmentType: Story = {
     await expect(tile(canvas, "Entering cohort")).toHaveTextContent("All enrollment types, Fall 2023");
     await expect(canvas.getByRole("img", { name: /^Flow of 1,584 students \(All enrollment types\)/ })).toBeInTheDocument();
     await expect(canvas.queryByText(/First-time/)).not.toBeInTheDocument();
+  },
+};
+
+/**
+ * Clicking the flow highlights a band or bar and the tiles count only its students; the flow and the table stay the
+ * whole cohort's. Clicking again (or the chip's ✕, or Escape) shows everyone.
+ */
+export const ClickToFocus: Story = {
+  name: "Click a band or bar to focus",
+  render: function Render(args) {
+    const [focus, setFocus] = useState<PathFocus | null>(null);
+    return <PathsView {...args} focus={focus} onFocusChange={setFocus} />;
+  },
+  play: async ({ canvas, step }) => {
+    await step("A second-term bar: its students' third term, from the moves", async () => {
+      await userEvent.click(canvas.getByRole("button", { name: "Stopped out by Spring 2024 · 439" }));
+      await expect(canvas.getByRole("status")).toHaveTextContent("Stopped out by Spring 2024 · 439");
+      await expect(tile(canvas, "Students in focus")).toHaveTextContent("43939% of the 1,114 who entered");
+      await expect(tile(canvas, "Still here · Fall 2024")).toHaveTextContent("22%96 took a course here that term");
+      await expect(tile(canvas, "Stopped out by Fall 2024")).toHaveTextContent("72%96 students returned after a term away");
+      // The flow and the table still show everyone; the table highlights the clicked status.
+      await expect(canvas.getByRole("group", { name: /^Flow of 1,114 students/ })).toBeInTheDocument();
+      const table = within(canvas.getByRole("table"));
+      await expect(table.getByRole("row", { name: "Spring 2024 642 0 33 439" })).toBeVisible();
+      await expect(table.getByRole("cell", { name: "439" })).toHaveClass("font-semibold");
+      await expect(canvas.getByText("Of 60 students who transferred out by Fall 2024")).toBeVisible();
+    });
+
+    await step("A band between the second and third terms: only its students", async () => {
+      await userEvent.click(canvas.getByRole("button", { name: "Returned after a term away · 96" }));
+      await expect(tile(canvas, "Students in focus")).toHaveTextContent("96");
+      await expect(tile(canvas, "Still here · Fall 2024")).toHaveTextContent("100%");
+      await expect(within(canvas.getByRole("table")).getByRole("row", { name: "Fall 2024 522 27 60 505" })).toBeVisible();
+    });
+
+    await step("Clicking the focused band again shows everyone", async () => {
+      await userEvent.click(canvas.getByRole("button", { name: "Returned after a term away · 96", pressed: true }));
+      await expect(canvas.queryByRole("status")).not.toBeInTheDocument();
+      await expect(tile(canvas, "Entering cohort")).toHaveTextContent("1,114");
+    });
+
+    await step("Escape and the chip's ✕ clear it too", async () => {
+      canvas.getByRole("button", { name: "Transferred out by Fall 2024 · 60" }).focus();
+      await userEvent.keyboard("{Enter}");
+      await expect(canvas.getByRole("status")).toHaveTextContent("Transferred out by Fall 2024 · 60");
+      await userEvent.keyboard("{Escape}");
+      await expect(canvas.queryByRole("status")).not.toBeInTheDocument();
+      await userEvent.click(canvas.getByRole("button", { name: "Enrolled in Spring 2024 · 642" }));
+      await userEvent.click(canvas.getByRole("button", { name: "Show every student" }));
+      await expect(canvas.queryByRole("status")).not.toBeInTheDocument();
+    });
   },
 };
 
