@@ -12,7 +12,7 @@ from measures.tests.explorer_fixture import here, make_database, student
 
 
 def test_gateway_cohort_completion_and_course_outcomes_have_different_populations(tmp_path):
-    """Ten completers at D-level grades and ten non-attempters have different denominators."""
+    """Ten gateway passes at 1.5 and ten non-attempters have different denominators."""
     students = [student(f"s{i}", retention=1) for i in range(20)]
     records = [
         here(f"s{i}", "2023-24", "FALL", prefix="MATH", number="101", grade="1.5", gateway="M")
@@ -30,8 +30,8 @@ def test_gateway_cohort_completion_and_course_outcomes_have_different_population
     (course,) = gateway_courses("2023-24", database=path)["courses"]
 
     assert (completion.numerator, completion.denominator, completion.metric_rate) == (10, 20, 0.5)
-    assert (course["students"], course["passed"], course["d"], course["f"]) == (10, 0, 10, 0)
-    assert course["shares"]["passed"] == 0.0
+    assert (course["students"], course["first_pass"], course["passed"]) == (10, 10, 10)
+    assert course["path"] == {"first": 10, "retook_passed": 0, "retook_not": 0, "no_retake": 0}
 
 
 def test_credit_completion_preserves_a_fractional_numerator(tmp_path):
