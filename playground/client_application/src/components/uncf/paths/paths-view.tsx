@@ -150,6 +150,7 @@ function FocusBar({ phrase, students, total, minStudents, onClear }: FocusBarPro
         {phrase} · <span className="uncf-num">{formatCount(students, minStudents)}</span>
         <button
           type="button"
+          data-pdf-skip
           onClick={onClear}
           aria-label="Show every student"
           className="ml-1 inline-flex size-6 cursor-pointer items-center justify-center rounded-full text-(--uncf-ink-3) hover:bg-(--uncf-band) hover:text-(--uncf-ink)"
@@ -157,7 +158,10 @@ function FocusBar({ phrase, students, total, minStudents, onClear }: FocusBarPro
           <X className="size-4" aria-hidden />
         </button>
       </span>
-      <span className="text-sm text-(--uncf-ink-3)">of {total.toLocaleString("en-US")} who entered. The tiles count only them. Click it again or press Esc to show everyone.</span>
+      <span className="text-sm text-(--uncf-ink-3)">
+        of {total.toLocaleString("en-US")} who entered. The tiles count only them.
+        <span data-pdf-skip> Click it again or press Esc to show everyone.</span>
+      </span>
     </div>
   );
 }

@@ -18,7 +18,7 @@ export function describeView(pathname: string, search: string, studentCount: Stu
   return {
     cohort: filters.cohort ?? "",
     students:
-      studentCount === "under 10" ? "Fewer than 10 students" : studentCount === null ? null : `${studentCount.toLocaleString("en-US")} students`,
+      studentCount === "too few" ? "Too few students to show" : studentCount === null ? null : `${studentCount.toLocaleString("en-US")} students`,
     filters: picked.map((definition) => `${definition.label}: ${filterValueLabel(definition, filters[definition.id] ?? null)}`),
     date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
   };

@@ -24,12 +24,12 @@ export const WithFilters: Story = {
   },
 };
 
-/** No filters set: the whole cohort. A tab whose numbers are hidden says so instead of a count. */
+/** No filters set: the whole cohort. A tab with too few students to show says so instead of a count. */
 export const NoFilters: Story = {
   name: "No filters",
-  args: { facts: describeView("/uncf/dfw", "?cohort=2022-23", "under 10") },
+  args: { facts: describeView("/uncf/dfw", "?cohort=2022-23", "too few") },
   play: async ({ canvas }) => {
-    await expect(canvas.getByText("Cohort 2022-23 · Fewer than 10 students")).toBeVisible();
+    await expect(canvas.getByText("Cohort 2022-23 · Too few students to show")).toBeVisible();
     await expect(canvas.getByText(/No filters/)).toBeVisible();
   },
 };
