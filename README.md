@@ -247,3 +247,7 @@ The Vercel chat service needs the OpenRouter key and model configured before dep
 its key, chat returns a readable 503 configuration error.
 `NEXT_PUBLIC_STUDENT_SUCCESS_CHAT_ENABLED=false` disables the UI after a rebuild, and `UNCF_CHAT_ENABLED=false` disables backend chat routes.
 See the [deployment guide](docs/chat-deployment.md).
+
+The proposed v2 analysis boundary is currently inactive and does not change the routes above.
+See [v2 contracts and client fixtures](docs/analysis-v2-contracts.md) for typed plans, clarification,
+evidence and partial-result rules, and the focused test command for work on that boundary.

@@ -1,0 +1,645 @@
+[
+  {
+    "protocol_version": 2,
+    "status": "confirmation",
+    "plan": {
+      "kind": "executable",
+      "catalog_version": "1",
+      "snapshot_ref": "fixture-1",
+      "steps": [
+        {
+          "step_id": "dfw",
+          "kind": "defined_measure",
+          "operation_id": "dfw.rate",
+          "parameters": {
+            "cohort": "2023-24",
+            "filters": {
+              "pell": "Y"
+            }
+          }
+        }
+      ]
+    },
+    "message": "Review the complete Pell DFW scope."
+  },
+  {
+    "protocol_version": 2,
+    "status": "clarification",
+    "plan": {
+      "kind": "proposed",
+      "catalog_version": "1",
+      "snapshot_ref": "fixture-1",
+      "steps": [
+        {
+          "step_id": "dfw",
+          "kind": "defined_measure",
+          "operation_id": "dfw.rate",
+          "parameters": {
+            "cohort": {
+              "unresolved": true,
+              "question": "Which cohort?",
+              "choices": [
+                {
+                  "value": "2022-23",
+                  "label": "2022-23"
+                },
+                {
+                  "value": "2023-24",
+                  "label": "2023-24"
+                }
+              ]
+            },
+            "filters": {
+              "pell": "Y"
+            }
+          }
+        },
+        {
+          "step_id": "other",
+          "kind": "defined_measure",
+          "operation_id": "dfw.rate",
+          "parameters": {
+            "cohort": "2023-24",
+            "filters": {
+              "pell": "Y"
+            }
+          }
+        }
+      ]
+    },
+    "clarification": {
+      "step_id": "dfw",
+      "parameter": "cohort",
+      "question": "Which cohort?",
+      "choices": [
+        {
+          "value": "2022-23",
+          "label": "2022-23"
+        },
+        {
+          "value": "2023-24",
+          "label": "2023-24"
+        }
+      ]
+    },
+    "message": "Choose the first step cohort."
+  },
+  {
+    "protocol_version": 2,
+    "status": "answer",
+    "plan": {
+      "kind": "executable",
+      "catalog_version": "1",
+      "snapshot_ref": "fixture-1",
+      "steps": [
+        {
+          "step_id": "credit_completion",
+          "kind": "defined_measure",
+          "operation_id": "credit_completion.ratio",
+          "parameters": {
+            "cohort": "2023-24",
+            "filters": {
+              "pell": "Y"
+            }
+          }
+        }
+      ]
+    },
+    "outcome": "complete",
+    "step_outcomes": [
+      {
+        "step_id": "credit_completion",
+        "outcome": "completed"
+      }
+    ],
+    "receipts": [
+      {
+        "schema_version": 2,
+        "step_id": "credit_completion",
+        "request": {
+          "step_id": "credit_completion",
+          "kind": "defined_measure",
+          "operation_id": "credit_completion.ratio",
+          "parameters": {
+            "cohort": "2023-24",
+            "filters": {
+              "pell": "Y"
+            }
+          }
+        },
+        "operation_id": "credit_completion.ratio",
+        "operation_version": "1",
+        "population": "Pell recipients in the selected cohort",
+        "time_window": "Observed course records",
+        "grain": "student/cohort",
+        "definitions": [
+          {
+            "id": "credit_completion.ratio",
+            "version": "1"
+          }
+        ],
+        "source": {
+          "label": "synthetic",
+          "snapshot_ref": "fixture-1",
+          "fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "loaded_at": "2026-11-10T12:00:00Z",
+          "coverage": "Hand-counted fixture"
+        },
+        "versions": {
+          "catalog": "1",
+          "pipeline": "1",
+          "configuration": "1",
+          "coverage": "1",
+          "implementation": "1",
+          "disclosure": "dashboard_v1"
+        },
+        "computation_fingerprint": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "execution_id": "execution-1",
+        "started_at": "2026-11-10T12:00:00Z",
+        "completed_at": "2026-11-10T12:00:01Z",
+        "result": {
+          "status": "ok",
+          "payload": {
+            "kind": "rate",
+            "numerator": 5.5,
+            "denominator": 10,
+            "value": 0.55,
+            "numerator_unit": "student ratios",
+            "denominator_unit": "students"
+          }
+        }
+      }
+    ],
+    "message": "Executed synthetic evidence."
+  },
+  {
+    "protocol_version": 2,
+    "status": "answer",
+    "plan": {
+      "kind": "executable",
+      "catalog_version": "1",
+      "snapshot_ref": "fixture-1",
+      "steps": [
+        {
+          "step_id": "online",
+          "kind": "exploratory_analysis",
+          "dataset_id": "student_year1",
+          "operation": "correlation",
+          "parameters": {
+            "cohort": "2023-24",
+            "x": "online_enrollment_count_y1",
+            "y": "credits_earned_y1"
+          }
+        }
+      ]
+    },
+    "outcome": "complete",
+    "step_outcomes": [
+      {
+        "step_id": "online",
+        "outcome": "completed"
+      }
+    ],
+    "receipts": [
+      {
+        "schema_version": 2,
+        "step_id": "online",
+        "request": {
+          "step_id": "online",
+          "kind": "exploratory_analysis",
+          "dataset_id": "student_year1",
+          "operation": "correlation",
+          "parameters": {
+            "cohort": "2023-24",
+            "x": "online_enrollment_count_y1",
+            "y": "credits_earned_y1"
+          }
+        },
+        "operation_id": "correlation",
+        "operation_version": "1",
+        "population": "Synthetic paired complete-case sample",
+        "time_window": "First academic year",
+        "grain": "student/cohort",
+        "definitions": [
+          {
+            "id": "correlation",
+            "version": "1"
+          }
+        ],
+        "source": {
+          "label": "synthetic",
+          "snapshot_ref": "fixture-1",
+          "fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "loaded_at": "2026-11-10T12:00:00Z",
+          "coverage": "Hand-counted fixture"
+        },
+        "versions": {
+          "catalog": "1",
+          "pipeline": "1",
+          "configuration": "1",
+          "coverage": "1",
+          "implementation": "1",
+          "disclosure": "dashboard_v1",
+          "method": {
+            "id": "pearson",
+            "version": "1"
+          },
+          "features": [
+            {
+              "id": "online_enrollment_count_y1",
+              "version": "1"
+            },
+            {
+              "id": "credits_earned_y1",
+              "version": "1"
+            }
+          ]
+        },
+        "computation_fingerprint": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "execution_id": "execution-1",
+        "started_at": "2026-11-10T12:00:00Z",
+        "completed_at": "2026-11-10T12:00:01Z",
+        "result": {
+          "status": "ok",
+          "payload": {
+            "kind": "correlation",
+            "method": "pearson",
+            "n": 10,
+            "coefficient": -1,
+            "x_unit": "enrollments",
+            "y_unit": "credits"
+          }
+        }
+      }
+    ],
+    "message": "Synthetic correlation; descriptive association."
+  },
+  {
+    "protocol_version": 2,
+    "status": "answer",
+    "plan": {
+      "kind": "executable",
+      "catalog_version": "1",
+      "snapshot_ref": "fixture-1",
+      "steps": [
+        {
+          "step_id": "dfw",
+          "kind": "defined_measure",
+          "operation_id": "dfw.rate",
+          "parameters": {
+            "cohort": "2023-24",
+            "filters": {
+              "pell": "Y"
+            }
+          }
+        }
+      ]
+    },
+    "outcome": "complete",
+    "step_outcomes": [
+      {
+        "step_id": "dfw",
+        "outcome": "completed"
+      }
+    ],
+    "receipts": [
+      {
+        "schema_version": 2,
+        "step_id": "dfw",
+        "request": {
+          "step_id": "dfw",
+          "kind": "defined_measure",
+          "operation_id": "dfw.rate",
+          "parameters": {
+            "cohort": "2023-24",
+            "filters": {
+              "pell": "Y"
+            }
+          }
+        },
+        "operation_id": "dfw.rate",
+        "operation_version": "1",
+        "population": "Pell recipients in the selected cohort",
+        "time_window": "Observed course records",
+        "grain": "course enrollment",
+        "definitions": [
+          {
+            "id": "dfw.rate",
+            "version": "1"
+          }
+        ],
+        "source": {
+          "label": "synthetic",
+          "snapshot_ref": "fixture-1",
+          "fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "loaded_at": "2026-11-10T12:00:00Z",
+          "coverage": "Hand-counted fixture"
+        },
+        "versions": {
+          "catalog": "1",
+          "pipeline": "1",
+          "configuration": "1",
+          "coverage": "1",
+          "implementation": "1",
+          "disclosure": "dashboard_v1"
+        },
+        "computation_fingerprint": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "execution_id": "execution-1",
+        "started_at": "2026-11-10T12:00:00Z",
+        "completed_at": "2026-11-10T12:00:01Z",
+        "result": {
+          "status": "suppressed",
+          "reason": "small_group"
+        }
+      }
+    ],
+    "message": "Synthetic result suppressed."
+  },
+  {
+    "protocol_version": 2,
+    "status": "error",
+    "issues": [
+      {
+        "code": "invalid_plan",
+        "message": "Choose a supported operation."
+      }
+    ],
+    "message": "No calculation was executed."
+  },
+  {
+    "protocol_version": 2,
+    "status": "answer",
+    "plan": {
+      "kind": "executable",
+      "catalog_version": "1",
+      "snapshot_ref": "fixture-1",
+      "steps": [
+        {
+          "step_id": "credit_completion",
+          "kind": "defined_measure",
+          "operation_id": "credit_completion.ratio",
+          "parameters": {
+            "cohort": "2023-24",
+            "filters": {
+              "pell": "Y"
+            }
+          }
+        },
+        {
+          "step_id": "dfw",
+          "kind": "defined_measure",
+          "operation_id": "dfw.rate",
+          "parameters": {
+            "cohort": "2023-24",
+            "filters": {
+              "pell": "Y"
+            }
+          }
+        }
+      ]
+    },
+    "outcome": "partial",
+    "step_outcomes": [
+      {
+        "step_id": "credit_completion",
+        "outcome": "completed"
+      },
+      {
+        "step_id": "dfw",
+        "outcome": "failed",
+        "issue": {
+          "code": "timeout",
+          "step_id": "dfw",
+          "message": "The step reached its deadline."
+        }
+      }
+    ],
+    "receipts": [
+      {
+        "schema_version": 2,
+        "step_id": "credit_completion",
+        "request": {
+          "step_id": "credit_completion",
+          "kind": "defined_measure",
+          "operation_id": "credit_completion.ratio",
+          "parameters": {
+            "cohort": "2023-24",
+            "filters": {
+              "pell": "Y"
+            }
+          }
+        },
+        "operation_id": "credit_completion.ratio",
+        "operation_version": "1",
+        "population": "Pell recipients in the selected cohort",
+        "time_window": "Observed course records",
+        "grain": "student/cohort",
+        "definitions": [
+          {
+            "id": "credit_completion.ratio",
+            "version": "1"
+          }
+        ],
+        "source": {
+          "label": "synthetic",
+          "snapshot_ref": "fixture-1",
+          "fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "loaded_at": "2026-11-10T12:00:00Z",
+          "coverage": "Hand-counted fixture"
+        },
+        "versions": {
+          "catalog": "1",
+          "pipeline": "1",
+          "configuration": "1",
+          "coverage": "1",
+          "implementation": "1",
+          "disclosure": "dashboard_v1"
+        },
+        "computation_fingerprint": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "execution_id": "execution-1",
+        "started_at": "2026-11-10T12:00:00Z",
+        "completed_at": "2026-11-10T12:00:01Z",
+        "result": {
+          "status": "ok",
+          "payload": {
+            "kind": "rate",
+            "numerator": 5.5,
+            "denominator": 10,
+            "value": 0.55,
+            "numerator_unit": "student ratios",
+            "denominator_unit": "students"
+          }
+        }
+      }
+    ],
+    "message": "Credit completion finished; DFW failed. This answer is partial."
+  },
+  {
+    "protocol_version": 2,
+    "status": "error",
+    "plan": {
+      "kind": "executable",
+      "catalog_version": "1",
+      "snapshot_ref": "fixture-1",
+      "steps": [
+        {
+          "step_id": "credit_completion",
+          "kind": "defined_measure",
+          "operation_id": "credit_completion.ratio",
+          "parameters": {
+            "cohort": "2023-24",
+            "filters": {
+              "pell": "Y"
+            }
+          }
+        },
+        {
+          "step_id": "dfw",
+          "kind": "defined_measure",
+          "operation_id": "dfw.rate",
+          "parameters": {
+            "cohort": "2023-24",
+            "filters": {
+              "pell": "Y"
+            }
+          },
+          "depends_on": [
+            "credit_completion"
+          ]
+        }
+      ]
+    },
+    "outcome": "failed",
+    "step_outcomes": [
+      {
+        "step_id": "credit_completion",
+        "outcome": "failed",
+        "issue": {
+          "code": "timeout",
+          "step_id": "credit_completion",
+          "message": "Execution timed out."
+        }
+      },
+      {
+        "step_id": "dfw",
+        "outcome": "not_executed",
+        "issue": {
+          "code": "dependency_unavailable",
+          "step_id": "dfw",
+          "message": "Required evidence is unavailable."
+        }
+      }
+    ],
+    "receipts": [],
+    "message": "Execution stopped; the dependent step was not executed."
+  },
+  {
+    "protocol_version": 2,
+    "status": "answer",
+    "plan": {
+      "kind": "executable",
+      "catalog_version": "1",
+      "snapshot_ref": "fixture-1",
+      "steps": [
+        {
+          "step_id": "credit_momentum",
+          "kind": "defined_measure",
+          "operation_id": "credit_momentum.summary",
+          "parameters": {
+            "cohort": "2023-24",
+            "retention_type": "school",
+            "filters": {
+              "pell": "Y"
+            }
+          }
+        }
+      ]
+    },
+    "outcome": "complete",
+    "step_outcomes": [
+      {
+        "step_id": "credit_momentum",
+        "outcome": "completed"
+      }
+    ],
+    "receipts": [
+      {
+        "schema_version": 2,
+        "step_id": "credit_momentum",
+        "request": {
+          "step_id": "credit_momentum",
+          "kind": "defined_measure",
+          "operation_id": "credit_momentum.summary",
+          "parameters": {
+            "cohort": "2023-24",
+            "retention_type": "school",
+            "filters": {
+              "pell": "Y"
+            }
+          }
+        },
+        "operation_id": "credit_momentum.summary",
+        "operation_version": "1",
+        "population": "Pell recipients in the selected cohort",
+        "time_window": "Observed course records",
+        "grain": "component-specific summary",
+        "definitions": [
+          {
+            "id": "credit_momentum.summary",
+            "version": "1"
+          }
+        ],
+        "source": {
+          "label": "synthetic",
+          "snapshot_ref": "fixture-1",
+          "fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "loaded_at": "2026-11-10T12:00:00Z",
+          "coverage": "Hand-counted fixture"
+        },
+        "versions": {
+          "catalog": "1",
+          "pipeline": "1",
+          "configuration": "1",
+          "coverage": "1",
+          "implementation": "1",
+          "disclosure": "dashboard_v1"
+        },
+        "computation_fingerprint": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "execution_id": "execution-1",
+        "started_at": "2026-11-10T12:00:00Z",
+        "completed_at": "2026-11-10T12:00:01Z",
+        "result": {
+          "status": "ok",
+          "payload": {
+            "kind": "table",
+            "columns": [
+              {
+                "id": "tier",
+                "type": "text",
+                "unit": "registered group"
+              },
+              {
+                "id": "students",
+                "type": "integer",
+                "unit": "distinct students"
+              }
+            ],
+            "rows": [
+              {
+                "status": "ok",
+                "cells": [
+                  "Under 15",
+                  10
+                ]
+              },
+              {
+                "status": "suppressed"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "message": "Synthetic credit-tier evidence; one row is hidden."
+  }
+]
