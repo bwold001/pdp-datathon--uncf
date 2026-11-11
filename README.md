@@ -19,7 +19,7 @@ commit `cef57aa` (the starter's latest commit when this repo was created, 2026-1
 
 Every page, export and chat answer uses one result contract: measure, filters, numerator,
 denominator, rate, suppression status, limitations, definition, source and load time. "Unavailable"
-is never shown as zero. How small a group can be shown is one setting, `UNCF_MIN_STUDENTS` (see below).
+is never shown as zero. Every nonempty group is shown; small result sets are not suppressed.
 
 ## Set up
 
@@ -136,15 +136,12 @@ Every page route and `/measures/{measure}` take the same query values: `cohort`,
 | `GET /api/v1/uncf/analyses/catalog` | The chat's approved analyses, their choices and declared data coverage |
 | `POST /api/v1/uncf/analyses` | One approved analysis with its receipt, or a clarification when a needed choice is missing |
 
-- **Small groups:** `UNCF_MIN_STUDENTS` on the server sets the smallest group whose numbers are shown. It
-  defaults to 1, so every group with students is shown, because the data is synthetic. Set it to 10 before real
-  student data is used: groups under 10 are then hidden on every page, export and `/measures` answer. Every
-  answer's `meta.min_students` says the value in use, and the pages word their notes from it. The chat's own
-  analyses still hide groups under 10 (`suppression_threshold` in `analytics/config/analytics.yaml`). The Gateway
-  page ranks only course pairs taken by 10 or more students, because a rate from a few students swings too much.
-- **Hidden or missing numbers** are `null` with a status: `suppressed` (fewer students than `min_students`, or
-  none), `not_yet_observable`, or `not_reported` (a gateway measure the college doesn't report). Never 0. With
-  small groups hidden, starter issue #87 (working out a hidden group by subtraction) is not fixed.
+- **Small groups:** every nonempty cohort, course, course pair and comparison is eligible for display,
+  including groups of one. `UNCF_MIN_STUDENTS` and the legacy analytics `suppression_threshold`
+  no longer hide results. API `min_students` metadata remains 1 for compatibility.
+- **Missing numbers** remain `null` with a status when evidence is unknown, unavailable or not yet
+  observable. Empty populations have no rate. The legacy `suppressed` status remains in response
+  contracts for empty groups and previously stored evidence.
 - **`provisional`** is true for the 2024-25 class, whose second year is only partly in the data.
 - **Errors:** 422 for a value the API doesn't offer (`invalid_filter`, `invalid_group_by`,
   `invalid_analysis`), 404 `unknown_course`, 503 `data_missing` or `analytics_unavailable`. Bodies
@@ -260,3 +257,6 @@ evidence and partial-result rules, and the focused test command for work on that
 
 The [shared snapshot and replay guide](docs/analysis-v2-snapshots.md) describes transaction ownership,
 configured database access, loader build identity, cancellation and reproducible computation inputs.
+
+The [defined operation catalog](docs/analysis-v2-defined-operations.md) registers the existing dashboard
+and legacy analyses with executable request schemas and typed result adapters. It remains inactive in HTTP/chat.

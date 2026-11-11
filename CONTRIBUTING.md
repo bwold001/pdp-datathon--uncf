@@ -24,7 +24,7 @@ branch protection requires a pull request, one approval, and passing checks.
 ## What the reviewer checks
 
 - The acceptance criteria in the task are met, and the validation steps were run.
-- Numbers match the shared measures; small-group suppression still holds.
+- Numbers match the shared measures; small nonempty groups stay visible and missing evidence stays unavailable.
 - Anything others use is explained in a README.
 - Changes to shared files or the result contract were announced.
 

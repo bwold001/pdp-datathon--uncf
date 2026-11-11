@@ -78,9 +78,9 @@ def test_page_wrappers_preserve_values_and_borrow_snapshot(database, page, extra
 
 
 @pytest.mark.parametrize("page", [credit_momentum, gateway_courses, student_paths, dfw_courses])
-@pytest.mark.parametrize("threshold,status", [(None, "ok"), ("10", "suppressed")])
-def test_small_groups_follow_setting_inside_borrowed_snapshot(database, monkeypatch, page, threshold, status):
-    """Three synthetic students stay visible by default without losing snapshot ownership or configured hiding."""
+@pytest.mark.parametrize("threshold", [None, "10", "100"])
+def test_small_groups_remain_visible_inside_borrowed_snapshot(database, monkeypatch, page, threshold):
+    """Three synthetic students remain visible on one snapshot despite legacy threshold settings."""
     monkeypatch.delenv("UNCF_MIN_STUDENTS", raising=False)
     if threshold is not None:
         monkeypatch.setenv("UNCF_MIN_STUDENTS", threshold)
@@ -92,22 +92,19 @@ def test_small_groups_follow_setting_inside_borrowed_snapshot(database, monkeypa
         with sqlite3.connect(database) as writer:
             writer.execute("UPDATE cohort_membership SET retention=0, number_of_credits_earned_yr_1=0")
         result = page("2023-24", filters=filters, snapshot=snapshot)
-        assert result["status"] == status
-        if status == "ok":
-            if page is dfw_courses:
-                assert result["everyone"]["students"] == 3
-                assert result["courses"] == []  # The list still requires ten final grades.
-            else:
-                assert result["students"] == 3
-            if page is credit_momentum:
-                assert result["credits"]["avg_earned"] == 6
-                assert result["retention"]["rate"] == 1
-                assert result["progress"] is not None
-            if page is gateway_courses:
-                assert result["courses"][0]["students"] == 3
-                assert result["context"]["min_pair_students"] == 10
-        elif page is credit_momentum:
-            assert result["progress"] is None
+        assert result["status"] == "ok"
+        if page is dfw_courses:
+            assert result["everyone"]["students"] == 3
+            assert result["courses"][0]["students"] == 3
+        else:
+            assert result["students"] == 3
+        if page is credit_momentum:
+            assert result["credits"]["avg_earned"] == 6
+            assert result["retention"]["rate"] == 1
+            assert result["progress"] is not None
+        if page is gateway_courses:
+            assert result["courses"][0]["students"] == 3
+            assert result["context"]["min_pair_students"] == 1
         assert snapshot.positional.execute("SELECT SUM(retention) FROM cohort_membership").fetchone() == (6,)
 
 

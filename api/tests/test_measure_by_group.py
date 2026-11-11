@@ -65,7 +65,7 @@ def test_retention_by_pell_matches_the_explorer_contract(data_file, client) -> N
         "source": "PDP analysis-ready cohort and course files (synthetic sample)",
         "loaded_at": LOADED_AT,
         "provisional": False,
-        "min_students": 10,
+        "min_students": 1,
     }
     assert [row["group"] for row in body["rows"]] == [{}, {"pell": "N"}, {"pell": "UNKNOWN"}, {"pell": "Y"}]
     assert body["rows"][0] | {"note": None} == {
@@ -85,12 +85,12 @@ def test_small_groups_are_shown_by_default(data_file, client, monkeypatch) -> No
     assert client.get(f"{PREFIX}/gateway", params={"cohort": "2022-23"}).json()["meta"]["min_students"] == 1
 
 
-def test_hidden_group_is_null_with_its_status_never_zero(data_file, client) -> None:
-    """A suppressed group keeps null numbers and its status."""
+def test_small_group_has_visible_counts(data_file, client) -> None:
+    """A three-student group retains its counts and rate."""
     rows = get(client, measure="retention", cohort="2022-23", group_by="pell").json()["rows"]
     hidden = next(row for row in rows if row["group"] == {"pell": "UNKNOWN"})
-    assert hidden["status"] == "suppressed"
-    assert hidden["numerator"] is None and hidden["denominator"] is None and hidden["rate"] is None
+    assert hidden["status"] == "ok"
+    assert (hidden["numerator"], hidden["denominator"], hidden["rate"]) == (3, 3, 1.0)
 
 
 def test_federal_retention_is_fall_to_fall(data_file, client) -> None:

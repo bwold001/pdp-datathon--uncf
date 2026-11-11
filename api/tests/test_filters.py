@@ -57,25 +57,25 @@ def test_filters_match_raw_spellings_and_combine(tmp_path):
     connection.close()
 
 
-def test_small_counts_are_hidden_never_zero():
+def test_small_counts_remain_visible():
     """Counts of 1 to 9 are hidden; 0 and 10 or more are shown. Shares need both numbers."""
-    assert [shown(n) for n in (0, 1, 9, 10)] == [0, None, None, 10]
+    assert [shown(n) for n in (0, 1, 9, 10)] == [0, 1, 9, 10]
     assert share(5, 20) == 0.25
     assert share(None, 20) is None
     assert share(5, 0) is None
 
 
 def test_cohort_options_count_each_value(tmp_path, monkeypatch):
-    """The bar's counts: students per cohort year, and per filter value in the chosen cohort, small ones hidden."""
+    """The bar reports every known cohort and filter count, including small groups."""
     students = [student(f"f{n}", pell="Y") for n in range(12)] + [student(f"s{n}", pell="N", cohort_term="SPRING") for n in range(3)]
     students += [student(f"old{n}", cohort="2022-23") for n in range(10)]
     database = make_database(tmp_path / "pdp.sqlite", students)
     monkeypatch.setattr(data, "data_path", lambda: database)
     options = cohort_options("2023-24")
     assert options["cohorts"] == {"2021-22": 0, "2022-23": 10, "2023-24": 15, "2024-25": 0}
-    assert options["filters"]["pell"] == {"Y": 12, "N": None, "UNKNOWN": 0}
+    assert options["filters"]["pell"] == {"Y": 12, "N": 3, "UNKNOWN": 0}
     assert options["filters"]["cohort_term"]["Fall"] == 12
-    assert options["filters"]["cohort_term"]["Spring"] is None
+    assert options["filters"]["cohort_term"]["Spring"] == 3
     assert options["filters"]["enrollment_type"]["First-time"] == 15
     assert set(options["filters"]) == {"cohort_term", "enrollment_intensity", "enrollment_type", "pell", "gender", "race", "ethnicity", "age_band"}
     assert options["retention_types"] == ["school", "federal"]

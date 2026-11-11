@@ -45,8 +45,8 @@ def test_grade_rules_follow_the_dfw_measure(tmp_path):
     assert everyone["rate"] == 0.5
 
 
-def test_courses_are_listed_by_dfw_count_and_small_ones_hidden(tmp_path):
-    """Courses with 10 or more students are listed, most DFW grades first; one with 9 students is hidden."""
+def test_courses_are_listed_by_dfw_count_including_small_ones(tmp_path):
+    """Every nonempty course is listed, most DFW grades first, including nine students."""
     database = build(
         tmp_path,
         graded("eng", 12, ["F", "4"], course=("ENG", "101")),
@@ -54,15 +54,15 @@ def test_courses_are_listed_by_dfw_count_and_small_ones_hidden(tmp_path):
         graded("art", 9, ["F"], course=("ART", "100")),
     )
     result = dfw_courses(**pick("2023-24"), database=database)
-    assert [c["course"] for c in result["courses"]] == ["MATH 111", "ENG 101"]
-    assert result["hidden_courses"] == 1
+    assert [c["course"] for c in result["courses"]] == ["MATH 111", "ART 100", "ENG 101"]
+    assert result["hidden_courses"] == 0
     math = result["courses"][0]
     assert (math["num"], math["den"], split(math)) == (15, 20, counts(f=10, w=5, total=20))
     assert math["names"] == {"top": ["COMPOSITION I"], "distinct": 1}
 
 
 def test_course_detail_splits_by_term_delivery_and_group(tmp_path):
-    """One course by term, by delivery method (blank shown as Blank) and by student group, small groups hidden."""
+    """One course keeps term, delivery and student-group counts, including small groups."""
     students, records = graded("y", 12, ["F", "4", "4"], pell="Y")
     more_students, more_records = graded("n", 15, ["4"], pell="N")
     few_students, few_records = graded("u", 3, ["W"], pell="U")
@@ -74,9 +74,9 @@ def test_course_detail_splits_by_term_delivery_and_group(tmp_path):
     assert (detail["num"], detail["den"]) == (7, 30)
     assert [term["value"] for term in detail["terms"]] == ["Fall"]
     delivery = {part["value"]: part["den"] for part in detail["delivery"]}
-    assert delivery == {"Online": None, "Blank": 24}  # 6 online students: hidden
+    assert delivery == {"Online": 6, "Blank": 24}
     pell = {group["value"]: (group["num"], group["den"]) for group in detail["groups"]["pell"]}
-    assert pell == {"N": (0, 15), "UNKNOWN": (None, None), "Y": (4, 12)}
+    assert pell == {"N": (0, 15), "UNKNOWN": (3, 3), "Y": (4, 12)}
     intensity = {group["value"] for group in detail["groups"]["enrollment_intensity"]}
     assert intensity == {"Full-time"}  # stored as Full-Time, answered with the listed spelling
 
@@ -107,17 +107,16 @@ def test_groups_are_compared_with_everyone_else_in_the_course(tmp_path):
     assert (pell["N"]["rest_rate"], pell["N"]["gap"]) == (0.5, -50.0)
 
 
-def test_unknown_or_hidden_course_is_an_error(tmp_path):
-    """Asking for a course that isn't there, or has under 10 students, raises UnknownCourse."""
+def test_small_course_is_visible_and_unknown_course_is_an_error(tmp_path):
+    """Small courses remain available; a nonexistent course raises UnknownCourse."""
     database = build(tmp_path, graded("s", 9, ["F"]))
-    with pytest.raises(UnknownCourse):
-        dfw_course(**pick("2023-24"), course="ENG 101", database=database)
+    assert dfw_course(**pick("2023-24"), course="ENG 101", database=database)["den"] == 9
     with pytest.raises(UnknownCourse):
         dfw_course(**pick("2023-24"), course="NOPE 1", database=database)
 
 
 def test_cohort_filters_pick_the_students(tmp_path):
-    """The cohort bar's filters decide whose grades count; under 10 students hides everything."""
+    """The cohort bar selects whose grades count; empty selections have no rate."""
     database = build(tmp_path, graded("y", 12, ["F"], pell="Y"), graded("n", 10, ["4"], pell="N"))
     assert dfw_courses(**pick("2023-24", pell="Y"), database=database)["everyone"]["rate"] == 1.0
     assert dfw_courses(**pick("2023-24", pell="N"), database=database)["everyone"]["rate"] == 0.0

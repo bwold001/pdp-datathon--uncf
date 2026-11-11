@@ -129,7 +129,7 @@ def test_definitions_come_from_the_shared_dictionary(client):
     """The Explorer's key terms are measures/definitions.py, word for word, with the small-groups line filled in."""
     body = client.get("/api/v1/uncf/definitions").json()
     assert body["definitions"] == all_definitions()
-    assert "A course or group with fewer than 10 students is hidden." in body["definitions"]["dfw_rate"]["limits"]
+    assert not any("students is hidden" in line for line in body["definitions"]["dfw_rate"]["limits"])
     assert body["definitions"]["persistence"]["name"] == "At another college"
 
 

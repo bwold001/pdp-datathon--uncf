@@ -34,14 +34,14 @@ def test_real_database_api_and_calculation_text_match(tmp_path):
     assert service.analyze({'analysis': 'retention', 'cohort': '2022-23'}).receipts[0].source_stamp != old
 
 
-def test_suppression_hides_counts_and_substitutions(tmp_path):
-    """Small cells cannot reappear in totals, exclusions or calculation text."""
+def test_legacy_threshold_does_not_hide_small_results(tmp_path):
+    """Old coverage settings cannot hide small counts, exclusions or calculation text."""
     service = AnalyticsService(build_database(tmp_path / 'data.sqlite'), fixture_coverage(10))
     receipt = service.analyze({'analysis': 'retention', 'cohort': '2022-23'}).receipts[0]
-    assert all(r.status not in ('ok', 'provisional') for r in receipt.rows)
-    for row in receipt.rows:
-        assert row.numerator is None and row.denominator is None
-        assert not row.exclusions and not row.calculation
+    row = receipt.rows[0]
+    assert (row.status, row.numerator, row.denominator, row.rate) == ('ok', 1, 2, .5)
+    assert row.calculation == '1 / 2 = 50.00%'
+    assert all(r.status != "suppressed" for r in receipt.rows)
 
 
 def test_clarification_and_all_graduation_horizons(tmp_path):
@@ -93,19 +93,6 @@ def test_service_does_not_infer_bachelor_major_from_earliest_duration(tmp_path):
     assert receipt.rows[1].numerator == 0
     assert receipt.rows[1].exclusions['unknown_completion_program'] == 1
     assert receipt.rows[2].status == 'unknown'
-
-
-def test_safe_retention_total_survives_fully_hidden_program_breakdown():
-    """A safe overall rate can remain visible when every linked program count is hidden."""
-    from analytics.presentation import rate_row, suppress
-    rows = [rate_row('All majors', 50, 100),
-            rate_row('Small program', 1, 2, group={'entry_program': '400501'}),
-            rate_row('Other program', 49, 98, group={'entry_program': '520201'})]
-    projected = suppress(rows, 10)
-    assert projected[0].rate == .5
-    assert projected[0].calculation == '50 / 100 = 50.00%'
-    assert all(r.status == 'suppressed' for r in projected[1:])
-    assert all(r.numerator is None and r.denominator is None and not r.calculation for r in projected[1:])
 
 
 def test_calculation_text_uses_the_serialized_rate_rounding():

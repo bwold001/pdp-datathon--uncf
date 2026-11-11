@@ -94,18 +94,18 @@ def test_table_refuses_a_hidden_row_with_a_number(tmp_path):
         connection.execute("UPDATE equity_gaps SET numerator = 0 WHERE status = 'suppressed'")
 
 
-def test_table_refuses_a_shown_row_under_ten(tmp_path):
+def test_table_refuses_a_shown_row_with_no_students(tmp_path):
     database = tmp_path / "gaps.sqlite"
     save_gaps(stub_gaps(), database)
     with sqlite3.connect(database) as connection, pytest.raises(sqlite3.IntegrityError):
-        connection.execute("UPDATE equity_gaps SET denominator = 9 WHERE status = 'unknown_group'")
+        connection.execute("UPDATE equity_gaps SET denominator = 0 WHERE status = 'unknown_group'")
 
 
-def test_table_refuses_an_ok_row_whose_everyone_else_is_under_ten(tmp_path):
+def test_table_refuses_a_comparison_with_no_students(tmp_path):
     database = tmp_path / "gaps.sqlite"
     save_gaps(stub_gaps(), database)
     with sqlite3.connect(database) as connection, pytest.raises(sqlite3.IntegrityError):
-        connection.execute("UPDATE equity_gaps SET comparison_denominator = 9 WHERE status = 'ok'")
+        connection.execute("UPDATE equity_gaps SET comparison_denominator = 0 WHERE status = 'ok'")
 
 
 def test_old_table_with_other_columns_is_rebuilt(tmp_path):

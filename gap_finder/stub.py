@@ -18,7 +18,7 @@ NOTE = (
     "A gap shows a difference, not its cause."
 )
 UNKNOWN_NOTE = NOTE + " Unknown values stay in everyone else, but aren't compared or ranked."
-HIDDEN_NOTE = NOTE + " Hidden: fewer than 10 students."
+HIDDEN_NOTE = NOTE + " Historical suppressed fixture; current calculations show every nonempty group."
 TOO_NEW_NOTE = NOTE + " Hidden: the cohort is too new for retention."
 
 RACES = (
@@ -42,21 +42,21 @@ EVERYONE_DENOMINATOR = 7701
 # rank_by_affected, rank_by_gap.
 COMPARED = (
     ("Black or African American", 565, 1218, 0.4639, 3560, 6483, 0.5491, -8.53, -103.8, -11.56, -5.47,
-     4.4059024806359754e-08, 3.5247219845087803e-07, 1, 2),
+     4.4059024806359754e-08, 3.5247219845087803e-07, 1, 3),
     ("American Indian or Alaska Native", 61, 148, 0.4122, 4064, 7553, 0.5381, -12.59, -18.6, -20.28, -4.46,
-     0.0023540875217095227, 0.006277566724558727, 2, 1),
+     0.0023540875217095227, 0.006277566724558727, 2, 2),
     ("Native Hawaiian or Other Pacific Islander", 6, 23, 0.2609, 4119, 7678, 0.5365, -27.56, -6.3, -41.14, -7.15,
-     0.008139490434714862, 0.013023184695543779, 3, None),
+     0.008139490434714862, 0.013023184695543779, 3, 1),
     ("Two or More Races", 104, 196, 0.5306, 4021, 7505, 0.5358, -0.52, -1.0, -7.59, 6.44,
-     0.8862099640464226, 0.8862099640464226, 4, 3),
+     0.8862099640464226, 0.8862099640464226, 4, 4),
     ("Hispanic", 1082, 2014, 0.5372, 3043, 5687, 0.5351, 0.22, 4.3, -2.32, 2.74,
-     0.8673899411062108, 0.8862099640464226, 5, 4),
+     0.8673899411062108, 0.8862099640464226, 5, 5),
     ("Nonresident alien", 97, 155, 0.6258, 4028, 7546, 0.5338, 9.2, 14.3, 1.29, 16.52,
-     0.02298198990832058, 0.030642653211094106, 6, 7),
+     0.02298198990832058, 0.030642653211094106, 6, 8),
     ("Asian", 341, 561, 0.6078, 3784, 7140, 0.53, 7.79, 43.7, 3.53, 11.91,
-     0.0003694684742348702, 0.0014778738969394808, 7, 6),
+     0.0003694684742348702, 0.0014778738969394808, 7, 7),
     ("White", 1704, 3068, 0.5554, 2421, 4633, 0.5226, 3.29, 100.8, 1.01, 5.55,
-     0.004651183069352605, 0.00930236613870521, 8, 5),
+     0.004651183069352605, 0.00930236613870521, 8, 6),
 )
 
 
@@ -107,7 +107,7 @@ def stub_rows() -> list[GapResult]:
     """Every stub row: at least one per status, and one two-way group."""
     rows = [compared_row(*values) for values in COMPARED]
     rows.append(unknown_row())
-    # Gender X and Two or More Races: 1 student in the pooled cohorts, so hidden.
+    # Historical suppressed evidence remains a contract fixture; current calculations show this group.
     rows.append(blank_row(POOLED, ("gender", "race"), ("X", "Two or More Races"), GapStatus.SUPPRESSED, HIDDEN_NOTE))
     # 2024-25 students can't have come back a year later yet.
     rows.extend(blank_row(NEWEST, ("race",), (race,), GapStatus.NOT_YET_OBSERVABLE, TOO_NEW_NOTE) for race in RACES)

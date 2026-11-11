@@ -1,5 +1,9 @@
 # Success measures
 
+The [v2 catalog and adapter guide](../docs/analysis-v2-defined-operations.md) explains `requests.py`,
+`registry.py` and `service.py`: pure request validation and dispatch to existing calculation owners on
+a caller-owned snapshot, preserving gateway definitions, fractional credit numerators and DFW enrollment counts.
+
 The shared shape for the core student success measures ([#9](https://github.com/devcolor/pdp-datathon-starter/issues/9)).
 This folder holds the contract and the calculations for retention, federal (fall to fall) retention, persistence, gateway completion, DFW rate and credit completion, plus the Explorer pages' breakdowns ([breakdowns/](breakdowns/)).
 
@@ -20,7 +24,7 @@ library only. `measures/` is a Python package, so other code imports it with
 | `cohort` | A `Cohort`: one year, e.g. `2023-24`, or several pooled, e.g. `2021-22 + 2022-23` |
 | `group` | A `Group`: which students the row is about. One condition or several. See below |
 | `numerator`, `denominator`, `metric_rate` | The counts, and `numerator / denominator`. None if hidden. For `credit_completion` the numerator adds up student ratios, so it can have decimals |
-| `status` | `ok`, `suppressed` (fewer students than `min_students()`, or none) or `not_yet_observable` (nobody in the cohort has an answer yet) |
+| `status` | `ok`, `suppressed` (no eligible students) or `not_yet_observable` (nobody in the cohort has an answer yet) |
 | `suppressed` | A property, not a stored field: true whenever the status isn't `ok`, so the numbers are hidden |
 | `n_excluded` | Students the measure applies to but we couldn't count (course enrollments for `dfw_rate`) |
 | `exclusions` | The same students (enrollments for `dfw_rate`) split by reason: a count for each `ExclusionReason`, adding up to `n_excluded`. Retention and persistence have one reason (`unknown_outcome`), gateway has one (`unknown_requirement_or_outcome`), and DFW and credit completion can have several. Empty when nothing was left out or the row is hidden |
@@ -71,12 +75,8 @@ A row that breaks these can't be built:
 - A shown group always has counts and a `metric_rate`.
 - No two rows for the same measure, cohort and group (`check_unique`).
 
-Hiding keeps a small group's own numbers off the row. It doesn't stop someone working a hidden group
-out by subtraction: everyone minus the shown groups leaves the hidden one (in the made-up sample,
-Re-admit is everyone minus First-time minus Transfer-in). Treat it as display protection, not a
-guarantee. The counts are kept next to the `metric_rate` so
-[#26](https://github.com/devcolor/pdp-datathon-starter/issues/26) can combine groups and compare a
-group with everyone else.
+Every nonempty group is visible, including one student. Empty or unobservable populations retain
+null rates and their existing statuses. No minimum-size privacy protection is applied.
 
 ## How each measure is calculated
 
@@ -92,12 +92,9 @@ course enrollments. Credit completion averages each student's ratio. The rate is
 | `dfw_rate` | the grade is a D, F or withdrawal | the grade is one we can classify (see below) | any other grade: `n_excluded`, with the reason in the grade table below |
 | `credit_completion` | the student's own ratio, credits earned / credits attempted in year 1 (added up) | first-time and transfer-in students with at least 1 credit attempted and a known full- or part-time status | no credits recorded: `unknown_outcome`. Under 1 attempted: `no_credits_attempted`. Enrollment type unknown: `unknown_enrollment_type`. Full- or part-time unknown: `unknown_attendance_type`. Re-admit and continuing students: `n_out_of_scope` |
 
-- **Hidden groups:** fewer students counted in the denominator than `min_students()` (for `dfw_rate`, fewer
-  students with a graded enrollment). `min_students()` reads `UNCF_MIN_STUDENTS`: 1 by default, which shows every
-  group with students, because the data is synthetic. Set it to 10 before real student data is used. The tests
-  run with 10, so the hiding rules stay checked. A cohort has status
-  `not_yet_observable` if nobody in it has an answer yet. A pooled cohort has it when any of its years
-  has no answers yet.
+- **Small groups:** every group with an eligible known outcome is shown. The compatibility helper
+  `min_students()` always returns 1; `UNCF_MIN_STUDENTS` is ignored. Empty groups have no rate.
+  A cohort is `not_yet_observable` when it has no observed outcomes; pooling preserves that rule.
 - **Group values** are matched ignoring case and spaces, because the data model keeps the source file's
   spelling.
 
@@ -190,8 +187,7 @@ C- passes. On the synthetic 2023-24 class that moves 60 grades out of the numera
 **DFW by course.** `GroupBy.of(COURSE)` gives one group for every course with an enrollment in the requested
 cohorts, so the courses come from the data, not a fixed list. A course is its prefix and number, such as
 `ENGL 1302`, and it only applies to `dfw_rate`: asking another measure for it is an error. It can be combined
-with other groups, like `GroupBy.of(COURSE, PELL)`. With `UNCF_MIN_STUDENTS=10`, most courses have fewer than 10 students and are hidden, so a
-run returns many rows with the status `suppressed`. Courses that differ only in case, like `ENG 101` and `eng 101`, are one course. A college that gives different
+with other groups, like `GroupBy.of(COURSE, PELL)`. Every course with a classifiable final grade is included, including a single enrollment. Courses that differ only in case, like `ENG 101` and `eng 101`, are one course. A college that gives different
 classes the same code will see them as one course.
 
 **Credit completion** is how much of the credit load students attempted in their first academic year they
@@ -237,7 +233,7 @@ read another SQLite file by path, or an open connection (for PostgreSQL). A meas
 
 Each measure's calculation is its own file in [calculations/](calculations/): `retention.py`,
 `persistence.py`, the two gateway files, `dfw.py` and `credit_completion.py`. A measure file has two parts, and `run_measures.py` does the rest (building the
-groups, hiding groups under `min_students()`, working out the rate):
+groups, preserving unavailable outcomes, working out the rate):
 
 - `NOTE`: the sentence that says who was counted
 - `count(connection, cohorts, groups)`: return a `Counts` (numerator, denominator and the students
@@ -257,7 +253,7 @@ To add a measure, write its file and list it in `MEASURES` in `run_measures.py`.
 **Saving results:** `run_measure(..., save=True)` also writes the rows to
 `measures/output/success_measures.sqlite`, in one table, `success_measures`, for all measures. It is its
 own file, not the loader's, so a reload of the data doesn't touch it. It holds only counts and rates
-(small groups hidden), so it can be shared without any student rows. Each row has the `data_loaded_at`
+(including small groups), without individual student rows. Each row has the `data_loaded_at`
 of the data it came from. The `output/` folder is gitignored.
 
 A results file saved before `exclusions` existed gets the new column when you save to it.
@@ -312,11 +308,10 @@ use it to count a measure among their own sets of students, such as the students
 
 **Breakdowns:** [breakdowns/](breakdowns/) holds the Explorer pages: Student paths, DFW courses,
 gateway courses and credit momentum. They get every rate from `run_measure` and only split it by
-term, course, flow or tier, with the same rule for small groups.
+term, course, flow or tier, with every nonempty group visible.
 
 **Pooling cohorts:** a `Cohort` with several years, like `Cohort.of("2021-22", "2022-23")`, counts
-those cohorts together. They are pooled before small groups are hidden, so a group under the minimum in each
-cohort can reach it together and be shown.
+those cohorts together. Pooling combines their counts; no minimum group size hides the result.
 
 ## Tests
 

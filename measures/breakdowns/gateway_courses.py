@@ -15,8 +15,8 @@ in the groups of grade_scale.py (C or higher, D, under 1.0, P, W), and the answe
 
 This module only counts. The comparisons (the filtered students against everyone else who took a course, and each
 course pair against everyone else) are the gap finder's job, which sits on top of measures: gap_finder/gateway.py
-runs these counts through gap_finder.compare, and the API calls it. Groups under min_students() are hidden.
-Only course pairs taken by 10 or more students are sent for comparing (MIN_PAIR_STUDENTS).
+runs these counts through gap_finder.compare, and the API calls it. Every nonempty group is shown.
+Every course pair with known retention outcomes is sent for comparison.
 """
 from __future__ import annotations
 
@@ -46,7 +46,6 @@ SUBJECTS = ("E", "M")
 PATH_STEPS = ("first", "retook_passed", "retook_not", "no_retake")
 # Course pairs are compared only with this many students. Not a privacy rule: the gap finder corrects for how many
 # comparisons it runs, so thousands of tiny pairs would make real gaps read as noise.
-MIN_PAIR_STUDENTS = 10
 
 
 def gateway_passed(grade: str | None) -> bool | None:
@@ -88,7 +87,7 @@ def _gateway_courses(cohort: str, filters: Group = EVERYONE, retention_measure: 
         "retention_observed": observable,
         "first_term": first_term,
         "compared": filters != EVERYONE,
-        "min_pair_students": max(MIN_PAIR_STUDENTS, min_students()),
+        "min_pair_students": 1,
         "grade_scale": gateway_scale(),
     }
     if len(students) < min_students():
@@ -145,13 +144,13 @@ def best_grade(grades: list[str]) -> str:
 
 
 def grade_counts(grades: dict[str, list[str]]) -> dict[str, int | None]:
-    """How many tries ended in each gateway group, best first (0 when none did). Hidden under min_students(), like the path."""
+    """How many tries ended in each gateway group, best first (0 when none did), through shown() like the path."""
     counted = Counter(gateway_group(grade) for tries in grades.values() for grade in tries)
     return {group: shown(counted[group]) for group in GATEWAY_GROUPS}
 
 
 def path_counts(tries: dict[str, list[bool]]) -> dict:
-    """First-try passes, passes in the end, and each step of the path, for these students. Steps hide under min_students()."""
+    """First-try passes, passes in the end, and each step of the path, for these students. Every known step count is visible."""
     steps = Counter()
     for passes in tries.values():
         if passes[0]:
@@ -204,7 +203,7 @@ def course_paths(rows: list[dict], students: set[str], compared: bool, answers: 
 
 
 def course_pairs(rows: list[dict], answers: dict) -> dict:
-    """Retention for each gateway course taken with another course in the first term, by MIN_PAIR_STUDENTS or more."""
+    """Retention for each gateway course taken with another course in the first term, by at least one student."""
     first_courses: dict[str, set[str]] = defaultdict(set)
     gateway: set[str] = set()
     for row in rows:
@@ -221,6 +220,6 @@ def course_pairs(rows: list[dict], answers: dict) -> dict:
     counted = []
     for pair, who in sorted(takers.items()):
         numbers = retained_share(answers, who)
-        if numbers["students"] is not None and numbers["students"] >= MIN_PAIR_STUDENTS:
+        if numbers["students"] is not None and numbers["students"] > 0:
             counted.append({"courses": list(pair), "students": numbers["students"], "retained": numbers["retained"]})
     return {"pair_counts": counted, "pairs_considered": len(counted)}

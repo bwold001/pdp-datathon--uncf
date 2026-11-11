@@ -67,11 +67,11 @@ CREATE TABLE IF NOT EXISTS equity_gaps (
                           AND n_excluded IS NOT NULL AND n_out_of_scope IS NOT NULL)),
     -- A shown group has at least min_students() students.
     CHECK (suppressed OR denominator >= {min_students}),
-    -- An ok row has every comparison column; rank_by_gap is blank for small groups.
+    -- An ok row has every comparison column and both ranks.
     CHECK (status != 'ok' OR (comparison_numerator IS NOT NULL AND comparison_denominator IS NOT NULL
         AND comparison_rate IS NOT NULL AND gap_pts IS NOT NULL AND students_affected IS NOT NULL
         AND ci_low IS NOT NULL AND ci_high IS NOT NULL AND p_value IS NOT NULL AND q_value IS NOT NULL
-        AND likely_noise IS NOT NULL AND rank_by_affected IS NOT NULL)),
+        AND likely_noise IS NOT NULL AND rank_by_affected IS NOT NULL AND rank_by_gap IS NOT NULL)),
     -- An ok row's everyone else has at least min_students() too, or its comparison columns would show a hidden group.
     CHECK (status != 'ok' OR comparison_denominator >= {min_students}),
     -- An unknown group is shown but not compared.

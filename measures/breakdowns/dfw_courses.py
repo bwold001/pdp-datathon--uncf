@@ -2,8 +2,8 @@
 
 Every rate comes from run_measure's dfw_rate (the course, term, delivery and student group splits included), so
 the page, /measures/dfw_rate and the chat agree. This module adds what isn't a rate: each course's catalog names and
-gateway flags, which values exist, and each group next to everyone else in the course. Fewer than min_students()
-is hidden. D, F and W are counted apart (every D letter is a D), and every answer carries the table that says so.
+gateway flags, which values exist, and each group next to everyone else in the course. Every nonempty group is shown.
+D, F and W are counted apart (every D letter is a D), and every answer carries the table that says so.
 """
 from __future__ import annotations
 
@@ -44,8 +44,6 @@ GROUP_DIMENSIONS = (
 SEASONS = {"FALL": "Fall", "WINTER": "Winter", "SPRING": "Spring", "SUMMER": "Summer"}
 DELIVERY = {"F": "Face-to-face", "H": "Hybrid", "O": "Online", "UNKNOWN": "Blank"}
 TOP_NAMES = 3
-# The page's smallest cutoff is 10 final grades, so courses with fewer aren't sent: the list never shows them.
-MIN_LISTED_GRADES = 10
 
 
 class UnknownCourse(LookupError):
@@ -53,7 +51,7 @@ class UnknownCourse(LookupError):
 
 
 def tally(row: MeasureResult) -> dict:
-    """A dfw_rate row as the page shows it, with D, F and W apart. Every number is None under min_students()."""
+    """A dfw_rate row as the page shows it, with D, F and W apart. Numbers are None when there are no eligible known outcomes."""
     if row.numerator is None:
         return {"students": None, "num": None, "den": None, "rate": None, "split": None}
     grades = {grade: row.split[grade] for grade in SPLIT}
@@ -112,7 +110,7 @@ def dfw_courses(cohort: str, filters: Group = EVERYONE, database: str | Path | N
 
 
 def _dfw_courses(cohort: str, filters: Group = EVERYONE, database: str | Path | None = None, *, connection) -> dict:
-    """The DFW page's list: everyone's DFW rate, then each course with 10 or more final grades and min_students() students."""
+    """The DFW page's list: everyone's DFW rate, then each course with at least one classifiable final grade."""
     rows = run_measure(Measure.DFW_RATE, [Cohort.of(cohort)], [GroupBy.of(GroupDimension.COURSE)], database=database, filters=filters)
     facts = course_facts(connection, cohort, select_students(connection, cohort, filters))
 
@@ -121,7 +119,7 @@ def _dfw_courses(cohort: str, filters: Group = EVERYONE, database: str | Path | 
     courses = []
     for course, fact in facts.items():
         numbers = tally(by_course[course])
-        if numbers["den"] is not None and numbers["den"] >= MIN_LISTED_GRADES:
+        if numbers["den"] is not None and numbers["den"] > 0:
             courses.append({"course": course, "names": names_of(fact), **numbers, "gateway": {"M": fact["gateway"]["M"], "E": fact["gateway"]["E"]}})
     courses.sort(key=lambda c: (-c["num"], -c["rate"], c["course"]))
     shown_any = everyone["den"] is not None
@@ -130,7 +128,7 @@ def _dfw_courses(cohort: str, filters: Group = EVERYONE, database: str | Path | 
         "status": "ok" if shown_any else "suppressed",
         "everyone": everyone,
         "courses": courses if shown_any else [],
-        # Courses these students took that aren't listed: under 10 final grades, or hidden under min_students().
+        # Courses these students took that aren't listed: without a calculable rate.
         "hidden_courses": len(facts) - len(courses),
     }
 

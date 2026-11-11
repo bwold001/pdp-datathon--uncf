@@ -61,16 +61,16 @@ def test_first_try_path_and_retention(tmp_path):
 
 
 def test_every_grade_is_counted_apart(tmp_path):
-    """Each try's grade group, one per student per term, zeros included; under 10 is hidden."""
+    """Each try's grade group, one per student per term, zeros included; every count is shown."""
     first = takers("first", 12, ["4", "1.5", "P", "0.3"], back=0)
     retake(*first, grade="2.0")
     page = gateway_courses(**FEDERAL, database=build(tmp_path, first))
     (course,) = page["courses"]
     grades = course["grades"]
     assert list(grades) == ["C or higher", "D", "Under 1.0", "P", "W"]
-    # First tries: 3 each of A, D+ (1.5), P and F (0.3); then a C for all 12 on the retake. So C or higher is 3 + 12,
-    # and the groups of 3 are hidden under UNCF_MIN_STUDENTS=10, like the path.
-    assert grades == {"C or higher": 15, "D": None, "Under 1.0": None, "P": None, "W": 0}
+    # First tries: 3 each of A, D+ (1.5), P and F (0.3); then a C for all 12 on the retake. So C or higher is 3 + 12.
+    assert grades == {"C or higher": 15, "D": 3, "Under 1.0": 3, "P": 3, "W": 0}
+    assert sum(grades.values()) == 24
     assert page["context"]["grade_scale"]["grades"][-1] == {"grade": "W", "points": "the code W (withdrew)", "counted": False}
 
 
@@ -125,12 +125,12 @@ def test_filtered_students_and_everyone_who_took_the_course(tmp_path):
     assert course["all_takers"] == {"students": 40, "first_pass": 20}
 
 
-def test_small_courses_are_hidden(tmp_path):
-    """A gateway course with under 10 students isn't listed; it's counted as hidden."""
+def test_small_courses_are_visible(tmp_path):
+    """A gateway course with three students is listed with its counts."""
     database = build(tmp_path, takers("a", 12, ["4"], back=0), takers("b", 9, ["4"], back=0, course=("ENG", "102")))
     page = gateway_courses(**FEDERAL, database=database)
-    assert [c["course"] for c in page["courses"]] == ["ENG 101"]
-    assert page["hidden_courses"] == 1
+    assert [c["course"] for c in page["courses"]] == ["ENG 101", "ENG 102"]
+    assert page["hidden_courses"] == 0
 
 
 def pairs_database(tmp_path):
@@ -153,11 +153,12 @@ def test_pairs_need_a_gateway_course(tmp_path):
     assert page["pairs_considered"] == 1  # ART + MUS has no gateway course
 
 
-def test_fewer_than_ten_students_hides_everything(tmp_path):
-    """Nine students: no numbers at all."""
+def test_fewer_than_ten_students_remain_visible(tmp_path):
+    """Nine students keep their course outcomes."""
     page = gateway_courses(**FEDERAL, database=build(tmp_path, takers("s", 9, ["4"], back=9)))
-    assert page["status"] == "suppressed"
-    assert page["courses"] == [] and page["pair_counts"] == []
+    assert page["status"] == "ok"
+    assert page["courses"][0]["students"] == 9
+    assert page["pair_counts"] == []
 
 
 @pytest.mark.slow
