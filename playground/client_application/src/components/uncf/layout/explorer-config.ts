@@ -22,84 +22,119 @@ export const explorerTabs: ExplorerTab[] = [
 ];
 
 /** One value a filter can take. */
-export type FilterOption = { value: string; label: string };
+export type FilterOption = {
+  value: string;
+  label: string;
+  /** The words on its chip once picked, when the label alone isn't clear ("Started in Fall", "Pell unknown"). */
+  chip?: string;
+  /** Its word in the cohort sentence, for a filter that lives there ("first-time"). */
+  word?: string;
+};
+
+/**
+ * Where a filter lives in the bar: in the sentence that says who's shown, behind "Add filter", or as a setting beside
+ * it (how a measure is counted, not which students).
+ */
+export type FilterPlace = "sentence" | "menu" | "setting";
+
+/** The groups "Add filter" lists its filters in, in order. */
+export const filterGroups = ["Enrollment", "Financial aid", "Demographics"] as const;
 
 /** One cohort filter: its URL key, its label, and the values it offers. */
 export type CohortFilterDefinition = {
   id: string;
   label: string;
   options: FilterOption[];
+  place: FilterPlace;
+  /** The group it's listed under in "Add filter". */
+  group?: (typeof filterGroups)[number];
   /** The value when the URL doesn't set one. Without it, the filter starts at "All". */
   defaultValue?: string;
   /** Always has a value (the cohort year), so it offers no "All". */
   required?: boolean;
   /** The tabs (their href) that show this filter. Without it, every tab does. */
   tabs?: string[];
-  /** Show a search box above a long list. */
-  searchable?: boolean;
-  /** A note under the list. Without it, the list says small groups are hidden. */
+  /** Its words in the sentence when it's "All" ("of every enrollment type"). */
+  allWord?: string;
+  /** Its "All" row in a list, when not "Any" ("Every enrollment type"). */
+  allLabel?: string;
+  /** A note under its list. */
   hint?: string;
 };
 
-const UNKNOWN: FilterOption = { value: "UNKNOWN", label: "Unknown" };
+/** "Unknown", with a chip that says which field is unknown, and its words when it's in the sentence. */
+const unknown = (field: string, word?: string): FilterOption => ({ value: "UNKNOWN", label: "Unknown", chip: `${field} unknown`, word });
 
-// The cohort bar, left to right. Each id is the URL key and the API's query name, and each value is the measures'
-// own (measures/models.py), so a page passes the filters to its endpoint as they are. Labels follow the design.
+// The cohort bar's filters. Each id is the URL key and the API's query name, and each value is the measures' own
+// (measures/models.py), so a page passes the filters to its endpoint as they are. The class year and enrollment type
+// are in the sentence that says who's shown; the rest are behind "Add filter", in its groups' order.
 export const cohortFilters: CohortFilterDefinition[] = [
   {
     id: "cohort",
-    label: "Cohort",
+    label: "Entering class",
+    place: "sentence",
     defaultValue: "2023-24",
     required: true,
-    hint: "Students who entered each year.",
-    options: ["2021-22", "2022-23", "2023-24", "2024-25"].map((year) => ({ value: year, label: year })),
+    options: ["2021-22", "2022-23", "2023-24", "2024-25"].map((year) => ({ value: year, label: year, word: year })),
+  },
+  {
+    id: "enrollment_type",
+    label: "Enrollment type",
+    place: "sentence",
+    allWord: "of every enrollment type",
+    allLabel: "Every enrollment type",
+    options: [
+      { value: "First-time", label: "First-time", word: "first-time" },
+      { value: "Transfer-in", label: "Transfer-in", word: "transfer-in" },
+      { value: "Re-admit", label: "Re-admitted", word: "re-admitted" },
+      unknown("Enrollment type", "of unknown enrollment type"),
+    ],
   },
   {
     id: "cohort_term",
     label: "Starting term",
+    place: "menu",
+    group: "Enrollment",
     options: [
-      { value: "Fall", label: "Fall" },
-      { value: "Winter", label: "Winter" },
-      { value: "Spring", label: "Spring" },
-      { value: "Summer", label: "Summer" },
-      UNKNOWN,
+      { value: "Fall", label: "Fall", chip: "Started in Fall" },
+      { value: "Winter", label: "Winter", chip: "Started in Winter" },
+      { value: "Spring", label: "Spring", chip: "Started in Spring" },
+      { value: "Summer", label: "Summer", chip: "Started in Summer" },
+      unknown("Starting term"),
     ],
   },
   {
     id: "enrollment_intensity",
     label: "Full / part-time",
-    options: [{ value: "Full-time", label: "Full-time" }, { value: "Part-time", label: "Part-time" }, UNKNOWN],
-  },
-  {
-    id: "enrollment_type",
-    label: "Enrollment type",
-    options: [
-      { value: "First-time", label: "First-time" },
-      { value: "Transfer-in", label: "Transfer-in" },
-      { value: "Re-admit", label: "Re-admit" },
-      UNKNOWN,
-    ],
+    place: "menu",
+    group: "Enrollment",
+    options: [{ value: "Full-time", label: "Full-time" }, { value: "Part-time", label: "Part-time" }, unknown("Full / part-time")],
   },
   {
     id: "pell",
     label: "Pell (year 1)",
-    options: [{ value: "Y", label: "Pell recipient" }, { value: "N", label: "No Pell" }, UNKNOWN],
+    place: "menu",
+    group: "Financial aid",
+    options: [{ value: "Y", label: "Pell recipient" }, { value: "N", label: "No Pell" }, unknown("Pell")],
   },
   {
     id: "gender",
     label: "Gender",
+    place: "menu",
+    group: "Demographics",
     options: [
       { value: "F", label: "Female" },
       { value: "M", label: "Male" },
-      { value: "X", label: "Nonbinary, intersex, and gender-nonconforming" },
-      { value: "P", label: "Prefer not to specify" },
-      UNKNOWN,
+      { value: "X", label: "Nonbinary, intersex, and gender-nonconforming", chip: "Nonbinary" },
+      { value: "P", label: "Prefer not to specify", chip: "Gender not specified" },
+      unknown("Gender"),
     ],
   },
   {
     id: "race",
     label: "Race",
-    searchable: true,
+    place: "menu",
+    group: "Demographics",
     options: [
       "American Indian or Alaska Native",
       "Asian",
@@ -110,23 +145,28 @@ export const cohortFilters: CohortFilterDefinition[] = [
       "Two or More Races",
       "White",
     ]
-      .map((race) => ({ value: race, label: race }))
-      .concat(UNKNOWN),
+      // Race has its own "Hispanic", apart from the Ethnicity filter's, so its chip says which.
+      .map((race): FilterOption => ({ value: race, label: race, chip: race === "Hispanic" ? "Hispanic (race)" : race }))
+      .concat(unknown("Race")),
   },
   {
     id: "ethnicity",
     label: "Ethnicity",
+    place: "menu",
+    group: "Demographics",
     // The cohort file's codes (data/dictionaries/arf_cohort_data_dictionary.md).
-    options: [{ value: "H", label: "Hispanic" }, { value: "N", label: "Not Hispanic" }, UNKNOWN],
+    options: [{ value: "H", label: "Hispanic" }, { value: "N", label: "Not Hispanic" }, unknown("Ethnicity")],
   },
   {
     id: "age_band",
     label: "Age at entry",
+    place: "menu",
+    group: "Demographics",
     options: [
-      { value: "20 and younger", label: "20 and younger" },
-      { value: "> 20-24", label: "Over 20 to 24" },
-      { value: "Older than 24", label: "Older than 24" },
-      UNKNOWN,
+      { value: "20 and younger", label: "20 and younger", chip: "Age 20 and younger" },
+      { value: "> 20-24", label: "Over 20 to 24", chip: "Age over 20 to 24" },
+      { value: "Older than 24", label: "Older than 24", chip: "Age older than 24" },
+      unknown("Age"),
     ],
   },
   {
@@ -134,6 +174,7 @@ export const cohortFilters: CohortFilterDefinition[] = [
     // the shared definitions: retention ("Returned here") and federal_retention ("Back next fall").
     id: "retention_type",
     label: "Retention",
+    place: "setting",
     defaultValue: "school",
     required: true,
     tabs: [routes.uncfGateway, routes.uncfCreditMomentum],

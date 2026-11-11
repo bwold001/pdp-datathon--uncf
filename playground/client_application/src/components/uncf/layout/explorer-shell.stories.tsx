@@ -24,7 +24,7 @@ export const OnTheDfwTab: Story = {
     await expect(canvas.getByText("Synthetic sample data")).toBeVisible();
     await expect(canvas.getByText("Synthetic sample data. Nothing here describes real students or institutions.")).toBeVisible();
     await expect(canvas.queryByRole("button", { name: /Export/ })).not.toBeInTheDocument();
-    await expect(canvas.getByRole("region", { name: "Cohort filters" })).toBeVisible();
+    await expect(canvas.getByRole("region", { name: "Who's shown" })).toBeVisible();
 
     const tabs = canvas.getAllByRole("link");
     await expect(tabs.map((tab) => tab.textContent)).toEqual(["Student paths", "DFW", "Gateway courses", "Credit momentum", "Chat"]);
@@ -51,7 +51,7 @@ export const KeepsFiltersAcrossTabs: Story = {
   parameters: { nextjs: { appDirectory: true, navigation: { pathname: "/uncf/paths", query: { pell: "Y", sort: "rate" } } } },
   play: async ({ canvas }) => {
     await expect(canvas.getByRole("link", { name: "DFW" })).toHaveAttribute("href", "/uncf/dfw?pell=Y");
-    await expect(canvas.getByRole("button", { name: /^Pell \(year 1\)/ })).toHaveTextContent("Pell recipient");
+    await expect(canvas.getByRole("button", { name: "Remove Pell recipient" })).toBeVisible();
   },
 };
 

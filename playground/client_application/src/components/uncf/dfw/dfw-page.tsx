@@ -7,6 +7,7 @@ import { useShowStudentCount } from "@/components/uncf/layout/explorer-context";
 import { LoadingBlock, MessageCard } from "@/components/uncf/layout/explorer-parts";
 import { privacyNote, tooFew } from "@/components/uncf/layout/small-groups";
 import { useCohortFilters } from "@/components/uncf/layout/use-cohort-filters";
+import { useExplorerResource } from "@/components/uncf/layout/use-explorer-resource";
 import { useApiResource } from "@/hooks/use-api-resource";
 
 import { type DfwCourseDetail, type DfwList, type DfwSort, rankCourses } from "./dfw-data";
@@ -18,8 +19,8 @@ const PAGE_SIZE = 10;
 export function DfwPage() {
   const { apiQuery } = useCohortFilters();
   const loadList = useMemo(() => explorerLoader<DfwList>("/uncf/dfw", apiQuery), [apiQuery]);
-  const { resource: list, retry: retryList } = useApiResource(loadList);
-  useShowStudentCount(list.status !== "success" ? null : list.data.status === "suppressed" ? "too few" : list.data.everyone.students);
+  const { resource: list, retry: retryList, current } = useExplorerResource(loadList);
+  useShowStudentCount(list.status !== "success" || !current ? null : list.data.status === "suppressed" ? "too few" : list.data.everyone.students);
 
   const [sort, setSort] = useState<DfwSort>("count");
   const [minimum, setMinimum] = useState(30);
