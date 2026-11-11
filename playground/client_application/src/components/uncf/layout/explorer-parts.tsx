@@ -1,6 +1,7 @@
 // The design's building blocks for a tab: cards, number tiles, legends, bars, tables and the "how it's counted" note.
 import { cn } from "@/lib/utils";
 
+import type { RetentionType } from "./explorer-api";
 import { hiddenCount } from "./small-groups";
 
 /** A white card with a border, the design's main container. */
@@ -138,6 +139,21 @@ export function MessageCard({ title, children, onRetry }: MessageCardProps) {
 /** A count for display: 1,234, or "Under 10" when it's hidden (minStudents is the answer's meta.min_students). */
 export function formatCount(count: number | null, minStudents: number): string {
   return count === null ? hiddenCount(minStudents) : count.toLocaleString("en-US");
+}
+
+/**
+ * How a page names the retention measure an answer used (its meta.retention_type), in the shared definitions' words
+ * (measures/definitions.py): retention is "Returned here", federal_retention is "Back next fall".
+ */
+export function retentionWords(type: RetentionType | undefined, term: string) {
+  if (type === "federal") {
+    return { name: "Back next fall", lower: "back next fall", how: `took a course here in ${term}, the fall after year 1` };
+  }
+  return {
+    name: "Returned here",
+    lower: "returned here",
+    how: "enrolled here again in the next academic year, or earned a credential here by then (the PDP retention flag)",
+  };
 }
 
 /** A share from 0 to 1 as a whole percent, e.g. 47%; an en dash when it's hidden. */

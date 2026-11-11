@@ -1,7 +1,18 @@
 import type { ExplorerMeta } from "@/components/uncf/layout/explorer-api";
 import { cohortFilters } from "@/components/uncf/layout/explorer-config";
 
-/** D-or-F, W and pass counts for a set of final grades. Every number is null when under 10 students. */
+/** The D, F and W grades among a set of final grades, and each one's share of them, from the API. */
+export type DfwSplit = {
+  D: number;
+  F: number;
+  W: number;
+  DF: number;
+  /** Final grades. */
+  total: number;
+  shares: { D: number; F: number; W: number };
+};
+
+/** D-or-F, W and pass counts for a set of final grades. Every number is null under meta.min_students. */
 export type DfwTally = {
   students: number | null;
   /** D, F and W grades. */
@@ -9,10 +20,10 @@ export type DfwTally = {
   /** Final grades. */
   den: number | null;
   rate: number | null;
-  split: { DF: number; W: number; total: number } | null;
+  split: DfwSplit | null;
 };
 
-/** One course in the list. Courses with under 10 students aren't listed. */
+/** One course in the list. Courses with fewer than 10 final grades, or under meta.min_students, aren't listed. */
 export type DfwCourseSummary = DfwTally & {
   course: string;
   names: { top: string[]; distinct: number };
@@ -21,7 +32,7 @@ export type DfwCourseSummary = DfwTally & {
   num: number;
   den: number;
   rate: number;
-  split: { DF: number; W: number; total: number };
+  split: DfwSplit;
 };
 
 /** The answer from GET /uncf/dfw (measures/breakdowns/dfw_courses.py). */
@@ -33,8 +44,14 @@ export type DfwList = {
   hidden_courses: number;
 };
 
-/** One value of a field within a course, e.g. Pell = Y, or delivery = Online. */
-export type DfwPart = DfwTally & { value: string };
+/** One value of a field within a course, e.g. Pell = Y, or delivery = Online, next to everyone else in the course. */
+export type DfwPart = DfwTally & {
+  value: string;
+  /** The DFW rate of every other final grade in the course; null when they're under meta.min_students. */
+  rest_rate: number | null;
+  /** The part's rate minus rest_rate, in points. */
+  gap: number | null;
+};
 
 /** The answer from GET /uncf/dfw/course: one course split by term, delivery method and student group. */
 export type DfwCourseDetail = DfwTally & {
@@ -51,6 +68,7 @@ export const dfwDimensions: { id: string; label: string }[] = [
   { id: "pell", label: "Pell" },
   { id: "gender", label: "Gender" },
   { id: "race", label: "Race" },
+  { id: "ethnicity", label: "Ethnicity" },
   { id: "age_band", label: "Age" },
   { id: "enrollment_intensity", label: "Full / part-time" },
   { id: "enrollment_type", label: "Enrollment type" },
@@ -95,18 +113,22 @@ export function percent(rate: number | null): string {
 /** A group compared with everyone else in the same course: its rate, theirs, and the gap in points. */
 export type GroupComparison = { label: string; grades: number | null; rate: number | null; rest: number | null; gap: number | null };
 
-/** Each value of one field in the course, next to everyone else in the course. Hidden groups have no numbers. */
-export function compareGroups(detail: DfwCourseDetail, dimension: string): GroupComparison[] {
+/**
+ * Each value of one field in the course, next to everyone else in the course, as the API compared them (rest_rate and
+ * gap). Hidden groups have no numbers.
+ */
+export function groupRows(detail: DfwCourseDetail, dimension: string): GroupComparison[] {
   const parts = dimension === "delivery" ? detail.delivery : dimension === "term" ? detail.terms : (detail.groups[dimension] ?? []);
-  return parts.map((part) => {
-    const label = dimension === "delivery" || dimension === "term" ? part.value : groupValueLabel(dimension, part.value);
-    if (part.num === null || part.den === null || detail.num === null || detail.den === null) {
-      return { label, grades: null, rate: null, rest: null, gap: null };
-    }
-    // Everyone else is the whole course minus the group; too few other grades can't be compared.
-    const restGrades = detail.den - part.den;
-    const rest = restGrades >= 10 ? (detail.num - part.num) / restGrades : null;
-    const rate = part.num / part.den;
-    return { label, grades: part.den, rate, rest, gap: rest === null ? null : (rate - rest) * 100 };
-  });
+  return parts.map((part) => ({
+    label: dimension === "delivery" || dimension === "term" ? part.value : groupValueLabel(dimension, part.value),
+    grades: part.den,
+    rate: part.rate,
+    rest: part.rest_rate,
+    gap: part.gap,
+  }));
+}
+
+/** The share of final grades that were a D or an F (the design shows them together; the API sends them apart). */
+export function dfShare(split: DfwSplit): number {
+  return split.shares.D + split.shares.F;
 }

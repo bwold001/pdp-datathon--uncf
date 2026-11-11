@@ -7,9 +7,11 @@ import {
   type DfwCourseDetail,
   type DfwCourseSummary,
   type DfwSort,
+  type DfwSplit,
   type DfwTally,
-  compareGroups,
+  dfShare,
   dfwDimensions,
+  groupRows,
   minimumGrades,
   percent,
   sortHints,
@@ -32,21 +34,21 @@ export function DfwKpis({ everyone }: { everyone: DfwTally }) {
         tone="warn"
         note={`${fmt(everyone.num!)} of ${fmt(everyone.den!)} final grades were a D, F or W`}
       />
-      <Kpi label="D or F" value={percent(split.DF / split.total)} note={`${fmt(split.DF)} final grades below a C`} />
-      <Kpi label="Withdrew" value={percent(split.W / split.total)} note={`${fmt(split.W)} withdrawals`} />
+      <Kpi label="D or F" value={percent(dfShare(split))} note={`${fmt(split.DF)} final grades below a C`} />
+      <Kpi label="Withdrew" value={percent(split.shares.W)} note={`${fmt(split.W)} withdrawals`} />
     </KpiGrid>
   );
 }
 
 /** D-or-F and W as parts of a course's final grades, on a grey track. */
-function DfwBar({ split }: { split: { DF: number; W: number; total: number } | null }) {
-  const width = (part: number) => (split ? `${(part / split.total) * 100}%` : "0");
+function DfwBar({ split }: { split: DfwSplit | null }) {
+  const width = (share: number) => `${share * 100}%`;
   return (
     <div className="flex h-3 overflow-hidden rounded-[3px] bg-(--uncf-track)" aria-hidden>
       {split && (
         <>
-          <div style={{ width: width(split.DF), background: "var(--uncf-f)" }} />
-          <div style={{ width: width(split.W), background: "var(--uncf-grey)" }} />
+          <div style={{ width: width(dfShare(split)), background: "var(--uncf-f)" }} />
+          <div style={{ width: width(split.shares.W), background: "var(--uncf-grey)" }} />
         </>
       )}
     </div>
@@ -169,7 +171,7 @@ type CourseDetailProps = {
 
 /** The selected course: its rate and split, then each group in it next to everyone else in the course. */
 export function CourseDetail({ detail, dimension, onDimension }: CourseDetailProps) {
-  const rows = compareGroups(detail, dimension);
+  const rows = groupRows(detail, dimension);
   const shown = rows.filter((row) => row.rate !== null).sort((a, b) => (b.gap ?? -999) - (a.gap ?? -999));
   const hidden = rows.filter((row) => row.rate === null);
   const min = detail.meta.min_students;

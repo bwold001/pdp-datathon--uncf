@@ -185,6 +185,9 @@ class CreditMomentumResponse(PageResponse):
 
     students: int | None
     retention: Retention | None
+    # Meaningful progress toward a degree (measures/breakdowns/credit_progress.py): settings, the minimum and pace,
+    # year 1 groups with retention, why students fell below the minimum, and year 2. None when the page is hidden.
+    progress: dict | None = None
 
 
 class Option(BaseModel):

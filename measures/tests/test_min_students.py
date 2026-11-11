@@ -70,8 +70,8 @@ def test_page_counts_follow_the_setting(default, monkeypatch):
     assert (shown(3), shown(0)) == (None, 0)
 
 
-def test_course_pairs_are_ranked_only_with_ten_students(default, tmp_path):
-    """Small courses are shown by default, but a pair of courses needs 10 students to be ranked as risky."""
+def test_course_pairs_are_compared_only_with_ten_students(default, tmp_path):
+    """Small courses are shown by default, but a pair of courses needs 10 students to be sent for comparing."""
     students, records = [], []
     for n in range(15):
         sid = f"s{n}"
@@ -84,7 +84,7 @@ def test_course_pairs_are_ranked_only_with_ten_students(default, tmp_path):
     page = gateway_courses(**ask("2023-24", "federal"), database=make_database(tmp_path / "pdp.sqlite", students, records))
     assert {course["course"]: course["students"] for course in page["courses"]} == {"ENG 101": 15, "MAT 101": 3}
     assert page["context"]["min_pair_students"] == 10
-    assert (page["pairs"], page["pairs_considered"]) == ([], 0)
+    assert (page["pair_counts"], page["pairs_considered"]) == ([], 0)
 
 
 def test_dfw_list_leaves_out_courses_under_ten_grades(default, tmp_path):
@@ -96,3 +96,12 @@ def test_dfw_list_leaves_out_courses_under_ten_grades(default, tmp_path):
     assert [course["course"] for course in page["courses"]] == ["ENG 101"]
     assert page["hidden_courses"] == 1
     assert (page["everyone"]["num"], page["everyone"]["den"]) == (3, 18)  # ART 105's 3 grades still count
+
+
+def test_the_dfw_definition_says_what_is_hidden(default, monkeypatch):
+    """The small-groups line is left out by default, and says 10 when the setting is 10."""
+    from measures.definitions import definition_for
+
+    assert not any("fewer than" in line for line in definition_for("dfw_rate")["limits"])
+    monkeypatch.setenv("UNCF_MIN_STUDENTS", "10")
+    assert "A course or group with fewer than 10 students is hidden." in definition_for("dfw_rate")["limits"]

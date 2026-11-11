@@ -56,6 +56,60 @@ export const Reset: Story = {
   },
 };
 
+/** Reset also clears a filter this tab doesn't show (the retention measure), so it's back to default everywhere. */
+export const ResetClearsHiddenFilters: Story = {
+  name: "Reset clears filters other tabs show",
+  parameters: {
+    nextjs: { appDirectory: true, navigation: { pathname: "/uncf/dfw", query: { pell: "Y", retention_type: "federal", sort: "rate" } } },
+  },
+  play: async ({ canvas, userEvent }) => {
+    await expect(canvas.queryByRole("button", { name: /^Retention/ })).not.toBeInTheDocument();
+    await expect(canvas.getByText(/· 1 filter set$/)).toBeVisible();
+    await userEvent.click(canvas.getByRole("button", { name: "Reset" }));
+    await expect(getRouter().push).toHaveBeenCalledWith("/uncf/dfw?sort=rate", { scroll: false });
+  },
+};
+
+/** Student paths follows first-time students, as in the design, and All is still one pick away. */
+export const PathsStartsAtFirstTime: Story = {
+  name: "Student paths starts at first-time",
+  parameters: { nextjs: { appDirectory: true, navigation: { pathname: "/uncf/paths" } } },
+  play: async ({ canvas, canvasElement, userEvent }) => {
+    const page = within(canvasElement.ownerDocument.body);
+    await expect(canvas.getByRole("button", { name: /^Enrollment type/ })).toHaveTextContent("First-time");
+    await expect(canvas.queryByText(/filters? set/)).not.toBeInTheDocument();
+    await userEvent.click(canvas.getByRole("button", { name: /^Enrollment type/ }));
+    await userEvent.click(await page.findByRole("radio", { name: /^All/ }));
+    await userEvent.click(page.getByRole("button", { name: "Apply" }));
+    await expect(getRouter().push).toHaveBeenCalledWith("/uncf/paths?enrollment_type=all", { scroll: false });
+  },
+};
+
+/** Every other tab starts Enrollment type at All, and reads "all" from a link the same way. */
+export const OtherTabsStartAtAll: Story = {
+  name: "Other tabs start at All",
+  parameters: { nextjs: { appDirectory: true, navigation: { pathname: "/uncf/dfw", query: { enrollment_type: "all" } } } },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole("button", { name: /^Enrollment type/ })).toHaveTextContent("All");
+    await expect(canvas.queryByText(/filters? set/)).not.toBeInTheDocument();
+  },
+};
+
+/** The retention measure is on the tabs that report retention, starting at the PDP flag; it has no "All". */
+export const PickTheRetentionMeasure: Story = {
+  name: "Pick the retention measure",
+  parameters: { nextjs: { appDirectory: true, navigation: { pathname: "/uncf/gateway" } } },
+  play: async ({ canvas, canvasElement, userEvent }) => {
+    const page = within(canvasElement.ownerDocument.body);
+    await expect(canvas.getByRole("button", { name: /^Retention/ })).toHaveTextContent("Returned here");
+    await userEvent.click(canvas.getByRole("button", { name: /^Retention/ }));
+    await expect(page.queryByRole("radio", { name: /^All/ })).not.toBeInTheDocument();
+    await userEvent.click(await page.findByRole("radio", { name: /^Back next fall/ }));
+    await userEvent.click(page.getByRole("button", { name: "Apply" }));
+    await expect(getRouter().push).toHaveBeenCalledWith("/uncf/gateway?retention_type=federal", { scroll: false });
+  },
+};
+
 /** A value the filter doesn't offer, from an old or hand-edited link, is ignored. */
 export const IgnoresAnUnknownValue: Story = {
   name: "Ignores an unknown value",

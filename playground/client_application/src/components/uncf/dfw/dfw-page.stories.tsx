@@ -83,6 +83,18 @@ export const HiddenGroups: Story = {
   },
 };
 
+/** Ethnicity in ENG 101: the API's comparison with everyone else in the course (its rest_rate and gap), first the furthest above. */
+export const ComparedByTheApi: Story = {
+  name: "Compared by the API",
+  play: async ({ canvas, userEvent }) => {
+    await canvas.findByRole("heading", { name: "ENG 101" });
+    await userEvent.click(canvas.getByRole("button", { name: "Ethnicity" }));
+    await expect(canvas.getByText(/^Not Hispanic/)).toBeVisible();
+    await expect(canvas.getByText("+19.9 pts").parentElement).toHaveTextContent("+19.9 pts vs. everyone else (24.5%)");
+    await expect(canvas.getByText("−11.9 pts").parentElement).toHaveTextContent("−11.9 pts vs. everyone else (33.9%)");
+  },
+};
+
 /** The size cutoff: only courses with at least 100 final grades. */
 export const SizeCutoff: Story = {
   name: "Size cutoff",

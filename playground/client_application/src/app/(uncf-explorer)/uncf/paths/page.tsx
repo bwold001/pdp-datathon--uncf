@@ -13,11 +13,12 @@ export default function StudentPathsPage() {
     <>
       <ViewIntro
         title="Student Paths"
-        whatThisShows="Every first-time student in the selected entering cohort, followed through their next two fall or spring terms."
+        whatThisShows="The selected entering cohort’s students (first-time unless you pick another enrollment type), followed through their next two fall or spring terms."
         howToRead="Band width = number of students. Bands split where students leave or transfer, and rejoin when they return."
         keyTerms={
           // Retention and persistence in the shared dictionary's words (measures/definitions.py), as /definitions sends them.
           <PdpKeyTerms terms={["retention", "persistence"]}>
+            <b className="font-semibold">Earned a credential:</b> no course here that term, but earned a credential here in an earlier year.{" "}
             <b className="font-semibold">Stopped out:</b> no record here or at another college that term.
           </PdpKeyTerms>
         }

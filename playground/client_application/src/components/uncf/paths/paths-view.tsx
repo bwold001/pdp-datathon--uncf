@@ -17,7 +17,7 @@ import {
 import { hiddenCount, privacyNote, tooFew } from "@/components/uncf/layout/small-groups";
 import { cn } from "@/lib/utils";
 
-import { type PathsResponse, pathStatuses, statusStyle, termNames } from "./paths-data";
+import { type PathsResponse, pathStatuses, statusStyle, studentsLabel, termNames } from "./paths-data";
 import { PathsSankey } from "./paths-sankey";
 
 /** The Student paths tab drawn from the API's answer: tiles, the student flow, transfers and the term table. */
@@ -34,7 +34,6 @@ export function PathsView({ data }: { data: PathsResponse }) {
   const year2 = data.columns.year2;
   const returned = data.moves?.find((move) => move.from === "stopped" && move.to === "here")?.students ?? null;
   const notObserved = data.columns.next.not_observed || data.columns.year2.not_observed;
-  const min = data.meta.min_students;
 
   return (
     <>
@@ -48,26 +47,26 @@ export function PathsView({ data }: { data: PathsResponse }) {
         <Kpi
           label="Entering cohort"
           value={total.toLocaleString("en-US")}
-          note={`First-time, ${names.entered ?? data.meta.cohort}`}
+          note={`${studentsLabel(data)}, ${names.entered ?? data.meta.cohort}`}
         />
         {/* These two count one term from course records, not PDP retention or persistence (year-2 flags, defined in
             Key terms), so they name what they count. */}
         <Kpi
           label={`Still here · ${names.year2Short}`}
-          value={formatShare(shareOf(year2.here, total))}
+          value={formatShare(year2.shares.here)}
           tone="blue"
-          note={`${formatCount(year2.here, min)} took a course here that term`}
+          note={`${formatCount(year2.here, data.meta.min_students)} took a course here that term`}
         />
         <Kpi
           label={`Enrolled anywhere · ${names.year2Short}`}
-          value={formatShare(shareOf(year2.anywhere, total))}
+          value={formatShare(year2.shares.anywhere)}
           note={`Here or at another college in ${names.year2Short}`}
         />
         <Kpi
           label={`Stopped out by ${names.year2Short}`}
-          value={formatShare(shareOf(year2.stopped, total))}
+          value={formatShare(year2.shares.stopped)}
           tone="warn"
-          note={returnedNote(returned, min)}
+          note={returnedNote(returned, data.meta.min_students)}
         />
       </KpiGrid>
 
@@ -81,14 +80,15 @@ export function PathsView({ data }: { data: PathsResponse }) {
         </div>
         {notObserved ? (
           <p className="mt-3 text-[13px] text-(--uncf-ink-3)">
-            {formatCount(notObserved, min)} students’ later terms aren’t in the data yet, so they aren’t drawn there.
+            {formatCount(notObserved, data.meta.min_students)} students’ later terms aren’t in the data yet, so they aren’t drawn there.
           </p>
         ) : null}
         <Counted>
-          first-time students in the entering cohort, by their record each term in the PDP course file. Enrolled here:
-          took a course here that term. Transferred out: no course here, but the file records enrollment at another
-          college that term. Stopped out: no record that term. These come from term records, so they can differ from the
-          cohort file’s retention and persistence flags. Hover a band to see its count.
+          the entering cohort’s students the cohort bar picks (first-time unless Enrollment type says otherwise), by their
+          record each term in the PDP course file. Enrolled here: took a course here that term. Earned a credential: no
+          course here, but earned a credential here in an earlier year. Transferred out: neither, but the file records
+          enrollment at another college that term. Stopped out: no record that term. These come from term records, so
+          they can differ from the cohort file’s retention and persistence flags. Hover a band to see its count.
         </Counted>
       </Card>
 
@@ -111,7 +111,6 @@ function returnedNote(returned: number | null, minStudents: number): string {
 function TransfersCard({ data, year2 }: { data: PathsResponse; year2: string }) {
   const transfers = data.transfers!;
   const moved = transfers.students;
-  const min = data.meta.min_students;
   const rows = [
     { label: "To a 4-year institution", count: transfers.four_year },
     { label: "To a 2-year institution", count: transfers.two_year },
@@ -124,7 +123,7 @@ function TransfersCard({ data, year2 }: { data: PathsResponse; year2: string }) 
       <h3 className="text-[21px] font-semibold">Where transfers went</h3>
       <p className="mt-1 text-(--uncf-ink-3)">
         {moved === null
-          ? `${tooFew(min)} transferred out by ${year2}, so this is hidden.`
+          ? `${tooFew(data.meta.min_students)} transferred out by ${year2}, so this is hidden.`
           : moved === 0
             ? `No students transferred out by ${year2}.`
             : `Of ${moved.toLocaleString("en-US")} students who transferred out by ${year2}`}
@@ -139,11 +138,11 @@ function TransfersCard({ data, year2 }: { data: PathsResponse; year2: string }) 
                   <div className="flex justify-between gap-3">
                     <span>{row.label}</span>
                     <span className="uncf-num">
-                      {formatCount(row.count, min)}
+                      {formatCount(row.count, data.meta.min_students)}
                       {share !== null && ` · ${formatShare(share)}`}
                     </span>
                   </div>
-                  <TrackBar share={share} color="var(--uncf-grey)" label={`${row.label}: ${formatCount(row.count, min)}`} />
+                  <TrackBar share={share} color="var(--uncf-grey)" label={`${row.label}: ${formatCount(row.count, data.meta.min_students)}`} />
                 </div>
               );
             })}
@@ -159,11 +158,18 @@ function TransfersCard({ data, year2 }: { data: PathsResponse; year2: string }) 
 function TermTableCard({ data }: { data: PathsResponse }) {
   const names = termNames(data);
   const columns = data.columns!;
-  const count = (value: number | null) => formatCount(value, data.meta.min_students);
   const rows = [
-    { term: names.entered ?? "Entering term", here: count(data.students), elsewhere: "–", stopped: "–" },
-    { term: capitalize(names.next), here: count(columns.next.here), elsewhere: count(columns.next.elsewhere), stopped: count(columns.next.stopped) },
-    { term: capitalize(names.year2), here: count(columns.year2.here), elsewhere: count(columns.year2.elsewhere), stopped: count(columns.year2.stopped) },
+    { term: names.entered ?? "Entering term", here: formatCount(data.students, data.meta.min_students), credential: "–", elsewhere: "–", stopped: "–" },
+    ...[
+      { term: names.next, counts: columns.next },
+      { term: names.year2, counts: columns.year2 },
+    ].map(({ term, counts }) => ({
+      term: capitalize(term),
+      here: formatCount(counts.here, data.meta.min_students),
+      credential: formatCount(counts.credential, data.meta.min_students),
+      elsewhere: formatCount(counts.elsewhere, data.meta.min_students),
+      stopped: formatCount(counts.stopped, data.meta.min_students),
+    })),
   ];
 
   return (
@@ -175,6 +181,7 @@ function TermTableCard({ data }: { data: PathsResponse }) {
             <tr>
               <th className={tableClasses.th}>Term</th>
               <th className={cn(tableClasses.th, tableClasses.right)}>Enrolled</th>
+              <th className={cn(tableClasses.th, tableClasses.right)}>Credential</th>
               <th className={cn(tableClasses.th, tableClasses.right)}>Transferred</th>
               <th className={cn(tableClasses.th, tableClasses.right)}>Stopped out</th>
             </tr>
@@ -184,6 +191,7 @@ function TermTableCard({ data }: { data: PathsResponse }) {
               <tr key={row.term}>
                 <td className={tableClasses.td}>{row.term}</td>
                 <td className={cn(tableClasses.td, tableClasses.right, "uncf-num")}>{row.here}</td>
+                <td className={cn(tableClasses.td, tableClasses.right, "uncf-num")}>{row.credential}</td>
                 <td className={cn(tableClasses.td, tableClasses.right, "uncf-num")}>{row.elsewhere}</td>
                 <td className={cn(tableClasses.td, tableClasses.right, "uncf-num")}>{row.stopped}</td>
               </tr>

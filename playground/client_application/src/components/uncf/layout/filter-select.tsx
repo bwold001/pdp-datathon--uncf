@@ -32,8 +32,8 @@ export function FilterSelect({ definition, value, onChange, counts, minStudents 
   const labelId = useId();
   const triggerId = useId();
   const radioName = useId();
-  // A filter with a default (the cohort year) always has a value, so it offers no "All".
-  const offersAll = definition.defaultValue === undefined;
+  // A filter that always has a value (the cohort year) offers no "All".
+  const offersAll = !definition.required;
 
   /** Each time the list opens, it starts from the applied value. */
   function handleOpenChange(nextOpen: boolean) {

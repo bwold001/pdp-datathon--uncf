@@ -31,6 +31,10 @@ export type CohortFilterDefinition = {
   options: FilterOption[];
   /** The value when the URL doesn't set one. Without it, the filter starts at "All". */
   defaultValue?: string;
+  /** Always has a value (the cohort year), so it offers no "All". */
+  required?: boolean;
+  /** The tabs (their href) that show this filter. Without it, every tab does. */
+  tabs?: string[];
   /** Show a search box above a long list. */
   searchable?: boolean;
   /** A note under the list. Without it, the list says small groups are hidden. */
@@ -46,6 +50,7 @@ export const cohortFilters: CohortFilterDefinition[] = [
     id: "cohort",
     label: "Cohort",
     defaultValue: "2023-24",
+    required: true,
     hint: "Students who entered each year.",
     options: ["2021-22", "2022-23", "2023-24", "2024-25"].map((year) => ({ value: year, label: year })),
   },
@@ -64,6 +69,16 @@ export const cohortFilters: CohortFilterDefinition[] = [
     id: "enrollment_intensity",
     label: "Full / part-time",
     options: [{ value: "Full-time", label: "Full-time" }, { value: "Part-time", label: "Part-time" }, UNKNOWN],
+  },
+  {
+    id: "enrollment_type",
+    label: "Enrollment type",
+    options: [
+      { value: "First-time", label: "First-time" },
+      { value: "Transfer-in", label: "Transfer-in" },
+      { value: "Re-admit", label: "Re-admit" },
+      UNKNOWN,
+    ],
   },
   {
     id: "pell",
@@ -99,6 +114,12 @@ export const cohortFilters: CohortFilterDefinition[] = [
       .concat(UNKNOWN),
   },
   {
+    id: "ethnicity",
+    label: "Ethnicity",
+    // The cohort file's codes (data/dictionaries/arf_cohort_data_dictionary.md).
+    options: [{ value: "H", label: "Hispanic" }, { value: "N", label: "Not Hispanic" }, UNKNOWN],
+  },
+  {
     id: "age_band",
     label: "Age at entry",
     options: [
@@ -108,4 +129,23 @@ export const cohortFilters: CohortFilterDefinition[] = [
       UNKNOWN,
     ],
   },
+  {
+    // Which retention measure the tabs that report retention use (the API's retention_type). Their words come from
+    // the shared definitions: retention ("Returned here") and federal_retention ("Back next fall").
+    id: "retention_type",
+    label: "Retention",
+    defaultValue: "school",
+    required: true,
+    tabs: [routes.uncfGateway, routes.uncfCreditMomentum],
+    hint: "Returned here: the PDP retention flag (enrolled here in the next academic year, or a credential). Back next fall: took a course here the fall after year 1.",
+    options: [
+      { value: "school", label: "Returned here" },
+      { value: "federal", label: "Back next fall" },
+    ],
+  },
 ];
+
+// A tab's own starting values, where they differ from the bar's. The design's Student paths follows first-time students.
+export const tabFilterDefaults: Record<string, Record<string, string>> = {
+  [routes.uncfPaths]: { enrollment_type: "First-time" },
+};

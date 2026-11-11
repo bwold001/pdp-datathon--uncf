@@ -131,8 +131,8 @@ Every page route and `/measures/{measure}` take the same query values: `cohort`,
 | `GET /api/v1/uncf/student-paths?…&terms=&group_by=` | Each student's status term by term (here, credential, elsewhere, stopped) with shares, moves, transfers, retention, and per group paths |
 | `GET /api/v1/uncf/dfw?…` | Everyone's DFW rate with D, F, W, then each course with `min_students` or more students |
 | `GET /api/v1/uncf/dfw/course?course=ENG%20101&…` | One course by term, delivery and group, each with `rest_rate` and `gap` against everyone else |
-| `GET /api/v1/uncf/gateway?…` | Gateway first attempts in year 1 (passed, D, F, W, shares), retention by outcome, riskiest first term pairs |
-| `GET /api/v1/uncf/credit-momentum?…` | Year 1 credits, completion ratio, 12/24/30 milestones, first two terms, credit tiers with retention |
+| `GET /api/v1/uncf/gateway?…` | Each flagged gateway course in year 1: students, passed on the first try and in the end (the PDP's 1.0 line), the path after the first try, retention if passed / not, the filtered group's gap against everyone else, and the course pairs with lower retention |
+| `GET /api/v1/uncf/credit-momentum?…` | Year 1 credits, completion ratio, 12/24/30 milestones, first two terms, credit tiers with retention; `progress`: meaningful progress toward a degree (the 24-credit minimum, 4-year pace, year 1 groups with retention, why students fell below, year 2), settings in `measures/breakdowns/credit_progress.py` |
 | `GET /api/v1/uncf/analyses/catalog` | The chat's approved analyses, their choices and declared data coverage |
 | `POST /api/v1/uncf/analyses` | One approved analysis with its receipt, or a clarification when a needed choice is missing |
 
@@ -253,3 +253,7 @@ The Vercel chat service needs the OpenRouter key and model configured before dep
 its key, chat returns a readable 503 configuration error.
 `NEXT_PUBLIC_STUDENT_SUCCESS_CHAT_ENABLED=false` disables the UI after a rebuild, and `UNCF_CHAT_ENABLED=false` disables backend chat routes.
 See the [deployment guide](docs/chat-deployment.md).
+
+The proposed v2 analysis boundary is currently inactive and does not change the routes above.
+See [v2 contracts and client fixtures](docs/analysis-v2-contracts.md) for typed plans, clarification,
+evidence and partial-result rules, and the focused test command for work on that boundary.

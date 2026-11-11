@@ -5,7 +5,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from api import data, route
-from measures.definitions import DEFINITIONS
+from measures.definitions import all_definitions
 from api.route import create_app
 from measures.tests.explorer_fixture import here, make_database, student
 
@@ -76,12 +76,32 @@ def test_credit_momentum(client):
     """The Credit momentum page answers; the fixture has no year-1 credits, so its numbers are hidden."""
     body = client.get("/api/v1/uncf/credit-momentum", params={"cohort": "2023-24"}).json()
     assert body["status"] == "suppressed"
+    assert body["progress"] is None
+
+
+def test_credit_momentum_progress(tmp_path, monkeypatch):
+    """progress, the design's meaningful-progress page, comes through the API with its settings and groups."""
+    students = [student(f"s{n}", attempted=30, earned=30) for n in range(12)]
+    records = [here(f"s{n}", "2023-24", "FALL", attempted=30, earned=30, grade="4", course_type="CU") for n in range(12)]
+    database = make_database(tmp_path / "pdp.sqlite", students, records)
+    monkeypatch.setattr(data, "data_path", lambda: database)
+    route.clear_cache()
+    body = TestClient(create_app()).get("/api/v1/uncf/credit-momentum", params={"cohort": "2023-24"}).json()
+    progress = body["progress"]
+    assert progress["settings"] == {
+        "minimum": 24, "degree_credits": 120, "years": 4, "pace": 30.0,
+        "higher_degree_credits": 125, "higher_pace": 31.25, "counting_course_types": ["CU", "CC"],
+    }
+    assert progress["pace"] == {"students": 12, "share": 1.0}
+    assert [band["key"] for band in progress["bands"]] == ["pace", "minimum", "below", "stopped"]
+    assert progress["year_two_follow_up"]["status"] == "not_yet_observable"
 
 
 def test_definitions_come_from_the_shared_dictionary(client):
-    """The Explorer's key terms are api/definitions.py, word for word."""
+    """The Explorer's key terms are measures/definitions.py, word for word, with the small-groups line filled in."""
     body = client.get("/api/v1/uncf/definitions").json()
-    assert body["definitions"] == DEFINITIONS
+    assert body["definitions"] == all_definitions()
+    assert "A course or group with fewer than 10 students is hidden." in body["definitions"]["dfw_rate"]["limits"]
     assert body["definitions"]["persistence"]["name"] == "At another college"
 
 

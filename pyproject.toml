@@ -9,7 +9,7 @@ requires-python = ">=3.10"
 dependencies = ["fastapi>=0.146", "uvicorn>=0.54", "pydantic>=2", "pyyaml>=6", "pyarrow>=17"]
 
 [tool.setuptools.packages.find]
-include = ["analytics*", "api*", "measures*"]
+include = ["analytics*", "api*", "gap_finder*", "measures*"]
 exclude = ["*.tests*"]
 
 [tool.setuptools.package-data]

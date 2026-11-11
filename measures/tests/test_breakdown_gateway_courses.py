@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from measures.breakdowns.gateway_courses import gateway_courses
+from measures.breakdowns.gateway_courses import gateway_courses, gateway_passed
 from measures.run_measures import DEFAULT_DATABASE
 from measures.tests.explorer_fixture import ask, here, make_database, student
 
@@ -11,13 +11,13 @@ from measures.tests.explorer_fixture import ask, here, make_database, student
 FEDERAL = ask("2023-24", "federal")
 
 
-def takers(prefix: str, count: int, grades: list[str], back: int, course=("ENG", "101"), gateway="E", **values):
-    """count students who took one course in Fall 2023 (grades cycled); the first `back` return in Fall 2024."""
+def takers(prefix: str, count: int, grades: list[str], back: int, course=("ENG", "101"), gateway="E", season="FALL", **values):
+    """count students who took one course in year 1 (grades cycled); the first `back` return in Fall 2024."""
     students, records = [], []
     for n in range(count):
         student_id = f"{prefix}{n}"
         students.append(student(student_id, **values))
-        records.append(here(student_id, "2023-24", "FALL", prefix=course[0], number=course[1], name="COMPOSITION I", grade=grades[n % len(grades)], gateway=gateway))
+        records.append(here(student_id, "2023-24", season, prefix=course[0], number=course[1], name="COMPOSITION I", grade=grades[n % len(grades)], gateway=gateway))
         if n < back:
             records.append(here(student_id, "2024-25", "FALL", prefix="HIS", number="101", grade="4"))
     return students, records
@@ -28,62 +28,78 @@ def build(tmp_path, *groups):
     return make_database(tmp_path / "pdp.sqlite", [s for g in groups for s in g[0]], [r for g in groups for r in g[1]])
 
 
-def test_outcomes_and_retention_by_course(tmp_path):
-    """Passed (2.0 or more, or P), D or F, withdrew, other grades apart, and next-fall retention by outcome."""
-    database = build(
-        tmp_path,
-        takers("pass", 12, ["4", "2.0", "P"], back=10),
-        takers("fail", 10, ["1.7", "F"], back=2),
-        takers("drop", 10, ["W"], back=1),
-        takers("inc", 2, ["I"], back=0),
-    )
-    page = gateway_courses(**FEDERAL, database=database)
-    assert page["context"]["flagged"] is True
-    assert page["context"]["retention_term"] == "Fall 2024"
-    (course,) = page["courses"]
-    assert course["course"] == "ENG 101"
-    assert (course["students"], course["passed"], course["df"], course["w"]) == (32, 12, 10, 10)
-    assert (course["d"], course["f"]) == (5, 5)
-    assert page["left_out"] is None  # 2 incomplete across the listed courses: hidden
-    assert course["other"] is None  # 2 incomplete: hidden
-    assert course["retained_if_passed"] == {"students": 12, "retained": 10, "rate": 0.8333}
-    assert course["retained_if_not_passed"] == {"students": 20, "retained": 3, "rate": 0.15}
-    assert page["cohort_retention"]["retained"] == 13
-
-
-def test_school_retention_is_the_pdp_flag(tmp_path):
-    """The default retention type reads the PDP flag, so it can differ from who came back next fall."""
-    flagged = takers("a", 12, ["4"], back=0, retention=1)
-    unflagged = takers("b", 10, ["F"], back=10, retention=0)
-    page = gateway_courses(**ask("2023-24"), database=build(tmp_path, flagged, unflagged))
-    assert page["cohort_retention"]["type"] == "school"
-    assert (page["cohort_retention"]["retained"], page["cohort_retention"]["students"]) == (12, 22)
-    (course,) = page["courses"]
-    assert course["retained_if_passed"]["rate"] == 1.0
-    assert course["retained_if_not_passed"]["rate"] == 0.0
-
-
-def test_first_attempt_counts_once(tmp_path):
-    """A student who fails in fall and passes the same course in spring counts once, with the fall F."""
-    students, records = takers("s", 10, ["F"], back=0)
+def retake(students: list[dict], records: list[dict], grade: str, year="2023-24", season="SPRING") -> None:
+    """Add a second try at ENG 101 for every student, in a later term."""
     for s in students:
-        records.append(here(s["student_id"], "2023-24", "SPRING", prefix="ENG", number="101", grade="4", gateway="E"))
+        records.append(here(s["student_id"], year, season, prefix="ENG", number="101", grade=grade, gateway="E"))
+
+
+def test_gateway_pass_line_is_one_point_zero():
+    """The PDP's gateway line: 1.0 or higher, or P, passes; F, W and under 1.0 don't; non-final grades are None."""
+    assert [gateway_passed(g) for g in ("4", "2.0", "1.7", "1.0", "1", "P")] == [True] * 6
+    assert [gateway_passed(g) for g in ("0.7", "0", "F", "W")] == [False] * 4
+    assert [gateway_passed(g) for g in ("I", "A", "MIS", None)] == [None] * 4
+
+
+def test_first_try_path_and_retention(tmp_path):
+    """Passed first try, retook and passed, retook and didn't, didn't retake; and retention by passing in the end."""
+    first = takers("first", 12, ["4", "1.3", "P"], back=10)
+    later = takers("later", 10, ["F"], back=6)
+    retake(*later, grade="2.0")
+    again = takers("again", 10, ["0.7"], back=1)
+    retake(*again, grade="W")
+    once = takers("once", 10, ["W"], back=0)
+    page = gateway_courses(**FEDERAL, database=build(tmp_path, first, later, again, once))
+    assert page["context"]["flagged"] is True
+    (course,) = page["courses"]
+    assert (course["course"], course["subject"], course["students"]) == ("ENG 101", "E", 42)
+    assert (course["first_pass"], course["passed"]) == (12, 22)
+    assert course["path"] == {"first": 12, "retook_passed": 10, "retook_not": 10, "no_retake": 10}
+    assert course["retained_if_passed"] == {"students": 22, "retained": 16, "rate": 0.7273}
+    assert course["retained_if_not_passed"] == {"students": 20, "retained": 1, "rate": 0.05}
+    assert course["all_takers"] is None  # no filters, so nothing to compare
+
+
+def test_one_try_per_term(tmp_path):
+    """Two rows in one term (duplicate class rows) are one try, passed if either passed."""
+    students, records = takers("s", 10, ["F"], back=0)
+    retake(students, records, grade="3", season="FALL")
     page = gateway_courses(**FEDERAL, database=make_database(tmp_path / "pdp.sqlite", students, records))
     (course,) = page["courses"]
-    assert (course["students"], course["passed"], course["df"]) == (10, 0, 10)
+    assert (course["first_pass"], course["path"]["first"], course["path"]["retook_passed"]) == (10, 10, 0)
 
 
-def test_unflagged_cohort_infers_math_and_english(tmp_path):
-    """With no gateway flags at all, college-level math and English courses are inferred, and the page says so."""
+def test_only_year_one_counts(tmp_path):
+    """A pass in year 2 doesn't count: like the PDP measure, the page looks at the first academic year only."""
+    students, records = takers("s", 10, ["F"], back=0)
+    retake(students, records, grade="4", year="2024-25", season="FALL")
+    page = gateway_courses(**FEDERAL, database=make_database(tmp_path / "pdp.sqlite", students, records))
+    (course,) = page["courses"]
+    assert (course["passed"], course["path"]["no_retake"]) == (0, 10)
+    assert page["context"]["year_one"] == "2023-24"
+
+
+def test_only_flagged_grades_count_and_nothing_is_guessed(tmp_path):
+    """Unflagged math and English courses aren't gateway courses; with no flags the page lists none."""
     database = build(
         tmp_path,
         takers("e", 10, ["4"], back=5, gateway="N"),
         takers("m", 10, ["F"], back=5, course=("MATH", "111"), gateway="N"),
-        takers("h", 10, ["4"], back=5, course=("HIS", "101"), gateway="N"),
     )
     page = gateway_courses(**FEDERAL, database=database)
     assert page["context"]["flagged"] is False
-    assert [(c["course"], c["subject"]) for c in page["courses"]] == [("ENG 101", "E"), ("MATH 111", "M")]
+    assert page["courses"] == []
+
+
+def test_filtered_students_and_everyone_who_took_the_course(tmp_path):
+    """With a filter, a course counts the filtered students and everyone who took it, for the API to compare."""
+    pell = takers("p", 20, ["F", "F", "F", "4"], back=0, pell="Y")
+    other = takers("n", 20, ["4", "4", "4", "F"], back=0, pell="N")
+    page = gateway_courses(**ask("2023-24", "federal", pell="Y"), database=build(tmp_path, pell, other))
+    assert page["context"]["compared"] is True
+    (course,) = page["courses"]
+    assert (course["students"], course["first_pass"]) == (20, 5)
+    assert course["all_takers"] == {"students": 40, "first_pass": 20}
 
 
 def test_small_courses_are_hidden(tmp_path):
@@ -94,29 +110,37 @@ def test_small_courses_are_hidden(tmp_path):
     assert page["hidden_courses"] == 1
 
 
-def test_pairs_below_the_cohort(tmp_path):
-    """Two courses taken together in the first term by 10+ students, with retention under the cohort's."""
+def pairs_database(tmp_path):
+    """ENG 101 + BIO 100 taken together by 10 who mostly left; HIS 100 alone by 10 who stayed; ART + MUS by 10."""
     students, records = takers("pair", 10, ["4"], back=1)
     for s in students:
-        records.append(here(s["student_id"], "2023-24", "FALL", prefix="MATH", number="111", grade="4", gateway="M"))
-    more_students, more_records = takers("solo", 10, ["4"], back=9, course=("BIO", "100"), gateway="N")
-    page = gateway_courses(**FEDERAL, database=make_database(tmp_path / "pdp.sqlite", students + more_students, records + more_records))
+        records.append(here(s["student_id"], "2023-24", "FALL", prefix="BIO", number="100", grade="4"))
+    solo_students, solo_records = takers("solo", 10, ["4"], back=9, course=("HIS", "100"), gateway="N")
+    plain_students, plain_records = takers("plain", 10, ["4"], back=0, course=("ART", "100"), gateway="N")
+    for s in plain_students:
+        plain_records.append(here(s["student_id"], "2023-24", "FALL", prefix="MUS", number="100", grade="4"))
+    return make_database(tmp_path / "pdp.sqlite", students + solo_students + plain_students, records + solo_records + plain_records)
+
+
+def test_pairs_need_a_gateway_course(tmp_path):
+    """Pairs are counted in the first term, and only when one of the two courses is a gateway course."""
+    page = gateway_courses(**FEDERAL, database=pairs_database(tmp_path))
     assert page["context"]["first_term"] == "Fall 2023"
-    assert page["cohort_retention"]["rate"] == 0.5
-    assert page["pairs"] == [{"courses": ["ENG 101", "MATH 111"], "students": 10, "retained": 1, "rate": 0.1, "gap": -40.0}]
+    assert page["pair_counts"] == [{"courses": ["BIO 100", "ENG 101"], "students": 10, "retained": 1}]
+    assert page["pairs_considered"] == 1  # ART + MUS has no gateway course
 
 
 def test_fewer_than_ten_students_hides_everything(tmp_path):
     """Nine students: no numbers at all."""
     page = gateway_courses(**FEDERAL, database=build(tmp_path, takers("s", 9, ["4"], back=9)))
     assert page["status"] == "suppressed"
-    assert page["courses"] == [] and page["pairs"] == []
+    assert page["courses"] == [] and page["pair_counts"] == []
 
 
 @pytest.mark.slow
 @pytest.mark.skipif(not DEFAULT_DATABASE.exists(), reason="the normalized data isn't loaded")
 def test_real_data_known_answers():
-    """2023-24, checked by hand with SQL on pdp.sqlite (synthetic data)."""
+    """2023-24 on pdp.sqlite (synthetic data): cohort retention as before, and ENG 101's path adds up."""
     page = gateway_courses(**FEDERAL)
     assert page["context"]["flagged"] is True
     retention = page["cohort_retention"]
@@ -124,4 +148,6 @@ def test_real_data_known_answers():
     school = gateway_courses(**ask("2023-24"))["cohort_retention"]
     assert (school["students"], school["retained"]) == (2580, 1345)  # the PDP flag, as on /measures/retention
     eng = next(c for c in page["courses"] if c["course"] == "ENG 101")
-    assert (eng["students"], eng["passed"], eng["df"], eng["w"]) == (380, 277, 76, 27)
+    steps = [eng["path"][step] or 0 for step in ("first", "retook_passed", "retook_not", "no_retake")]
+    assert eng["path"]["first"] == eng["first_pass"]
+    assert sum(steps) <= eng["students"] and eng["passed"] >= eng["first_pass"]
