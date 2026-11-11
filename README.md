@@ -260,3 +260,7 @@ configured database access, loader build identity, cancellation and reproducible
 
 The [defined operation catalog](docs/analysis-v2-defined-operations.md) registers the existing dashboard
 and legacy analyses with executable request schemas and typed result adapters. It remains inactive in HTTP/chat.
+
+The [disclosure and parity guide](docs/analysis-v2-disclosure.md) documents versioned dashboard/legacy
+profiles at version 2, shared API/CSV execution, and validation for future mixed v2 plans.
+Small, linked and overlapping results remain visible; no size-based privacy protection applies.

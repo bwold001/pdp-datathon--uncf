@@ -60,7 +60,7 @@ def _spec(id, name):
         exclusions=definition.exclusions,
         required_coverage=coverage[name],
         executor="analytics.service.AnalyticsService.analyze",
-        disclosure_profile="legacy_v1",
+        disclosure_profile="legacy_analytics_v1",
         limitations=tuple(definition.limitations),
         units=("students", "ratio"),
         component_denominators=(definition.formula,),

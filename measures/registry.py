@@ -5,6 +5,7 @@ from types import MappingProxyType
 
 from measures.definitions import definition_for
 from measures.models import Measure
+from measures.disclosure import profile
 from measures.requests import (
     FILTER_NAMES,
     Contract,
@@ -16,7 +17,7 @@ from measures.requests import (
     Scope,
 )
 
-CATALOG_VERSION = "defined-1"
+CATALOG_VERSION = "defined-3"
 
 
 @dataclass(frozen=True)
@@ -71,6 +72,15 @@ class OperationSpec:
             "required_coverage": self.required_coverage,
             "executor": self.executor,
             "disclosure_profile": self.disclosure_profile,
+            "disclosure_version": profile(self.disclosure_profile).version,
+            "disclosure_scope": {
+                "population": self.population,
+                "analysis_unit": self.grain,
+                "minimum_sample": profile(self.disclosure_profile).minimum,
+                "partitions": self.supported_breakdowns,
+                "measures": self.definitions,
+                "known_overlap": "Selected cohort populations, filtered subsets and their totals may overlap; no disjointness is implied by different operation IDs or cohort labels.",
+            },
             "limitations": self.limitations,
             "units": self.units,
             "definitions": self.definitions,
