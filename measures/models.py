@@ -7,7 +7,9 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
 
-SUPPRESSION_THRESHOLD = 10  # groups with fewer students are hidden
+from .disclosure import DASHBOARD_V1
+
+SUPPRESSION_THRESHOLD = DASHBOARD_V1.minimum  # preserve the versioned dashboard policy
 UNKNOWN = "UNKNOWN"  # how the data model stores a value nobody knows
 
 

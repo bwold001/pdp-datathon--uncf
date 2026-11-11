@@ -14,7 +14,7 @@ from analytics.data_access import sqlite_snapshot
 from analytics.execution import check_cancelled
 from analytics.provenance import DataUnavailable
 from analytics.definitions import DEFINITIONS
-from analytics.presentation import suppress
+from analytics.disclosure import suppress_legacy
 from analytics.schemas import (
     AnalysisReceipt,
     AnalysisRequest,
@@ -232,7 +232,7 @@ class AnalyticsService:
                             "The extract has no exact award semester. Inferred completion-program attribution is unknown."
                         )
                 check_cancelled()
-                receipt.rows = suppress(
+                receipt.rows = suppress_legacy(
                     receipt.rows, self.coverage.suppression_threshold
                 )
         except (sqlite3.Error, OSError, DataUnavailable):

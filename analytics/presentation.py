@@ -1,7 +1,9 @@
 """Calculation text and conservative suppression shared by browser and model."""
 
 from analytics.schemas import CalculationRow
-from analytics.execution import checked
+from analytics.disclosure import has_small_cell, suppress_legacy as suppress
+
+__all__ = ["rate_row", "has_small_cell", "suppress"]
 
 
 def rate_row(
@@ -40,45 +42,3 @@ def rate_row(
         note=note,
         calculation=f"{numerator} / {denominator} = {rate:.2%}",
     )
-
-
-def has_small_cell(row: CalculationRow, threshold: int) -> bool:
-    """Detect small values or recoverable complements before serializing evidence."""
-    return row.status in ("ok", "provisional") and (
-        (row.count is not None and 0 < row.count < threshold)
-        or (row.denominator is not None and row.denominator < threshold)
-        or (row.numerator is not None and 0 < row.numerator < threshold)
-        or (
-            row.denominator is not None
-            and row.numerator is not None
-            and 0 < row.denominator - row.numerator < threshold
-        )
-        or any(0 < n < threshold for n in row.exclusions.values())
-    )
-
-
-def suppress(rows: list[CalculationRow], threshold: int) -> list[CalculationRow]:
-    """Hide linked small cells, preserving a safe overall result only with all groups hidden."""
-    if not any(has_small_cell(row, threshold) for row in checked(rows)):
-        return rows
-    totals = [row for row in checked(rows) if not row.group and row.horizon is None]
-    safe_total = (
-        totals[0]
-        if len(totals) == 1
-        and any(row.group for row in checked(rows))
-        and not has_small_cell(totals[0], threshold)
-        else None
-    )
-    return [
-        CalculationRow(
-            label=row.label,
-            kind=row.kind,
-            group=row.group,
-            horizon=row.horizon,
-            status="suppressed",
-            note="Linked results hidden to prevent small-cell disclosure.",
-        )
-        if row is not safe_total and row.status in ("ok", "provisional")
-        else row
-        for row in checked(rows)
-    ]

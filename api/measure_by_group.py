@@ -11,8 +11,10 @@ from functools import lru_cache
 from api import data
 from api.filters import CohortQuery
 from api.schemas import GroupRow
-from measures.models import Cohort, GroupBy, GroupDimension, Measure, MeasureResult
-from measures.run_measures import run_measure
+from measures.models import Measure, MeasureResult
+from measures import service as measures_service
+from measures.breakdowns.common import page_source
+from measures.disclosure import DASHBOARD_V1
 
 GATEWAY_MEASURES = {"gateway_math", "gateway_english"}
 YEAR_TWO_MEASURES = {"retention", "persistence"}
@@ -30,9 +32,7 @@ def measure_for(measure: str, query: CohortQuery) -> Measure:
 
 def status_of(measure: str, row: MeasureResult) -> str:
     """A gateway measure with no answers means the college doesn't report the requirement."""
-    if measure in GATEWAY_MEASURES and row.status.value == "not_yet_observable":
-        return "not_reported"
-    return row.status.value
+    return DASHBOARD_V1.dashboard_status(measure, row.status.value)
 
 
 def to_row(measure: str, row: MeasureResult) -> GroupRow:
@@ -53,9 +53,14 @@ def to_row(measure: str, row: MeasureResult) -> GroupRow:
 @lru_cache(maxsize=1024)
 def _calculate(measure: str, query: CohortQuery, dimensions: tuple[str, ...], stamp: float) -> tuple[tuple[GroupRow, ...], str]:
     """One measure for one class, its filters and grouping. stamp is only part of the cache key."""
-    group_by = [GroupBy.of(*(GroupDimension(d) for d in dimensions))] if dimensions else None
-    rows = run_measure(measure_for(measure, query), [Cohort.of(query.cohort)], group_by, database=data.data_path(), filters=query.as_group())
-    return tuple(to_row(measure, row) for row in rows), data.loaded_at()
+    operation_id = measures_service.operation_for_measure(measure)
+    parameters = {"cohort": query.cohort, "filters": query.as_dict(), "group_by": dimensions}
+    if measure == "retention":
+        parameters["retention_type"] = query.retention_type
+    with page_source(data.data_path()) as snapshot:
+        rows = measures_service.execute(operation_id, parameters, snapshot)
+        loaded_at = data.loaded_at(snapshot.named)
+    return tuple(to_row(measure, row) for row in rows), loaded_at
 
 
 def measure_by_group(measure: str, query: CohortQuery, dimensions: list[str]) -> tuple[list[GroupRow], str]:

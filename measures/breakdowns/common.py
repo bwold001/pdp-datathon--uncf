@@ -13,6 +13,7 @@ from pathlib import Path
 
 from ..calculations.dfw import grade_result
 from ..data_access import ReadConnection, ReadSnapshot
+from ..disclosure import DASHBOARD_V1
 from ..calculations.sql_counts import SAFE_YEAR, filters_sql, group_value_sql, normalize
 from ..models import (
     ALLOWED_VALUES,
@@ -122,9 +123,7 @@ def listed_value(dimension: str, normalized: str) -> str:
 
 def shown(count: int | None) -> int | None:
     """A count as a page may show it: groups of 1 to 9 students are hidden (None), never shown as 0."""
-    if count is None or 0 < count < MIN_STUDENTS:
-        return None
-    return count
+    return DASHBOARD_V1.visible_count(count)
 
 
 def share(count: int | None, total: int | None) -> float | None:

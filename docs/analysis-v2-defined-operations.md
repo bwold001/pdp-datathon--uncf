@@ -28,6 +28,8 @@ with legacy_service.snapshot() as snapshot:
 
 This is **internal single-operation evidence**, not a complete plan executor or HTTP endpoint. Catalog/snapshot freshness, version resolution, dependency scheduling, exploration, plan-wide disclosure and final receipts remain later work. Do not serialize this evidence as a final chat response before those checks. Existing display suppression alone does not prevent inference by subtraction.
 
+The [disclosure boundary](analysis-v2-disclosure.md) now supplies versioned profiles, a policy stamp on staged evidence, shared API execution and a conservative complete-plan projection primitive. The future plan executor must call that primitive on the actual returned set before constructing public receipts.
+
 ## Registered meanings
 
 | ID | Existing meaning |

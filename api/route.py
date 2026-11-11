@@ -55,11 +55,11 @@ from api.schemas import (
     OptionsResponse,
     StudentPathsResponse,
 )
-from measures.breakdowns.credit_momentum import credit_momentum
-from measures.breakdowns.dfw_courses import UnknownCourse, dfw_course, dfw_courses
-from measures.breakdowns.gateway_courses import gateway_courses
-from measures.breakdowns.student_paths import DEFAULT_TERMS, student_paths
-from measures.models import GroupDimension
+from measures import service as measures_service
+from measures.breakdowns.common import page_source
+from measures.registry import OPERATIONS
+from measures.breakdowns.dfw_courses import UnknownCourse
+from measures.breakdowns.student_paths import DEFAULT_TERMS
 
 PREFIX = "/api/v1/uncf"
 DEFAULT_PORT = 8001
@@ -125,21 +125,26 @@ class Bar:
 
 def run_page(name: str, query: CohortQuery, *extra) -> dict:
     """Ask measures/breakdowns for one page, then add what every answer says about its question (meta)."""
-    cohort, filters, retention, database = query.cohort, query.as_group(), query.retention_measure, data.data_path()
+    operation_id = {
+        "student-paths": "student_paths.summary", "dfw": "dfw.course_list",
+        "dfw-course": "dfw.course_detail", "gateway": "gateway.course_outcomes",
+        "credit-momentum": "credit_momentum.summary",
+    }[name]
+    parameters = {"cohort": query.cohort, "filters": query.as_dict()}
+    if "retention_type" in OPERATIONS[operation_id].parameters.model_fields:
+        parameters["retention_type"] = query.retention_type
     if name == "student-paths":
         terms, group_by = extra
-        body = student_paths(cohort, filters, retention, terms, GroupDimension(group_by) if group_by else None, database)
-    elif name == "dfw":
-        body = dfw_courses(cohort, filters, database)
+        parameters.update(terms=terms, group_by=group_by)
     elif name == "dfw-course":
-        (course,) = extra
-        body = dfw_course(cohort, course, filters, database)
-    elif name == "gateway":
-        body = add_gateway_gaps(gateway_courses(cohort, filters, retention, database))
-    else:
-        body = credit_momentum(cohort, filters, retention, database)
+        parameters["course"] = extra[0]
+    with page_source(data.data_path()) as snapshot:
+        body = measures_service.execute(operation_id, parameters, snapshot)
+        loaded_at = data.loaded_at(snapshot.named)
+    if name == "gateway":
+        body = add_gateway_gaps(body)
     context = body.pop("context")
-    return {"meta": {**query.meta(), **context, "loaded_at": data.loaded_at()}, **body}
+    return {"meta": {**query.meta(), **context, "loaded_at": loaded_at}, **body}
 
 
 @lru_cache(maxsize=256)
@@ -160,9 +165,22 @@ def answer(bar: Bar, name: str, *extra):
         # A value the page doesn't take, such as terms=9 or group_by=housing.
         return error(422, "invalid_filter", str(invalid))
     if bar.format == "csv":
-        rows = [{"section": section, **flatten(item)} for section in CSV_SECTIONS[name] for item in body.get(section) or []]
+        rows = page_csv_rows(body, CSV_SECTIONS[name])
         return csv_response(rows, bar.query, f"uncf-{name}-{bar.query.cohort}.csv")
     return body
+
+
+def page_csv_rows(body: dict, sections: tuple[str, ...]) -> list[dict]:
+    """Flatten the existing disclosed page objects, including DFW's dimension-keyed group lists."""
+    rows = []
+    for section in sections:
+        items = body.get(section) or []
+        if isinstance(items, dict):
+            for dimension, groups in items.items():
+                rows.extend({"section": section, "dimension": dimension, **flatten(item)} for item in groups)
+        else:
+            rows.extend({"section": section, **flatten(item)} for item in items)
+    return rows
 
 
 def flatten(item: dict, prefix: str = "") -> dict:
