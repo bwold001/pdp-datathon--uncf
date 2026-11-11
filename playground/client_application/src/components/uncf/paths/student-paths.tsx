@@ -7,7 +7,7 @@ import { explorerLoader } from "@/components/uncf/layout/explorer-api";
 import { useShowStudentCount } from "@/components/uncf/layout/explorer-context";
 import { LoadingBlock, MessageCard } from "@/components/uncf/layout/explorer-parts";
 import { useCohortFilters } from "@/components/uncf/layout/use-cohort-filters";
-import { useApiResource } from "@/hooks/use-api-resource";
+import { useExplorerResource } from "@/components/uncf/layout/use-explorer-resource";
 
 import { type PathFocus, type PathsResponse, readPathFocus } from "./paths-data";
 import { PathsView } from "./paths-view";
@@ -16,8 +16,8 @@ import { PathsView } from "./paths-view";
 export function StudentPaths() {
   const { apiQuery } = useCohortFilters();
   const load = useMemo(() => explorerLoader<PathsResponse>("/uncf/student-paths", apiQuery), [apiQuery]);
-  const { resource, retry } = useApiResource(load);
-  useShowStudentCount(resource.status !== "success" ? null : resource.data.status === "suppressed" ? "too few" : resource.data.students);
+  const { resource, retry, current } = useExplorerResource(load);
+  useShowStudentCount(resource.status !== "success" || !current ? null : resource.data.status === "suppressed" ? "too few" : resource.data.students);
   const [focus, setFocus] = usePathFocus();
 
   if (resource.status === "loading") return <PathsLoading />;

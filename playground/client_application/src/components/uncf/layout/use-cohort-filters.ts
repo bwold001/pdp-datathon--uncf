@@ -8,12 +8,8 @@ import {
   cohortFiltersFor,
   cohortFiltersToApiQuery,
   cohortFiltersToUrl,
-  defaultCohortFilters,
   readCohortFilters,
 } from "./cohort-filters";
-import { cohortFilters } from "./explorer-config";
-
-const allFilterIds = new Set(cohortFilters.map((definition) => definition.id));
 
 /**
  * The cohort bar's filters on this tab, read from and written to the URL, so a view can be shared and Back undoes a
@@ -47,7 +43,13 @@ export function useCohortFilters() {
     apiQuery,
     /** Set one filter; null clears it to "All". Filters this tab doesn't show and the page's own values stay. */
     setFilter: (id: string, value: string | null) => navigate({ ...filters, [id]: value }, () => true),
-    /** Every filter back to its default, on every tab. The page's own query values (a sort order) stay. */
-    reset: () => navigate(defaultCohortFilters(definitions), (key) => !allFilterIds.has(key)),
+    /**
+     * Every "Add filter" filter back to its default. The class year, enrollment type, retention measure, filters
+     * this tab doesn't show and the page's own values stay.
+     */
+    clearMenuFilters: () => {
+      const cleared = definitions.filter((definition) => definition.place === "menu").map((definition) => [definition.id, definition.defaultValue ?? null]);
+      navigate({ ...filters, ...Object.fromEntries(cleared) }, () => true);
+    },
   };
 }

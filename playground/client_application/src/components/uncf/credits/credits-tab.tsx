@@ -8,21 +8,22 @@ import { explorerLoader } from "@/components/uncf/layout/explorer-api";
 import { useShowStudentCount } from "@/components/uncf/layout/explorer-context";
 import { LoadingBlock, MessageCard } from "@/components/uncf/layout/explorer-parts";
 import { useCohortFilters } from "@/components/uncf/layout/use-cohort-filters";
-import { useApiResource } from "@/hooks/use-api-resource";
+import { useExplorerResource } from "@/components/uncf/layout/use-explorer-resource";
 
 import type { CreditsResponse } from "./credits-data";
 import { CreditsView, ProgressIntro } from "./credits-view";
 
 /** The Credit momentum tab: loads the cohort bar's students' progress and draws it. */
 export function CreditsTab() {
-  const { apiQuery, definitions, filters, reset } = useCohortFilters();
+  const { apiQuery, definitions, filters, clearMenuFilters } = useCohortFilters();
   const searchParams = useSearchParams();
   const load = useMemo(() => explorerLoader<CreditsResponse>("/uncf/credit-momentum", apiQuery), [apiQuery]);
-  const { resource, retry } = useApiResource(load);
-  useShowStudentCount(resource.status !== "success" ? null : resource.data.status === "suppressed" ? "too few" : resource.data.students);
+  const { resource, retry, current } = useExplorerResource(load);
+  useShowStudentCount(resource.status !== "success" || !current ? null : resource.data.status === "suppressed" ? "too few" : resource.data.students);
 
-  // The student filters someone set, in words. The cohort year and retention measure aren't filters on who's counted.
-  const picked = definitions.filter((definition) => !definition.required && (filters[definition.id] ?? null) !== (definition.defaultValue ?? null));
+  // The "Add filter" filters someone set (the bar's chips), in words. The bar's sentence already names the class year
+  // and enrollment type, and Clear filters keeps those, as the bar's Clear filters does.
+  const picked = definitions.filter((definition) => definition.place === "menu" && (filters[definition.id] ?? null) !== (definition.defaultValue ?? null));
   const filterText = picked.map((definition) => filterValueLabel(definition, filters[definition.id] ?? null)).join(" · ");
 
   if (resource.status === "loading") return <CreditsLoading />;
@@ -39,7 +40,7 @@ export function CreditsTab() {
   return (
     <CreditsView
       data={resource.data}
-      filters={picked.length ? { text: filterText, onClear: reset } : undefined}
+      filters={picked.length ? { text: filterText, onClear: clearMenuFilters } : undefined}
       linkQuery={carriedFilterQuery(searchParams).toString()}
     />
   );

@@ -8,7 +8,7 @@ import { cohortFilters } from "@/components/uncf/layout/explorer-config";
 import { useShowStudentCount } from "@/components/uncf/layout/explorer-context";
 import { LoadingBlock, MessageCard } from "@/components/uncf/layout/explorer-parts";
 import { useCohortFilters } from "@/components/uncf/layout/use-cohort-filters";
-import { useApiResource } from "@/hooks/use-api-resource";
+import { useExplorerResource } from "@/components/uncf/layout/use-explorer-resource";
 
 import type { GatewayResponse } from "./gateway-data";
 import { GatewayView } from "./gateway-view";
@@ -18,8 +18,8 @@ export function GatewayTab() {
   const { apiQuery, filters } = useCohortFilters();
   const groupLabel = useMemo(() => describeGroup(filters), [filters]);
   const load = useMemo(() => explorerLoader<GatewayResponse>("/uncf/gateway", apiQuery), [apiQuery]);
-  const { resource, retry } = useApiResource(load);
-  useShowStudentCount(resource.status !== "success" ? null : resource.data.status === "suppressed" ? "too few" : resource.data.students);
+  const { resource, retry, current } = useExplorerResource(load);
+  useShowStudentCount(resource.status !== "success" || !current ? null : resource.data.status === "suppressed" ? "too few" : resource.data.students);
 
   if (resource.status === "loading") return <GatewayLoading />;
   if (resource.status === "error") {

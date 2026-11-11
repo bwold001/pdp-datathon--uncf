@@ -94,3 +94,25 @@ export function filterValueLabel(definition: CohortFilterDefinition, value: stri
   if (value === null) return "All";
   return definition.options.find((option) => option.value === value)?.label ?? value;
 }
+
+/** A sentence filter's words: "first-time", "2023-24", or its "All" words ("of every enrollment type"). */
+export function sentenceWord(definition: CohortFilterDefinition, value: string | null): string {
+  if (value === null) return definition.allWord ?? "all";
+  const option = definition.options.find((candidate) => candidate.value === value);
+  return option?.word ?? option?.label ?? value;
+}
+
+/** One "Add filter" filter that's set, as a chip: which filter, its value, and the chip's words. */
+export type FilterChip = { definition: CohortFilterDefinition; value: string; text: string };
+
+/** The "Add filter" filters someone set, in the menu's order, as chips. */
+export function filterChips(filters: CohortFilters, definitions: CohortFilterDefinition[] = cohortFilters): FilterChip[] {
+  const chips: FilterChip[] = [];
+  for (const definition of definitions) {
+    const value = filters[definition.id] ?? null;
+    if (definition.place !== "menu" || value === null || value === (definition.defaultValue ?? null)) continue;
+    const option = definition.options.find((candidate) => candidate.value === value);
+    chips.push({ definition, value, text: option?.chip ?? option?.label ?? value });
+  }
+  return chips;
+}
