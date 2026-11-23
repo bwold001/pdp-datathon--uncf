@@ -18,25 +18,8 @@ def test_unknown_endpoint_returns_json_error_with_docs_hint(client: TestClient) 
     }
 
 
-def test_missing_resource_keeps_its_own_message(client: TestClient) -> None:
-    response = client.get("/api/v1/documents/01a152ec-e1a9-72a0-8679-f33b5bc941e3")
-
-    assert response.status_code == 404
-    assert response.json()["error"]["message"] == "Document not found"
-    assert "docs" not in response.json()["error"]
-
-
-def test_validation_errors_list_each_field(client: TestClient) -> None:
-    response = client.post("/api/v1/documents", json={"content": ""})
-
-    error = response.json()["error"]
-    assert response.status_code == 422
-    assert error["code"] == "validation_error"
-    assert error["details"][0]["loc"] == ["body", "content"]
-
-
 def test_wrong_method_returns_405(client: TestClient) -> None:
-    response = client.delete("/api/v1/health")
+    response = client.delete("/api/v1/uncf/health")
 
     assert response.status_code == 405
     assert response.json()["error"]["code"] == "method_not_allowed"

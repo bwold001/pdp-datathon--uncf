@@ -106,8 +106,8 @@ jobs:
         with:
           working_directory: playground
       - run: mise run api:lint
-      # SQLite, so there's no database to start.
-      - run: mise run api:test-sqlite
+      # Tests build their own SQLite files; the Postgres service above covers the Postgres parity test.
+      - run: mise run api:test
       - run: mise run web:install
       # Build first: it generates the Next.js types the type check needs.
       - run: mise run web:build

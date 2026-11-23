@@ -71,8 +71,8 @@ Chat setup is in [Student success chat](#student-success-chat).
   `python -m api load`, so every deploy builds `pdp.sqlite` from the mock CSVs in `data/raw/`.
   The bundle includes `analytics/`, so `/analyses` works there too. This service is provider-free.
 - **chat:** the dedicated `chat_app:app` service uses the official OpenRouter Python SDK. It builds
-  the same synthetic extract, reads it in read-only snapshots and exposes no uploads or Sandbox
-  endpoints. Build-only PyArrow is removed after loading the extract to keep the function bundle
+  the same synthetic extract, reads it in read-only snapshots and exposes only the chat
+  routes. Build-only PyArrow is removed after loading the extract to keep the function bundle
   within Vercel’s limit. See [deploy chat](docs/chat-deployment.md) for credentials, model selection,
   Preview verification and rollback.
 
@@ -171,7 +171,7 @@ columns: [pdp-data skill](.agents/skills/pdp-data/SKILL.md#known-data-facts). Ne
 | --- | --- |
 | [Normalized data model](normalized-data-model/README.md) | Tables, keys, loader into SQLite or PostgreSQL |
 | [Success measures](measures/README.md) | Retention, persistence, gateway completion; we added federal retention, DFW, credit completion, filters and the page breakdowns |
-| [Playground](playground/README.md) | Next.js + FastAPI app shell and chart examples |
+| [Playground](playground/README.md) | The Explorer web app: Next.js client and FastAPI server |
 | [Data quality log](data/quality/README.md) | Known mock-data issues, such as first-generation status |
 | [PDP MCP server](mcp/README.md) | Definitions only, for development support |
 | [Equity gap finder](gap_finder/README.md) | Optional group comparisons |
@@ -184,7 +184,7 @@ and `playground` checks must pass to merge.
 | You changed | While you work | Before a pull request |
 | --- | --- | --- |
 | Data or a foundation | `make check-fast` | `make check` |
-| [`playground/`](playground/README.md) | `cd playground && mise run api:test-sqlite` | `make check`, then the Playground commands in its README |
+| [`playground/`](playground/README.md) | `cd playground && mise run api:test` | `make check`, then the Playground commands in its README |
 
 Without `make` (Windows), run `python scripts/check.py`, `python data/quality/run_checks.py`, and
 `cd normalized-data-model && python -m pytest -q`. If you change `data/raw/` on purpose, run
@@ -198,14 +198,13 @@ Short branch, pull request, a teammate reviews, then merge. See
 ## Student success chat
 
 The demonstration at `/uncf/chat` (the Explorer's Chat tab) answers the agreed graduation,
-retention and annual enrollment questions with shared calculation receipts from `analytics/`. The
-old `/chat` and `/sandbox/data-chat-ui` bookmarks redirect there. See
+retention and annual enrollment questions with shared calculation receipts from `analytics/`. See
 [calculation definitions and coverage requirements](docs/analytics-definitions.md).
 
-1. Install the Playground's dependencies with `uv sync` in `playground/server_application/`, then
-   load the cohort and course files in Workbench. Chat and `/analyses` read the Playground's
-   `DATABASE_URL` (SQLite or PostgreSQL, read only snapshots, no results cache), so newly uploaded
-   data shows up.
+1. Install the Playground's dependencies with `mise run api:install`, then build the SQLite
+   extract with `mise run api:load` (both in `playground/`). Chat and `/analyses` read the
+   Playground's `DATABASE_URL`, which defaults to that extract (SQLite or PostgreSQL, read only
+   snapshots, no results cache), so reloaded data shows up.
 2. Follow [Playground setup](playground/README.md) for its Python 3.14/uv and Node 24/Bun runtimes.
    The root Python and the Playground's provider runtime are separate environments.
 3. Set `OPENROUTER_API_KEY` and `UNCF_CHAT_MODEL=openai/gpt-4.1` in the server's ignored
@@ -213,7 +212,7 @@ old `/chat` and `/sandbox/data-chat-ui` bookmarks redirect there. See
    available to your account. The same key supports model changes. Replace legacy OpenAI/Anthropic
    keys and bare `claude-*` settings; no names are rewritten. Keep the key server-side.
 4. Run the Playground API and client (`mise run api:dev`, `mise run web:dev`) and open `/uncf/chat`.
-   `UNCF_CHAT_ENABLED` controls chat independently of `SANDBOX_ENABLED`. It is enabled in local
+   `UNCF_CHAT_ENABLED` controls chat. It is enabled in local
    development and the dedicated Vercel chat service unless explicitly disabled. Full Playground
    production remains opt-in. The client uses its existing `NEXT_PUBLIC_API_BASE_URL`.
 5. Try "What is the graduation rate for chemistry majors?", "What is the retention rate for all
@@ -242,8 +241,9 @@ only verified coverage in `analytics/config/analytics.yaml`. An earlier associat
 rounded time to credential must never be used to invent a bachelor's award semester.
 
 **Checks.** `make check` at the root covers `analytics/`. In the Playground run `mise run api:lint`,
-`mise run api:test-sqlite`, `mise run web:build`, `mise run web:lint` and
-`mise run web:test-storybook`. Python tests use small, independently counted SQLite fixtures and a
+`mise run api:test`, `mise run web:build`, `mise run web:lint` and
+`mise run web:test-storybook` (CI skips Storybook, so run it locally if you changed a story or
+component). Python tests use small, independently counted SQLite fixtures and a
 scripted model, with no live provider calls.
 
 The Vercel chat service needs the OpenRouter key and model configured before deployment; without

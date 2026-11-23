@@ -18,8 +18,8 @@ configuration and result-policy/version stamps. Load timestamps may differ; equa
 alone do not establish equivalent normalization.
 
 `chat_app.py` gives only this dedicated service production defaults and a bundled SQLite URL.
-It does not start the full Playground app, migrations, Workbench, document endpoints or uploads.
-The full local Playground continues to use its configured database, including Workbench uploads.
+It does not start the full Playground app or the Explorer API.
+The local Playground reads its own `DATABASE_URL`, which defaults to the same SQLite extract.
 Do not set a project-wide `DATABASE_URL` for this mock deployment: it would override chat's
 bundled extract while the Explorer API (`api/`) still reads its own bundled extract. A shared external
 database for the whole Explorer requires a separate coordinated change.

@@ -1,9 +1,9 @@
 # Playground agent instructions
 
-When developing an institution-focused feature in Sandbox, use the normalized data model and follow
-[`pdp-sandbox`](../.agents/skills/pdp-sandbox/SKILL.md). Use
-[`pdp-data`](../.agents/skills/pdp-data/SKILL.md) only when mapping an original ARF field or
-dictionary term to the modeled data.
+Explorer pages live in `client_application/src/app/(uncf-explorer)/uncf/` and their components in
+`client_application/src/components/uncf/`. The server only mounts routers: Explorer numbers come
+from the repo's `measures/` and `api/`, chat numbers from `analytics/` (see the root AGENTS.md).
 
-For the deployment boundary and synthetic-data language, follow `pdp-sandbox`; do not treat
-invented values as results from the shared model.
+Use [`pdp-data`](../.agents/skills/pdp-data/SKILL.md) only when mapping an original ARF field or
+dictionary term to the modeled data. The data is synthetic: never present a value as a finding
+about real students or institutions.
