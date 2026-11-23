@@ -127,7 +127,7 @@ Playground checks (run from `playground/server_application`):
 
 ```bash
 uv sync --locked
-TEST_ON_SQLITE=true uv run pytest
+uv run pytest
 uv run ruff check .
 uv run ruff format --check .
 ```

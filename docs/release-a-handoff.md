@@ -1,14 +1,21 @@
 # Release A exit-gate evidence — issue #53
 
-Release decision: **blocked**. This change adds repeatable verification and corrects the acceptance
-specification; it does not authorize deployment. All fixtures and results are synthetic.
+PR #72 is a reviewable verification/tooling change based on merged PR #71. The **Release A exit gate remains blocked** by the separate semantic and environment checks below. Approving this PR does not certify Release A or authorize deployment. All fixtures and results are synthetic.
 
 ## Revision and supported contract
 
-Baseline and locally verified rollback candidate: `3b098967fcc61741efaa0001aeacd9abc86bff92`
-(merged #52 / PR #70). Verification changes are on `issue-53-release-a`; the PR head is the
-release candidate, not an already deployed revision. No source calculations or transport contracts
+Merged baseline and locally verified rollback candidate: `cf84f8e02369cae50d3972e242c2ba1fd6a03c99`
+(PR #71, Remove unused Playground starter code). The combined verification tree is
+`f33a68f8f68841f12469cc2a63dbf1215391d734` plus documentation-only handoff updates.
+Verification changes are on `issue-53-release-a`; the PR head is the release candidate,
+not an already deployed revision. No source calculations or transport contracts
 change in this PR. The actual production revision/deployment ID has not been established.
+
+PR #71 removes the Sandbox, Workbench and starter database stack. This PR preserves that removal:
+local backend checks use `mise run api:test` and disposable SQLite fixtures, without Docker,
+Alembic or `TEST_ON_SQLITE`. The default runtime reads the bundled normalized SQLite extract;
+configured PostgreSQL support still needs its own integration evidence. No removed starter code,
+dependencies, database services or old test task are restored.
 
 The inventory is eleven defined operations and three legacy adapters, each currently version `1`:
 `retention.rate`, `persistence.rate`, `dfw.rate`, `dfw.course_list`, `dfw.course_detail`,
@@ -76,20 +83,23 @@ missed and unnecessary clarification, unsupported outcomes and absence of execut
 No proposal is confirmed or executed. Each case has a 75-second deadline and a request-scoped SDK.
 Any failed case or boundary check prevents a successful evaluation exit. A passing evaluation does not establish the other release gates. Rerun when the model changes.
 
-Local attempt selected repository default `openai/gpt-4.1`; no provider key was present, so **0/34
-live cases ran**, status unverified, gate_passed false. This does not verify the production model
-configuration or interpretation. No credential values are written to reports.
+The local attempt selected repository default `openai/gpt-4.1`; the key was unavailable to the
+local process, so **0/34 live cases ran**, status unverified, gate_passed false. The user reports an
+OpenRouter key configured in Vercel. This connection cannot access the UNCF project to verify its
+environment scope/model or run that deployment evaluation; this is not evidence that the deployed
+key is absent. No credential values are written to reports.
 
 ## Rollback without feature flags
 
-A separate detached checkout of `3b098967fcc61741efaa0001aeacd9abc86bff92` passed the existing
+A separate detached checkout of `cf84f8e02369cae50d3972e242c2ba1fd6a03c99` passed the existing
 `test_chat_deployment.py`, `test_uncf_chat.py` and `test_student_success_tools.py` suites:
-**21 passed**, using the current Python 3.14 backend environment and disposable SQLite fixtures.
+**21 passed**, using the post-#71 Python 3.14 backend environment and disposable SQLite fixtures.
 That establishes local v1 route/confirmation compatibility on this candidate; no deployment
 rollback rehearsal occurred. The candidate still shares the gateway semantic blocker above.
 
-This PR leaves `vercel.json`, dependency locks, loader/schema/pipeline, raw inputs, coverage config
-and runtime environment contracts unchanged. No migration or destructive reset is needed to
+Relative to merged PR #71, this PR leaves `vercel.json`, dependency locks, loader/schema/pipeline,
+raw inputs, coverage config and runtime environment contracts unchanged. PR #71 itself changed
+the dependency locks and default database selection; the rollback candidate includes those changes. No migration or destructive reset is needed to
 restore the candidate. Historical v2 receipts require the original snapshot, implementation,
 operation, configuration and policy versions for replay; rollback does not make missing versions
 available and must never silently recalculate on another snapshot.
@@ -115,12 +125,12 @@ Operator steps, only after separate authorization:
 
 Resolve the gateway definition mismatch; run the configured live model set; verify PostgreSQL in
 its required environment; complete browser/preview parity and identify/test the actual known-good
-deployment. No PostgreSQL URL was configured, and no developer database was reset. No merge,
-production deployment or rollback was performed. Keep issue #53 open until required gates pass.
+deployment. No PostgreSQL URL was configured, and no developer database was reset. PR #71 was merged upstream; PR #72 has not been merged. No production deployment or rollback
+was performed in this work. Keep issue #53 open until required gates pass.
 
 ## Commands and results (November 23, 2026)
 
-The commands used the baseline above plus this PR's verification changes. Root requirements were
+These are fresh checks of the combined post-#71 tree above; the pre-#71 counts are superseded. Root requirements were
 installed from `requirements.txt` in `.venv`; Playground dependencies were synced from `uv.lock`,
 and client dependencies installed with `bun install --frozen-lockfile` (offline hardlink install
 completed from the populated cache). Toolchain: root/backend Python 3.14.8,
@@ -132,13 +142,13 @@ Bun 1.4.3, Node 24.22.2, uv 0.13.0, mise 2026.11.12. No tracked lock/configurati
 | `make check-fast` | 1,101 passed, 52 skipped; manifest and quality checks passed |
 | `make check` | 1,108 passed, 76 skipped; manifest and quality checks passed |
 | `mise run api:lint` | Ruff lint and formatting passed |
-| `mise run api:test-sqlite` | 165 passed, 5 skipped |
+| `mise run api:test` | 127 passed, 5 skipped |
 | `mise run web:lint` | ESLint and TypeScript passed |
-| `mise run web:build` | Compilation, types and 23-page generation passed; initial command stopped on a Next.js security-advisory check; the same task passed on its single retry, without dependency changes |
+| `mise run web:build` | Compilation, types and seven-route generation passed; initial command stopped on a Next.js security-advisory check; the same task passed on its single retry, without dependency changes |
 | `mise run web:test-storybook` | Chromium installed; launch failed with Mach-port `bootstrap_check_in` permission denied (1100). Browser assertions did not run; unverified |
 | Real serialized receipts through React `EvidenceCard` static markup | Nine zero-rate receipts retained n=1–9, result policy, computation fingerprint and synthetic notice. This does not replace browser/interaction verification |
 | Detached rollback candidate's legacy/deployment tests | 21 passed; revision/compatibility check only |
-| Live model evaluation | 0/34 ran: missing OpenRouter key; unverified. Independent gateway boundary check failed as documented above |
+| Live model evaluation | 0/34 ran: Vercel key unavailable to the local process; unverified. Independent gateway boundary check failed as documented above |
 | PostgreSQL | No configured integration URL; unverified. SQLite does not establish PostgreSQL parity |
 
 The Next.js diagnostic reported a known vulnerability in the pinned framework version. Dependency
