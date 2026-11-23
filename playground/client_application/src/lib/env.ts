@@ -53,19 +53,8 @@ export const env = {
   isDevelopment: appEnv === "development",
   isProduction: appEnv === "production",
   apiBaseUrl,
-  /** Swagger UI. The API disables it in production, so there is nothing to link to there. */
-  apiDocsUrl: appEnv === "production" ? null : new URL("/docs", apiBaseUrl).toString(),
-  /** The /sandbox page and its mock-data API. Off in production, like SANDBOX_ENABLED on the API. */
-  sandboxEnabled: process.env.NEXT_PUBLIC_SANDBOX_ENABLED
-    ? process.env.NEXT_PUBLIC_SANDBOX_ENABLED === "true"
-    : appEnv !== "production",
   /** Enable only when this deployment has a provider-enabled Playground backend. */
   studentSuccessChatEnabled: process.env.NEXT_PUBLIC_STUDENT_SUCCESS_CHAT_ENABLED
     ? process.env.NEXT_PUBLIC_STUDENT_SUCCESS_CHAT_ENABLED === "true"
     : appEnv === "development",
-  /** Source repository, linked from the landing page. Copies of Playground override this. */
-  repositoryUrl:
-    process.env.NEXT_PUBLIC_REPOSITORY_URL || "https://github.com/devcolor/pdp-datathon-starter",
-  /** Folder in the repository that holds Playground. */
-  repositoryFolder: process.env.NEXT_PUBLIC_REPOSITORY_FOLDER ?? "playground",
 } as const;

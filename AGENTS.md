@@ -9,8 +9,8 @@ changes get in. Priorities: Core (Explorer, with CSV export of every page), Stre
 Never push to `main`, and never commit, push, or open a pull request without the user's explicit
 yes. Keep per-school differences in config, not forks.
 
-**Put code with its owner.** Don't edit the starter's Sandbox examples or shared foundations to
-build our features; copy their pattern into our own folders:
+**Put code with its owner.** Don't edit the starter's shared foundations to build our features;
+copy their pattern into our own folders:
 - Every Explorer number (measures, filters on them, page breakdowns) and their
   staff facing definitions: `measures/`.
 - The chat's deterministic analyses (graduation, retention by major, enrollment), program
@@ -67,8 +67,6 @@ by direct API and chat. Document changes to shared files in the review descripti
   of guessing.
 - **For comparing groups or finding gaps, use the gap finder:** `find_gaps` or the `equity_gaps`
   table ([gap_finder/README.md](gap_finder/README.md)). Don't recompute gaps from `data/raw/`.
-- **Use `pdp-sandbox`** when building a Playground Sandbox endpoint or chart from the normalized
-  PDP data model ([.agents/skills/pdp-sandbox/SKILL.md](.agents/skills/pdp-sandbox/SKILL.md)).
 - **For Playground UI and stories,** follow
   [the client agent instructions](playground/client_application/AGENTS.md), including the Storybook
   MCP guidance and source-file fallback.

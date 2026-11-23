@@ -1,4 +1,4 @@
-"""Host only chat and its read-only analytics dependencies, without Sandbox or uploads."""
+"""Host only chat and its read-only analytics dependencies, without the Explorer API."""
 
 from api.analyses import get_service as standalone_service
 from fastapi import FastAPI

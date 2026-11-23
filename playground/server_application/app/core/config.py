@@ -14,9 +14,8 @@ import os
 from enum import StrEnum
 from functools import lru_cache
 from pathlib import Path
-from typing import Literal
 
-from pydantic import model_validator
+from measures.run_measures import DEFAULT_DATABASE
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 SERVER_ROOT = Path(__file__).resolve().parents[2]
@@ -54,19 +53,14 @@ class Settings(BaseSettings):
     VERSION: str = "0.1.0"
     API_V1_PREFIX: str = "/api/v1"
 
-    DATABASE_URL: str = ""
-    DATABASE_ECHO: bool = False
-    DATABASE_POOL_SIZE: int = 5
-    DATABASE_MAX_OVERFLOW: int = 10
+    # The synthetic SQLite extract `python -m api load` builds. A postgresql:// URL also works.
+    DATABASE_URL: str = f"sqlite:///{DEFAULT_DATABASE}"
 
     CORS_ORIGINS: list[str] = []
 
-    # Mock-data endpoints behind the client's example charts. Off in production.
-    SANDBOX_ENABLED: bool = True
-
     # Provider keys stay server-side in .env.<APP_ENV>.local or the host secret store.
     OPENROUTER_API_KEY: str | None = None
-    # Explicitly enabled for the local synthetic demo; independent of Sandbox.
+    # Explicitly enabled for the local synthetic demo.
     UNCF_CHAT_ENABLED: bool = False
     UNCF_CHAT_MODEL: str = "openai/gpt-4.1"
 
@@ -82,9 +76,6 @@ class Settings(BaseSettings):
     def is_development(self) -> bool:
         return self.APP_ENV is Environment.DEVELOPMENT
 
-    # Largest file /sandbox/pipeline/uploads accepts. The mock course file is about 18 MB.
-    PIPELINE_UPLOAD_MAX_BYTES: int = 100 * 1024 * 1024
-
     @property
     def is_production(self) -> bool:
         return self.APP_ENV is Environment.PRODUCTION
@@ -93,31 +84,6 @@ class Settings(BaseSettings):
     def docs_path(self) -> str | None:
         """Where Swagger UI is served, or None in production, where it is turned off."""
         return None if self.is_production else DOCS_PATH
-
-    @property
-    def async_database_url(self) -> str:
-        """DATABASE_URL with an async driver (asyncpg or aiosqlite), whatever form it is in."""
-        for prefix in ("postgres://", "postgresql://"):
-            if self.DATABASE_URL.startswith(prefix):
-                return "postgresql+asyncpg://" + self.DATABASE_URL.removeprefix(prefix)
-        if self.DATABASE_URL.startswith("sqlite://"):
-            return "sqlite+aiosqlite://" + self.DATABASE_URL.removeprefix("sqlite://")
-        return self.DATABASE_URL
-
-    @property
-    def database_engine(self) -> Literal["postgresql", "sqlite"]:
-        """PostgreSQL by default; SQLite when DATABASE_URL starts with sqlite://."""
-        return "sqlite" if self.async_database_url.startswith("sqlite") else "postgresql"
-
-    @model_validator(mode="after")
-    def _require_database_url(self) -> Settings:
-        # Fail at startup with a clear message instead of on the first query.
-        if not self.DATABASE_URL:
-            raise ValueError(
-                f"DATABASE_URL is not set for APP_ENV={self.APP_ENV}. "
-                f"Set it in .env.{self.APP_ENV}.local or as an environment variable."
-            )
-        return self
 
 
 @lru_cache

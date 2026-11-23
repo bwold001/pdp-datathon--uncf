@@ -42,7 +42,7 @@ def test_deployed_chat_reads_configured_database(tmp_path, monkeypatch, path):
             {"analysis": "retention", "cohort": "2022-23"}
         )
         assert reply.json()["receipts"] == direct.model_dump(mode="json")["receipts"]
-        for forbidden in ["/docs", "/api/v1/documents", "/api/v1/sandbox/pipeline/runs"]:
+        for forbidden in ["/docs", "/api/v1/uncf/health"]:
             assert client.get(forbidden).status_code == 404
 
 
@@ -60,7 +60,7 @@ def test_deployment_switch_and_missing_key(monkeypatch):
 
 
 def test_vercel_entrypoint_imports_without_playground_startup():
-    """Production import defaults to the bundled extract and never loads Sandbox or DB sessions."""
+    """Production import defaults to the bundled extract and never loads pyarrow."""
     root = Path(__file__).resolve().parents[3]
     environment = {
         key: os.environ[key] for key in ("PATH", "TMPDIR", "SYSTEMROOT") if key in os.environ
@@ -72,8 +72,6 @@ def test_vercel_entrypoint_imports_without_playground_startup():
             "import chat_app,sys,json; from app.core.config import settings; "
             "print(json.dumps({'database':settings.DATABASE_URL, "
             "'enabled':settings.UNCF_CHAT_ENABLED, 'environment':settings.APP_ENV, "
-            "'sandbox': 'app.sandbox.router' in sys.modules, "
-            "'sessions': 'app.db.session' in sys.modules, "
             "'pyarrow': 'pyarrow' in sys.modules, "
             "'routes':list(chat_app.app.openapi()['paths'])}))",
         ],
@@ -87,5 +85,5 @@ def test_vercel_entrypoint_imports_without_playground_startup():
     assert state["environment"] == "production"
     assert state["enabled"]
     assert state["database"] == f"sqlite:///{root / 'normalized-data-model/output/pdp.sqlite'}"
-    assert not state["sandbox"] and not state["sessions"] and not state["pyarrow"]
+    assert not state["pyarrow"]
     assert set(state["routes"]) == {"/api/v1/chat"}

@@ -415,7 +415,7 @@ Each retake is its own row. Use `attempt_number = 1` for first attempts only.
 
 ### Use the model from another project
 
-Another Python project can run the loader, without copying it, through the `pdp_model` package in this folder. The Playground's `/sandbox/pipeline` endpoints do this. Install this folder **editable**, because the loader reads `config/` and writes `data/staging/`, `logs/` and `output/` here, next to its code:
+Another Python project can run the loader, without copying it, through the `pdp_model` package in this folder. Install this folder **editable**, because the loader reads `config/` and writes `data/staging/`, `logs/` and `output/` here, next to its code:
 
 ```bash
 pip install -e normalized-data-model            # add [postgres] for the PostgreSQL backend
