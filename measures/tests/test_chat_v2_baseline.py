@@ -74,3 +74,24 @@ def test_small_dfw_results_keep_student_and_enrollment_units(tmp_path, size, sta
 
     assert result.status == status
     assert (result.numerator, result.denominator, result.n_students, result.metric_rate) == (size, 2 * size, size, 0.5)
+
+
+def test_two_student_credit_ratios_are_averaged(tmp_path):
+    """Ratios 1/2 and 1 give .75, while pooled credits would give 2/3."""
+    path = make_database(tmp_path / "two-ratios.sqlite", [
+        student("half", attempted=2, earned=1),
+        student("full", attempted=1, earned=1),
+    ])
+    (result,) = run_measure(Measure.CREDIT_COMPLETION, [Cohort.of("2023-24")], database=path)
+    assert (result.numerator, result.denominator, result.metric_rate) == (1.5, 2, 0.75)
+
+
+def test_one_student_final_grade_boundaries_count_enrollments(tmp_path):
+    """Six final enrollments include three DFW outcomes; I and unknown remain excluded."""
+    path = make_database(tmp_path / "grade-boundaries.sqlite", [student("one")], [
+        here("one", "2023-24", "FALL", grade=grade)
+        for grade in ("0.69", "0.70", "1.99", "2.00", "P", "W", "I", "unknown")
+    ])
+    (result,) = run_measure(Measure.DFW_RATE, [Cohort.of("2023-24")], database=path)
+    assert (result.numerator, result.denominator, result.metric_rate) == (3, 6, 0.5)
+    assert result.n_students == 1

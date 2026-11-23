@@ -259,7 +259,7 @@ The [shared snapshot and replay guide](docs/analysis-v2-snapshots.md) describes 
 configured database access, loader build identity, cancellation and reproducible computation inputs.
 
 The [defined operation catalog](docs/analysis-v2-defined-operations.md) registers the existing dashboard
-and legacy analyses with executable request schemas and typed result adapters. The v2 API uses these adapters; chat migration follows.
+and legacy analyses with executable request schemas and typed result adapters. The v2 API and chat use these adapters.
 
 The [disclosure and parity guide](docs/analysis-v2-disclosure.md) documents versioned dashboard/legacy
 profiles at version 2, shared API/CSV execution, and validation for mixed v2 plans.
@@ -267,7 +267,11 @@ Small, linked and overlapping results remain visible; no size-based privacy prot
 
 See the [deterministic v2 API guide](docs/analysis-v2-api.md) for `/api/v1/uncf/analysis-v2/catalog`,
 `/validate` and `/execute`, including configured sources, replay, deadlines and partial outcomes.
-The existing chat provider tools remain unchanged until the next integration task.
+Chat v2 proposes typed plans and executes only after explicit confirmation through the shared plan service.
 
 Chat v2 planning, confirmation and immutable result pagination are documented in
 [the client contract](docs/chat-v2-client.md). All example results are synthetic.
+
+Release A acceptance rules, fixed model-evaluation instructions, local verification evidence and
+remaining release blockers are in the [acceptance matrix](docs/chat-v2-acceptance.md) and
+[release handoff and rollback runbook](docs/release-a-handoff.md).
