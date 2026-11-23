@@ -49,9 +49,7 @@ def configured_data(tmp_path, monkeypatch):
 
 
 @pytest.mark.parametrize("analysis_request", REQUESTS)
-@pytest.mark.parametrize(
-    "url", ["/api/v1/chat", "/api/v1/uncf/chat", "/api/v1/sandbox/chat/suggest"]
-)
+@pytest.mark.parametrize("url", ["/api/v1/chat", "/api/v1/uncf/chat"])
 def test_all_chat_paths_match_direct_service(client, configured_data, analysis_request, url):
     """Old URLs and the new URL execute the same rich, deterministic analyses."""
     path, coverage = configured_data

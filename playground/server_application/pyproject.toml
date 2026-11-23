@@ -7,22 +7,13 @@ authors = [
 ]
 requires-python = ">=3.14"
 dependencies = [
-    "aiosqlite>=0.22.1",
-    "alembic>=1.20.0",
     "openrouter==1.3.151", # chat: official OpenRouter SDK; receipts supply displayed numbers
-    "asyncpg>=0.32.0",
-    "bcrypt>=5.0.0",
     "fastapi[standard]>=0.146.0",
-    "pandas>=3.0.6",
     "pdp-normalized-data-model[postgres]",
     "pdp-student-success",
-    "pgvector>=0.5.1",
-    "polars>=2.0.0",
-    "pyarrow>=26.0.0",
     "pydantic-settings>=2.16.0",
-    "pyjwt>=2.15.1",
     "pyyaml>=6.0.3", # analytics: reads declared coverage and definitions
-    "sqlalchemy[asyncio]>=2.1.5",
+    "sqlalchemy>=2.1.5", # chat: parses DATABASE_URL
 ]
 
 # The data model's loader, used in place: editable, because it reads its configs from its own folder.
@@ -37,26 +28,6 @@ dev = [
 ]
 
 
-[tool.alembic]
-script_location = "%(here)s/alembic"
-# Date-prefixed filenames so migrations sort chronologically in the editor.
-file_template = "%%(year)d_%%(month).2d_%%(day).2d_%%(hour).2d%%(minute).2d-%%(rev)s_%%(slug)s"
-prepend_sys_path = ["."]
-truncate_slug_length = 40
-
-# Format and lint every newly generated migration.
-[[tool.alembic.post_write_hooks]]
-name = "ruff_format"
-type = "module"
-module = "ruff"
-options = "format REVISION_SCRIPT_FILENAME"
-
-[[tool.alembic.post_write_hooks]]
-name = "ruff_check"
-type = "module"
-module = "ruff"
-options = "check --fix REVISION_SCRIPT_FILENAME"
-
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]
@@ -67,7 +38,3 @@ target-version = "py314"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM", "ASYNC"]
-
-[tool.ruff.lint.per-file-ignores]
-# Migration template imports op/sa/pgvector up front so hand-written migrations can use them.
-"alembic/versions/*" = ["F401"]

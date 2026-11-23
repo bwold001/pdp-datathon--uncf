@@ -1,13 +1,8 @@
 import type { Preview } from '@storybook/nextjs-vite'
 import { Inter } from 'next/font/google'
-import { mocked, sb } from 'storybook/test'
 
 import '../src/app/globals.css'
 import { ThemeProvider } from '../src/components/theme-provider'
-import { useHealthMonitor } from '../src/hooks/use-health-monitor'
-
-// Replace polling in Storybook; stories can override the default empty history below.
-sb.mock('../src/hooks/use-health-monitor.ts')
 
 // Mirrors src/app/layout.tsx, which Storybook doesn't render: globals.css reads --font-sans from this class.
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' })
@@ -44,8 +39,6 @@ const preview: Preview = {
   beforeEach() {
     // next-themes reads this key; light keeps colors the same on every machine.
     localStorage.setItem('theme', 'light');
-    // Keep LiveStatus safe to render even when a story does not configure the hook.
-    mocked(useHealthMonitor).mockReturnValue({ history: [], latest: undefined });
   },
   parameters: {
     controls: {

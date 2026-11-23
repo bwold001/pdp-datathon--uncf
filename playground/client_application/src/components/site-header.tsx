@@ -6,7 +6,7 @@ import { brand } from "@/content/brand";
 import { env } from "@/lib/env";
 import { routes } from "@/lib/routes";
 
-/** Logo (links home), Sandbox link, environment badge and theme toggle. */
+/** Logo (links home), Explorer link, environment badge and theme toggle. */
 export function SiteHeader({ linksInNewTab = false }: { linksInNewTab?: boolean }) {
   const newTab = linksInNewTab ? { target: "_blank", rel: "noreferrer" } : {};
   return (
@@ -29,11 +29,9 @@ export function SiteHeader({ linksInNewTab = false }: { linksInNewTab?: boolean 
         )}
       </Link>
       <div className="flex items-center gap-3">
-        {env.sandboxEnabled && (
-          <Link href={routes.sandbox} {...newTab} className="text-sm font-medium underline-offset-4 hover:underline">
-            Sandbox
-          </Link>
-        )}
+        <Link href={routes.uncfPaths} {...newTab} className="text-sm font-medium underline-offset-4 hover:underline">
+          Explorer
+        </Link>
         <span className="hidden rounded-full border px-2.5 py-0.5 text-[11px] tracking-widest text-muted-foreground uppercase sm:inline">
           {env.appEnv}
         </span>
