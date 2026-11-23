@@ -1,6 +1,6 @@
 # Release A exit-gate evidence — issue #53
 
-PR #72 is a reviewable verification/tooling change based on merged PR #71. The **Release A exit gate remains blocked** by the separate semantic and environment checks below. Approving this PR does not certify Release A or authorize deployment. All fixtures and results are synthetic.
+PR #72 is a reviewable verification/tooling change based on merged PR #71. It also fixes a browser-story timing failure by waiting for the filter popover to become visible before asserting and selecting Pell. The **Release A exit gate remains blocked** by the separate semantic and environment checks below. Approving this PR does not certify Release A or authorize deployment. All fixtures and results are synthetic.
 
 ## Revision and supported contract
 
@@ -123,9 +123,9 @@ Operator steps, only after separate authorization:
 
 ## Remaining release gates
 
-Resolve the gateway definition mismatch; run the configured live model set; verify PostgreSQL in
-its required environment; complete browser/preview parity and identify/test the actual known-good
-deployment. No PostgreSQL URL was configured, and no developer database was reset. PR #71 was merged upstream; PR #72 has not been merged. No production deployment or rollback
+Resolve the gateway definition mismatch; run the configured live model set; complete preview parity
+and identify/test the actual known-good deployment. PostgreSQL and browser evidence from configured
+Linux CI must be read alongside the local results below; the current PR checks identify the tested head. No PostgreSQL URL was configured, and no developer database was reset. PR #71 was merged upstream; PR #72 has not been merged. No production deployment or rollback
 was performed in this work. Keep issue #53 open until required gates pass.
 
 ## Commands and results (November 23, 2026)
@@ -149,8 +149,17 @@ Bun 1.4.3, Node 24.22.2, uv 0.13.0, mise 2026.11.12. No tracked lock/configurati
 | Real serialized receipts through React `EvidenceCard` static markup | Nine zero-rate receipts retained n=1–9, result policy, computation fingerprint and synthetic notice. This does not replace browser/interaction verification |
 | Detached rollback candidate's legacy/deployment tests | 21 passed; revision/compatibility check only |
 | Live model evaluation | 0/34 ran: Vercel key unavailable to the local process; unverified. Independent gateway boundary check failed as documented above |
-| PostgreSQL | No configured integration URL; unverified. SQLite does not establish PostgreSQL parity |
+| PostgreSQL | Unavailable locally. Configured PostgreSQL 18.4 CI ran all backend tests: 132 passed, no skips, on `2657a82`; the subsequent story-only fix does not change backend sources |
 
 The Next.js diagnostic reported a known vulnerability in the pinned framework version. Dependency
 upgrades are outside this verification change; assess that advisory before deployment. No automated
 upgrade, production operation or database reset was performed.
+
+Configured CI evidence: [post-#71 workflow run](https://github.com/bwold001/pdp-datathon--uncf/actions/runs/45292256625)
+verified backend PostgreSQL integration, client build and types. Its browser run passed 55/56 stories,
+including all eleven chat stories; Add a filter queried visibility before the popover transition
+completed. The story now retries the same visibility assertion with `waitFor`, preserving the Pell
+selection and URL assertions. The [PR checks](https://github.com/bwold001/pdp-datathon--uncf/pull/72/checks)
+record the rerun on the latest head. Local Chromium remains unavailable; the Linux browser job supplies
+interaction evidence. Preview readiness alone does not establish same-snapshot numerical parity or
+a rollback rehearsal.
