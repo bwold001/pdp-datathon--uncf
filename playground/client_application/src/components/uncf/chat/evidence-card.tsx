@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { Payload, Rate, Receipt, Status } from "@/services/student-success-v2";
 import { Button } from "@/components/ui/button";
+import { chatAnswerItems } from "./answer-items";
 
 const statuses: Record<Status, string> = {
   ok: "Available", provisional: "Provisional — follow-up is incomplete", unknown: "Unknown — no observed value",
@@ -51,16 +52,17 @@ export function Evidence({ payload }: { payload: Payload }) {
 
 /** Display source identity, exact executed scope and versioned evidence together. */
 export function EvidenceCard({ receipt }: { receipt: Receipt }) {
+  const items = chatAnswerItems(receipt);
   return <article className="min-w-0 space-y-3 rounded-xl border bg-card p-4 text-sm">
     <h3 className="font-semibold">{receipt.presentation?.title ?? receipt.operation_id}</h3>
     {receipt.presentation ? <div className="space-y-2">
       <p className="font-medium">{receipt.presentation.summary}</p>
       <p>{receipt.presentation.scope}</p>
-      {receipt.presentation.items.length > 0 && <ul className="list-disc space-y-1 pl-5">{receipt.presentation.items.map((item, index) => <li key={index}>{item}</li>)}</ul>}
+      {items.length > 0 && <ul className="list-disc space-y-1 pl-5">{items.map((item, index) => <li key={index}>{item}</li>)}</ul>}
       {receipt.presentation.caveats.map((note, index) => <p key={index}>{note}</p>)}
     </div> : <p>{statuses[receipt.result.status]}</p>}
     {receipt.result.payload && (receipt.result.payload.kind === "table" && receipt.presentation
-      ? <details><summary>Calculation details — all groups and supporting counts</summary><Evidence payload={receipt.result.payload} /></details>
+      ? <details open={items.length === 0}><summary>Calculation details — all groups and supporting counts</summary><Evidence payload={receipt.result.payload} /></details>
       : <Evidence payload={receipt.result.payload} />)}
     {receipt.result.exclusions?.map((e) => <p key={e.reason}>Excluded {e.reason}: {e.count}</p>)}
     <details><summary>Scope, definitions and source</summary><dl className="space-y-2 break-all">

@@ -206,6 +206,51 @@ export const ChemistryExplanation: Story = {
   },
 };
 
+export const GroupedCreditsVisibleImmediately: Story = {
+  render: () => <EvidenceCard receipt={{ ...receipt, operation_id: "grouped_summary", presentation: {
+    title: "Grouped first-year credits", scope: "2023-24 entry cohort", summary: "Results are shown below.", items: [], caveats: [],
+  }, result: { status: "ok", payload: {
+    kind: "table", columns: ["group", "count", "earned_mean", "earned_n", "earned_missing", "attempted_mean", "attempted_n", "attempted_missing"].map((id) => ({ id, type: id === "group" ? "text" : "number", unit: "fixture" })),
+    rows: [{ status: "ok", cells: ["zero", 3, 0, 2, 1, 20, 3, 0] }],
+  } } }} />,
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText("0 observed online enrollments — average first-year credits earned: 0 credits (usable n=2; missing=1).")).toBeVisible();
+    await expect(canvas.getByText(/attempted: 20 credits \(usable n=3; missing=0\)/)).toBeVisible();
+    await expect(canvas.getByRole("table", { hidden: true })).not.toBeVisible();
+  },
+};
+
+export const ChatTablesWithoutSummariesOpenImmediately: Story = {
+  render: () => <div>{["student_paths.summary", "dfw.course_list", "gateway.course_outcomes", "credit_momentum.summary"].map((operation) => <EvidenceCard key={operation} receipt={{ ...receipt, operation_id: operation,
+    presentation: { title: operation, scope: "Synthetic cohort", summary: "Results are shown below.", items: [], caveats: [] },
+    result: { status: "ok", payload: { kind: "table", columns: [{ id: "result", type: "text", unit: "fixture" }], rows: [{ status: "ok", cells: [`${operation} evidence`] }] } },
+  }} />)}</div>,
+  play: async ({ canvas, userEvent }) => {
+    await expect(canvas.getAllByRole("table")).toHaveLength(4);
+    for (const operation of ["student_paths.summary", "dfw.course_list", "gateway.course_outcomes", "credit_momentum.summary"]) {
+      await expect(canvas.getByText(`${operation} evidence`)).toBeVisible();
+    }
+    await userEvent.click(canvas.getAllByText("Calculation details — all groups and supporting counts")[0]);
+    await expect(canvas.getByText("student_paths.summary evidence")).not.toBeVisible();
+  },
+};
+
+export const GraduationPerspectivesStayDistinct: Story = {
+  render: () => <EvidenceCard receipt={{ ...chemistryReceipt, presentation: { ...chemistryReceipt.presentation!, summary: "Results are shown below." }, result: { status: "ok", payload: {
+    kind: "table", columns: ["label", "kind", "horizon", "group", "numerator", "denominator", "count", "rate", "note"].map((id) => ({ id, type: "text", unit: "fixture" })),
+    rows: [
+      { status: "ok", cells: ["Entrants completing in any program", "rate", "four_year", "overall", 1, 2, null, .5, null] },
+      { status: "unavailable", explanation: { label: "Entrants completing in the selected program", kind: "rate", horizon: "four_year", reason: "completion_program_missing", note: null } },
+      { status: "unavailable", explanation: { label: "Program graduates who switched in", kind: "composition", horizon: "four_year", reason: "completion_program_missing", note: null } },
+    ],
+  } } }} />,
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText("Within four years — Entrants completing in any program: 50.00% (1 of 2 students).")).toBeVisible();
+    await expect(canvas.getByText(/^Within four years — Entrants completing in the selected program: We cannot tell/)).toBeVisible();
+    await expect(canvas.getByText(/^Within four years — Program graduates who switched in: We cannot tell/)).toBeVisible();
+  },
+};
+
 export const ChemistryClarifyConfirmAndExplore: Story = {
   args: {
     loadSuggestions: async () => [{ ...retentionSuggestion, operation_id: "legacy.graduation", question: "What is the graduation rate for chemistry majors?" }],
