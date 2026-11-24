@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { expect, fn, waitFor } from "storybook/test";
-import type { ChatRequestV2, ChatResponseV2, Payload, Receipt, SuggestedQuestion } from "@/services/student-success-v2";
+import { loadSuggestedQuestions, type ChatRequestV2, type ChatResponseV2, type Payload, type Receipt, type SuggestedQuestion } from "@/services/student-success-v2";
 import { StudentSuccessChat } from "./chat";
 import { Evidence, EvidenceCard } from "./evidence-card";
 import StudentSuccessChatPage from "@/app/(uncf-explorer)/uncf/chat/page";
@@ -265,5 +265,29 @@ export const CatalogSuggestionsOnly: Story = {
     await userEvent.click(canvas.getByRole("button", { name: retentionSuggestion.question }));
     await expect(args.request).toHaveBeenLastCalledWith({ protocol_version: 2, prompt: retentionSuggestion.question });
     await expect(canvas.getByRole("checkbox")).not.toBeChecked();
+  },
+};
+
+
+export const CatalogSuggestionRequest: Story = {
+  args: { loadSuggestions: loadSuggestedQuestions },
+  beforeEach: () => {
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      if (input === `${env.apiBaseUrl}/uncf/analysis-v2/catalog`) {
+        return new Response(JSON.stringify({ suggestions: [retentionSuggestion] }), {
+          status: 200, headers: { "Content-Type": "application/json" },
+        });
+      }
+      return originalFetch(input, init);
+    });
+    return () => { globalThis.fetch = originalFetch; };
+  },
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByRole("button", { name: retentionSuggestion.question })).toBeVisible();
+    await expect(globalThis.fetch).toHaveBeenCalledWith(
+      `${env.apiBaseUrl}/uncf/analysis-v2/catalog`,
+      expect.objectContaining({ cache: "no-store" }),
+    );
   },
 };

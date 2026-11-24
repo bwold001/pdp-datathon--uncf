@@ -54,7 +54,7 @@ export function sendStudentSuccessV2(request: ChatRequestV2): Promise<ChatRespon
 
 /** Load server-filtered questions without calling the chat provider or calculating results. */
 export async function loadSuggestedQuestions(): Promise<SuggestedQuestion[]> {
-  const catalog = await apiRequest<{ suggestions?: SuggestedQuestion[]; status?: string }>("/analysis-v2/catalog", { cache: "no-store" });
+  const catalog = await apiRequest<{ suggestions?: SuggestedQuestion[]; status?: string }>("/uncf/analysis-v2/catalog", { cache: "no-store" });
   if (catalog.status === "error") throw new Error("Question suggestions are unavailable.");
   return catalog.suggestions ?? [];
 }
