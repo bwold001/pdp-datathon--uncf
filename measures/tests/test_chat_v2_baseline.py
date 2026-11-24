@@ -30,8 +30,8 @@ def test_gateway_cohort_completion_and_course_outcomes_have_different_population
     (course,) = gateway_courses("2023-24", database=path)["courses"]
 
     assert (completion.numerator, completion.denominator, completion.metric_rate) == (10, 20, 0.5)
-    assert (course["students"], course["first_pass"], course["passed"]) == (10, 10, 10)
-    assert course["path"] == {"first": 10, "retook_passed": 0, "retook_not": 0, "no_retake": 0}
+    assert (course["students"], course["first_pass"], course["passed"]) == (10, 0, 0)
+    assert course["path"] == {"first": 0, "retook_passed": 0, "retook_not": 0, "no_retake": 10}
 
 
 def test_credit_completion_preserves_a_fractional_numerator(tmp_path):

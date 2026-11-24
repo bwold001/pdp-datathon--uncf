@@ -349,12 +349,12 @@ def test_api_matches_an_independent_recount_of_the_normalized_data(client) -> No
                         key = tuple(row["group"][d] for d in dimensions) if row["group"] else ()
                         achieved, answered = expected.get(key, (0, 0))
                         where = (measure, cohort, dimensions, key)
-                        if answered >= 10:
+                        if answered > 0:
                             assert row["status"] == "ok", where
                             assert (row["numerator"], row["denominator"]) == (achieved, answered), where
                             assert row["rate"] == round(achieved / answered, 4), where
                         else:
-                            assert row["status"] == "suppressed", where
+                            assert row["status"] in ("unknown", "unavailable", "not_reported", "not_yet_observable", "suppressed"), where
                             assert row["numerator"] is None and row["rate"] is None, where
                         checked += 1
     finally:

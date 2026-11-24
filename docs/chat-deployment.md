@@ -29,7 +29,7 @@ The first matching rewrite wins:
 | URL | Service |
 | --- | --- |
 | `/api/v1/chat` | Chat |
-| `/api/v1/uncf/chat` | Chat compatibility alias |
+| `/api/v1/uncf/chat` | Chat URL alias (v2 body required) |
 | `/api/v1/uncf/*` except chat | Existing Results and deterministic analysis API |
 | Other paths | Next.js frontend |
 
@@ -99,14 +99,14 @@ The browser deadline remains 90 seconds. Calculation cancellation waits for data
 2. Open `/uncf/chat`. Ask “What is the retention rate for all majors?” Select a cohort when asked.
 3. Check that the full proposed scope appears before any calculation. Confirm it and inspect
    the receipt. This is synthetic demonstration data, not a finding about a campus.
-4. Compare the receipt with `POST /api/v1/uncf/analyses` using the exact same parameters. The
-   calculations, coverage and definitions should agree; build timestamps/source stamps may differ.
+4. Compare the receipt with `POST /api/v1/uncf/analysis-v2/execute` using the exact canonical plan. The
+   calculations, coverage and definitions should agree; snapshot, build/configuration versions and computation fingerprints must match.
 5. Ask “What is the graduation rate for chemistry majors?” and “What is enrollment ethnicity
    by academic program over the past 2 years?” Resolve requested scope choices, confirm, and
    compare each receipt with direct analytics. Unknown or unavailable results must stay unknown;
    do not invent coverage declarations to make a demo produce numbers.
-6. Verify missing-key (503), provider-error (502), invalid-input (422), unsupported-question,
-   and timeout behavior. No error response should reveal provider exception details or keys.
+6. Verify missing-key/provider-error/timeout typed v2 error responses, invalid-input (422),
+   and unsupported-question behavior. No error response should reveal provider exception details or keys.
 7. Verify Explorer results, CSV exports, assets, and both old chat-page redirects still work.
 8. Set the Production key/model, deploy, and repeat the live question on the production URL.
 
@@ -141,9 +141,12 @@ environment. The hosted entrypoint does not read the local development secret fi
 ## Rollback
 
 Restore the previous verified deployment/revision for the frontend, Results API and chat services.
-Record its environment/data compatibility and verify legacy v1 behavior before promotion. Do not
+Record its environment/data compatibility and verify the previous artifact's supported behavior before promotion, using its matching client. Do not
 reset a database or change protocols during an in-flight response; allow bounded cleanup to finish.
 Existing enablement settings are not the Release A rollback mechanism.
 
 The [Release A handoff](release-a-handoff.md) records the locally checked revision, exit gates,
 operator steps and limits of the evidence. No production deployment or rollback was rehearsed.
+
+Current Release B verification and unresolved gates: [release-b-handoff.md](release-b-handoff.md).
+The historical Release A report remains evidence about that revision, not the current chat protocol.

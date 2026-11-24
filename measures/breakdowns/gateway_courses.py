@@ -4,14 +4,14 @@ A gateway course is one the institution flags as gateway math (M) or English (E)
 grades it flags count, and only in the cohort's first academic year, as in the PDP's own gateway measure. If a cohort
 has no flagged grades, the page lists no courses and says so; it never guesses which courses are gateway.
 
-Passing uses the PDP's gateway line, not the DFW one: a grade of 1.0 or higher, or a P (the dictionary's
-CompletedGatewayMathYear1 and CompletedGatewayEnglishYear1). F and W don't pass. Grades that aren't final
+Passing uses the registered course-outcome definition: a grade of 2.0 or higher, or P.
+Cohort requirement/completion flags use a separate 1.0-or-P definition. F and W don't pass. Grades that aren't final
 (incomplete, audit, missing) are left out and counted apart, as in the DFW measure.
 
 A try is a term: several rows in one term (duplicate class rows, data finding 9) are one try, passed if any passed.
 Each student's path through a course: passed on the first try, failed and passed on a later try, failed and failed
 again, or failed and didn't retake (all within year 1). Each course also counts its grades, one per student per try,
-in the groups of grade_scale.py (C or higher, D, under 1.0, P, W), and the answer carries that table.
+in the groups of grade_scale.py (C or higher, below C, under 1.0, P, W), and the answer carries that table.
 
 This module only counts. The comparisons (the filtered students against everyone else who took a course, and each
 course pair against everyone else) are the gap finder's job, which sits on top of measures: gap_finder/gateway.py
@@ -49,7 +49,7 @@ PATH_STEPS = ("first", "retook_passed", "retook_not", "no_retake")
 
 
 def gateway_passed(grade: str | None) -> bool | None:
-    """True for a gateway pass (1.0 or higher, or P), False for anything lower, F or W, None if it isn't a final grade."""
+    """True for a gateway pass (2.0 or higher, or P), False for anything lower, F or W, None if it isn't a final grade."""
     if grade_result(grade) is None:
         return None
     code = grade.strip().upper()

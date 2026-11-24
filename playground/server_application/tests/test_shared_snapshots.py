@@ -1,5 +1,7 @@
 """Configured runtime snapshots reuse the same source as existing deterministic APIs."""
 
+import sqlite3
+
 import pytest
 from analytics.provenance import DataUnavailable, VersionUnavailable
 from analytics.tests.test_snapshots import add_identity
@@ -27,5 +29,8 @@ def test_configured_snapshot_exposes_both_row_views_and_legacy_binding(configure
 
 def test_configured_v2_snapshot_refuses_missing_build_identity(configured_data):
     """An old uploaded extract must be rebuilt for v2 rather than borrowing local metadata."""
+    path, _ = configured_data
+    with sqlite3.connect(path) as db:
+        db.execute("DROP TABLE load_run")
     with pytest.raises(VersionUnavailable), database_snapshot():
         pass

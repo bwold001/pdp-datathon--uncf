@@ -29,12 +29,12 @@ export type GatewayCourse = {
   subject: "E" | "M";
   /** Students with a final grade in the course in year 1. */
   students: number;
-  /** Passed on the first try: a grade of 1.0 or higher, or a pass. */
+  /** Passed on the first try: a grade of 2.0 or higher, or a pass. */
   first_pass: number;
   /** Passed on any try in year 1. */
   passed: number;
   path: GatewayPath;
-  /** How many tries ended in each grade group (C or higher, D, Under 1.0, P, W), one per student per term. Null when hidden. */
+  /** How many tries ended in each grade group (C or higher, Below C, Under 1.0, P, W), one per student per term. Null when hidden. */
   grades: Record<string, number | null>;
   retained_if_passed: Retention;
   retained_if_not_passed: Retention;

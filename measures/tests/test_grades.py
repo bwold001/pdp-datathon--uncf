@@ -32,10 +32,10 @@ def test_dfw_is_d_plus_and_below():
     assert not outcomes["1.7"] and outcomes["1.69"] and outcomes["F"] and outcomes["W"] and not outcomes["P"]
 
 
-def test_gateway_pass_is_a_d_or_better():
-    """The PDP's gateway line (1.0) falls on the D: D and up and P pass, D-, F and W don't."""
+def test_gateway_course_pass_is_c_or_better():
+    """The registered course line is 2.0: C or better and P pass; lower grades fail."""
     passing = [grade for grade in GRADE_ORDER if letter_passes_gateway(grade)]
-    assert passing == ["A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D+", "D", "P"]
+    assert passing == ["A", "A-", "B+", "B", "B-", "C+", "C", "P"]
 
 
 def test_every_dfw_letter_has_a_group():
@@ -46,10 +46,10 @@ def test_every_dfw_letter_has_a_group():
 
 
 def test_gateway_groups_follow_the_two_lines():
-    """C or higher from the DFW line (1.7), D down to the pass line (1.0), and everything under it together."""
+    """Course groups distinguish C or better, grades from 1.0 to below C, and grades under 1.0."""
     groups = {letter: gateway_group(letter) for letter in GRADE_ORDER}
-    assert {letter for letter, group in groups.items() if group == "C or higher"} == {"A", "A-", "B+", "B", "B-", "C+", "C", "C-"}
-    assert {letter for letter, group in groups.items() if group == "D"} == {"D+", "D"}
+    assert {letter for letter, group in groups.items() if group == "C or higher"} == {"A", "A-", "B+", "B", "B-", "C+", "C"}
+    assert {letter for letter, group in groups.items() if group == "Below C"} == {"C-", "D+", "D"}
     assert {letter for letter, group in groups.items() if group == "Under 1.0"} == {"D-", "F"}
     assert (groups["P"], groups["W"]) == ("P", "W")
     # Every group passes or fails as a whole, so its label is honest whatever grades the data holds.
@@ -68,7 +68,7 @@ def test_the_tables_follow_the_rules():
 
     gateway = {row["grade"]: row for row in gateway_scale()["grades"]}
     assert list(gateway) == list(GATEWAY_GROUPS)
-    assert [grade for grade, row in gateway.items() if row["counted"]] == ["C or higher", "D", "P"]
-    assert gateway["D"]["points"] == "1.0 to under 1.7 (D, D+)"
+    assert [grade for grade, row in gateway.items() if row["counted"]] == ["C or higher", "P"]
+    assert gateway["Below C"]["points"] == "1.0 to under 2.0 (D, D+, C-)"
     assert gateway["Under 1.0"]["points"] == "under 1.0 (D- or F), or the code F"
     assert "UW" in dfw_scale()["left_out"]

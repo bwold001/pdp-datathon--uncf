@@ -96,6 +96,7 @@ def implementation_version():
 def issue(code, step_id=None):
     """Use fixed application messages rather than raw driver, validation or configuration errors."""
     messages = {
+        "provider_failed": "Chat interpretation is unavailable. Check provider configuration and credentials; deterministic endpoints remain available.",
         "invalid_plan": "The plan is invalid or incomplete.",
         "unsupported_operation": "The operation is not registered for execution.",
         "unsupported_parameter": "A parameter is unsupported or outside the current catalog choices.",

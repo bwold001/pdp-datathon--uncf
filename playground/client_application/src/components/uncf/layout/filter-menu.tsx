@@ -13,10 +13,10 @@ import { explorerFontClass } from "./explorer-fonts";
 import { explorerLinkButton, explorerPrimaryButton } from "./explorer-styles";
 import { hiddenCount } from "./small-groups";
 
-/** Students with each value of a filter, from the API: null is a group under the API's min_students. */
+/** Students with each value of a filter, from the API: null means unavailable or historically omitted evidence. */
 export type ValueCounts = Record<string, number | null>;
 
-/** One value in a list: what it's called, its students, and whether it's picked or too small to pick. */
+/** One value in a list: what it's called, its students, and whether it's selected or has no reported population. */
 type OptionRow = { value: string | null; label: string; count?: string; disabled: boolean; selected: boolean };
 
 /** A filter's values as rows: "Any" (or its "All" words) first unless it always has a value. */
@@ -27,7 +27,7 @@ function optionRows(definition: CohortFilterDefinition, value: string | null, co
   }
   for (const option of definition.options) {
     const count = counts?.[option.value];
-    // Under minStudents (or none): too small to show, so it can't be picked.
+    // An absent or empty population cannot be selected from these reported counts.
     const tooSmall = counts !== undefined && (count === null || count === 0 || count === undefined);
     rows.push({
       value: option.value,
