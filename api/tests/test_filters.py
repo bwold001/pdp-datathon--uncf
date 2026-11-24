@@ -11,7 +11,15 @@ from measures.models import Group, GroupDimension, Measure
 from measures.tests.explorer_fixture import LOADED_AT, make_database, student
 
 
-def test_query_takes_only_offered_values():
+@pytest.fixture
+def two_classes(tmp_path, monkeypatch):
+    """Loaded data with the 2022-23 and 2023-24 classes: the cohorts a query may name come from the data."""
+    path = make_database(tmp_path / "classes.sqlite", [student("a"), student("b", cohort="2022-23")])
+    monkeypatch.setattr(data, "data_path", lambda: path)
+    return path
+
+
+def test_query_takes_only_offered_values(two_classes):
     """A cohort, filter name or value the Explorer doesn't offer is refused; equal queries are equal."""
     with pytest.raises(InvalidFilter, match="Cohort"):
         CohortQuery.of("2019-20")
@@ -26,7 +34,7 @@ def test_query_takes_only_offered_values():
     assert CohortQuery.of("2023-24").retention_type == "school"
 
 
-def test_query_hands_the_measures_a_group_and_a_measure():
+def test_query_hands_the_measures_a_group_and_a_measure(two_classes):
     """Filters become a measures Group, and the retention type picks school or federal retention."""
     query = CohortQuery.of("2023-24", "federal", pell="Y", race="Asian")
     assert query.as_group() == Group.of((GroupDimension.PELL, "Y"), (GroupDimension.RACE, "Asian"))
@@ -34,7 +42,7 @@ def test_query_hands_the_measures_a_group_and_a_measure():
     assert CohortQuery.of("2023-24").retention_measure == Measure.RETENTION
 
 
-def test_filters_match_raw_spellings_and_combine(tmp_path):
+def test_filters_match_raw_spellings_and_combine(tmp_path, monkeypatch):
     """Values match ignoring case and spaces, unlisted ones count as UNKNOWN, and filters combine with AND."""
     database = make_database(
         tmp_path / "pdp.sqlite",
@@ -45,6 +53,7 @@ def test_filters_match_raw_spellings_and_combine(tmp_path):
             student("d", cohort="2022-23"),
         ],
     )
+    monkeypatch.setattr(data, "data_path", lambda: database)
     connection = connect(database)
     picked = lambda **filters: sorted(select_students(connection, "2023-24", CohortQuery.of("2023-24", **filters).as_group()))
     assert picked() == ["a", "b", "c"]
