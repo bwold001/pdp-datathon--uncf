@@ -48,7 +48,7 @@ def stage_defined(step_id, spec, evidence, *, linked_family=None):
     """Bind already-projected defined evidence to its registry policy without suppressing it again."""
     selected = profile(spec.disclosure_profile)
     if (
-        selected not in (DASHBOARD_V1, LEGACY_ANALYTICS_V1)
+        selected not in (DASHBOARD_V1, LEGACY_ANALYTICS_V1, EXPLORATION_V1)
         or evidence.operation_id != spec.id
         or evidence.operation_version != spec.version
     ):
@@ -61,6 +61,8 @@ def stage_defined(step_id, spec, evidence, *, linked_family=None):
         step_id=step_id,
         profile_id=selected.id,
         result=evidence.result,
+        distinct_units=evidence.distinct_units,
+        group_units=evidence.group_units,
         linked_family=linked_family,
     )
 

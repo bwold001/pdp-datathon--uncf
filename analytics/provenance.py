@@ -127,6 +127,7 @@ def _material(spec: ReplaySpec) -> dict:
     raw = spec.model_dump(mode="json", exclude={"computation_fingerprint"})
     raw["operations"] = sorted(raw["operations"], key=lambda r: r["id"])
     raw["policies"] = sorted(raw["policies"], key=lambda r: r["id"])
+    raw["versions"]["methods"] = sorted(raw["versions"]["methods"], key=lambda r: r["id"])
     raw["versions"]["features"] = sorted(raw["versions"]["features"], key=lambda r: r["id"])
     return raw
 
@@ -151,7 +152,7 @@ def make_replay_spec(plan: ExecutablePlan, identity: SnapshotIdentity, versions:
         if step.kind == "exploratory_analysis" and step.operation == "correlation":
             if not {step.parameters.x, step.parameters.y} <= set(feature_ids):
                 raise VersionUnavailable("The requested feature versions are unavailable.")
-            if versions.method is None or versions.method.id != step.parameters.method:
+            if step.parameters.method not in {v.id for v in versions.methods}:
                 raise VersionUnavailable("The requested method version is unavailable.")
     if plan.snapshot_ref != identity.snapshot_ref:
         raise SnapshotUnavailable("The requested snapshot is unavailable.")

@@ -340,7 +340,7 @@ def test_visible_exploration_needs_matching_method_and_feature_versions():
     """A correlation cannot omit the versioned inputs needed to replay it."""
     examples = json.loads((Path(__file__).parent / "fixtures/contracts_v2.json").read_text())
     raw = next(e for e in examples if e.get("receipts") and e["receipts"][0]["operation_id"] == "correlation")
-    for versions in ({"method": None}, {"features": []}, {"method": {"id": "spearman", "version": "1"}}):
+    for versions in ({"methods": []}, {"features": []}, {"methods": [{"id": "spearman", "version": "1"}]}):
         bad = copy.deepcopy(raw)
         bad["receipts"][0]["versions"].update(versions)
         with pytest.raises(ValidationError):
