@@ -428,8 +428,8 @@ function PairsCard({ data }: { data: GatewayResponse }) {
         </div>
       )}
       <p className="mt-4 text-[13px] text-(--uncf-ink-3)">
-        {fmt(data.pairs_considered)} pairs have {data.meta.min_pair_students} or more students and are compared; the rest
-        are hidden to protect privacy. “Could be chance” means the gap may not hold up in another year.
+        {fmt(data.pairs_considered)} course pairs were evaluated. Values are not hidden by group size.
+        “Could be chance” means the gap may not hold up in another year.
       </p>
     </Card>
   );

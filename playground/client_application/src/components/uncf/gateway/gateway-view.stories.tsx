@@ -40,7 +40,7 @@ export const RealCourses: Story = {
     await expect(canvas.getAllByRole("listitem")).toHaveLength(20);
     await userEvent.selectOptions(canvas.getByRole("combobox", { name: /Sort by/ }), "first");
     await expect(canvas.getAllByRole("listitem")[0]).toHaveTextContent("0%");
-    await expect(canvas.getByText(/pairs have 1 or more students/)).toBeVisible();
+    await expect(canvas.getByText(/course pairs were evaluated/)).toBeVisible();
   },
 };
 
@@ -76,12 +76,13 @@ export const ProvisionalClass: Story = {
   },
 };
 
-/** Fewer than 10 students match: no numbers at all. */
+/** A two-student cohort keeps its one-student course visible. */
 export const SmallGroupVisible: Story = {
   name: "Two students stay visible",
   args: { data: gatewayTooFew },
   play: async ({ canvas }) => {
     await expect(canvas.getByText("passed on the first try: 1 of 1 students")).toBeVisible();
+    await expect(canvas.getByText(/3 course pairs were evaluated/)).toBeVisible();
     await expect(canvas.queryByText(/hidden to protect privacy/)).not.toBeInTheDocument();
   },
 };
