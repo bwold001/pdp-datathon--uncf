@@ -13,7 +13,9 @@ extract through `DATABASE_URL`; reads are read-only and calculations are not cac
 is generated or modified during a request. After loading the extract, the chat build uninstalls
 PyArrow, a build-only dependency unused by chat and deterministic calculations. This keeps the
 function below Vercel’s bundle limit without changing the Results service or Playground dependencies. Separate builds can have different load timestamps;
-compare parameters, definitions and calculated values, not build timestamps or opaque source stamps.
+compare parameters, definitions and calculated values together with source, pipeline, normalization,
+configuration and result-policy/version stamps. Load timestamps may differ; equal source hashes
+alone do not establish equivalent normalization.
 
 `chat_app.py` gives only this dedicated service production defaults and a bundled SQLite URL.
 It does not start the full Playground app or the Explorer API.
@@ -125,7 +127,7 @@ Playground checks (run from `playground/server_application`):
 
 ```bash
 uv sync --locked
-TEST_ON_SQLITE=true uv run pytest
+uv run pytest
 uv run ruff check .
 uv run ruff format --check .
 ```
@@ -138,7 +140,10 @@ environment. The hosted entrypoint does not read the local development secret fi
 
 ## Rollback
 
-Set `NEXT_PUBLIC_STUDENT_SUCCESS_CHAT_ENABLED=false` and redeploy to hide the chat interface.
-Set `UNCF_CHAT_ENABLED=false` to remove the backend routes too. Results and direct analysis routes
-continue to use their existing service. The chat code never sends arbitrary SQL or executes a
-calculation before explicit scope confirmation.
+Restore the previous verified deployment/revision for the frontend, Results API and chat services.
+Record its environment/data compatibility and verify legacy v1 behavior before promotion. Do not
+reset a database or change protocols during an in-flight response; allow bounded cleanup to finish.
+Existing enablement settings are not the Release A rollback mechanism.
+
+The [Release A handoff](release-a-handoff.md) records the locally checked revision, exit gates,
+operator steps and limits of the evidence. No production deployment or rollback was rehearsed.

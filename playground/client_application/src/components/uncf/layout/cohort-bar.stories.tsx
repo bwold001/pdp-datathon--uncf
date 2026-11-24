@@ -45,7 +45,7 @@ export const AddAFilter: Story = {
   play: async ({ canvas, canvasElement, userEvent }) => {
     const page = within(canvasElement.ownerDocument.body);
     await userEvent.click(canvas.getByRole("button", { name: "Add filter" }));
-    await expect(await page.findByRole("group", { name: "Financial aid" })).toBeVisible();
+    await waitFor(() => expect(page.getByRole("group", { name: "Financial aid" })).toBeVisible());
     await userEvent.click(page.getByRole("button", { name: /^Pell \(year 1\)/ }));
     await userEvent.click(await page.findByRole("button", { name: /^Pell recipient/ }));
     await expect(getRouter().push).toHaveBeenCalledWith("/uncf/dfw?pell=Y&sort=rate", { scroll: false });

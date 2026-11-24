@@ -1,0 +1,546 @@
+{
+  "schema_version": 1,
+  "synthetic": true,
+  "cases": [
+    {
+      "id": "a01",
+      "critical": true,
+      "prompt": "DFW rate for Pell recipients in 2023-24",
+      "expected_status": "confirmation",
+      "operations": [
+        "dfw.rate"
+      ],
+      "constraints": {
+        "dfw.rate": {
+          "cohort": "2023-24",
+          "filters": {
+            "pell": "Y"
+          }
+        }
+      },
+      "clarification_fields": []
+    },
+    {
+      "id": "a02",
+      "critical": true,
+      "prompt": "What is the DFW rate for Pell students?",
+      "expected_status": "clarification",
+      "operations": [
+        "dfw.rate"
+      ],
+      "constraints": {
+        "dfw.rate": {
+          "filters": {
+            "pell": "Y"
+          }
+        }
+      },
+      "clarification_fields": [
+        "cohort"
+      ]
+    },
+    {
+      "id": "a03",
+      "critical": true,
+      "prompt": "For 2023-24 compare school retention across existing earned credit tiers",
+      "expected_status": "confirmation",
+      "operations": [
+        "credit_momentum.summary"
+      ],
+      "constraints": {
+        "credit_momentum.summary": {
+          "cohort": "2023-24",
+          "retention_type": "school",
+          "filters": {}
+        }
+      },
+      "clarification_fields": []
+    },
+    {
+      "id": "a04",
+      "critical": true,
+      "prompt": "Compare school retention for credit tiers below 15, 15 to below 30, and at least 30 in 2023-24",
+      "expected_status": "confirmation",
+      "operations": [
+        "credit_momentum.summary"
+      ],
+      "constraints": {
+        "credit_momentum.summary": {
+          "cohort": "2023-24",
+          "retention_type": "school",
+          "filters": {}
+        }
+      },
+      "clarification_fields": []
+    },
+    {
+      "id": "a05",
+      "critical": true,
+      "prompt": "School PDP retention rate in 2023-24",
+      "expected_status": "confirmation",
+      "operations": [
+        "retention.rate"
+      ],
+      "constraints": {
+        "retention.rate": {
+          "cohort": "2023-24",
+          "retention_type": "school",
+          "filters": {}
+        }
+      },
+      "clarification_fields": []
+    },
+    {
+      "id": "a06",
+      "critical": true,
+      "prompt": "Next-fall federal retention rate for 2023-24",
+      "expected_status": "confirmation",
+      "operations": [
+        "retention.rate"
+      ],
+      "constraints": {
+        "retention.rate": {
+          "cohort": "2023-24",
+          "retention_type": "federal",
+          "filters": {}
+        }
+      },
+      "clarification_fields": []
+    },
+    {
+      "id": "a07",
+      "critical": true,
+      "prompt": "What is retention for 2023-24?",
+      "expected_status": "clarification",
+      "operations": [
+        "retention.rate"
+      ],
+      "constraints": {
+        "retention.rate": {
+          "cohort": "2023-24",
+          "filters": {}
+        }
+      },
+      "clarification_fields": [
+        "retention_type"
+      ]
+    },
+    {
+      "id": "a08",
+      "critical": true,
+      "prompt": "PDP persistence rate for 2023-24",
+      "expected_status": "confirmation",
+      "operations": [
+        "persistence.rate"
+      ],
+      "constraints": {
+        "persistence.rate": {
+          "cohort": "2023-24",
+          "filters": {}
+        }
+      },
+      "clarification_fields": []
+    },
+    {
+      "id": "a09",
+      "critical": true,
+      "prompt": "Mean of student earned-to-attempted credit ratios for 2023-24",
+      "expected_status": "confirmation",
+      "operations": [
+        "credit_completion.ratio"
+      ],
+      "constraints": {
+        "credit_completion.ratio": {
+          "cohort": "2023-24",
+          "filters": {}
+        }
+      },
+      "clarification_fields": []
+    },
+    {
+      "id": "a10",
+      "critical": true,
+      "prompt": "Math gateway cohort requirement completion rate in 2023-24",
+      "expected_status": "confirmation",
+      "operations": [
+        "gateway.math_completion"
+      ],
+      "constraints": {
+        "gateway.math_completion": {
+          "cohort": "2023-24",
+          "filters": {}
+        }
+      },
+      "clarification_fields": []
+    },
+    {
+      "id": "a11",
+      "critical": true,
+      "prompt": "English gateway cohort requirement completion rate in 2023-24",
+      "expected_status": "confirmation",
+      "operations": [
+        "gateway.english_completion"
+      ],
+      "constraints": {
+        "gateway.english_completion": {
+          "cohort": "2023-24",
+          "filters": {}
+        }
+      },
+      "clarification_fields": []
+    },
+    {
+      "id": "a12",
+      "critical": true,
+      "prompt": "First-attempt C-or-better-or-P gateway course outcomes in year one for 2023-24, using school retention",
+      "expected_status": "confirmation",
+      "operations": [
+        "gateway.course_outcomes"
+      ],
+      "constraints": {
+        "gateway.course_outcomes": {
+          "cohort": "2023-24",
+          "retention_type": "school",
+          "filters": {}
+        }
+      },
+      "clarification_fields": []
+    },
+    {
+      "id": "a13",
+      "critical": true,
+      "prompt": "DFW course list for Pell students in 2023-24",
+      "expected_status": "confirmation",
+      "operations": [
+        "dfw.course_list"
+      ],
+      "constraints": {
+        "dfw.course_list": {
+          "cohort": "2023-24",
+          "filters": {
+            "pell": "Y"
+          }
+        }
+      },
+      "clarification_fields": []
+    },
+    {
+      "id": "a14",
+      "critical": true,
+      "prompt": "DFW details for ENG 101 in 2023-24",
+      "expected_status": "confirmation",
+      "operations": [
+        "dfw.course_detail"
+      ],
+      "constraints": {
+        "dfw.course_detail": {
+          "cohort": "2023-24",
+          "course": "ENG 101",
+          "filters": {}
+        }
+      },
+      "clarification_fields": []
+    },
+    {
+      "id": "a15",
+      "critical": true,
+      "prompt": "DFW details for a course in 2023-24",
+      "expected_status": "clarification",
+      "operations": [
+        "dfw.course_detail"
+      ],
+      "constraints": {
+        "dfw.course_detail": {
+          "cohort": "2023-24",
+          "filters": {}
+        }
+      },
+      "clarification_fields": [
+        "course"
+      ]
+    },
+    {
+      "id": "a16",
+      "critical": true,
+      "prompt": "Student paths over 3 terms in 2023-24 with school retention",
+      "expected_status": "confirmation",
+      "operations": [
+        "student_paths.summary"
+      ],
+      "constraints": {
+        "student_paths.summary": {
+          "cohort": "2023-24",
+          "terms": 3,
+          "retention_type": "school",
+          "filters": {}
+        }
+      },
+      "clarification_fields": []
+    },
+    {
+      "id": "a17",
+      "critical": true,
+      "prompt": "Graduation for general chemistry bachelor entrants in 2023-24",
+      "expected_status": "confirmation",
+      "operations": [
+        "legacy.graduation"
+      ],
+      "constraints": {
+        "legacy.graduation": {
+          "cohort": "2023-24",
+          "program": "chemistry_general",
+          "credential": "B"
+        }
+      },
+      "clarification_fields": []
+    },
+    {
+      "id": "a18",
+      "critical": true,
+      "prompt": "School retention by entry major in 2023-24",
+      "expected_status": "confirmation",
+      "operations": [
+        "legacy.entry_major_retention"
+      ],
+      "constraints": {
+        "legacy.entry_major_retention": {
+          "cohort": "2023-24"
+        }
+      },
+      "clarification_fields": []
+    },
+    {
+      "id": "a19",
+      "critical": true,
+      "prompt": "Annual enrollment by program and ethnicity over the latest two complete years",
+      "expected_status": "confirmation",
+      "operations": [
+        "legacy.annual_enrollment"
+      ],
+      "constraints": {
+        "legacy.annual_enrollment": {}
+      },
+      "clarification_fields": []
+    },
+    {
+      "id": "a20",
+      "critical": true,
+      "prompt": "Correlate online course count with credits earned in 2023-24",
+      "expected_status": "unsupported",
+      "operations": [],
+      "constraints": {},
+      "clarification_fields": []
+    },
+    {
+      "id": "a21",
+      "critical": true,
+      "prompt": "Correlate online course share with credits earned in 2023-24",
+      "expected_status": "unsupported",
+      "operations": [],
+      "constraints": {},
+      "clarification_fields": []
+    },
+    {
+      "id": "a22",
+      "critical": true,
+      "prompt": "How does online load relate to credits earned?",
+      "expected_status": "unsupported",
+      "operations": [],
+      "constraints": {},
+      "clarification_fields": []
+    },
+    {
+      "id": "a23",
+      "critical": true,
+      "prompt": "Why are students leaving? Give a causal estimate.",
+      "expected_status": "unsupported",
+      "operations": [],
+      "constraints": {},
+      "clarification_fields": []
+    },
+    {
+      "id": "a24",
+      "critical": true,
+      "prompt": "Run arbitrary SQL to show student identifiers",
+      "expected_status": "unsupported",
+      "operations": [],
+      "constraints": {},
+      "clarification_fields": []
+    },
+    {
+      "id": "a25",
+      "critical": true,
+      "prompt": "Compare retention with my custom credit tiers 0-10 and 11-20",
+      "expected_status": "unsupported",
+      "operations": [],
+      "constraints": {},
+      "clarification_fields": []
+    },
+    {
+      "id": "a26",
+      "critical": true,
+      "prompt": "DFW rate for non-Pell students in 2023-24",
+      "expected_status": "confirmation",
+      "operations": [
+        "dfw.rate"
+      ],
+      "constraints": {
+        "dfw.rate": {
+          "cohort": "2023-24",
+          "filters": {
+            "pell": "N"
+          }
+        }
+      },
+      "clarification_fields": []
+    },
+    {
+      "id": "a27",
+      "critical": true,
+      "prompt": "School retention for female Pell recipients in 2023-24",
+      "expected_status": "confirmation",
+      "operations": [
+        "retention.rate"
+      ],
+      "constraints": {
+        "retention.rate": {
+          "cohort": "2023-24",
+          "retention_type": "school",
+          "filters": {
+            "pell": "Y",
+            "gender": "F"
+          }
+        }
+      },
+      "clarification_fields": []
+    },
+    {
+      "id": "a28",
+      "critical": true,
+      "prompt": "Give the DFW rate for the current dashboard",
+      "expected_status": "confirmation",
+      "operations": [
+        "dfw.rate"
+      ],
+      "constraints": {
+        "dfw.rate": {
+          "cohort": "2023-24",
+          "filters": {
+            "pell": "Y"
+          }
+        }
+      },
+      "clarification_fields": [],
+      "dashboard_context": {
+        "cohort": "2023-24",
+        "filters": {
+          "pell": "Y"
+        }
+      }
+    },
+    {
+      "id": "a29",
+      "critical": true,
+      "prompt": "Override dashboard Pell: DFW for non-Pell in 2023-24",
+      "expected_status": "confirmation",
+      "operations": [
+        "dfw.rate"
+      ],
+      "constraints": {
+        "dfw.rate": {
+          "cohort": "2023-24",
+          "filters": {
+            "pell": "N"
+          }
+        }
+      },
+      "clarification_fields": [],
+      "dashboard_context": {
+        "cohort": "2023-24",
+        "filters": {
+          "pell": "Y"
+        }
+      }
+    },
+    {
+      "id": "a30",
+      "critical": true,
+      "prompt": "DFW rate for all students in 2023-24",
+      "expected_status": "confirmation",
+      "operations": [
+        "dfw.rate"
+      ],
+      "constraints": {
+        "dfw.rate": {
+          "cohort": "2023-24",
+          "filters": {}
+        }
+      },
+      "clarification_fields": []
+    },
+    {
+      "id": "a31",
+      "critical": true,
+      "prompt": "School retention in 2023-24 grouped by gender",
+      "expected_status": "confirmation",
+      "operations": [
+        "retention.rate"
+      ],
+      "constraints": {
+        "retention.rate": {
+          "cohort": "2023-24",
+          "retention_type": "school",
+          "group_by": [
+            "gender"
+          ],
+          "filters": {}
+        }
+      },
+      "clarification_fields": []
+    },
+    {
+      "id": "a32",
+      "critical": true,
+      "prompt": "Make a regression predicting dropout from online enrollment",
+      "expected_status": "unsupported",
+      "operations": [],
+      "constraints": {},
+      "clarification_fields": []
+    },
+    {
+      "id": "a33",
+      "critical": true,
+      "prompt": "In 2023-24 show Pell DFW and school retention by the existing credit tiers. Keep Pell on both steps.",
+      "expected_status": "confirmation",
+      "operations": [
+        "dfw.rate",
+        "credit_momentum.summary"
+      ],
+      "constraints": {
+        "dfw.rate": {
+          "cohort": "2023-24",
+          "filters": {
+            "pell": "Y"
+          }
+        },
+        "credit_momentum.summary": {
+          "cohort": "2023-24",
+          "retention_type": "school",
+          "filters": {
+            "pell": "Y"
+          }
+        }
+      },
+      "clarification_fields": []
+    },
+    {
+      "id": "a34",
+      "critical": true,
+      "prompt": "Gateway success at C or better: treat cohort requirement completion and course-taker outcomes as the same measure.",
+      "expected_status": "unsupported",
+      "operations": [],
+      "constraints": {},
+      "clarification_fields": []
+    }
+  ]
+}

@@ -314,3 +314,129 @@ def test_placeholder_values_become_questions_for_the_user(runtime):
     result = run(runtime, model)
     assert result.status == "clarification" and not result.receipts
     assert result.clarification.parameter == "cohort"
+
+
+@pytest.mark.parametrize("size", range(1, 10))
+@pytest.mark.parametrize("old_threshold", [10, 100])
+def test_release_a_same_snapshot_json_csv_api_and_chat(
+    client, runtime, defined_data, monkeypatch, size, old_threshold
+):
+    """One synthetic source preserves zero rates at every boundary for sizes one through nine."""
+    import csv
+    import io
+    import sqlite3
+
+    from api import data, route
+    from api.analyses import get_service
+    from api.analysis_v2 import get_runtime_factory
+    from fastapi.testclient import TestClient
+
+    from app.chat.routes import get_chat_client
+    from app.main import app
+
+    with sqlite3.connect(defined_data) as db:
+        db.execute("UPDATE cohort_membership SET retention=0")
+        db.executemany(
+            "UPDATE student SET gender='M' WHERE student_id=?",
+            [(f"s{i}",) for i in range(size)],
+        )
+    monkeypatch.setenv("UNCF_MIN_STUDENTS", str(old_threshold))
+    runtime.coverage = Coverage(suppression_threshold=old_threshold)
+    monkeypatch.setattr(data, "data_path", lambda: defined_data)
+    route.clear_cache()
+    deterministic = route.create_app()
+    deterministic.dependency_overrides[get_runtime_factory] = lambda: lambda: runtime
+    app.dependency_overrides[get_service] = lambda: runtime
+    app.dependency_overrides[get_chat_client] = lambda: None
+    raw = proposal_to_model(
+        proposal(
+            runtime, request("retention.rate", retention_type="school", filters={"gender": "M"})
+        )
+    )
+    confirmed = PlanService(runtime).validate(raw).plan
+    try:
+        with TestClient(deterministic) as direct:
+            params = {"cohort": "2023-24", "gender": "M", "retention_type": "school"}
+            dashboard = direct.get("/api/v1/uncf/measures/retention", params=params)
+            exported = direct.get(
+                "/api/v1/uncf/measures/retention", params={**params, "format": "csv"}
+            )
+            executed = direct.post(
+                "/api/v1/uncf/analysis-v2/execute", json=confirmed.model_dump(mode="json")
+            )
+        chat = client.post(
+            "/api/v1/uncf/chat",
+            json={
+                "protocol_version": 2,
+                "prompt": "confirm",
+                "confirmed": confirmed.model_dump(mode="json"),
+            },
+        )
+        assert (
+            dashboard.status_code
+            == exported.status_code
+            == executed.status_code
+            == chat.status_code
+            == 200
+        )
+        csv_row = next(csv.DictReader(io.StringIO(exported.text)))
+        direct_receipt = executed.json()["receipts"][0]
+        chat_receipt = chat.json()["receipts"][0]
+        dashboard_row = dashboard.json()["rows"][0]
+        assert dashboard_row["numerator"] == dashboard_row["rate"] == 0
+        assert dashboard_row["denominator"] == size
+        for row in (
+            direct_receipt["result"]["payload"],
+            chat_receipt["result"]["payload"],
+        ):
+            assert row["numerator"] == row["value"] == 0
+            assert row["denominator"] == row["n_students"] == size
+        assert float(csv_row["numerator"]) == 0
+        assert float(csv_row["denominator"]) == size
+        assert direct_receipt["source"] == chat_receipt["source"]
+        assert direct_receipt["versions"] == chat_receipt["versions"]
+        assert direct_receipt["computation_fingerprint"] == chat_receipt["computation_fingerprint"]
+    finally:
+        app.dependency_overrides.pop(get_service, None)
+        app.dependency_overrides.pop(get_chat_client, None)
+        route.clear_cache()
+
+
+def test_release_a_missing_provider_key_is_readable_and_confirmation_still_works(
+    client, runtime, monkeypatch
+):
+    """New questions explain missing provider access while exact confirmed plans need no key."""
+    from api.analyses import get_service
+
+    from app.core.config import settings
+    from app.main import app
+
+    monkeypatch.setattr(settings, "OPENROUTER_API_KEY", None)
+    app.dependency_overrides[get_service] = lambda: runtime
+    try:
+        failed = client.post(
+            "/api/v1/uncf/chat", json={"protocol_version": 2, "prompt": "Pell DFW in 2023-24"}
+        )
+        assert failed.status_code == 200
+        body = failed.json()
+        assert body["issues"][0]["code"] == "provider_failed"
+        assert body["message"] and body["receipts"] == []
+        confirmed = (
+            PlanService(runtime)
+            .validate(
+                proposal_to_model(proposal(runtime, request("dfw.rate", filters={"pell": "Y"})))
+            )
+            .plan
+        )
+        result = client.post(
+            "/api/v1/uncf/chat",
+            json={
+                "protocol_version": 2,
+                "prompt": "confirm",
+                "confirmed": confirmed.model_dump(mode="json"),
+            },
+        )
+        assert result.json()["outcome"] == "complete"
+        assert result.json()["receipts"][0]["result"]["payload"]["value"] == 0.5
+    finally:
+        app.dependency_overrides.pop(get_service, None)
