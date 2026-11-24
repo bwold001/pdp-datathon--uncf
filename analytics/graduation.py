@@ -62,6 +62,8 @@ def calculate(
                     kind=kind,
                     horizon=horizon,
                     status="not_yet_observable",
+                    reason=("insufficient_followup" if cohort in coverage.cohort_followup_years
+                            else "followup_not_verified"),
                     note="Whole-cohort follow-up is not certified for this horizon.",
                 )
                 for label, kind in LABELS
@@ -74,6 +76,7 @@ def calculate(
                     kind=kind,
                     horizon=horizon,
                     status="unavailable",
+                    reason="followup_not_verified",
                     note="Extract cutoff and cohort follow-up must be declared.",
                 )
                 for label, kind in LABELS
@@ -118,6 +121,9 @@ def calculate(
                 LABELS[0][0],
                 len(any_graduates),
                 len(any_known),
+                unknown_reason=("empty_population" if not entrants and not unknown_eligibility
+                                and not any(normalize_program(s["program_of_study_term_1"]) is None
+                                            for s in eligible) else "no_known_outcomes"),
                 horizon=horizon,
                 exclusions=exclusions,
             )
@@ -127,6 +133,8 @@ def calculate(
                 LABELS[1][0],
                 len(program_graduates),
                 len(program_known),
+                unknown_reason=("completion_program_missing" if any_known and not program_known
+                                else "no_known_outcomes"),
                 horizon=horizon,
                 exclusions={
                     **exclusions,
@@ -156,6 +164,7 @@ def calculate(
                     count,
                     len(inferred),
                     kind="composition",
+                    unknown_reason="completion_program_missing" if composition_exclusions["unknown_completion_program"] else "no_known_outcomes",
                     horizon=horizon,
                     exclusions=composition_exclusions,
                     note="Composition among inferred program graduates, not a graduation rate.",

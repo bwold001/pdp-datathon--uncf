@@ -271,7 +271,11 @@ See the [deterministic v2 API guide](docs/analysis-v2-api.md) for `/api/v1/uncf/
 Chat v2 proposes typed plans and executes only after explicit confirmation through the shared plan service.
 
 Chat v2 planning, confirmation and immutable result pagination are documented in
-[the client contract](docs/chat-v2-client.md). All example results are synthetic.
+[the client contract](docs/chat-v2-client.md). Cards explain unavailable results in plain
+language and keep full calculation tables and source details expandable. Scope review
+shows known coverage limits before calculation. Suggested questions come from current
+catalog capabilities and coverage; they do not promise eligible outcomes, and each new
+question still requires scope confirmation. All example results are synthetic.
 
 Release A acceptance rules, fixed model-evaluation instructions, local verification evidence and
 remaining release blockers are in the [acceptance matrix](docs/chat-v2-acceptance.md) and

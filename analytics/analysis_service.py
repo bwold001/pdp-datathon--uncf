@@ -14,6 +14,7 @@ from analytics.contracts_v2 import (
     Result,
     Step,
     TableColumn,
+    RowExplanation,
     TablePayload,
     TablePage,
     Text,
@@ -308,7 +309,13 @@ def _legacy_result(receipt):
     for row in receipt.rows:
         check_cancelled()
         if row.status not in ("ok", "provisional"):
-            rows.append(HiddenTableRow(status=row.status))
+            rows.append(HiddenTableRow(
+                status=row.status,
+                explanation=RowExplanation(
+                    label=row.label, kind=row.kind, horizon=row.horizon,
+                    reason=row.reason or "missing_required_evidence", note=row.note or None,
+                ),
+            ))
             continue
         group = (
             ", ".join(f"{key}={value}" for key, value in sorted(row.group.items()))

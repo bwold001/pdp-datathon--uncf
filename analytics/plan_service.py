@@ -11,6 +11,8 @@ from uuid import uuid4
 from pydantic import TypeAdapter, ValidationError
 
 from analytics.analysis_service import AnalysisService, OperationError
+from analytics.answer_presentation import present_answer
+from analytics.chat_guidance import scope_guidance, suggested_questions
 from analytics.contracts_v2 import (
     AnalysisIssue,
     Choice,
@@ -428,6 +430,7 @@ class PlanService:
                 ),
             ),
             operations=operations,
+            suggestions=suggested_questions(operations, self.runtime.coverage, cohorts),
             exploration=metadata(),
             choices=CatalogChoices(
                 cohorts=cohorts, courses=courses[:100], more_courses=len(courses) > 100
@@ -542,13 +545,17 @@ class PlanService:
                                         choices=pending.choices,
                                     ),
                                     message="Choose the scope for this step.",
+                                    guidance=scope_guidance(plan, self.runtime.coverage),
+                                    suggestions=catalog.suggestions,
                                 )
                     plan = to_executable(plan)
             return PlanResponse(
                 protocol_version=2,
                 status="confirmation",
                 plan=plan,
-                message="Review the complete explicit scope before execution.",
+                message="Review your choices before calculating.",
+                guidance=scope_guidance(plan, self.runtime.coverage),
+                suggestions=catalog.suggestions,
             )
         except CalculationCancelled:
             return refusal("timeout", plan)
@@ -796,6 +803,7 @@ class PlanService:
                     started_at=before,
                     completed_at=after,
                     result=disclosed.result,
+                    presentation=present_answer(step, spec, disclosed.result),
                 )
             )
         outcome = (
@@ -815,6 +823,7 @@ class PlanService:
             issues=tuple(state.issue for state in ordered if state.issue)
             + ((issue(cleanup_failure),) if cleanup_failure else ()),
             replay=replay,
+            suggestions=catalog.suggestions,
             execution=ExecutionInfo(
                 execution_id=execution_id,
                 started_at=started,

@@ -1,22 +1,19 @@
 "use client";
 
-import { useState } from "react";
-import { QuestionComposer, SuggestedQuestions } from "@/components/chat/panel-chat";
+import { useEffect, useState } from "react";
+import { QuestionComposer } from "@/components/chat/panel-chat";
 import { Button } from "@/components/ui/button";
 import { useStudentSuccessChat } from "@/hooks/use-student-success-chat";
 import { useScrollToLatest } from "@/hooks/use-scroll-to-latest";
-import { type Parameter, type Plan, sendStudentSuccessV2 } from "@/services/student-success-v2";
+import { type Parameter, type Plan, type ScopeGuidance, type SuggestedQuestion, loadSuggestedQuestions, sendStudentSuccessV2 } from "@/services/student-success-v2";
 import { EvidenceCard } from "./evidence-card";
 
-const questions = [
-  "What is the graduation rate for chemistry majors?",
-  "What is the retention rate for all majors?",
-  "What is enrollment ethnicity by academic program over the past 2 years?",
-];
 
 /** Staff questions with explicit clarifications and inspectable calculation evidence. */
-export function StudentSuccessChat({ request = sendStudentSuccessV2 }: { request?: typeof sendStudentSuccessV2 }) {
-  const { messages, pending, clarification, revision, plan, state, ask, select, confirm, reset } = useStudentSuccessChat(request);
+export function StudentSuccessChat({ request = sendStudentSuccessV2, loadSuggestions = loadSuggestedQuestions }: {
+  request?: typeof sendStudentSuccessV2; loadSuggestions?: typeof loadSuggestedQuestions;
+}) {
+  const { messages, pending, clarification, revision, plan, state, guidance, suggestions, ask, select, confirm, reset } = useStudentSuccessChat(request);
   const scrollRef = useScrollToLatest<HTMLDivElement>(`${messages.length}:${pending}`);
   return (
     <section data-state={state} aria-label="Student success chat" className="flex h-full min-h-0 min-w-0 flex-col">
@@ -26,7 +23,7 @@ export function StudentSuccessChat({ request = sendStudentSuccessV2 }: { request
       </header>
       <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto p-4">
         {messages.length === 0 ? (
-          <div className="space-y-4 py-6"><p>Ask about student success measures, graduation, enrollment or registered year-one comparisons. I’ll ask for any details that change the answer.</p><SuggestedQuestions questions={questions} onQuestionChosen={ask} /></div>
+          <div className="space-y-4 py-6"><p>Ask about student success measures, graduation, enrollment or registered year-one comparisons. I’ll ask for any details that change the answer.</p><QuestionSuggestions key={revision} load={loadSuggestions} onChoose={ask} /></div>
         ) : (
           <ol className="space-y-5" aria-label="Conversation">
             {messages.map((message) => (
@@ -41,7 +38,8 @@ export function StudentSuccessChat({ request = sendStudentSuccessV2 }: { request
         {pending && <p role="status" className="mt-4 text-sm text-muted-foreground">Looking up the approved calculations…</p>}
         {clarification && <fieldset disabled={pending} className="mt-4 space-y-2"><legend className="font-medium">{clarification.step_id}: {clarification.question}</legend><div className="flex flex-wrap gap-2">{clarification.choices.map((choice) => <Button key={choice.value} variant="outline" className="h-auto whitespace-normal py-2 text-left" onClick={() => select(choice.value)}>{choice.label}</Button>)}</div>{clarification.choices.length === 0 && <p>No choices are available. Check that the normalized data has been loaded.</p>}</fieldset>}
         {plan && (state === "ready_for_confirmation" || state === "needs_clarification") && <ScopeConfirmation key={JSON.stringify(plan)} plan={plan}
-          disabled={pending || state !== "ready_for_confirmation"} onConfirm={confirm} />}
+          guidance={guidance} disabled={pending || state !== "ready_for_confirmation"} onConfirm={confirm} />}
+        {messages.length > 0 && !pending && suggestions.length > 0 && <details className="mt-4"><summary>Explore another question</summary><SuggestionList suggestions={suggestions} onChoose={ask} /></details>}
       </div>
       <QuestionComposer key={revision} onSubmit={ask} disabled={false} placeholder="Ask a student success question…" />
       <p className="px-4 pb-3 text-xs text-muted-foreground">Synthetic demonstration. Each new question starts a separate analysis.</p>
@@ -50,13 +48,14 @@ export function StudentSuccessChat({ request = sendStudentSuccessV2 }: { request
 }
 
 /** Every numerical request needs an explicit, initially unchecked scope approval. */
-function ScopeConfirmation({ plan, disabled, onConfirm }: {
-  plan: Plan; disabled: boolean; onConfirm: () => void;
+function ScopeConfirmation({ plan, guidance, disabled, onConfirm }: {
+  plan: Plan; guidance: ScopeGuidance[]; disabled: boolean; onConfirm: () => void;
 }) {
   const [accepted, setAccepted] = useState(false);
   return <fieldset disabled={disabled} className="mt-4 space-y-3 rounded-lg border p-4">
     <legend className="font-semibold">Confirm calculation scope</legend>
-    <ul className="list-disc space-y-2 pl-5">{plan.steps.map((step) => <li key={step.step_id}><strong>{step.step_id}: {step.kind === "exploratory_analysis" ? step.operation : step.operation_id}</strong><dl className="mt-2 space-y-1">{Object.entries(step.parameters).map(([key, value]) => <div key={key}><dt className="font-medium">{key.replaceAll("_", " ")}</dt><dd>{describeParameter(value)}</dd></div>)}</dl>{step.depends_on.length > 0 && <p>Depends on: {step.depends_on.join(", ")}</p>}</li>)}</ul>
+    <ul className="list-disc space-y-2 pl-5">{plan.steps.map((step) => <li key={step.step_id}><strong>{step.step_id}: {step.kind === "exploratory_analysis" ? step.operation : step.operation_id}</strong><dl className="mt-2 space-y-1">{Object.entries(step.parameters).map(([key, value]) => <div key={key}><dt className="font-medium">{key.replaceAll("_", " ")}</dt><dd>{describeParameter(value, key)}</dd></div>)}</dl>{step.depends_on.length > 0 && <p>Depends on: {step.depends_on.join(", ")}</p>}</li>)}</ul>
+    {guidance.map((item, index) => <p key={index} className={item.state === "known_limitation" ? "rounded border p-2" : "text-muted-foreground"}>{plan.steps.length > 1 ? `${item.step_id}: ` : ""}{item.message}</p>)}
     <p>Only the displayed cohort, filters and definitions will be used. Check that every requested constraint is present.</p>
     {disabled && <p>Resolve the remaining clarification before confirming.</p>}
     <label className="flex items-start gap-2"><input type="checkbox" checked={accepted}
@@ -67,10 +66,38 @@ function ScopeConfirmation({ plan, disabled, onConfirm }: {
 }
 
 /** Show canonical scope values in staff language without inventing inherited context. */
-function describeParameter(value: Parameter): string {
+function describeParameter(value: Parameter, key: string): string {
+  const labels: Record<string, Record<string, string>> = {
+    credential: { B: "Bachelor's degree", A: "Associate degree", C: "Certificate" },
+    program: { chemistry_general: "General chemistry", chemistry_family: "Chemistry family" },
+  };
+  if (typeof value === "string" && labels[key]?.[value]) return labels[key][value];
   if (typeof value === "string" || typeof value === "number") return String(value);
   if (Array.isArray(value)) return value.length ? value.join(", ") : "Overall (no breakdown)";
   if ("unresolved" in value && value.unresolved === true) return String(value.question);
   const selected = Object.entries(value).filter(([, item]) => item !== null);
   return selected.length ? selected.map(([key, item]) => `${key.replaceAll("_", " ")}: ${item}`).join(" · ") : "All eligible students (no categorical filters)";
+}
+
+/** Load suggestions independently; failed metadata must not block typing a question. */
+function QuestionSuggestions({ load, onChoose }: { load: typeof loadSuggestedQuestions; onChoose: (question: string) => void }) {
+  const [result, setResult] = useState<{ suggestions: SuggestedQuestion[]; failed: boolean } | null>(null);
+  useEffect(() => {
+    let active = true;
+    load().then((suggestions) => { if (active) setResult({ suggestions, failed: false }); })
+      .catch(() => { if (active) setResult({ suggestions: [], failed: true }); });
+    return () => { active = false; };
+  }, [load]);
+  if (result === null) return <p>Loading suggested questions…</p>;
+  if (result.failed) return <p>Suggested questions couldn&apos;t be loaded. You can still type your question.</p>;
+  if (result.suggestions.length === 0) return <p>No suggested questions are available for the current dataset. You can still type your question.</p>;
+  return <SuggestionList suggestions={result.suggestions} onChoose={onChoose} />;
+}
+
+/** Treat an alternative as a new question that still requires scope review and confirmation. */
+function SuggestionList({ suggestions, onChoose }: { suggestions: SuggestedQuestion[]; onChoose: (question: string) => void }) {
+  return <ul className="mt-3 space-y-2">{suggestions.map((item) => <li key={item.operation_id}>
+    <Button variant="outline" className="h-auto w-full whitespace-normal py-2 text-left" onClick={() => onChoose(item.question)}>{item.question}</Button>
+    <p className="mt-1 text-xs text-muted-foreground">{item.explanation}</p>
+  </li>)}</ul>;
 }

@@ -84,6 +84,23 @@ class CoverageDeclaration(Contract):
     provisional_retention_cohorts: Annotated[tuple[Cohort, ...], Field(max_length=100)]
 
 
+class SuggestedQuestion(Contract):
+    """Offer a registered question without promising a usable numerical answer."""
+
+    operation_id: Identifier
+    question: Text
+    availability: Literal["not_checked"] = "not_checked"
+    explanation: Text = "We'll check whether the selected students have usable information when you calculate."
+
+
+class ScopeGuidance(Contract):
+    """Explain known coverage limits separately from calculation availability."""
+
+    step_id: Identifier
+    state: Literal["known_limitation", "not_checked"]
+    message: Text
+
+
 class CatalogResponse(Contract):
     """Bind all choices and capability metadata to a real source and current computation versions."""
 
@@ -94,6 +111,7 @@ class CatalogResponse(Contract):
     source: Source
     coverage: CoverageDeclaration
     operations: Annotated[tuple[CatalogOperation, ...], Field(max_length=18)]
+    suggestions: Annotated[tuple[SuggestedQuestion, ...], Field(max_length=8)] = ()
     exploration: dict[str, JsonValue] = Field(default_factory=dict)
     choices: CatalogChoices
     configuration_version: Fingerprint
@@ -118,5 +136,7 @@ class ExecutionInfo(Contract):
 class PlanResponse(AnalysisResponseV2):
     """Export executed computation inputs and request execution stamps after cleanup/disclosure."""
 
+    guidance: Annotated[tuple[ScopeGuidance, ...], Field(max_length=16)] = ()
+    suggestions: Annotated[tuple[SuggestedQuestion, ...], Field(max_length=8)] = ()
     replay: ReplaySpec | None = None
     execution: ExecutionInfo | None = None

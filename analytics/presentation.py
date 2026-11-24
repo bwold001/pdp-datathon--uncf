@@ -17,6 +17,7 @@ def rate_row(
     group=None,
     horizon=None,
     provisional=False,
+    unknown_reason="no_known_outcomes",
 ) -> CalculationRow:
     """Build a rate only when an eligible known population exists."""
     if denominator == 0:
@@ -26,6 +27,7 @@ def rate_row(
             group=group or {},
             horizon=horizon,
             status="unknown",
+            reason=unknown_reason,
             note=note or "No eligible known outcomes; this is not a zero rate.",
         )
     rate = round(numerator / denominator, 4)

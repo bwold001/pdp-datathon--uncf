@@ -8,6 +8,8 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from pydantic_core import PydanticCustomError
 
+from analytics.explanations import EvidenceReason
+
 Analysis = Literal["graduation", "retention", "enrollment"]
 ResultStatus = Literal[
     "ok", "suppressed", "unknown", "unavailable", "not_yet_observable", "provisional"
@@ -75,6 +77,7 @@ class CalculationRow(Contract):
     exclusions: dict[str, int] = Field(default_factory=dict)
     calculation: str = ""
     note: str = ""
+    reason: EvidenceReason | None = None
 
     @model_validator(mode="after")
     def consistent_values(self) -> CalculationRow:
