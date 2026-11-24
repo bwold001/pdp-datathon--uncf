@@ -114,3 +114,18 @@ def test_unknown_retention_is_distinct_from_unobserved_federal(tmp_path):
     finally:
         snapshot.named.close()
         snapshot.positional.close()
+
+
+def test_unknown_year_does_not_become_known_zero(tmp_path):
+    """An unresolved year invalidates exposure even beside a valid face-to-face record."""
+    path = make_database(tmp_path / 'data.db', [student('a')],
+        [here('a', '2023-24', 'FALL', delivery='F'), here('a', '2024-25', 'FALL', delivery='O')])
+    snapshot = source(path)
+    try:
+        snapshot.named.execute("UPDATE term SET academic_year='UNKNOWN' WHERE academic_year='2024-25'")
+        row = build(snapshot, '2023-24', Filters()).rows[0]
+        assert row.online_enrollment_count_y1 is None
+        assert row.online_reasons == ('unresolved_term',)
+    finally:
+        snapshot.named.close()
+        snapshot.positional.close()

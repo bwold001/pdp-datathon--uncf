@@ -89,7 +89,7 @@ def build(snapshot, cohort, filters):
         SELECT ce.student_id, ce.cohort,
           SUM(CASE WHEN t.academic_year = ce.cohort THEN 1 ELSE 0 END) AS observed,
           SUM(CASE WHEN t.academic_year = ce.cohort AND UPPER(TRIM(ce.delivery_method)) = 'O' THEN 1 ELSE 0 END) AS online,
-          SUM(CASE WHEN t.academic_year IS NULL OR t.academic_year = '' OR t.academic_term IS NULL
+          SUM(CASE WHEN t.academic_year IS NULL OR t.academic_year = '' OR UPPER(TRIM(t.academic_year)) IN ('UNKNOWN', 'UK') OR LENGTH(t.academic_year) <> 7 OR SUBSTR(t.academic_year, 5, 1) <> '-' OR t.academic_term IS NULL
             OR UPPER(TRIM(t.academic_term)) NOT IN ('FALL','WINTER','SPRING','SUMMER') THEN 1 ELSE 0 END) AS unresolved,
           SUM(CASE WHEN t.academic_year = ce.cohort AND (ce.delivery_method IS NULL
             OR UPPER(TRIM(ce.delivery_method)) NOT IN ('O','F','H')) THEN 1 ELSE 0 END) AS unknown_delivery
