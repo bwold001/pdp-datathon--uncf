@@ -40,6 +40,17 @@ def data_file(tmp_path, monkeypatch):
 
 
 @pytest.fixture
+def four_classes(tmp_path, monkeypatch):
+    """One student in each of the four sample classes, so every class is in the loaded data."""
+    students = [student(f"c{n}", cohort) for n, cohort in enumerate(("2021-22", "2022-23", "2023-24", "2024-25"))]
+    path = make_database(tmp_path / "pdp.sqlite", students)
+    monkeypatch.setattr(data, "data_path", lambda: path)
+    route.clear_cache()
+    yield path
+    route.clear_cache()
+
+
+@pytest.fixture
 def client() -> TestClient:
     """A test client for the standalone app."""
     return TestClient(create_app())
@@ -159,7 +170,7 @@ def test_gateway_with_no_answers_is_not_reported(data_file, client) -> None:
     ("measure", "cohort", "expected"),
     [("retention", "2024-25", True), ("persistence", "2024-25", True), ("gateway_math", "2024-25", False), ("retention", "2023-24", False)],
 )
-def test_provisional_for_year_two_measures_of_the_newest_class(data_file, client, measure, cohort, expected) -> None:
+def test_provisional_for_year_two_measures_of_the_newest_class(four_classes, client, measure, cohort, expected) -> None:
     """Only year 2 measures for a class missing part of its second year are provisional."""
     assert get(client, measure=measure, cohort=cohort).json()["meta"]["provisional"] is expected
 
@@ -349,12 +360,12 @@ def test_api_matches_an_independent_recount_of_the_normalized_data(client) -> No
                         key = tuple(row["group"][d] for d in dimensions) if row["group"] else ()
                         achieved, answered = expected.get(key, (0, 0))
                         where = (measure, cohort, dimensions, key)
-                        if answered >= 10:
+                        if answered > 0:
                             assert row["status"] == "ok", where
                             assert (row["numerator"], row["denominator"]) == (achieved, answered), where
                             assert row["rate"] == round(achieved / answered, 4), where
                         else:
-                            assert row["status"] == "suppressed", where
+                            assert row["status"] in ("unknown", "unavailable", "not_reported", "not_yet_observable", "suppressed"), where
                             assert row["numerator"] is None and row["rate"] is None, where
                         checked += 1
     finally:

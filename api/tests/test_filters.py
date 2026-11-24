@@ -66,13 +66,13 @@ def test_small_counts_remain_visible():
 
 
 def test_cohort_options_count_each_value(tmp_path, monkeypatch):
-    """The bar reports every known cohort and filter count, including small groups."""
+    """The bar reports every cohort in the loaded data and every filter count, including small groups."""
     students = [student(f"f{n}", pell="Y") for n in range(12)] + [student(f"s{n}", pell="N", cohort_term="SPRING") for n in range(3)]
     students += [student(f"old{n}", cohort="2022-23") for n in range(10)]
     database = make_database(tmp_path / "pdp.sqlite", students)
     monkeypatch.setattr(data, "data_path", lambda: database)
     options = cohort_options("2023-24")
-    assert options["cohorts"] == {"2021-22": 0, "2022-23": 10, "2023-24": 15, "2024-25": 0}
+    assert options["cohorts"] == {"2022-23": 10, "2023-24": 15}
     assert options["filters"]["pell"] == {"Y": 12, "N": 3, "UNKNOWN": 0}
     assert options["filters"]["cohort_term"]["Fall"] == 12
     assert options["filters"]["cohort_term"]["Spring"] == 3

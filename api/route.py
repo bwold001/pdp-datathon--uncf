@@ -9,7 +9,8 @@ retention_type (school, the default, or federal), and format (json, the default,
 e.g. /api/v1/uncf/gateway?cohort=2022-23&pell=Y&retention_type=federal&format=csv
 
 Run it with `python -m api` (port 8001). The Playground server mounts `router` with one line.
-Errors: 422 for a value the API doesn't offer, 404 for a hidden course, 503 when the data isn't loaded.
+Errors: 422 for a value the API doesn't offer, 404 for a hidden course, 503 when the data isn't loaded or the
+analytics config (UNCF_ANALYTICS_CONFIG) can't be read.
 Our bodies are {"error": {"code", "message"}}.
 """
 from __future__ import annotations
@@ -91,7 +92,7 @@ class Bar:
 
     def __init__(
         self,
-        cohort: str = data.DEFAULT_COHORT,
+        cohort: str | None = None,
         cohort_term: Filter = None,
         enrollment_intensity: Filter = None,
         enrollment_type: Filter = None,
@@ -123,6 +124,10 @@ class Bar:
             self.query = CohortQuery.of(cohort, retention_type, **filters)
         except InvalidFilter as invalid:
             self.problem = error(422, "invalid_filter", str(invalid))
+        except data.DataMissing as missing:
+            self.problem = error(503, "data_missing", str(missing))
+        except data.ConfigInvalid as invalid:
+            self.problem = error(503, "config_invalid", str(invalid))
 
 
 def run_page(name: str, query: CohortQuery, *extra) -> dict:
@@ -163,6 +168,8 @@ def answer(bar: Bar, name: str, *extra):
         body = cached(name, bar.query, data.data_stamp(), *extra)
     except data.DataMissing as missing:
         return error(503, "data_missing", str(missing))
+    except data.ConfigInvalid as invalid:
+        return error(503, "config_invalid", str(invalid))
     except ValueError as invalid:
         # A value the page doesn't take, such as terms=9 or group_by=housing.
         return error(422, "invalid_filter", str(invalid))
@@ -238,7 +245,7 @@ def get_definitions():
 
 
 @router.get("/cohort-options", responses=ERRORS)
-def get_cohort_options(cohort: str = data.DEFAULT_COHORT):
+def get_cohort_options(cohort: str | None = None):
     """How many students entered in each cohort year, and how many in the chosen cohort have each filter value."""
     try:
         return cohort_options(cohort)
@@ -246,6 +253,8 @@ def get_cohort_options(cohort: str = data.DEFAULT_COHORT):
         return error(422, "invalid_filter", str(invalid))
     except data.DataMissing as missing:
         return error(503, "data_missing", str(missing))
+    except data.ConfigInvalid as invalid:
+        return error(503, "config_invalid", str(invalid))
 
 
 # One measure by group ------------------------------------------------------------------------------------------
@@ -275,8 +284,11 @@ def measure_answer(measure: str, cohort: str, bar: Bar, dimensions: list[str]):
         return bar.problem
     try:
         rows, loaded_at = measure_by_group(measure, bar.query, dimensions)
+        provisional = is_provisional(measure, cohort)
     except data.DataMissing as missing:
         return error(503, "data_missing", str(missing))
+    except data.ConfigInvalid as invalid:
+        return error(503, "config_invalid", str(invalid))
 
     if bar.format == "csv":
         table = [{**{d: row.group.get(d, "All") for d in dimensions}, **flatten(row.model_dump(exclude={"group"}))} for row in rows]
@@ -289,9 +301,9 @@ def measure_answer(measure: str, cohort: str, bar: Bar, dimensions: list[str]):
         filters=bar.query.as_dict(),
         retention_type=bar.query.retention_type,
         definition=MeasureDefinition(**definition_for("federal_retention" if federal else measure)),
-        source=data.SOURCE,
+        source=data.source(),
         loaded_at=loaded_at,
-        provisional=is_provisional(measure, cohort),
+        provisional=provisional,
         min_students=min_students(),
     )
     return MeasureByGroupResponse(meta=meta, rows=rows)
@@ -299,10 +311,14 @@ def measure_answer(measure: str, cohort: str, bar: Bar, dimensions: list[str]):
 
 @router.get("/options", response_model=OptionsResponse)
 def get_options() -> OptionsResponse:
-    """The measures, classes, groupings and filters /measures/{measure} takes."""
+    """The measures, classes, groupings and filters /measures/{measure} takes. No cohorts until data is loaded."""
+    try:
+        cohorts = list(data.cohorts())
+    except data.DataMissing:
+        cohorts = []
     return OptionsResponse(
         measures=[Option(value=m, label=definition_for(m)["name"]) for m in get_args(Measure)],
-        cohorts=list(get_args(Cohort)),
+        cohorts=cohorts,
         dimensions=[Option(value=d, label=FILTER_LABELS[d]) for d in get_args(Dimension)],
         max_group_by=MAX_GROUP_BY,
     )

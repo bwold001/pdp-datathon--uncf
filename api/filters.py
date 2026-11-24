@@ -8,7 +8,6 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from api import data
-from api.data import COHORTS, DEFAULT_COHORT
 from measures.breakdowns.common import filter_options
 from measures.requests import (
     FILTER_DIMENSIONS as FILTER_DIMENSIONS, FILTER_NAMES as FILTER_NAMES,
@@ -41,20 +40,26 @@ DEFAULT_RETENTION_TYPE = "school"
 
 @dataclass(frozen=True)
 class CohortQuery:
-    """One cohort year, the filters set on it, and which retention to report. A filter left out means "All"."""
+    """One cohort year, the filters set on it, and which retention to report. A filter left out means "All".
 
-    cohort: str = DEFAULT_COHORT
+    A cohort left as None is the data's default cohort (data.default_cohort). The years allowed are the ones in
+    the loaded data, so checking a query needs the data: it raises data.DataMissing when nothing is loaded.
+    """
+
+    cohort: str | None = None
     filters: tuple[tuple[str, str], ...] = field(default_factory=tuple)
     retention_type: str = DEFAULT_RETENTION_TYPE
 
     def __post_init__(self) -> None:
-        """Apply the domain validators while retaining the API's configured cohort set."""
-        validate_cohort(self.cohort, COHORTS)
+        """Apply the domain validators against the cohort years in the loaded data."""
+        if self.cohort is None:
+            object.__setattr__(self, "cohort", data.default_cohort())
+        validate_cohort(self.cohort, data.cohorts())
         validate_retention_type(self.retention_type)
         validate_filters(self.filters)
 
     @classmethod
-    def of(cls, cohort: str = DEFAULT_COHORT, retention_type: str = DEFAULT_RETENTION_TYPE, **filters: str | None) -> CohortQuery:
+    def of(cls, cohort: str | None = None, retention_type: str = DEFAULT_RETENTION_TYPE, **filters: str | None) -> CohortQuery:
         """A query from keyword filters, skipping the ones left as None. Sorted, so equal queries are equal."""
         chosen = tuple(sorted((name, value) for name, value in filters.items() if value is not None))
         return cls(cohort, chosen, retention_type)
@@ -80,20 +85,20 @@ class CohortQuery:
             "retention_type": self.retention_type,
             "provisional": data.is_provisional(self.cohort),
             "min_students": min_students(),
-            "source": data.SOURCE,
+            "source": data.source(),
         }
 
 
-def cohort_options(cohort: str = DEFAULT_COHORT) -> dict:
+def cohort_options(cohort: str | None = None) -> dict:
     """How many students entered in each cohort year, and in the chosen cohort, how many have each filter value."""
-    CohortQuery(cohort)  # checks the cohort
-    counts = filter_options(COHORTS, cohort, data.data_path())
+    cohort = CohortQuery(cohort).cohort  # checks the cohort, or picks the default one
+    counts = filter_options(data.cohorts(), cohort, data.data_path())
     return {
         "cohort": cohort,
         **counts,
         "labels": FILTER_LABELS,
         "retention_types": list(RETENTION_TYPES),
         "min_students": min_students(),
-        "source": data.SOURCE,
+        "source": data.source(),
         "loaded_at": data.loaded_at(),
     }
