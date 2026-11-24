@@ -42,8 +42,8 @@ export function Evidence({ payload }: { payload: Payload }) {
   switch (payload.kind) {
     case "count": return <p>{payload.count} {payload.unit}</p>;
     case "mean": return <p>Mean: {payload.value} {payload.unit} · n={payload.n}</p>;
-    case "correlation": return <p>Pearson r={payload.coefficient} · paired n={payload.n} · x: {payload.x_unit}; y: {payload.y_unit}</p>;
-    case "mean_comparison": return <div>{payload.groups.map((g) => <p key={g.id}>{g.id}: {g.mean} {payload.unit} · n={g.n}</p>)}{payload.differences.map((d) => <p key={`${d.minuend}-${d.subtrahend}`}>{d.minuend} − {d.subtrahend}: {d.value} {payload.unit}</p>)}</div>;
+    case "correlation": return <p>Pearson r={payload.coefficient} · paired n={payload.n} · x: {payload.x_unit}; y: {payload.y_unit} · incomplete pairs={payload.missing_pairs ?? 0}</p>;
+    case "mean_comparison": return <div>{payload.groups.map((g) => <p key={g.id}>{g.id}: {g.mean === null ? "Unavailable — no observed credits" : `${g.mean} ${payload.unit}`} · n={g.n} · missing={g.missing_count ?? 0}</p>)}{payload.differences.map((d) => <p key={`${d.minuend}-${d.subtrahend}`}>{d.minuend} − {d.subtrahend}: {d.value === null ? "Unavailable — missing group mean" : `${d.value} ${payload.unit}`} · n={d.minuend_n ?? payload.groups.find((g) => g.id === d.minuend)?.n} versus n={d.subtrahend_n ?? payload.groups.find((g) => g.id === d.subtrahend)?.n}</p>)}</div>;
     case "table": return <EvidenceTable payload={payload} />;
     case "rate": return <div><RateValue value={payload} />{payload.breakdowns.map((row, i) => <div key={i} className="mt-3 rounded border p-2"><p>{Object.entries(row.group).filter(([, v]) => v !== null).map(([k, v]) => `${k}: ${v}`).join(" · ")}</p>{(row.status === "ok" || row.status === "provisional") && row.value !== undefined ? <RateValue value={row as Rate} /> : <p>{statuses[row.status]}</p>}{row.exclusions?.map((e) => <p key={e.reason}>Excluded {e.reason}: {e.count}</p>)}</div>)}</div>;
   }

@@ -1,17 +1,14 @@
 """Bounded planning tools over the shared deterministic plan service."""
 
 import json
-from typing import Annotated, Literal, Union
+from typing import Literal
 
 from analytics.contracts_v2 import (
-    DEFINED_REQUESTS,
-    LEGACY_REQUESTS,
     Contract,
     ExecutablePlan,
     Identifier,
     ParameterKey,
     ProposedPlan,
-    proposal_model,
     resolve_choice,
 )
 from analytics.execution import run_sync
@@ -21,21 +18,9 @@ from measures.requests import Cohort, Filters, RetentionType
 from pydantic import Field, StrictInt, StrictStr, ValidationError, model_validator
 
 from app.chat.provider import ProviderFailed
-from app.chat.service import MAX_TOOL_ROUNDS, MAX_TOOLS_PER_ROUND
 
-ReleaseAOperations = Union[  # noqa: UP007 - runtime operation union
-    tuple(proposal_model(step) for step in (*DEFINED_REQUESTS, *LEGACY_REQUESTS))
-]
-ReleaseAStep = Annotated[
-    ReleaseAOperations,
-    Field(discriminator="operation_id"),
-]
-
-
-class ReleaseAProposal(ProposedPlan):
-    """Advertise only implemented registered operation schemas to the provider."""
-
-    steps: Annotated[tuple[ReleaseAStep, ...], Field(min_length=1, max_length=4)]
+MAX_TOOL_ROUNDS = 6
+MAX_TOOLS_PER_ROUND = 6
 
 
 class Selection(Contract):
@@ -76,9 +61,12 @@ class ChatRequestV2(Contract):
 
 RULES = """Propose a complete typed plan using propose_plan; never calculate or answer with numbers.
 Search the catalog and read operation details to distinguish definitions and populations.
-Release A supports only the fourteen registered defined/legacy operations. Never substitute
+The catalog includes defined/legacy operations and registered descriptive exploration. Prefer a
+defined operation when it fully expresses a question; supported filters are not exploration.
+Never substitute
 another definition or broaden filters. Keep every requested step and filter in one plan.
-For missing cohort, retention_type, course, terms, credential or program, use an unresolved
+For missing cohort, retention_type, course, terms, credential, program, grouping, x or y,
+use an unresolved
 choice with a valid placeholder option; the server replaces choices with its current choices.
 An unresolved choice is an object, never a string like "<choice>": {"unresolved": true,
 "question": "Which cohort?", "choices": [{"value": "2023-24", "label": "2023-24"}]}.
@@ -86,6 +74,12 @@ Do not assume a cohort or dashboard context absent from this conversation. Conte
 provided by the application may be inherited; question-specific scope overrides it visibly.
 School and federal retention differ. Credit-tier retention uses credit_momentum.summary.
 No SQL, Python, expressions, student rows, causal claims or unregistered exploration.
+Online count means observed year-one enrollments, not share or distinct courses. Clarify count
+versus share and time-period ambiguity. Retention grouping must explicitly choose school or federal.
+Official retention plus non-retained characteristics needs two steps with explicit
+separate populations.
+Keep other steps while clarifying one. Gateway variants are unavailable pending equivalent evidence;
+never substitute first-attempt outcomes or execute a causal request.
 All evidence is synthetic. Use supplied catalog_version and snapshot_ref on the proposal.
 """
 
@@ -116,7 +110,7 @@ def tools():
         (
             "propose_plan",
             "Propose all steps for deterministic validation; never executes.",
-            ReleaseAProposal.model_json_schema(),
+            ProposedPlan.model_json_schema(),
         ),
     ]
     return [
@@ -217,13 +211,7 @@ async def answer_v2(payload, client, model, runtime):
                 elif call.name == "operation_details" and set(args) == {"operation_id"}:
                     output = service.owner.details(args["operation_id"])
                 elif call.name == "propose_plan" and proposal is None:
-                    if any(
-                        s.get("kind") == "exploratory_analysis"
-                        for s in args.get("steps", ())
-                        if isinstance(s, dict)
-                    ):
-                        return refusal("unsupported_operation")
-                    proposal = ReleaseAProposal.model_validate(
+                    proposal = ProposedPlan.model_validate(
                         {**with_choices(args, catalog), **context_without_dashboard(context)}
                     )
                     output = {"proposed": True, "executed": False}
@@ -242,7 +230,18 @@ async def answer_v2(payload, client, model, runtime):
 
 
 # Parameters the server offers its own choices for when the question doesn't say.
-CHOICE_KEYS = ("cohort", "retention_type", "credential", "program", "course", "terms")
+CHOICE_KEYS = (
+    "cohort",
+    "retention_type",
+    "credential",
+    "program",
+    "course",
+    "terms",
+    "grouping",
+    "x",
+    "y",
+    "variant_id",
+)
 
 
 def is_placeholder(value) -> bool:
@@ -265,6 +264,26 @@ def server_options(catalog, key: str) -> list[dict]:
         "program": [c.model_dump() for c in choices.programs],
         "course": [{"value": c, "label": c} for c in choices.courses],
         "terms": [{"value": n, "label": f"{n} terms"} for n in range(2, 7)],
+        "grouping": [
+            {"value": key, "label": key.replace("_", " ")}
+            for key in catalog.exploration["groupings"]
+        ],
+        "x": [
+            {"value": key, "label": key.replace("_", " ")}
+            for key in catalog.exploration["features"]
+            if not key.startswith("retained_")
+        ],
+        "y": [
+            {"value": key, "label": key.replace("_", " ")}
+            for key in catalog.exploration["features"]
+            if not key.startswith("retained_")
+        ],
+        "variant_id": [
+            {
+                "value": "gateway.cohort_completion_c_or_better",
+                "label": "Gateway C or better (unavailable)",
+            }
+        ],
     }[key]
     return options[:100]
 

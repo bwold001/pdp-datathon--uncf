@@ -52,7 +52,7 @@ def test_catalog_and_validate_do_not_execute_metrics(client, monkeypatch):
     assert catalog.status_code == 200
     body = catalog.json()
     assert body["choices"]["cohorts"] == ["2023-24"]
-    assert len(body["operations"]) == 14
+    assert len(body["operations"]) == 18
     assert any(
         row["id"] == "retention.rate" and row["available"] for row in body["operations"]
     )
@@ -227,7 +227,7 @@ def test_missing_manifest_is_typed_and_legacy_endpoint_remains_compatible(
 
 
 def test_entire_plan_is_checked_before_any_supported_step_runs(client, monkeypatch):
-    """A later exploratory request cannot cause an earlier defined step to run first."""
+    """A later invalid feature pair cannot cause an earlier defined step to run first."""
     from measures import service
 
     calls = []
@@ -239,7 +239,7 @@ def test_entire_plan_is_checked_before_any_supported_step_runs(client, monkeypat
         "dataset_id": "student_year1",
         "parameters": {
             "cohort": "2023-24",
-            "x": "credits_earned_y1",
+            "x": "online_enrollment_count_y1",
             "y": "online_enrollment_share_y1",
         },
     }
@@ -249,7 +249,7 @@ def test_entire_plan_is_checked_before_any_supported_step_runs(client, monkeypat
             client, request("retention.rate", retention_type="school"), exploratory
         ),
     )
-    assert response.json()["issues"][0]["code"] == "unsupported_operation"
+    assert response.json()["issues"][0]["code"] == "invalid_plan"
     assert response.json()["outcome"] is None and not calls
 
 
@@ -475,7 +475,12 @@ def test_owner_cleanup_failure_preserves_completed_evidence(
         lambda: AnalyticsService(None, Coverage(), snapshot_factory=source)
     )
     body = client.post(PREFIX + "/execute", json=raw).json()
-    assert body["outcome"] == ("partial" if bounded_failure else "complete")
+    assert body["outcome"] == ("partial" if bounded_failure else "failed")
+    if not bounded_failure:
+        assert not body["receipts"]
+        assert body["step_outcomes"][0]["outcome"] == "failed"
+        assert events == ["rollback", "close"]
+        return
     assert body["receipts"][0]["result"]["payload"]["numerator"] == 6
     assert body["receipts"][0]["result"]["payload"]["denominator"] == 12
     assert body["step_outcomes"][:1] == [

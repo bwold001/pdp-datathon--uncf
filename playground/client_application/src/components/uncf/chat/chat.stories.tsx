@@ -85,7 +85,7 @@ export const EveryPayloadAndHistoricalStatus: Story = {
   </div>,
   play: async ({ canvas }) => {
     await expect(canvas.getByText(/Pearson r=-1/)).toBeInTheDocument();
-    await expect(canvas.getByText("a − b: -2 credits")).toBeInTheDocument();
+    await expect(canvas.getByText(/a − b: -2 credits/)).toBeInTheDocument();
     await expect(canvas.getByText(/Historical suppressed receipt/)).toBeInTheDocument();
   },
 };
@@ -155,5 +155,22 @@ export const ProviderFreeDeployment: Story = {
     await expect(canvas.getByText(/Chat is not enabled on this site/)).toBeVisible();
     await expect(canvas.queryByRole("textbox", { name: "Your question" })).not.toBeInTheDocument();
     await expect(canvas.queryByRole("button", { name: "Confirm scope and calculate" })).not.toBeInTheDocument();
+  },
+};
+
+export const ExplorationMissingMeans: Story = {
+  render: () => <Evidence payload={{ kind: "mean_comparison", unit: "credits", groups: [
+    { id: "zero", mean: 20, n: 2, count: 3, missing_count: 1 },
+    { id: "one_to_two", mean: null, n: 0, count: 1, missing_count: 1 },
+    { id: "three_plus", mean: 5, n: 1, count: 1, missing_count: 0 },
+  ], differences: [
+    { minuend: "one_to_two", subtrahend: "zero", value: null, minuend_n: 0, subtrahend_n: 2, unavailable_reason: "missing_group_mean" },
+    { minuend: "three_plus", subtrahend: "zero", value: -15, minuend_n: 1, subtrahend_n: 2 },
+  ] }} />,
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText("zero: 20 credits · n=2 · missing=1")).toBeInTheDocument();
+    await expect(canvas.getByText("one_to_two: Unavailable — no observed credits · n=0 · missing=1")).toBeInTheDocument();
+    await expect(canvas.getByText("three_plus − zero: -15 credits · n=1 versus n=2")).toBeInTheDocument();
+    await expect(canvas.getByText(/Unavailable — missing group mean/)).toBeInTheDocument();
   },
 };
