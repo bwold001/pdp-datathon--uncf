@@ -2,6 +2,7 @@
 
 import json
 from dataclasses import replace
+from statistics import StatisticsError
 
 import pytest
 from pydantic import ValidationError
@@ -76,6 +77,51 @@ def test_pearson_two_pairs_and_unrelated_missingness(sign):
     assert evidence.result.exclusions[0].count == 1
 
 
+@pytest.mark.parametrize('scale', [1, 1e200, 1e-200])
+@pytest.mark.parametrize('reverse', [False, True])
+def test_pearson_scale_invariance_through_execute(tmp_path, scale, reverse):
+    """Real finite credit inputs retain a known non-perfect correlation at extreme scales."""
+    from analytics.tests.test_student_year1 import source
+    from measures.tests.explorer_fixture import make_database, student
+
+    attempted = [3, 1, 2] if reverse else [1, 3, 2]
+    path = make_database(tmp_path / 'data.db', [
+        student(str(i), earned=x * scale, attempted=y * scale)
+        for i, (x, y) in enumerate(zip([1, 2, 3], attempted))
+    ])
+    snapshot = source(path)
+    try:
+        evidence = execute('correlation', {
+            'cohort': '2023-24', 'x': 'credits_earned_y1', 'y': 'credits_attempted_y1',
+        }, snapshot)
+    finally:
+        snapshot.named.close()
+        snapshot.positional.close()
+    serialized = json.loads(adapt('correlation', evidence).model_dump_json())
+    assert serialized['result']['payload']['n'] == 3
+    assert serialized['result']['payload']['coefficient'] == pytest.approx(-0.5 if reverse else 0.5)
+
+
+@pytest.mark.parametrize('coefficient', [float('nan'), float('inf'), -float('inf'), 1.01, -1.01])
+def test_invalid_pearson_output_refuses(monkeypatch, coefficient):
+    """Invalid library results cannot be clamped into valid-looking evidence."""
+    monkeypatch.setattr('analytics.exploration.operations.correlation', lambda x, y: coefficient)
+    with pytest.raises(ExplorationRefusal, match='data_unavailable'):
+        paired([row(0, 1, online=0), row(1, 2, online=1)])
+
+
+@pytest.mark.parametrize('error', [StatisticsError, OverflowError, ZeroDivisionError])
+def test_pearson_arithmetic_failures_refuse(monkeypatch, error):
+    """Numerical failures use the existing typed refusal instead of leaking library exceptions."""
+    def fail(x, y):
+        """Simulate arithmetic that cannot produce trustworthy evidence."""
+        raise error('numerical failure')
+
+    monkeypatch.setattr('analytics.exploration.operations.correlation', fail)
+    with pytest.raises(ExplorationRefusal, match='data_unavailable'):
+        paired([row(0, 1, online=0), row(1, 2, online=1)])
+
+
 def test_correlation_limits_and_retention_directions():
     """Insufficient pairs and zero variance remain different unavailable states."""
     assert paired([row(0, 1, online=0)]).result.reason == 'no_evidence'
@@ -92,6 +138,33 @@ def test_empty_and_unknown_federal():
     assert grouped([]).result.status == 'unavailable'
     result = grouped([row(0, 10)], grouping='retention_outcome_federal')
     assert result.result.status == 'unavailable'
+
+
+@pytest.mark.parametrize('operation', ['grouped_summary', 'mean_comparison'])
+@pytest.mark.parametrize('grouping,reason', [
+    ('online_count_0_1to2_3plus', 'no_year1_records'),
+    ('retention_outcome_school', 'unknown'),
+    ('retention_outcome_federal', 'not_yet_observable'),
+])
+def test_no_occupied_groups_are_unavailable_through_disclosure(tmp_path, operation, grouping, reason):
+    """Entirely excluded populations carry no comparison permission through the public owner path."""
+    from analytics.exploration.operations import OPERATIONS
+    from analytics.tests.test_student_year1 import source
+    from measures.tests.explorer_fixture import make_database, student
+
+    snapshot = source(make_database(tmp_path / 'data.db', [student('private', earned=10)]))
+    try:
+        evidence = execute(operation, {'cohort': '2023-24', 'grouping': grouping}, snapshot)
+    finally:
+        snapshot.named.close()
+        snapshot.positional.close()
+    owner = adapt(operation, evidence)
+    assert any(f'Excluded {reason}: 1' in text for text in owner.context)
+    assert evidence.distinct_units == 1
+    stage = stage_defined('empty_groups', OPERATIONS[operation], owner)
+    disclosed = disclose_plan((stage,))[0]
+    assert json.loads(disclosed.result.model_dump_json()) == {'status': 'unavailable', 'reason': 'no_evidence'}
+    assert disclosed.comparisons_allowed is False
 
 
 def test_resource_limits_without_truncation(monkeypatch):

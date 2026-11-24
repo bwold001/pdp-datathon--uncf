@@ -6,7 +6,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from itertools import combinations
 from math import isfinite
-from statistics import correlation, mean
+from statistics import StatisticsError, correlation, mean
 
 from analytics.contracts_v2 import (
     ComparisonPayload, CorrelationPayload, HiddenResult, TableColumn, TablePayload,
@@ -60,6 +60,17 @@ def _stats(rows, feature):
     return (mean(known) if known else None), len(known), len(values) - len(known)
 
 
+def _scaled(values, deadline):
+    """Bound Pearson intermediates without changing correlation under positive scaling."""
+    _check(deadline)
+    scale = max(map(abs, values))
+    scaled = []
+    for value in values:
+        _check(deadline)
+        scaled.append(value / scale)
+    return scaled
+
+
 def _grouped(data, parameters, comparison, deadline):
     """Preserve registered order, exclusion reasons and independent metric eligibility."""
     groups = {name: [] for name in GROUPS[parameters.grouping]}
@@ -77,6 +88,9 @@ def _grouped(data, parameters, comparison, deadline):
         *(f"Excluded {key}: {value} student/cohort units." for key, value in sorted(exclusions.items())))
     if not data.rows:
         return Evidence(HiddenResult(status="unavailable", reason="no_evidence"), 0, context=context)
+    if not any(groups.values()):
+        return Evidence(HiddenResult(status="unavailable", reason="no_evidence"), len(data.rows),
+            context=(*context, "No units with known grouping membership."))
     if comparison:
         summaries = []
         for key, rows in groups.items():
@@ -107,8 +121,6 @@ def _grouped(data, parameters, comparison, deadline):
         attempted, an, am = _stats(members, "credits_attempted_y1")
         rows.append(VisibleTableRow(status="ok", cells=(key, len(members), earned, en, em, attempted, an, am)))
         sizes.append(len(members))
-    if not rows:
-        return Evidence(HiddenResult(status="unavailable", reason="no_evidence"), len(data.rows), context=(*context, "No units with known grouping membership."))
     return Evidence(VisibleResult(status="ok", payload=TablePayload(kind="table",
         columns=[TableColumn(id=key, type=kind, unit=unit) for key, kind, unit in columns], rows=rows), exclusions=counts),
         len(data.rows), tuple(sizes), context)
@@ -137,7 +149,14 @@ def _correlation(data, parameters, deadline):
     if len(x) < 2 or len(set(x)) == 1 or len(set(y)) == 1:
         reason = "no_evidence" if len(x) < 2 else "zero_variance"
         return Evidence(HiddenResult(status="unavailable", reason=reason), len(x), context=context)
-    coefficient = correlation(x, y)
+    try:
+        coefficient = correlation(_scaled(x, deadline), _scaled(y, deadline))
+    except (StatisticsError, ArithmeticError) as error:
+        raise ExplorationRefusal("data_unavailable") from error
+    _check(deadline)
+    # Clamp only finite roundoff near the mathematical bounds, never failed arithmetic.
+    if not isfinite(coefficient) or abs(coefficient) > 1.0 + 1e-12:
+        raise ExplorationRefusal("data_unavailable")
     result = VisibleResult(status="ok", payload=CorrelationPayload(kind="correlation", method="pearson", n=len(x),
         coefficient=max(-1.0, min(1.0, coefficient)), x_unit=FEATURES[parameters.x].unit, y_unit=FEATURES[parameters.y].unit, missing_pairs=len(data.rows) - len(x)),
         exclusions=[{"reason": key, "count": value} for key, value in sorted(missing.items())])
