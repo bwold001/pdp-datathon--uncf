@@ -275,3 +275,19 @@ Chat v2 planning, confirmation and immutable result pagination are documented in
 Release A acceptance rules, fixed model-evaluation instructions, local verification evidence and
 remaining release blockers are in the [acceptance matrix](docs/chat-v2-acceptance.md) and
 [release handoff and rollback runbook](docs/release-a-handoff.md).
+
+### Internal exploration dataset
+
+`analytics/exploration/datasets.py` builds `student_year1` at one private row per
+student and entry cohort. Course attempts are aggregated on both keys before being
+combined with cohort facts. It reuses dashboard categorical filters and per-student
+school/federal retention answers. Cohort year-one credits remain independent of
+course credit sums; earned and attempted credit missingness is separate.
+
+`analytics/exploration/catalog.py` owns versioned feature units, missing rules,
+permitted numeric pairs, and ordered group definitions. Online features count
+actual enrollments, including repeated attempts, rather than distinct courses.
+Unknown delivery, unresolved terms and absent year-one course records exclude an
+online feature; known F/H records yield a real zero. Exposure describes observed
+records, not certified whole-year completeness. Internal rows/identifiers are not
+public payloads; consumers must return validated aggregates only. All data is synthetic.
