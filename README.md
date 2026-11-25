@@ -173,7 +173,6 @@ columns: [pdp-data skill](.agents/skills/pdp-data/SKILL.md#known-data-facts). Ne
 | [Success measures](measures/README.md) | Retention, persistence, gateway completion; we added federal retention, DFW, credit completion, filters and the page breakdowns |
 | [Playground](playground/README.md) | The Explorer web app: Next.js client and FastAPI server |
 | [Data quality log](data/quality/README.md) | Known mock-data issues, such as first-generation status |
-| [PDP MCP server](mcp/README.md) | Definitions only, for development support |
 | [Equity gap finder](gap_finder/README.md) | Optional group comparisons |
 
 ## Checks
