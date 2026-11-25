@@ -7,8 +7,7 @@ them with the log, so the log can't drift from the data. It never changes data/r
     python data/quality/run_checks.py --update   # rewrite the count column after a deliberate change
     python data/quality/run_checks.py --missing  # per column: each kind of no value, and whether the dictionary documents it
 
-Needs pandas (requirements.txt). The notebook notebooks/deep_dive.ipynb shows each finding with
-examples and a recommended fix.
+Needs pandas (requirements.txt).
 """
 
 from __future__ import annotations
