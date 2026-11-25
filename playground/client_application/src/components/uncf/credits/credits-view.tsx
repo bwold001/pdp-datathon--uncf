@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { Card, Counted, Legend, MessageCard, Notice, TrackBar, formatCount, formatShare, retentionWords } from "@/components/uncf/layout/explorer-parts";
+import { DownloadCsvButton } from "@/components/uncf/layout/download-csv-button";
 import { ShareInsightButton } from "@/components/uncf/layout/share-insight-button";
 import { hiddenCount, privacyNote, tooFew } from "@/components/uncf/layout/small-groups";
 import { routes } from "@/lib/routes";
@@ -118,7 +119,10 @@ export function ProgressIntro({ data }: { data?: CreditsResponse }) {
             Are students making meaningful progress toward their degree?
           </h2>
         </div>
-        <ShareInsightButton name="Credit momentum" />
+        <div className="flex shrink-0 flex-wrap items-start gap-2">
+          <DownloadCsvButton path="/uncf/credit-momentum" />
+          <ShareInsightButton name="Credit momentum" />
+        </div>
       </div>
       {settings && (
         <div className="flex flex-wrap gap-2 text-sm">

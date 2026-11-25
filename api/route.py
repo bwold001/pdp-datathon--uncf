@@ -76,6 +76,39 @@ CSV_SECTIONS = {
     "gateway": ("courses", "pairs"),
     "credit-momentum": ("milestones", "terms", "tiers"),
 }
+# Each page's CSV columns, in order, after cohort, filters and retention_type. Every file a page writes has exactly
+# these, whatever the cohort and filters, so a school can import it the same way each time; a value a row doesn't
+# have is blank. api/tests/test_csv_columns.py fails if a page starts returning a field that isn't listed here.
+CSV_COLUMNS: dict[str, tuple[str, ...]] = {
+    "student-paths": (
+        "section", "position", "label", "here", "credential", "elsewhere", "stopped", "anywhere", "not_observed",
+        "shares.here", "shares.credential", "shares.elsewhere", "shares.stopped", "shares.anywhere", "value",
+        "students", "retention.type", "retention.status", "retention.numerator", "retention.denominator",
+        "retention.rate", "retention.n_excluded", "retention.n_out_of_scope", "retention.retained", "retention.students",
+    ),
+    "dfw": (
+        "section", "course", "names.top", "names.distinct", "students", "num", "den", "rate", "split.grades.D",
+        "split.grades.F", "split.grades.W", "split.DF", "split.W", "split.total", "split.shares.D", "split.shares.F",
+        "split.shares.W", "gateway.M", "gateway.E",
+    ),
+    "dfw-course": (
+        "section", "value", "students", "num", "den", "rate", "split.grades.D", "split.grades.F", "split.grades.W",
+        "split.DF", "split.W", "split.total", "split.shares.D", "split.shares.F", "split.shares.W", "rest_rate", "gap",
+        "dimension",
+    ),
+    "gateway": (
+        "section", "course", "name", "subject", "students", "first_pass", "passed", "path.first", "path.retook_passed",
+        "path.retook_not", "path.no_retake", "grades.C or higher", "grades.Below C", "grades.Under 1.0", "grades.P",
+        "grades.W", "retained_if_passed.students", "retained_if_passed.retained", "retained_if_passed.rate",
+        "retained_if_not_passed.students", "retained_if_not_passed.retained", "retained_if_not_passed.rate", "group",
+        "courses", "retained", "rate", "others_rate", "gap", "affected", "likely_noise", "group.status", "group.rate",
+        "group.others_rate", "group.gap", "group.likely_noise",
+    ),
+    "credit-momentum": (
+        "section", "credits", "students", "share", "label", "enrolled", "avg_attempted", "avg_earned", "key",
+        "retained", "rate",
+    ),
+}
 
 # The router answers under /uncf; both apps mount it under /api/v1, so every path is PREFIX + route.
 router = APIRouter(prefix="/uncf", tags=["UNCF"])
@@ -175,7 +208,7 @@ def answer(bar: Bar, name: str, *extra):
         return error(422, "invalid_filter", str(invalid))
     if bar.format == "csv":
         rows = page_csv_rows(body, CSV_SECTIONS[name])
-        return csv_response(rows, bar.query, f"uncf-{name}-{bar.query.cohort}.csv")
+        return csv_response(rows, bar.query, f"uncf-{name}-{bar.query.cohort}.csv", CSV_COLUMNS[name])
     return body
 
 
@@ -207,15 +240,19 @@ def flatten(item: dict, prefix: str = "") -> dict:
     return row
 
 
-def csv_response(rows: list[dict], query: CohortQuery, filename: str) -> Response:
-    """Rows as a CSV download. Each row also says which cohort, filters and retention type it is for."""
+def csv_response(rows: list[dict], query: CohortQuery, filename: str, fixed: tuple[str, ...] = ()) -> Response:
+    """Rows as a CSV download. Each row also says which cohort, filters and retention type it is for.
+
+    fixed lists the columns every file has, in order, filled or blank (CSV_COLUMNS). A field outside it still gets a
+    column at the end, so nothing is dropped; the tests fail when that happens, so the list stays complete.
+    """
     context = {
         "cohort": query.cohort,
         "filters": "; ".join(f"{key}={value}" for key, value in query.filters) or "all students",
         "retention_type": query.retention_type,
     }
     rows = [{**context, **row} for row in rows]
-    columns: list[str] = list(context)
+    columns: list[str] = [*context, *fixed]
     for row in rows:
         columns.extend(key for key in row if key not in columns)
     buffer = io.StringIO()

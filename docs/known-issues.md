@@ -57,10 +57,6 @@ These are set for the mock data. They are team choices, not campus-confirmed rul
   `playground/client_application/src/components/uncf/layout/explorer-config.ts`. The API offers the
   years in your data, but until the picker reads them from `/api/v1/uncf/options`, add your years
   to that list and rebuild the pages.
-- **No CSV button.** The pages download as a PDF (**Share Insight**). The API returns every page as
-  CSV with `format=csv` ([integration guide, section 9](integration.md#9-getting-numbers-into-power-bi-or-a-data-lake)).
-- **CSV columns can change with the filters.** A page's CSV columns follow what its answer holds, so a
-  few can come and go (Gateway's group-comparison columns, for example).
 - **The pages and API read SQLite only.** PostgreSQL works for the loader and the chat, not the
   pages. SQL Server and data lakes aren't supported.
 
