@@ -441,9 +441,10 @@ calling tools correctly.
 
 ## 9. Getting numbers into Power BI or a data lake
 
-Staff export what they see as a PDF. There is no CSV button in the pages yet. For other
-systems, the API returns every page as CSV: add
-`format=csv` to the page's address, with the same cohort and filters the page uses.
+Staff export what they see as a PDF with **Share Insight**, or as a CSV with **Download CSV** next to it.
+Both follow the cohort, filters and retention measure picked on the page. Other systems can get the same
+CSV straight from the API: add `format=csv` to the page's address, with the same cohort and filters the
+page uses.
 
 | Page | CSV address (after your site's address) |
 | --- | --- |
@@ -454,7 +455,12 @@ systems, the API returns every page as CSV: add
 | Credit momentum | `/api/v1/uncf/credit-momentum?cohort=2023-24&format=csv` |
 | One measure by group | `/api/v1/uncf/measures/retention?cohort=2023-24&group_by=pell&format=csv` |
 
-Each row starts with the cohort, filters and retention type it answers. Filters such as `pell=Y` or
+Each row starts with the cohort, filters and retention type it answers, then a `section` column naming
+which list on the page the row comes from. **A page's CSV always has the same columns in the same order,
+whatever the cohort and filters**, so an import set up once keeps working; a value a row doesn't have is
+left blank, never 0. The column names are the API's own field names, listed in `CSV_COLUMNS` in
+`api/route.py`. "One measure by group" adds one column for each `group_by` you ask for, so keep the same
+`group_by` for one import. Filters such as `pell=Y` or
 `retention_type=federal` work the same as on the pages. The API's own `/docs` page lists every option
 (on your server, `http://127.0.0.1:8001/docs`).
 

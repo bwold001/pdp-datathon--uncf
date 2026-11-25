@@ -48,6 +48,10 @@ jobs:
           python-version: "3.12.16"
           cache: pip
       - run: python -m pip install -r requirements.txt
+      # The slow API tests read the database built from the mock files, so build it first.
+      # Without it they skip, and CI would pass without running them.
+      - if: matrix.check == 'check-slow'
+        run: python -m api load
       # Runs scripts/check.py plus any foundation tests added to the Makefile's check target.
       # Between them, these two run every test.
       - run: make ${{ matrix.check }}

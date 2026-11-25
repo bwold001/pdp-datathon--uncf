@@ -24,6 +24,12 @@ a copy of the tab. Mark a control `data-pdf-skip` to leave it out (sort menus, "
 drawn in the browser (`html-to-image`, then `jspdf`), off screen, so the page doesn't change; the PDF's text is part of
 the picture, not selectable. It doesn't print: print lays the page out again for the paper and splits it.
 
+**Download CSV** (`download-csv-button.tsx`) sits next to Share Insight: `ViewIntro` draws it when the page passes
+`csvPath`, and Credit momentum adds it beside its own Share Insight. It links to the page's API address with the cohort
+bar's query and `format=csv`, so the file holds the numbers behind what the page shows. Each page's CSV has the same
+columns for every cohort and filter (`CSV_COLUMNS` in `api/route.py`), so a school can import it into Power BI or a
+spreadsheet the same way each time.
+
 The numbers come from the shared API (`api/route.py`), which takes every number from `measures/` and is mounted in
 the Playground server under `/api/v1`. The tabs do no counting. The numbers are calculated from the synthetic sample
 data, never typed in.
