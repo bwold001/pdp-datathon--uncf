@@ -128,7 +128,7 @@ def test_chat_service_build_and_bundle():
         assert any(fnmatch(path, pattern) for pattern in excluded), path
 
 
-def test_chat_frontend_is_enabled_with_an_environment_override():
-    """The deployed UI is enabled by default and can still be disabled for rollback."""
-    assert "NEXT_PUBLIC_STUDENT_SUCCESS_CHAT_ENABLED:-true" in FRONTEND["buildCommand"]
-    assert "NEXT_PUBLIC_STUDENT_SUCCESS_CHAT_ENABLED=false " not in FRONTEND["buildCommand"]
+def test_chat_frontend_is_off_unless_the_host_turns_it_on():
+    """The deployed UI ships without chat; a host turns it on with an environment setting."""
+    assert "NEXT_PUBLIC_STUDENT_SUCCESS_CHAT_ENABLED:-false" in FRONTEND["buildCommand"]
+    assert "NEXT_PUBLIC_STUDENT_SUCCESS_CHAT_ENABLED=true " not in FRONTEND["buildCommand"]

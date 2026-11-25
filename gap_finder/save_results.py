@@ -1,4 +1,4 @@
-"""Saves gap rows as an equity_gaps table in SQLite, so squads can query them, and as a CSV for spreadsheets.
+"""Saves gap rows as an equity_gaps table in SQLite, so teams can query them, and as a CSV for spreadsheets.
 
 Run from the repo root, after loading the data: python -m gap_finder.save_results
 Add --stub for the hand-written rows, which need no data. The files hold only counts and rates, with small

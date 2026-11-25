@@ -1,13 +1,11 @@
 # Source spec for a candidate supplementary dataset, written once per dataset before it is
-# vetted and loaded, per proposal #19 ("On-demand ETL joins: bring in new datasets with
-# provenance and quality checks"). This is NOT a destination mapping (see
-# config/*_mapping.yaml in the normalized data model for that): it is the vetting metadata
-# #19 asks for, so a number built on this source can say how far to trust it.
+# vetted and loaded, so a joined dataset arrives with its provenance and quality checks. This is
+# NOT a destination mapping (see config/*_mapping.yaml in the normalized data model for that): it
+# is the vetting metadata, so a number built on this source can say how far to trust it.
 #
-# This file and its sample CSV are a worked example for #19's own scope item: "two synthetic
-# datasets (registration holds, parent status)". The load command that reads a spec like this
-# one, checks match rate / duplicate keys / null rates, and lands the result in the enrichment
-# tables (student_attribute) is not built yet; that is the remaining work tracked on #19.
+# This file and its sample CSV are a worked example with synthetic registration holds. The load
+# command that reads a spec like this one, checks match rate / duplicate keys / null rates, and
+# lands the result in the enrichment tables (student_attribute) is not built yet.
 
 dataset: registration_holds
 
@@ -17,7 +15,7 @@ description: >
   missing advising sign-off). PDP's Analysis-Ready Files do not carry this; institutions hold it
   in their own student information system (Banner, Colleague, PeopleSoft, etc).
 
-owner: unassigned   # the person or squad vouching for this source once it's real, not synthetic
+owner: unassigned   # the person or team vouching for this source once it's real, not synthetic
 trust_label: unverified   # verified or unverified; this sample is synthetic, so it stays unverified
 
 sensitivity:
@@ -27,7 +25,7 @@ sensitivity:
 note_on_sensitivity: >
   hold_type values of financial, disciplinary and immunization are student-identifying risk
   signals. Any summary of this data broken out by a group smaller than 10 students must suppress
-  the value, same as the shared success-measures rule (#9).
+  the value, same as the shared success-measures rule.
 
 grain: One row per student, per hold, per term it applied to. A student can have more than one
   open hold in the same term; each is its own row.

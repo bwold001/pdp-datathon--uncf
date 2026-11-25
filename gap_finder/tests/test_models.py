@@ -32,7 +32,7 @@ def hidden(status=GapStatus.SUPPRESSED, **changes) -> GapResult:
     return replace(OK, status=status, suppressed=True, **{**BLANK, **changes})
 
 
-# The shared measures' table (#9), in its order: the gap table starts with these columns.
+# The shared measures' table, in its order: the gap table starts with these columns.
 MEASURES_COLUMNS = (
     "measure", "cohort", "group_dimensions", "group_values", "numerator", "denominator", "metric_rate",
     "suppressed", "status", "n_excluded", "n_out_of_scope", "exclusion_reason", "note", "data_loaded_at",

@@ -6,7 +6,7 @@ comes from src/loader/tables.py, so both databases get the same rows.
 
 Each table is created from config/destination_schema.yaml: its types, NOT NULL, primary key,
 unique groups and foreign keys, including those over several columns (rules["foreign_keys"]). A single-column whole-number primary key, such as
-course.course_id, also hands out the next id when a squad adds a row without one.
+course.course_id, also hands out the next id when a team adds a row without one.
 
 refresh() runs in one transaction: drop the model's tables, create them, insert every row, and
 commit. Any failure rolls back, so the database keeps what it held before. A table outside the

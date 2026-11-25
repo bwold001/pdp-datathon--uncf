@@ -5,9 +5,9 @@
 
 [tools]
 bun = "1.4.3"      # client_application: package manager and script runner
-node = "24"        # client_application: runtime Next.js tooling expects alongside bun
-python = "3.14"    # server_application: matches server_application/.python-version
-uv = "0.13"        # server_application: dependencies, virtualenv, lockfile
+node = "24.22.2"   # client_application: runtime Next.js tooling expects alongside bun
+python = "3.14.10" # server_application: matches server_application/.python-version
+uv = "0.13.7"      # server_application: dependencies, virtualenv, lockfile
 
 # --- server_application ----------------------------------------------------------------
 

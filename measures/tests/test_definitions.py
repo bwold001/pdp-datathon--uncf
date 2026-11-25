@@ -1,4 +1,4 @@
-"""Checks the measure definitions (#3)."""
+"""Checks the measure definitions."""
 from __future__ import annotations
 
 import csv

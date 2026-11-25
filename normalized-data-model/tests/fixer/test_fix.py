@@ -55,7 +55,7 @@ def test_only_public_api_is_fix_and_load_fixes():
 
 def test_every_fix_names_its_bug_and_its_decision():
     for entry in FIXES:
-        assert entry["bug"].startswith("https://docs.google.com/document/"), entry["name"]
+        assert entry["bug"].startswith("data/quality/findings.csv, finding "), entry["name"]
         assert entry["decision"], entry["name"]
 
 
@@ -85,7 +85,7 @@ def test_a_switched_off_fix_changes_nothing(tmp_path):
 
 def test_a_fix_that_changes_nothing_is_listed(tmp_path):
     staging = staged(tmp_path)
-    stale = FIXES + [{"name": "stale", "bug": "https://docs.google.com/document/x", "decision": "test", "enabled": True,
+    stale = FIXES + [{"name": "stale", "bug": "data/quality/findings.csv, finding x", "decision": "test", "enabled": True,
                       "table": "student", "column": "gender", "replace": {"no such value": "F"}}]
     fix(staging, config_dir=CONFIG, fixes=fixes_file(tmp_path, stale))
     report = yaml.safe_load((staging / "fixed/pdp_cohort_data.csv/fixes.yaml").read_text())
@@ -135,7 +135,7 @@ def test_a_fix_with_no_kind_or_a_missing_field_is_a_config_error(tmp_path):
 
 
 def test_a_team_names_its_own_copy_in_its_settings(tmp_path):
-    own = FIXES + [{"name": "gender_f_is_female", "bug": "https://docs.google.com/document/x", "decision": "a team's own",
+    own = FIXES + [{"name": "gender_f_is_female", "bug": "data/quality/findings.csv, finding x", "decision": "a team's own",
                     "enabled": True, "table": "student", "column": "gender", "replace": {"F": "Female"}}]
     sources = [{"kind": k, "path": str(AR[k]), "config": f"{k}_mapping.yaml", "provider": "test"} for k in ("cohort", "course")]
     (tmp_path / "pipeline.yaml").write_text(yaml.safe_dump({

@@ -9,8 +9,9 @@ from measures.run_measures import DEFAULT_DATABASE
 SERVER_ROOT = Path(__file__).resolve().parent / "playground" / "server_application"
 sys.path.insert(0, str(SERVER_ROOT))
 # These defaults apply only to this dedicated deployment, never the local Playground.
+# Chat stays off until the host sets UNCF_CHAT_ENABLED=true, with its own OPENROUTER_API_KEY.
 os.environ.setdefault("APP_ENV", "production")
-os.environ.setdefault("UNCF_CHAT_ENABLED", "true")
+os.environ.setdefault("UNCF_CHAT_ENABLED", "false")
 os.environ.setdefault("DATABASE_URL", f"sqlite:///{DEFAULT_DATABASE}")
 
 from app.chat.deployment import create_app  # noqa: E402

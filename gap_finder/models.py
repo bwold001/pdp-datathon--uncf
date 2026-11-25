@@ -1,7 +1,7 @@
 """One row of the equity gap table: the contract the gap finder's output follows.
 
 Each row compares one group with everyone else in the same cohort, on one measure. The first columns
-are the shared measures' table (#9), in its order, and the comparison columns come after them. It refuses rows
+are the shared measures' table, in its order, and the comparison columns come after them. It refuses rows
 that break the rules, so a bad row fails when it is built.
 """
 from __future__ import annotations

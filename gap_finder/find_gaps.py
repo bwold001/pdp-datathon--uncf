@@ -11,7 +11,7 @@ from .stub import stub_rows
 # What find_gaps compares when it isn't told: each default dimension on its own, each measure, the three oldest cohorts pooled.
 DEFAULT_MEASURES = ["retention", "persistence", "gateway_math", "gateway_english"]
 DEFAULT_COHORTS = [["2021-22", "2022-23", "2023-24"]]
-# first_gen is left out until #74's finding 1 is settled: Y reads as UNKNOWN. Ask for it by name.
+# first_gen is left out until data quality finding 1 is settled: Y reads as UNKNOWN. Ask for it by name.
 DEFAULT_DIMENSIONS = ["race", "gender", "pell", "age_band", "enrollment_intensity"]
 
 

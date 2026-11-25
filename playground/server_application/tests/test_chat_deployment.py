@@ -83,12 +83,15 @@ def test_deployment_switch_and_missing_key(monkeypatch):
         assert reply.json()["issues"][0]["code"] == "provider_failed"
 
 
-def test_vercel_entrypoint_imports_without_playground_startup():
-    """Production import defaults to the bundled extract and never loads pyarrow."""
+@pytest.mark.parametrize(("switch", "routes"), [(None, set()), ("true", {"/api/v1/chat"})])
+def test_vercel_entrypoint_imports_without_playground_startup(switch, routes):
+    """Production import uses the bundled extract, ships with chat off, and never loads pyarrow."""
     root = Path(__file__).resolve().parents[3]
     environment = {
         key: os.environ[key] for key in ("PATH", "TMPDIR", "SYSTEMROOT") if key in os.environ
     }
+    if switch:
+        environment["UNCF_CHAT_ENABLED"] = switch
     result = subprocess.run(
         [
             sys.executable,
@@ -107,7 +110,7 @@ def test_vercel_entrypoint_imports_without_playground_startup():
     assert result.returncode == 0, result.stderr
     state = json.loads(result.stdout.strip().splitlines()[-1])
     assert state["environment"] == "production"
-    assert state["enabled"]
+    assert state["enabled"] is bool(switch)
     assert state["database"] == f"sqlite:///{root / 'normalized-data-model/output/pdp.sqlite'}"
     assert not state["pyarrow"]
-    assert set(state["routes"]) == {"/api/v1/chat"}
+    assert set(state["routes"]) == routes

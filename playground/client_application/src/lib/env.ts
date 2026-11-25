@@ -53,8 +53,6 @@ export const env = {
   isDevelopment: appEnv === "development",
   isProduction: appEnv === "production",
   apiBaseUrl,
-  /** Enable only when this deployment has a provider-enabled Playground backend. */
-  studentSuccessChatEnabled: process.env.NEXT_PUBLIC_STUDENT_SUCCESS_CHAT_ENABLED
-    ? process.env.NEXT_PUBLIC_STUDENT_SUCCESS_CHAT_ENABLED === "true"
-    : appEnv === "development",
+  /** Off unless NEXT_PUBLIC_STUDENT_SUCCESS_CHAT_ENABLED is "true", for a backend with chat turned on. */
+  studentSuccessChatEnabled: process.env.NEXT_PUBLIC_STUDENT_SUCCESS_CHAT_ENABLED === "true",
 } as const;

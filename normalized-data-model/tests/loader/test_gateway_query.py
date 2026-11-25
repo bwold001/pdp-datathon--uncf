@@ -1,4 +1,4 @@
-"""Checks the README's answer to #8's gateway question: its SQL, run on a full load, matches the raw cohort file."""
+"""Checks the README's answer to the gateway question: its SQL, run on a full load, matches the raw cohort file."""
 
 import csv
 import os

@@ -46,7 +46,9 @@ from the repository root:
 python -m api load --cohort /secure/pdp/cohort.csv --course /secure/pdp/course.csv
 ```
 
-That rebuilds `normalized-data-model/output/pdp.sqlite`, which the pages, API and chat read. Your
+That rebuilds `normalized-data-model/output/pdp.sqlite`, which the pages, API and chat read. Set
+`UNCF_DATA_LABEL=institution` and `UNCF_SOURCE` before you start the API, so the pages and answers
+label the numbers as your data rather than the synthetic sample. Your
 files' column names must match the ones in [manifest.json](manifest.json) (full PDP names are in
 [column_lookup.csv](dictionaries/column_lookup.csv)). The other choices for a first real load (data
 fixes, data coverage, private links for hosted builds) and the checklist before real data goes in are

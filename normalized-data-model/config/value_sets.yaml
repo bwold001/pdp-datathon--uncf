@@ -4,7 +4,7 @@
 #     rules:
 #       - {value_set: yes_no, severity: error}
 # The rule passes if the stored value is in the list. Use a list here instead of writing it into
-# the rule (`enum: [...]`) when more than one column uses it, or when squads should be able to
+# the rule (`enum: [...]`) when more than one column uses it, or when teams should be able to
 # add values without editing the schema.
 #
 # What the rule's severity does with a value that isn't in the list:
@@ -27,8 +27,8 @@ completed_c_d_na: [C, D, NA]                    # gateway and developmental cour
 count_0_to_7: [0, 1, 2, 3, 4, 5, 6, 7]          # the 18 year-index columns, such as years to a credential (0: none)
 locale: [Urban, Suburb, Town/Rural]             # locale of another institution, in the cohort and course files
 
-# Open lists: values squads have agreed on so far. A value that isn't listed still loads, with a
-# warning, so a squad can bring a new one without changing the schema. Add it here once it's agreed.
+# Open lists: values teams have agreed on so far. A value that isn't listed still loads, with a
+# warning, so a team can bring a new one without changing the schema. Add it here once it's agreed.
 
 # institution_event.event_type. A type must also be lower-case words joined by underscores, such as
 # community_gathering; that rule is an error, so `Pow Wow` or a blank type is held back.

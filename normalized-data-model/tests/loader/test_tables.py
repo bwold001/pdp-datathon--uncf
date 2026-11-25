@@ -86,7 +86,7 @@ def test_fill_attempt_numbers_counts_retakes_by_term():
 
 
 def club_tables(tmp_path, club_optional):
-    """A squad's club and club_membership tables, from a file with one row that names no club. The club key
+    """A team's club and club_membership tables, from a file with one row that names no club. The club key
     on club_membership can be blank only when club_optional."""
     config = tmp_path / "config"
     shutil.copytree(BUILD / "config", config)
@@ -153,14 +153,14 @@ def test_an_enrichment_row_whose_two_column_key_points_nowhere_is_held_back(tmp_
     mapped = staging / "r/mapped"
     sources = [{"tables": mapped / "pdp_cohort_data.csv", "config": names[0], "provider": "cohort", "source_file": "c"},
                {"tables": mapped / "pdp_course_data.csv", "config": names[1], "provider": "course", "source_file": "k"},
-               {"tables": mapped / "cohort_notes.csv", "config": names[2], "provider": "squad", "source_file": "n"}]
+               {"tables": mapped / "cohort_notes.csv", "config": names[2], "provider": "team", "source_file": "n"}]
     tables, report = t.build_tables(rules, sources, datetime(2026, 10, 29))
     assert [n["note"] for n in tables["cohort_note"]] == ["in its cohort"]
     assert [(h["source_file"], h["source_row_number"]) for h in report["held_back"]] == [("cohort_notes.csv", 2)]
 
 
 def test_a_new_table_and_a_new_optional_table_need_no_code_change(tmp_path):
-    """A squad's enrichment adds two tables: club_membership, which points at club through a key
+    """A team's enrichment adds two tables: club_membership, which points at club through a key
     that can be blank. club is filled where the row names a club and left out where it doesn't,
     and club_membership is filled after club, though neither is named anywhere in the code."""
     config = tmp_path / "config"

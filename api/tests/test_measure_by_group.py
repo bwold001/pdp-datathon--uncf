@@ -62,7 +62,7 @@ def get(client: TestClient, measure: str, **params):
 
 
 def test_retention_by_pell_matches_the_explorer_contract(data_file, client) -> None:
-    """#5's done criterion: rows, the definition and the load time, in the Explorer's shape."""
+    """The measure-by-group route's done criterion: rows, the definition and the load time, in the Explorer's shape."""
     response = get(client, measure="retention", cohort="2022-23", group_by="pell")
     assert response.status_code == 200
     body = response.json()
