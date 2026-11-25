@@ -24,8 +24,8 @@ LETTER_SCALE = (
 )
 # Codes that are a final grade on their own (the dictionary's P = pass, F = fail, W = withdraw).
 FINAL_CODES = ("P", "F", "W")
-# The PDP's gateway pass line (CompletedGatewayMathYear1 and CompletedGatewayEnglishYear1): 1.0 or higher, or a P.
-GATEWAY_PASS_AT = 1.0
+# First-attempt course outcomes use C or better; cohort C/D completion flags retain their separate definition.
+GATEWAY_PASS_AT = 2.0
 # Every final grade in the order pages list them: the letters down to F, then pass and withdrawal.
 GRADE_ORDER = (*(letter for letter, _ in LETTER_SCALE), "F", "P", "W")
 

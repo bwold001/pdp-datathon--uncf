@@ -140,7 +140,7 @@ export const IgnoresAnUnknownValue: Story = {
   },
 };
 
-/** With the API's counts (real, for 2023-24): the sentence counts the tab's students, and groups under 10 can't be picked. */
+/** With the API's counts (real, for 2023-24): the sentence counts the tab's students, and groups unavailable can't be picked. */
 export const WithCounts: Story = {
   name: "With counts",
   render: () => <CohortBarView definitions={paths} filters={defaultCohortFilters(paths)} options={cohortOptions2023} studentCount={1114} />,
@@ -152,34 +152,34 @@ export const WithCounts: Story = {
     await expect(await page.findByRole("button", { name: "Prefer not to specify 0" })).toBeDisabled();
     await userEvent.click(page.getByRole("button", { name: "All filters" }));
     await userEvent.click(page.getByRole("button", { name: /^Race/ }));
-    await expect(await page.findByRole("button", { name: "Native Hawaiian or Other Pacific Islander under 10" })).toBeDisabled();
+    await expect(await page.findByRole("button", { name: "Native Hawaiian or Other Pacific Islander unavailable" })).toBeDisabled();
     await expect(page.getByRole("button", { name: "Asian 196" })).toBeEnabled();
   },
 };
 
 /** When the tab hides its numbers for too few students, the sentence says so, not the whole class's size. */
 export const FewerThanTen: Story = {
-  name: "Fewer than 10 match",
+  name: "Historical omitted counts",
   render: () => (
     <CohortBarView definitions={paths} filters={{ ...defaultCohortFilters(paths), pell: "Y", race: "Asian" }} options={cohortOptions2023} studentCount="too few" />
   ),
   play: async ({ canvas }) => {
-    await expect(canvas.getByText("Fewer than 10")).toBeVisible();
+    await expect(canvas.getByText("No reported")).toBeVisible();
     await expect(canvas.queryByText(/2,580/)).not.toBeInTheDocument();
   },
 };
 
-/** With UNCF_MIN_STUDENTS unset (1), nothing is hidden: no ⓘ about hidden groups, and an empty value reads "none". */
+/** A known one-student option stays selectable even with a historical minimum setting of 100. */
 export const SmallGroupsShown: Story = {
   name: "Small groups shown",
-  render: () => <CohortBarView definitions={paths} filters={defaultCohortFilters(paths)} options={{ ...cohortOptions2023, min_students: 1 }} studentCount={1114} />,
+  render: () => <CohortBarView definitions={paths} filters={defaultCohortFilters(paths)} options={{ ...cohortOptions2023, min_students: 100, filters: { ...cohortOptions2023.filters, race: { ...cohortOptions2023.filters.race, "Native Hawaiian or Other Pacific Islander": 1 } } }} studentCount={1114} />,
   play: async ({ canvas, canvasElement, userEvent }) => {
     const page = within(canvasElement.ownerDocument.body);
     await expect(canvas.getByText("1,114").parentElement).toHaveTextContent("1,114 first-time students who entered in 2023-24");
     await expect(canvas.queryByRole("button", { name: "About hidden groups" })).not.toBeInTheDocument();
     await userEvent.click(canvas.getByRole("button", { name: "Add filter" }));
     await userEvent.click(await page.findByRole("button", { name: /^Race/ }));
-    await expect(await page.findByRole("button", { name: "Native Hawaiian or Other Pacific Islander none" })).toBeDisabled();
+    await expect(await page.findByRole("button", { name: "Native Hawaiian or Other Pacific Islander 1" })).toBeEnabled();
   },
 };
 

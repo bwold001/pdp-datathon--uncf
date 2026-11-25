@@ -7,15 +7,19 @@ from uuid import uuid4
 import psycopg
 import pytest
 import yaml
+from analytics.analysis_service import _legacy_result, legacy_step
+from analytics.plan_service import PlanService
 from analytics.service import AnalyticsService
 from analytics.tests.analytics_fixtures import build_database, fixture_coverage
+from analytics.tests.test_snapshots import add_identity
 from sqlalchemy.engine import make_url
 
+from app.chat.provider import ToolCall
 from app.chat.routes import get_chat_client
 from app.core.config import settings
 from app.main import app
 from app.services.analytics import database
-from tests.test_student_success_tools import ScriptedModel, call, finish
+from tests.scripted_provider import ScriptedModel
 
 REQUESTS = [
     {"analysis": "retention", "cohort": "2022-23"},
@@ -39,6 +43,7 @@ REQUESTS = [
 def configured_data(tmp_path, monkeypatch):
     """The selected Playground file is distinct from the standalone extract."""
     path = build_database(tmp_path / "uploaded.sqlite")
+    add_identity(path)
     coverage = fixture_coverage()
     config = tmp_path / "coverage.yaml"
     config.write_text(yaml.safe_dump(coverage.model_dump()))
@@ -53,21 +58,29 @@ def configured_data(tmp_path, monkeypatch):
 def test_all_chat_paths_match_direct_service(client, configured_data, analysis_request, url):
     """Old URLs and the new URL execute the same rich, deterministic analyses."""
     path, coverage = configured_data
-    analysis, parameters = (
-        analysis_request["analysis"],
-        {k: v for k, v in analysis_request.items() if k != "analysis"},
-    )
-    model = ScriptedModel([call(analysis, **parameters)], [finish()])
+    runtime = AnalyticsService(path, coverage)
+    catalog = PlanService(runtime).catalog()
+    proposal = {
+        "kind": "proposed",
+        "catalog_version": catalog.catalog_version,
+        "snapshot_ref": catalog.snapshot_ref,
+        "steps": [legacy_step(analysis_request).model_dump(mode="json")],
+    }
+    model = ScriptedModel([ToolCall("1", "propose_plan", proposal)])
     app.dependency_overrides[get_chat_client] = lambda: model
-    reply = client.post(url, json={"prompt": "Synthetic parity example"})
+    reply = client.post(url, json={"protocol_version": 2, "prompt": "Synthetic parity example"})
     assert reply.json()["status"] == "confirmation" and not reply.json()["receipts"]
-    reply = client.post(url, json={"prompt": "confirmed", "confirmed": reply.json()["proposals"]})
-    expected = AnalyticsService(path, coverage).analyze(analysis_request).model_dump(mode="json")
-    assert reply.status_code == 200
-    assert reply.json()["receipts"] == expected["receipts"]
-    assert "99.9" not in reply.json()["message"]
+    reply = client.post(
+        url, json={"protocol_version": 2, "prompt": "confirmed", "confirmed": reply.json()["plan"]}
+    )
+    expected = runtime.analyze(analysis_request)
+    assert reply.status_code == 200 and reply.json()["outcome"] == "complete"
+    assert reply.json()["receipts"][0]["result"] == _legacy_result(expected.receipts[0]).model_dump(
+        mode="json"
+    )
+    assert len(model.requests) == 1
     direct = client.post("/api/v1/uncf/analyses", json=analysis_request)
-    assert direct.json()["receipts"] == expected["receipts"]
+    assert direct.json()["receipts"] == expected.model_dump(mode="json")["receipts"]
 
 
 def test_reload_is_visible_without_restart(client, configured_data):

@@ -251,7 +251,7 @@ function CourseDetail({ course, compared, groupLabel, minStudents, scale }: Cour
         </Section>
         <Section title="Grades in year 1">
           <p className="text-[13px] text-(--uncf-ink-3)">
-            Each try’s grade, one per student per term. Blue grades pass (a D or higher, or P); orange ones don’t.
+            Each try’s grade, one per student per term. Blue grades pass (a C or higher, or P); orange ones don’t.
           </p>
           <GradeBar grades={course.grades} scale={scale} minStudents={minStudents} />
         </Section>
@@ -428,8 +428,8 @@ function PairsCard({ data }: { data: GatewayResponse }) {
         </div>
       )}
       <p className="mt-4 text-[13px] text-(--uncf-ink-3)">
-        {fmt(data.pairs_considered)} pairs have {data.meta.min_pair_students} or more students and are compared; the rest
-        are hidden to protect privacy. “Could be chance” means the gap may not hold up in another year.
+        {fmt(data.pairs_considered)} course pairs were evaluated. Values are not hidden by group size.
+        “Could be chance” means the gap may not hold up in another year.
       </p>
     </Card>
   );
@@ -461,8 +461,8 @@ function GatewayCounted({ data }: { data: GatewayResponse }) {
     <div className="border-t border-(--uncf-line) pt-4.5 text-sm text-(--uncf-ink-2)">
       <b className="font-semibold text-(--uncf-ink)">What the numbers mean:</b> every number counts students, once per course,
       in their first year ({data.meta.year_one}), the same window as the PDP’s gateway measure. Only grades the school marked
-      as gateway math or English count. Passed: a D (1.0) or higher, or a Pass, as in the PDP; a D- or F doesn’t pass.
-      The DFW page draws its line higher: there a D+, D or D- counts as a DFW. A try is a term, and the first try is the
+      as gateway math or English count. Passed: a C (2.0) or higher, or a Pass. Cohort requirement completion uses a separate definition.
+      The DFW page uses its own line: there a D+, D or D- counts as a DFW. A try is a term, and the first try is the
       earliest; a class listed twice in one term counts once, at the better grade. Retention follows the Retention filter above: “
       {retentionWords(data.meta.retention_type, data.meta.retention_term).name}” means{" "}
       {retentionWords(data.meta.retention_type, data.meta.retention_term).how}. Everyone else is all other students who took the same course. A gap shows a difference, not its cause.

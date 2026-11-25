@@ -11,7 +11,7 @@ from analytics.tests.test_defined_operations import request
 
 from app.chat.provider import ToolCall
 from app.chat.v2 import ChatRequestV2, answer_v2
-from tests.test_student_success_tools import ScriptedModel
+from tests.scripted_provider import ScriptedModel
 
 
 @pytest.fixture

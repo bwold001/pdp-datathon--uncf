@@ -40,13 +40,14 @@ def assess(case, response):
     """Score routing, constraints and necessary versus unnecessary clarification separately."""
     raw = response.model_dump(mode="json", exclude_none=True)
     steps = raw.get("plan", {}).get("steps", []) if raw.get("plan") else []
-    operations = [step.get("operation_id") for step in steps]
+    operations = [step.get("operation", step.get("operation_id")) for step in steps]
     issues = {issue["code"] for issue in raw.get("issues", [])}
     unsupported = "unsupported_operation" in issues
     expected = case["expected_status"]
     constraints = all(
         any(
-            step.get("operation_id") == operation and contains(step["parameters"], parameters)
+            step.get("operation", step.get("operation_id")) == operation
+            and contains(step["parameters"], parameters)
             for step in steps
         )
         for operation, parameters in case["constraints"].items()
@@ -109,7 +110,7 @@ def gateway_boundary_check():
     return {"grades": grades, "expected": expected, "actual": actual, "passed": actual == expected}
 
 
-def main():
+def main(default_cases=CASES, release_name="A"):
     """Write explicit unverified evidence when credentials or source prerequisites are missing."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--model", required=True, help="Configured production OpenRouter model ID")
@@ -123,7 +124,7 @@ def main():
     )
     parser.add_argument("--output", required=True, type=Path, help="Untracked JSON evidence path")
     args = parser.parse_args()
-    suite = CASES.read_bytes()
+    suite = default_cases.read_bytes()
     cases = json.loads(suite)["cases"]
     root = Path(__file__).resolve().parents[3]
     report = {
@@ -159,7 +160,7 @@ def main():
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, indent=2) + "\n")
     print(
-        f"Release A interpretation evaluation: {report['status']} "
+        f"Release {release_name} interpretation evaluation: {report['status']} "
         f"({len(report['results'])}/{len(cases)} cases)"
     )
     return 0 if report["gate_passed"] else 1

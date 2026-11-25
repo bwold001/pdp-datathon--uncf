@@ -111,26 +111,26 @@ export const ProvisionalClass: Story = {
   },
 };
 
-/** A small group: groups and reasons of 1 to 9 students show "Under 10", never a count or share. */
+/** A small group: groups and reasons of 1 to 9 students show "Unavailable", never a count or share. */
 export const SmallGroup: Story = {
   name: "Small group",
   args: { data: creditsSmallGroup },
   play: async ({ canvas }) => {
     const table = within(canvas.getByRole("table"));
-    await expect(table.getByRole("row", { name: /^On 4-year pace/ })).toHaveTextContent("Under 10–");
+    await expect(table.getByRole("row", { name: /^On 4-year pace/ })).toHaveTextContent("Unavailable–");
     await expect(table.getByRole("row", { name: /^Below the minimum/ })).toHaveTextContent("32 · 48%81%");
-    await expect(canvas.getByRole("img", { name: "Signed up for enough, failed: Under 10" })).toBeInTheDocument();
-    // On pace is under 10, so its big share is hidden too.
+    await expect(canvas.getByRole("img", { name: "Signed up for enough, failed: Unavailable" })).toBeInTheDocument();
+    // On pace is unavailable, so its big share is hidden too.
     await expect(question(canvas, /^2 · /)).toHaveTextContent(/^2 · Are they on pace to finish in 4 years\?–/);
   },
 };
 
 /** Fewer than 10 students match: the heading, then no numbers at all. */
 export const TooFewStudents: Story = {
-  name: "Fewer than 10 students",
+  name: "Historical omitted counts",
   args: { data: creditsTooFew },
   play: async ({ canvas }) => {
     await expect(canvas.getByRole("heading", { name: "Are students making meaningful progress toward their degree?" })).toBeVisible();
-    await expect(canvas.getByText("Fewer than 10 students match these filters.")).toBeVisible();
+    await expect(canvas.getByText("No reported students match these filters.")).toBeVisible();
   },
 };

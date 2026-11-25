@@ -34,16 +34,16 @@ def retake(students: list[dict], records: list[dict], grade: str, year="2023-24"
         records.append(here(s["student_id"], year, season, prefix="ENG", number="101", grade=grade, gateway="E"))
 
 
-def test_gateway_pass_line_is_one_point_zero():
-    """The PDP's gateway line: 1.0 or higher, or P, passes; F, W and under 1.0 don't; non-final grades are None."""
-    assert [gateway_passed(g) for g in ("4", "2.0", "1.7", "1.0", "1", "P")] == [True] * 6
-    assert [gateway_passed(g) for g in ("0.7", "0", "F", "W")] == [False] * 4
+def test_gateway_pass_line_is_two_point_zero():
+    """The registered course line: 2.0 or higher, or P, passes; F, W and under 1.0 don't; non-final grades are None."""
+    assert [gateway_passed(g) for g in ("4", "2.0", "P")] == [True] * 3
+    assert [gateway_passed(g) for g in ("1.99", "1.7", "1.0", "1", "0.7", "0", "F", "W")] == [False] * 8
     assert [gateway_passed(g) for g in ("I", "A", "MIS", None)] == [None] * 4
 
 
 def test_first_try_path_and_retention(tmp_path):
     """Passed first try, retook and passed, retook and didn't, didn't retake; and retention by passing in the end."""
-    first = takers("first", 12, ["4", "1.3", "P"], back=10)
+    first = takers("first", 12, ["4", "2.3", "P"], back=10)
     later = takers("later", 10, ["F"], back=6)
     retake(*later, grade="2.0")
     again = takers("again", 10, ["0.7"], back=1)
@@ -67,9 +67,9 @@ def test_every_grade_is_counted_apart(tmp_path):
     page = gateway_courses(**FEDERAL, database=build(tmp_path, first))
     (course,) = page["courses"]
     grades = course["grades"]
-    assert list(grades) == ["C or higher", "D", "Under 1.0", "P", "W"]
+    assert list(grades) == ["C or higher", "Below C", "Under 1.0", "P", "W"]
     # First tries: 3 each of A, D+ (1.5), P and F (0.3); then a C for all 12 on the retake. So C or higher is 3 + 12.
-    assert grades == {"C or higher": 15, "D": 3, "Under 1.0": 3, "P": 3, "W": 0}
+    assert grades == {"C or higher": 15, "Below C": 3, "Under 1.0": 3, "P": 3, "W": 0}
     assert sum(grades.values()) == 24
     assert page["context"]["grade_scale"]["grades"][-1] == {"grade": "W", "points": "the code W (withdrew)", "counted": False}
 

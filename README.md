@@ -131,7 +131,7 @@ Every page route and `/measures/{measure}` take the same query values: `cohort`,
 | `GET /api/v1/uncf/student-paths?…&terms=&group_by=` | Each student's status term by term (here, credential, elsewhere, stopped) with shares, moves, transfers, retention, and per group paths |
 | `GET /api/v1/uncf/dfw?…` | Everyone's DFW rate with D, F and W apart, then each course with `min_students` or more students. `meta.grade_scale` says which grades count |
 | `GET /api/v1/uncf/dfw/course?course=ENG%20101&…` | One course by term, delivery and group, each with `rest_rate` and `gap` against everyone else |
-| `GET /api/v1/uncf/gateway?…` | Each flagged gateway course in year 1: students, passed on the first try and in the end (the PDP's 1.0 line), the path after the first try, retention if passed / not, the filtered group's gap against everyone else, and the course pairs with lower retention |
+| `GET /api/v1/uncf/gateway?…` | Each flagged gateway course in year 1: students, passed on the first try and in the end (C or better, >=2.0, or P), the path after the first try, retention if passed / not, the filtered group's gap against everyone else, and the course pairs with lower retention |
 | `GET /api/v1/uncf/credit-momentum?…` | Year 1 credits, completion ratio, 12/24/30 milestones, first two terms, credit tiers with retention; `progress`: meaningful progress toward a degree (the 24-credit minimum, 4-year pace, year 1 groups with retention, why students fell below, year 2), settings in `measures/breakdowns/credit_progress.py` |
 | `GET /api/v1/uncf/analyses/catalog` | The chat's approved analyses, their choices and declared data coverage |
 | `POST /api/v1/uncf/analyses` | One approved analysis with its receipt, or a clarification when a needed choice is missing |
@@ -221,7 +221,8 @@ retention and annual enrollment questions with shared calculation receipts from 
    calculated" to see the evidence.
 
 Chat is served by the Playground at `POST /api/v1/chat` (`/api/v1/uncf/chat` is an alias). It
-uses the same `/api/v1/uncf/analyses` routes the standalone API offers.
+requires `protocol_version: 2` and uses the same registered PlanService as the deterministic
+`/api/v1/uncf/analysis-v2` API. Obsolete unversioned chat bodies are rejected with 422.
 
 **Safeguards.** The model can call only the catalog, definitions and approved analysis tools. No
 tool accepts SQL, student IDs or file paths. Chat proposes the full scope and needs explicit
@@ -229,7 +230,8 @@ approval before calculating, and infers no extra filters. A missing choice gets 
 clarification. A new question starts a separate analysis; only a pending typed request carries
 through clarification, and reset discards late replies. Displayed numbers, formulas and
 limitations come from validated receipts, never from the model's prose. Rates must match their
-numerators and denominators, and suppressed values stay out of evidence and display text. All
+numerators and denominators. Every nonempty group remains visible; historical omitted values
+require recomputation rather than reconstruction. All
 three graduation horizons, program perspectives, ethnicity handling and certified coverage rules
 stay in place. Calculation deadlines cancel SQLite work and counting loops; timeouts wait for
 transaction cleanup, and PostgreSQL statements use the remaining request budget. These
@@ -242,8 +244,7 @@ rounded time to credential must never be used to invent a bachelor's award semes
 
 **Checks.** `make check` at the root covers `analytics/`. In the Playground run `mise run api:lint`,
 `mise run api:test`, `mise run web:build`, `mise run web:lint` and
-`mise run web:test-storybook` (CI skips Storybook, so run it locally if you changed a story or
-component). Python tests use small, independently counted SQLite fixtures and a
+`mise run web:test-storybook` (CI also runs the browser stories). Python tests use small, independently counted SQLite fixtures and a
 scripted model, with no live provider calls.
 
 The Vercel chat service needs the OpenRouter key and model configured before deployment; without
@@ -317,3 +318,8 @@ populations, versions and sample sizes. Separate steps may overlap and do not im
 one shared denominator. Safe independent refusals can return a partial answer;
 database errors and deadlines stop further work. Cleanup failure invalidates the
 current step while preserving earlier completed receipts.
+
+Release B operation inventory, verification limits and rollback steps are in the
+[Release B handoff](docs/release-b-handoff.md). The fixed 41-prompt interpretation suite
+uses `python -m scripts.evaluate_release_b` from the Playground backend, with the
+same `--model`, `--database` and `--output` arguments as the Release A evaluator.
