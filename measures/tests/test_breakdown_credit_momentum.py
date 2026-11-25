@@ -102,4 +102,4 @@ def test_real_data_known_answers():
     assert (page["credits"]["avg_attempted"], page["credits"]["avg_earned"]) == (17.8, 13.1)
     assert [m["students"] for m in page["milestones"]] == [778, 316, 140]
     federal = credit_momentum(**ask("2023-24", "federal", cohort_term="Fall"))
-    assert [t["rate"] for t in federal["tiers"]] == [0.2949, 0.6859, 0.7357]  # same as the Explorer before #35
+    assert [t["rate"] for t in federal["tiers"]] == [0.2949, 0.6859, 0.7357]  # same as the Explorer showed before

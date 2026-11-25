@@ -3,7 +3,7 @@
 Each measure's calculation lives in its own file in calculations/ and counts in SQL or in Python. This file
 builds the groups, asks the measure for its counts, preserves every nonempty group, works out the rate and checks the rows.
 
-The equity gap finder (#26) will call run_measure, so keep its inputs and rows stable.
+The equity gap finder calls run_measure, so keep its inputs and rows stable.
 """
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-"""Checks #35's promise: the same cohort, filters and retention type give the same numbers on every route."""
+"""Checks the Explorer's promise: the same cohort, filters and retention type give the same numbers on every route."""
 from __future__ import annotations
 
 import pytest

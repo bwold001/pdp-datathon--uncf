@@ -1,4 +1,4 @@
-"""Mounts the UNCF squad's API, which lives in the repo's top-level api/ folder (AGENTS.md)."""
+"""Mounts the Explorer API, which lives in the repo's top-level api/ folder (AGENTS.md)."""
 
 from fastapi import APIRouter
 

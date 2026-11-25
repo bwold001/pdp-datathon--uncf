@@ -67,7 +67,7 @@ def test_input_order_doesnt_matter():
 
 
 def planted() -> list[CountRow]:
-    """Made-up counts for #26's completion tests 2 and 3: A is 15 points behind, B has a 2-point gap in 40 students."""
+    """Made-up counts for the gap finder's completion tests 2 and 3: A is 15 points behind, B has a 2-point gap in 40 students."""
     return [
         count("2022-23", (), 480, 1000),
         count("2022-23", ("A",), 72, 200),  # 36% against 51% for everyone else

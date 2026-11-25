@@ -345,38 +345,38 @@ def test_a_failed_first_load_leaves_no_tables(tmp_path, monkeypatch):
 
 
 @pytest.mark.parametrize("on_delete", ["ON DELETE CASCADE", "ON DELETE SET NULL", ""])
-def test_sqlite_refresh_stops_when_a_squad_table_points_at_the_model(tmp_path, on_delete):
-    """Dropping a table in SQLite deletes its rows first, which would cascade into the squad's table."""
+def test_sqlite_refresh_stops_when_a_team_table_points_at_the_model(tmp_path, on_delete):
+    """Dropping a table in SQLite deletes its rows first, which would cascade into the team's table."""
     config = make_config(tmp_path)
     run(config)
     with sqlite3.connect(tmp_path / "output/pdp.sqlite") as connection:
-        connection.execute(f"CREATE TABLE squad_notes (student_id TEXT REFERENCES student (student_id) {on_delete}, "
+        connection.execute(f"CREATE TABLE team_notes (student_id TEXT REFERENCES student (student_id) {on_delete}, "
                            f"note TEXT)")
-        connection.execute("INSERT INTO squad_notes SELECT student_id, 'keep me' FROM student")
-        notes = connection.execute("SELECT * FROM squad_notes ORDER BY student_id").fetchall()
+        connection.execute("INSERT INTO team_notes SELECT student_id, 'keep me' FROM student")
+        notes = connection.execute("SELECT * FROM team_notes ORDER BY student_id").fetchall()
     before = read_sqlite(tmp_path / "output/pdp.sqlite")
-    with pytest.raises(RuntimeError, match=r"not changed.*squad_notes\.student_id -> student"):
+    with pytest.raises(RuntimeError, match=r"not changed.*team_notes\.student_id -> student"):
         run(config)
     assert read_sqlite(tmp_path / "output/pdp.sqlite") == before
     with sqlite3.connect(tmp_path / "output/pdp.sqlite") as connection:
-        assert connection.execute("SELECT * FROM squad_notes ORDER BY student_id").fetchall() == notes
+        assert connection.execute("SELECT * FROM team_notes ORDER BY student_id").fetchall() == notes
 
 
-def test_sqlite_refresh_stops_when_a_squad_table_points_at_a_two_column_key(tmp_path):
+def test_sqlite_refresh_stops_when_a_team_table_points_at_a_two_column_key(tmp_path):
     """SQLite lists a two-column key as two lines; the check reads only table names, so it still stops."""
     config = make_config(tmp_path)
     run(config)
     with sqlite3.connect(tmp_path / "output/pdp.sqlite") as connection:
-        connection.execute("CREATE TABLE squad_cohort_notes (student_id TEXT, cohort TEXT, note TEXT, FOREIGN KEY "
+        connection.execute("CREATE TABLE team_cohort_notes (student_id TEXT, cohort TEXT, note TEXT, FOREIGN KEY "
                            "(student_id, cohort) REFERENCES cohort_membership (student_id, cohort))")
-        connection.execute("INSERT INTO squad_cohort_notes SELECT student_id, cohort, 'keep me' FROM cohort_membership")
-        notes = connection.execute("SELECT * FROM squad_cohort_notes ORDER BY student_id, cohort").fetchall()
+        connection.execute("INSERT INTO team_cohort_notes SELECT student_id, cohort, 'keep me' FROM cohort_membership")
+        notes = connection.execute("SELECT * FROM team_cohort_notes ORDER BY student_id, cohort").fetchall()
     before = read_sqlite(tmp_path / "output/pdp.sqlite")
-    with pytest.raises(RuntimeError, match=r"not changed.*squad_cohort_notes\.\w+ -> cohort_membership"):
+    with pytest.raises(RuntimeError, match=r"not changed.*team_cohort_notes\.\w+ -> cohort_membership"):
         run(config)
     assert read_sqlite(tmp_path / "output/pdp.sqlite") == before
     with sqlite3.connect(tmp_path / "output/pdp.sqlite") as connection:
-        assert connection.execute("SELECT * FROM squad_cohort_notes ORDER BY student_id, cohort").fetchall() == notes
+        assert connection.execute("SELECT * FROM team_cohort_notes ORDER BY student_id, cohort").fetchall() == notes
 
 
 # What gets loaded
@@ -542,21 +542,21 @@ def test_postgres_full_refresh_repeats_and_failed_load_rolls_back(tmp_path, post
 
 
 @needs_postgres
-def test_postgres_refresh_stops_when_a_squad_table_points_at_the_model(tmp_path, postgres):
+def test_postgres_refresh_stops_when_a_team_table_points_at_the_model(tmp_path, postgres):
     import psycopg
     config = make_config(tmp_path)
     environ = {"PDP_TEST_POSTGRES_URL": postgres}
     run(config, backend="postgres", environ=environ)
     with psycopg.connect(postgres) as connection:
-        connection.execute("CREATE TABLE squad_notes (student_id TEXT REFERENCES student (student_id) "
+        connection.execute("CREATE TABLE team_notes (student_id TEXT REFERENCES student (student_id) "
                            "ON DELETE CASCADE, note TEXT)")
-        connection.execute("INSERT INTO squad_notes SELECT student_id, 'keep me' FROM student")
+        connection.execute("INSERT INTO team_notes SELECT student_id, 'keep me' FROM student")
     before = read_postgres(postgres)
-    with pytest.raises(RuntimeError, match="(?s)not changed.*squad_notes"):
+    with pytest.raises(RuntimeError, match="(?s)not changed.*team_notes"):
         run(config, backend="postgres", environ=environ)
     assert read_postgres(postgres) == before
     with psycopg.connect(postgres) as connection:
-        assert connection.execute("SELECT COUNT(*) FROM squad_notes").fetchone()[0] == len(before["student"])
+        assert connection.execute("SELECT COUNT(*) FROM team_notes").fetchone()[0] == len(before["student"])
 
 
 # Command line

@@ -1,4 +1,4 @@
-"""Runs the shared measures (#9) and hands their rows to compare() as CountRows.
+"""Runs the shared measures and hands their rows to compare() as CountRows.
 
 This is the only file that runs the measures, so a change to their results is fixed here. compare.py takes
 only their unknown value and status names.

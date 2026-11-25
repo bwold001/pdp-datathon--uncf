@@ -146,7 +146,7 @@ def test_full_load(full_load, tmp_path, monkeypatch):
         for name in COMPUTED:
             assert getattr(computed[values], name) == pytest.approx(getattr(row, name), rel=1e-12), (values, name)
 
-    # #26's completion test 6: one gap, by hand from the raw file.
+    # The gap finder's completion test 6: one gap, by hand from the raw file.
     with RAW_COHORT.open(newline="", encoding="utf-8") as f:
         raw = list(csv.DictReader(f))
     retained, students = raw_retention(raw)
@@ -157,7 +157,7 @@ def test_full_load(full_load, tmp_path, monkeypatch):
     by_hand = black_retained / black_students - (retained - black_retained) / (students - black_students)
     assert black.gap_pts == round(by_hand * 100, 2)
 
-    # #26's completion test 1: the script saves one table and one CSV, every row with its note.
+    # The gap finder's completion test 1: the script saves one table and one CSV, every row with its note.
     database, output = tmp_path / "results.sqlite", tmp_path / "equity_gaps.csv"
     saved = ["save_results", "--input", str(full_load), "--results", str(database), "--output", str(output)]
     monkeypatch.setattr(sys, "argv", saved)

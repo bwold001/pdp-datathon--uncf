@@ -1,6 +1,6 @@
-"""Hand-written rows in the final shape, so the UI kit and other squads can build before the real calculation lands.
+"""Hand-written rows in the final shape, so the UI kit and other teams can build before the real calculation lands.
 
-The counts are retention by race from the synthetic mock data, as the shared measures count it (#61). The
+The counts are retention by race from the synthetic mock data, as the shared measures count it. The
 comparison columns were worked out from those counts once and typed in. Nothing here reads a database.
 """
 from __future__ import annotations

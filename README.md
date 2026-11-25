@@ -46,9 +46,9 @@ produces the numbers. Components, data flow and the API reference: [docs/archite
 | [Git](https://git-scm.com/) | any recent | Cloning |
 | [mise](https://mise.jdx.dev) | 2026.10 or newer | Installs the pinned tools below |
 | bun | 1.4.3 (pinned by mise) | Web app packages and scripts |
-| Node.js | 24 (pinned by mise) | Web app runtime |
-| Python | 3.14 (pinned by mise) | Playground server |
-| uv | 0.13 (pinned by mise) | Playground server packages |
+| Node.js | 24.22.2 (pinned by mise) | Web app runtime |
+| Python | 3.14.10 (pinned by mise) | Playground server |
+| uv | 0.13.7 (pinned by mise) | Playground server packages |
 | Python | 3.10 or newer, separately | Only for the root tools and tests (`measures/`, `analytics/`, the data model) |
 
 No database server, Docker or cloud account is needed for the Explorer. Versions are pinned in
@@ -103,16 +103,23 @@ python -m pip install -r requirements.txt
 make check-fast                  # no make (Windows)? python scripts/check.py && python data/quality/run_checks.py
 ```
 
-**Optional: turn on the chat.** Create `playground/server_application/.env.development.local`
-(git ignores it) with your own [OpenRouter](https://openrouter.ai) key, restart `mise run api:dev`,
-and open http://localhost:3000/uncf/chat:
+**Optional: turn on the chat.** Chat is off until you turn it on with your own
+[OpenRouter](https://openrouter.ai) key. Create `playground/server_application/.env.development.local`
+(git ignores it) with:
 
 ```bash
+UNCF_CHAT_ENABLED=true
 OPENROUTER_API_KEY=your-openrouter-key
 ```
 
-Try "What is the retention rate for all majors?" Without a key, the Explorer pages work and the
-chat shows a configuration message. What the chat can answer and how it keeps numbers right:
+and `playground/client_application/.env.local` (also ignored) with:
+
+```bash
+NEXT_PUBLIC_STUDENT_SUCCESS_CHAT_ENABLED=true
+```
+
+Restart `mise run api:dev` and `mise run web:dev`, then open http://localhost:3000/uncf/chat and try
+"What is the retention rate for all majors?" With chat off, the Explorer pages work as usual. What the chat can answer and how it keeps numbers right:
 [docs/chat.md](docs/chat.md).
 
 ## Use your own PDP files
@@ -131,8 +138,10 @@ root, with the root `.venv` active:
 python -m api load --cohort /secure/pdp/cohort.csv --course /secure/pdp/course.csv
 ```
 
-That rebuilds `normalized-data-model/output/pdp.sqlite`, which every page and the chat read.
-**Never commit real student data:** PDP exports are protected by FERPA. Column names, data fixes,
+That rebuilds `normalized-data-model/output/pdp.sqlite`, which every page and the chat read. Then
+set `UNCF_DATA_LABEL=institution` and `UNCF_SOURCE` (for example "Example College PDP files, fall
+2026 release") before you start the API, so every page and answer says the numbers are your own
+data, not the synthetic sample. **Never commit real student data:** PDP exports are protected by FERPA. Column names, data fixes,
 data coverage and the checklist before real data goes in are in the
 [integration guide](docs/integration.md).
 
@@ -159,8 +168,8 @@ has the steps for both:
 
 - **Your own server** (recommended for real data): the API and the built web app as two services
   behind nginx.
-- **Vercel:** [vercel.json](vercel.json) deploys the web app, API and chat as one project. It turns
-  chat on unless you turn it off.
+- **Vercel:** [vercel.json](vercel.json) deploys the web app, API and chat as one project. Chat
+  stays off until you turn it on with your own key.
 
 Before real student data goes on any host, it needs sign in, a privacy (FERPA) and IT review, and
 the data owner's sign-off.

@@ -13,7 +13,7 @@ The only public API is load(), plus a command line. A load:
    failed load rolls back and leaves the database as it was. A load with no student rows, such as
    one where every cohort row failed validation, stops first and keeps the last load;
 5. writes every loaded table as a file to output/tables/, CSV or Parquet as --format says, after
-   the commit, so the files match the database. A squad without a database reads those;
+   the commit, so the files match the database. A team without a database reads those;
 6. writes logs/load_report/<run id>/summary.yaml, whether the load worked or not.
 
 The source files are only read. Given a staging folder, the loader reads that run's validated/ tables

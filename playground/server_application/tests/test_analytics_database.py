@@ -1,4 +1,4 @@
-"""Configured-database parity for every preserved PR #24 analysis."""
+"""Configured-database parity for every preserved legacy analysis."""
 
 import os
 import sqlite3

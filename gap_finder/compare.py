@@ -19,7 +19,7 @@ UNKNOWN_VALUES = frozenset({UNKNOWN, ""})  # the shared measures' unknown value,
 MEASURE_OK = Status.OK.value
 MEASURE_NOT_YET_OBSERVABLE = Status.NOT_YET_OBSERVABLE.value
 
-# Says who was compared and over which cohorts, as #26 asks of every note.
+# Says who was compared and over which cohorts, as the gap finder asks of every note.
 COMPARED_NOTE = "Compared with everyone else in the same cohort ({cohort}). A gap shows a difference, not its cause."
 
 

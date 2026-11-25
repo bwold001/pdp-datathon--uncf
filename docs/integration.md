@@ -1,9 +1,10 @@
 # Integration guide: running the Student Persistence and Pathway Explorer on your own PDP data
 
-For the IT and institutional research staff at Florida Memorial University (FMU) and Benedict College
-who will run the Explorer after handoff. It covers how the app gets its data, how to load your own PDP
-files, where to host it, how to require sign in, how to turn chat off or point it at your own AI
-service, and what to check before real student data goes in.
+For the IT and institutional research staff at a college who will run the Explorer on their own PDP
+files, such as the teams at Florida Memorial University and Benedict College it was built with. It
+covers how the app gets its data, how to load your own PDP files, where to host it, how to require
+sign in, how to turn chat on or point it at your own AI service, and what to check before real
+student data goes in.
 
 Everything in this repo was built and tested on **synthetic mock data**. No number it shows today is a
 finding about real students or either school.
@@ -123,7 +124,7 @@ Set these as environment variables (on Vercel, in the project's settings).
 | `UNCF_DATABASE` | `normalized-data-model/output/pdp.sqlite` | The SQLite file the load writes and the API and chat read |
 | `UNCF_COHORT_URL`, `UNCF_COURSE_URL` | none | `https` links to your two files, for a build that can't pass `--cohort` and `--course` |
 | `UNCF_DATA_LABEL` | `synthetic` | What kind of data is loaded: `synthetic` (the sample) or `institution` (your own PDP files). The Explorer's badge, page notes and shared PDFs, the chat's cards and instructions, and every answer and receipt follow it. Set `institution` whenever you load your own files |
-| `UNCF_SOURCE` | "PDP analysis-ready cohort and course files (synthetic sample)" | The source every answer names, for example "FMU PDP files, fall 2026 release" |
+| `UNCF_SOURCE` | "PDP analysis-ready cohort and course files (synthetic sample)" | The source every answer names, for example "Example College PDP files, fall 2026 release" |
 | `UNCF_ANALYTICS_CONFIG` | `analytics/config/analytics.yaml` | What you know about your data's coverage (see [section 5](#5-tell-the-app-about-your-data)) |
 | `UNCF_SCHOOL` | none | `fmu` or `benedict`: show metrics under the school's own names (see section 5) |
 | `UNCF_CORS_ORIGINS` | `http://localhost:3000` | Other web addresses allowed to call the API from a browser. Not needed when the pages and API share one address |
@@ -133,8 +134,8 @@ Set these as environment variables (on Vercel, in the project's settings).
 
 | Setting | Default | What it does |
 | --- | --- | --- |
-| `NEXT_PUBLIC_STUDENT_SUCCESS_CHAT_ENABLED` | on (Vercel) | `false` hides chat in the pages. Read when the pages are built, so rebuild after changing it |
-| `UNCF_CHAT_ENABLED` | off locally, on in `chat_app.py` | `false` stops the chat service from answering |
+| `NEXT_PUBLIC_STUDENT_SUCCESS_CHAT_ENABLED` | off | `true` shows chat in the pages. Read when the pages are built, so rebuild after changing it |
+| `UNCF_CHAT_ENABLED` | off | `true` lets the chat service answer. Needs `OPENROUTER_API_KEY` |
 | `OPENROUTER_API_KEY` | none | The key for the AI model service (see [section 8](#8-chat)) |
 | `UNCF_CHAT_MODEL` | `openai/gpt-4.1` | Which model the chat uses |
 | `DATABASE_URL` | the SQLite file above | What the chat reads, if not the SQLite file |
@@ -170,8 +171,8 @@ The repo already deploys to Vercel as is (`vercel.json`).
 
 1. Create your own Vercel team. The free Hobby plan is for personal use, so an institution needs Pro.
 2. Copy the repo into your GitHub organization and import it into the team as a new project.
-3. Set the settings from [section 4](#4-settings) in the project. To start without chat, set
-   `NEXT_PUBLIC_STUDENT_SUCCESS_CHAT_ENABLED=false` and `UNCF_CHAT_ENABLED=false`.
+3. Set the settings from [section 4](#4-settings) in the project. Chat is off unless you set
+   `NEXT_PUBLIC_STUDENT_SUCCESS_CHAT_ENABLED=true`, `UNCF_CHAT_ENABLED=true` and your own key.
 4. Turn on deployment protection (see [section 7](#7-sign-in-and-access)), then deploy.
 
 With no file settings, each deploy builds the database from the mock files in `data/raw/`. For real
@@ -249,24 +250,24 @@ server {
 Check it: `https://<your address>/api/v1/uncf/health` should say `"data_available": true`, and the home
 page should open the Student paths page.
 
-### What this looks like at each school
+### Two example setups
 
-**FMU (Linux server, Microsoft SQL Server, Power BI)**
-- Path B on the existing Linux server. No database server is needed: the app keeps its own SQLite file.
+**A campus Linux server, with Power BI**
+- Path B on the existing server. No database server is needed: the app keeps its own SQLite file.
 - The institutional research office provides the PDP files; whoever runs the server loads them (section 3, option A).
 - Keep it on the campus network, with sign in in front (section 7).
-- Start with chat off. FMU requires any AI model to run on its own servers (section 8).
+- Start with chat off if your policy requires AI models to run on your own servers (section 8).
 - Power BI reads the API's CSV output (section 9).
 
-**Benedict (Azure, Azure Data Lake, Power BI, Entra ID)**
+**Azure, with a data lake and Microsoft Entra ID**
 - Path B on an Azure Linux virtual machine, with Entra ID sign in in front (section 7).
 - Load the PDP files from Azure Blob Storage with private links (section 3, option B) or copy them to the
   machine.
-- The weekly Data Lake batch can fetch the API's CSV output (section 9). Confirm the columns against the
-  Data Lake's schema first.
+- A scheduled data lake job can fetch the API's CSV output (section 9). Confirm the columns against the
+  data lake's schema first.
 - Chat can use Azure OpenAI once the model provider is switched (section 8).
 
-A ready made container image would let Benedict run the same thing on Azure App Service, and make Path B
+A ready made container image would let a school run the same thing on Azure App Service, and make Path B
 a single command everywhere. It is a planned follow up, not built yet.
 
 ## 7. Sign in and access
@@ -285,7 +286,7 @@ front of it. That covers the pages, the API and the chat together, with no code 
 4. Check from another machine: `https://<your address>/api/v1/uncf/health` and
    `http://<server>:3000` and `:8001` should all fail or ask you to sign in.
 
-**With Microsoft Entra ID (Benedict, and FMU if it uses Microsoft 365)**
+**With Microsoft Entra ID (or Microsoft 365)**
 1. Run [oauth2-proxy](https://oauth2-proxy.github.io/oauth2-proxy/) on the same server, set up with its
    Microsoft Entra ID provider, listening on `127.0.0.1:4180` in reverse proxy mode
    (`--http-address=127.0.0.1:4180 --reverse-proxy=true --upstream=static://202`).
@@ -337,14 +338,19 @@ real data.
 
 ## 8. Chat
 
-### Turn chat off
+### Turn chat on or off
 
-- **On Vercel:** set `NEXT_PUBLIC_STUDENT_SUCCESS_CHAT_ENABLED=false` and `UNCF_CHAT_ENABLED=false`, then
-  redeploy. Both default to on there.
-- **On your own server:** build the pages with `NEXT_PUBLIC_STUDENT_SUCCESS_CHAT_ENABLED=false` and don't
-  run the chat service.
+Chat is off by default everywhere, so nobody's AI bill runs until you choose. To turn it on, set
+`OPENROUTER_API_KEY` (your own key, see below) and:
 
-The Explorer pages, PDF export and the API keep working with chat off.
+- **On Vercel:** `NEXT_PUBLIC_STUDENT_SUCCESS_CHAT_ENABLED=true` and `UNCF_CHAT_ENABLED=true`, then redeploy.
+- **On your own server:** build the pages with `NEXT_PUBLIC_STUDENT_SUCCESS_CHAT_ENABLED=true` and run the
+  chat service with `UNCF_CHAT_ENABLED=true`.
+- **Locally:** put `UNCF_CHAT_ENABLED=true` and the key in `playground/server_application/.env.development.local`,
+  and `NEXT_PUBLIC_STUDENT_SUCCESS_CHAT_ENABLED=true` in `playground/client_application/.env.local`.
+
+Set them back to `false` (or remove them) to turn chat off. The Explorer pages, PDF export and the API
+keep working with chat off.
 
 ### How chat uses an AI model
 
@@ -372,7 +378,7 @@ separate Python 3.14 environment, from the repo root:
 ```bash
 python3.14 -m venv .venv-chat && .venv-chat/bin/python -m pip install -r requirements-chat.txt
 .venv-chat/bin/python -m api load            # or point DATABASE_URL at the database the API uses
-OPENROUTER_API_KEY=... UNCF_CHAT_MODEL=openai/gpt-4.1   .venv-chat/bin/python -m uvicorn chat_app:app --host 127.0.0.1 --port 8002
+UNCF_CHAT_ENABLED=true OPENROUTER_API_KEY=... UNCF_CHAT_MODEL=openai/gpt-4.1   .venv-chat/bin/python -m uvicorn chat_app:app --host 127.0.0.1 --port 8002
 ```
 
 Put the key in the service's environment file, not in the repo. `chat_app.py` doesn't read the
@@ -381,7 +387,7 @@ Playground's `.env.development.local`. nginx sends `/api/v1/chat` and `/api/v1/u
 
 ### Chat on Vercel
 
-`vercel.json` deploys chat as a third service and turns it on. In the project's **Settings →
+`vercel.json` deploys chat as a third service, off until you turn it on. In the project's **Settings →
 Environment Variables**, set these separately for Preview and Production (use a test key for Preview):
 
 | Name | Example | Type |
