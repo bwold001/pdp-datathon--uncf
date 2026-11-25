@@ -12,7 +12,8 @@ from pydantic import BaseModel, ConfigDict
 Measure = Literal["retention", "persistence", "gateway_math", "gateway_english", "dfw_rate", "credit_completion"]
 # school: the PDP retention flag. federal: fall to fall, enrolled here the fall after year 1.
 RetentionType = Literal["school", "federal"]
-Cohort = Literal["2021-22", "2022-23", "2023-24", "2024-25"]
+# A cohort year such as "2023-24". The years allowed are the ones in the loaded data (api/data.py), not a fixed list.
+Cohort = str
 # Every grouping the measures support except first_gen (unreliable in the mock data) and course (DFW only).
 Dimension = Literal[
     "pell",

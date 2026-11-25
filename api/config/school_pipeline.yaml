@@ -1,0 +1,38 @@
+# How `python -m api load --cohort FILE --course FILE` loads a school's own PDP analysis-ready files.
+# The same settings as normalized-data-model/config/pipeline.yaml, without the sample's two enrichment files:
+# on_campus_housing.csv is synthetic and keyed to the sample's students, and institution_events.csv is
+# another school's calendar. The --cohort and --course paths replace the two paths below.
+# Relative paths are from normalized-data-model/. See docs/integration.md.
+
+mode: full_refresh
+backend: sqlite
+
+sqlite:
+  path: output/pdp.sqlite   # replaced by UNCF_DATABASE or the built-in path when run through python -m api load
+
+tables:
+  path: output/tables
+
+postgres:
+  url_env: PDP_POSTGRES_URL
+
+# skip: hold back a row that breaks a rule (listed in logs/failed_records/) and load the rest.
+on_error_rows: skip
+
+batch_size: 5000
+logs_dir: logs
+staging_dir: data/staging
+# Fixes for known bugs in the mock files. Review them on the first real load: each has an enabled switch,
+# and a copy of the file can be named here instead.
+fixes: config/data_fixes.yaml
+
+sources:
+  - kind: cohort
+    path: ../data/raw/pdp_cohort_data.csv      # replaced by --cohort
+    config: cohort_mapping.yaml
+    provider: National Student Clearinghouse PDP
+    order_by: cohort_membership.cohort
+  - kind: course
+    path: ../data/raw/pdp_course_data.csv      # replaced by --course
+    config: course_mapping.yaml
+    provider: National Student Clearinghouse PDP

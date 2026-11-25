@@ -8,6 +8,7 @@ The equity gap finder (#26) will call run_measure, so keep its inputs and rows s
 from __future__ import annotations
 
 import logging
+import os
 import sqlite3
 from itertools import product
 from pathlib import Path
@@ -42,8 +43,17 @@ from .save_results import RESULTS_DATABASE, save_results
 
 logger = logging.getLogger(__name__)
 
-# Where the loader writes its SQLite database.
-DEFAULT_DATABASE = Path(__file__).parent.parent / "normalized-data-model" / "output" / "pdp.sqlite"
+# Where the loader writes its SQLite database unless UNCF_DATABASE names another file.
+BUILT_IN_DATABASE = Path(__file__).parent.parent / "normalized-data-model" / "output" / "pdp.sqlite"
+
+
+def configured_database() -> Path:
+    """The database file the API, the chat and `python -m api load` use: UNCF_DATABASE, or the built-in path."""
+    configured = os.environ.get("UNCF_DATABASE", "").strip()
+    return Path(configured).expanduser().resolve() if configured else BUILT_IN_DATABASE
+
+
+DEFAULT_DATABASE = configured_database()
 
 # Add a measure by writing its file in calculations/ and listing it here.
 MEASURES = {

@@ -51,6 +51,7 @@ From the repo root, with `.venv` active:
 ```bash
 python -m api              # load the data if it's missing, then serve the API on http://localhost:8001
 python -m api load         # only load the data (about 75 seconds the first time)
+python -m api load --cohort FILE --course FILE   # load a school's own PDP files instead (see docs/integration.md)
 python -m api serve        # only serve the API; --port to change it
 ```
 
@@ -83,6 +84,9 @@ All three sit on one site: `/api/v1/chat` and `/api/v1/uncf/chat` go to chat bef
 
 The data is mock data and the site is public. Before real student data goes here, it needs a
 login, data that doesn't live in git, and the data owner's sign off.
+
+To run the Explorer on a school's own PDP files, on Vercel or the school's own server, see the
+[integration guide](docs/integration.md).
 
 #### How the numbers are calculated
 
