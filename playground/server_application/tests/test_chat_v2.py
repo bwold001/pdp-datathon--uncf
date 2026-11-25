@@ -11,7 +11,7 @@ from analytics.tests.test_defined_operations import request
 
 from app.chat.provider import ToolCall
 from app.chat.v2 import ChatRequestV2, answer_v2
-from tests.test_student_success_tools import ScriptedModel
+from tests.scripted_provider import ScriptedModel
 
 
 @pytest.fixture
@@ -152,7 +152,7 @@ def test_provider_prose_failure_limits_and_exploration(runtime):
         },
     )
     result = run(runtime, ScriptedModel([ToolCall("1", "propose_plan", raw)]))
-    assert result.issues[0].code == "unsupported_operation" and not result.receipts
+    assert result.status == "confirmation" and not result.receipts
 
 
 def test_http_v2_dispatch_and_invalid_input(client, runtime):
@@ -229,14 +229,14 @@ def test_small_zero_rates_serialize_without_hiding(tmp_path, size, old_threshold
 
 
 def test_catalog_tools_and_round_budget(runtime):
-    """Catalog tools expose only Release A, and metadata-only conversations are bounded."""
+    """Catalog tools expose registered exploration, and metadata-only conversations are bounded."""
     import json
 
     from app.chat.v2 import tools
 
     proposal_schema = tools()[2]["function"]["parameters"]
     serialized = json.dumps(proposal_schema)
-    assert "exploratory_analysis" not in serialized
+    assert "exploratory_analysis" in serialized
     assert "legacy.annual_enrollment" in serialized
     for operation in PlanService(runtime).owner.operations:
         assert operation in serialized
@@ -440,3 +440,44 @@ def test_release_a_missing_provider_key_is_readable_and_confirmation_still_works
         assert result.json()["receipts"][0]["result"]["payload"]["value"] == 0.5
     finally:
         app.dependency_overrides.pop(get_service, None)
+
+
+def test_mixed_exploration_confirmation_and_step_clarification(runtime):
+    """Clarifying one exploration step preserves official retention and confirms without a model."""
+    defined = request("retention.rate", retention_type="school")
+    exploratory = {
+        "kind": "exploratory_analysis",
+        "operation": "grouped_summary",
+        "dataset_id": "student_year1",
+        "step_id": "characteristics",
+        "parameters": {
+            "cohort": "2023-24",
+            "grouping": {
+                "unresolved": True,
+                "question": "Which retention definition?",
+                "choices": [{"value": "retention_outcome_school", "label": "School"}],
+            },
+        },
+    }
+    model = ScriptedModel([ToolCall("1", "propose_plan", proposal(runtime, defined, exploratory))])
+    pending = run(runtime, model)
+    assert pending.status == "clarification"
+    assert len(pending.plan.steps) == 2
+    confirmed = run(
+        runtime,
+        plan=pending.plan,
+        selection={
+            "step_id": "characteristics",
+            "parameter": "grouping",
+            "value": "retention_outcome_school",
+        },
+    )
+    assert confirmed.status == "confirmation"
+    assert confirmed.plan.steps[0].parameters.retention_type == "school"
+    answer = run(runtime, confirmed=confirmed.plan)
+    assert answer.outcome == "complete"
+    first, second = answer.receipts
+    assert first.source.snapshot_ref == second.source.snapshot_ref
+    assert second.result.payload.rows[0].cells[1] == 6
+    assert second.result.payload.rows[1].cells[1] == 6
+    assert len(model.requests) == 1

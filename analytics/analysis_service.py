@@ -14,10 +14,12 @@ from analytics.contracts_v2 import (
     Result,
     Step,
     TableColumn,
+    RowExplanation,
     TablePayload,
     TablePage,
     Text,
     VisibleResult,
+    operation_id,
     VisibleTableRow,
     VersionReference,
 )
@@ -62,6 +64,8 @@ class OperationEvidence(Contract):
     disclosure_profile: VersionReference
     result: Result
     context: Annotated[tuple[Text, ...], Field(max_length=32)] = ()
+    distinct_units: int | None = None
+    group_units: tuple[int, ...] = ()
 
 
 def _hidden(status):
@@ -305,7 +309,13 @@ def _legacy_result(receipt):
     for row in receipt.rows:
         check_cancelled()
         if row.status not in ("ok", "provisional"):
-            rows.append(HiddenTableRow(status=row.status))
+            rows.append(HiddenTableRow(
+                status=row.status,
+                explanation=RowExplanation(
+                    label=row.label, kind=row.kind, horizon=row.horizon,
+                    reason=row.reason or "missing_required_evidence", note=row.note or None,
+                ),
+            ))
             continue
         group = (
             ", ".join(f"{key}={value}" for key, value in sorted(row.group.items()))
@@ -398,7 +408,9 @@ class AnalysisService:
     def __init__(self, coverage):
         """Use explicit coverage while borrowing all execution snapshots from the caller."""
         self.coverage = coverage
-        self.operations = {**DEFINED_OPERATIONS, **LEGACY_OPERATIONS}
+        from analytics.exploration.operations import OPERATIONS as EXPLORATION_OPERATIONS
+
+        self.operations = {**DEFINED_OPERATIONS, **LEGACY_OPERATIONS, **EXPLORATION_OPERATIONS}
 
     def catalog(self, query=None):
         """Return compact candidates and distinctions without choosing a definition for the user."""
@@ -423,20 +435,26 @@ class AnalysisService:
             raise OperationError(
                 "unsupported_operation", "The requested operation is not registered."
             )
-        return self.operations[operation_id].details()
+        details = self.operations[operation_id].details()
+        if self.operations[operation_id].kind == "exploratory_analysis":
+            from analytics.exploration.catalog import metadata
+
+            details["exploration"] = metadata()
+        return details
 
     def execute(self, step, snapshot):
         """Validate before reading, dispatch once and stage typed v2 evidence on the borrowed source."""
         raw = step.model_dump(mode="python") if isinstance(step, Contract) else step
+        selector = "operation" if isinstance(raw, dict) and raw.get("kind") == "exploratory_analysis" else "operation_id"
         if (
             not isinstance(raw, dict)
-            or not isinstance(raw.get("operation_id"), str)
-            or raw["operation_id"] not in self.operations
+            or not isinstance(raw.get(selector), str)
+            or raw[selector] not in self.operations
         ):
             raise OperationError(
                 "unsupported_operation", "The requested operation is not registered."
             )
-        spec = self.operations[raw["operation_id"]]
+        spec = self.operations[raw[selector]]
         policy = profile(spec.disclosure_profile)
         policy_reference = VersionReference(id=policy.id, version=policy.version)
         try:
@@ -450,6 +468,15 @@ class AnalysisService:
                 "The operation parameters are invalid or unsupported.",
             ) from error
         check_cancelled()
+        if spec.kind == "exploratory_analysis":
+            from analytics.exploration.adapters import adapt
+            from analytics.exploration.datasets import ExplorationRefusal
+            from analytics.exploration.operations import execute
+
+            try:
+                return adapt(operation_id(step), execute(spec.id, step.parameters, snapshot))
+            except ExplorationRefusal as error:
+                raise OperationError(error.code, "Exploration could not execute within its supported contract.") from error
         if spec.kind == "defined_measure":
             try:
                 options = {"include_evidence": True} if spec.id == "credit_momentum.summary" else {}

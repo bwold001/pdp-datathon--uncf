@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { Payload, Rate, Receipt, Status } from "@/services/student-success-v2";
 import { Button } from "@/components/ui/button";
+import { chatAnswerItems } from "./answer-items";
 
 const statuses: Record<Status, string> = {
   ok: "Available", provisional: "Provisional — follow-up is incomplete", unknown: "Unknown — no observed value",
@@ -32,7 +33,7 @@ function EvidenceTable({ payload }: { payload: Extract<Payload, { kind: "table" 
       <Button variant="outline" disabled={page === pages.length - 1} onClick={() => setPage(page + 1)}>Next evidence page</Button>
     </nav>}
     <table className="w-full text-left text-sm"><thead><tr>{payload.columns.map((c) => <th key={c.id} className="border p-2">{c.id} ({c.unit})</th>)}<th className="border p-2">Status</th></tr></thead>
-      <tbody>{pages[page].map((row, index) => <tr key={index}>{row.cells ? row.cells.map((cell, i) => <td key={i} className="border p-2">{cell === null ? "Unknown / no observed value" : cell}</td>) : <td className="border p-2" colSpan={payload.columns.length}>{row.path ?? "Result"}</td>}<td className="border p-2">{statuses[row.status]}</td></tr>)}</tbody>
+      <tbody>{pages[page].map((row, index) => <tr key={index}>{row.cells ? row.cells.map((cell, i) => <td key={i} className="border p-2">{cell === null ? "Unknown / no observed value" : cell}</td>) : <td className="border p-2" colSpan={payload.columns.length}>{row.explanation ? `${row.explanation.label} · ${row.explanation.horizon?.replaceAll("_", " ") ?? ""} · ${row.explanation.note ?? row.explanation.reason.replaceAll("_", " ")}` : row.path ?? "Result"}</td>}<td className="border p-2">{statuses[row.status]}</td></tr>)}</tbody>
     </table>
   </div>;
 }
@@ -42,8 +43,8 @@ export function Evidence({ payload }: { payload: Payload }) {
   switch (payload.kind) {
     case "count": return <p>{payload.count} {payload.unit}</p>;
     case "mean": return <p>Mean: {payload.value} {payload.unit} · n={payload.n}</p>;
-    case "correlation": return <p>Pearson r={payload.coefficient} · paired n={payload.n} · x: {payload.x_unit}; y: {payload.y_unit}</p>;
-    case "mean_comparison": return <div>{payload.groups.map((g) => <p key={g.id}>{g.id}: {g.mean} {payload.unit} · n={g.n}</p>)}{payload.differences.map((d) => <p key={`${d.minuend}-${d.subtrahend}`}>{d.minuend} − {d.subtrahend}: {d.value} {payload.unit}</p>)}</div>;
+    case "correlation": return <p>Pearson r={payload.coefficient} · paired n={payload.n} · x: {payload.x_unit}; y: {payload.y_unit} · incomplete pairs={payload.missing_pairs ?? 0}</p>;
+    case "mean_comparison": return <div>{payload.groups.map((g) => <p key={g.id}>{g.id}: {g.mean === null ? "Unavailable — no observed credits" : `${g.mean} ${payload.unit}`} · n={g.n} · missing={g.missing_count ?? 0}</p>)}{payload.differences.map((d) => <p key={`${d.minuend}-${d.subtrahend}`}>{d.minuend} − {d.subtrahend}: {d.value === null ? "Unavailable — missing group mean" : `${d.value} ${payload.unit}`} · n={d.minuend_n ?? payload.groups.find((g) => g.id === d.minuend)?.n} versus n={d.subtrahend_n ?? payload.groups.find((g) => g.id === d.subtrahend)?.n}</p>)}</div>;
     case "table": return <EvidenceTable payload={payload} />;
     case "rate": return <div><RateValue value={payload} />{payload.breakdowns.map((row, i) => <div key={i} className="mt-3 rounded border p-2"><p>{Object.entries(row.group).filter(([, v]) => v !== null).map(([k, v]) => `${k}: ${v}`).join(" · ")}</p>{(row.status === "ok" || row.status === "provisional") && row.value !== undefined ? <RateValue value={row as Rate} /> : <p>{statuses[row.status]}</p>}{row.exclusions?.map((e) => <p key={e.reason}>Excluded {e.reason}: {e.count}</p>)}</div>)}</div>;
   }
@@ -51,14 +52,22 @@ export function Evidence({ payload }: { payload: Payload }) {
 
 /** Display source identity, exact executed scope and versioned evidence together. */
 export function EvidenceCard({ receipt }: { receipt: Receipt }) {
+  const items = chatAnswerItems(receipt);
   return <article className="min-w-0 space-y-3 rounded-xl border bg-card p-4 text-sm">
-    <h3 className="font-semibold">{receipt.step_id} · {receipt.operation_id}</h3>
-    <p>{statuses[receipt.result.status]}</p>
-    {receipt.result.payload && <Evidence payload={receipt.result.payload} />}
+    <h3 className="font-semibold">{receipt.presentation?.title ?? receipt.operation_id}</h3>
+    {receipt.presentation ? <div className="space-y-2">
+      <p className="font-medium">{receipt.presentation.summary}</p>
+      <p>{receipt.presentation.scope}</p>
+      {items.length > 0 && <ul className="list-disc space-y-1 pl-5">{items.map((item, index) => <li key={index}>{item}</li>)}</ul>}
+      {receipt.presentation.caveats.map((note, index) => <p key={index}>{note}</p>)}
+    </div> : <p>{statuses[receipt.result.status]}</p>}
+    {receipt.result.payload && (receipt.result.payload.kind === "table" && receipt.presentation
+      ? <details open={items.length === 0}><summary>Calculation details — all groups and supporting counts</summary><Evidence payload={receipt.result.payload} /></details>
+      : <Evidence payload={receipt.result.payload} />)}
     {receipt.result.exclusions?.map((e) => <p key={e.reason}>Excluded {e.reason}: {e.count}</p>)}
-    <p>Population: {receipt.population} · Grain: {receipt.grain} · Window: {receipt.time_window}</p>
     <details><summary>Scope, definitions and source</summary><dl className="space-y-2 break-all">
       {[
+        ["Population", receipt.population], ["Counting unit", receipt.grain], ["Time window", receipt.time_window],
         ["Executed parameters and filters", JSON.stringify(receipt.request.parameters)],
         ["Result policy", receipt.disclosure_profile ? `${receipt.disclosure_profile.id} v${receipt.disclosure_profile.version}` : receipt.versions.disclosure],
         ["Definitions", receipt.definitions.map((d) => `${d.id} v${d.version}`).join(", ")],
@@ -68,8 +77,7 @@ export function EvidenceCard({ receipt }: { receipt: Receipt }) {
         ["Computation fingerprint", receipt.computation_fingerprint], ["Execution", receipt.execution_id],
         ["Started", receipt.started_at], ["Completed", receipt.completed_at],
       ].map(([label, value]) => <div key={label}><dt className="font-medium">{label}</dt><dd>{value}</dd></div>)}
-    </dl></details>
-    {[...receipt.assumptions, ...receipt.limitations, ...receipt.baseline_changes].map((note, i) => <p key={i}>{note}</p>)}
+    </dl>{[...receipt.assumptions, ...receipt.limitations, ...receipt.baseline_changes].map((note, i) => <p key={i}>{note}</p>)}</details>
     <p className="text-xs text-muted-foreground">Synthetic demonstration data. These are not findings about real students or institutions.</p>
   </article>;
 }

@@ -5,15 +5,16 @@ import json
 
 import httpx
 import pytest
+from analytics.coverage import Coverage
+from analytics.plan_service import PlanService
 from analytics.service import AnalyticsService
-from analytics.tests.analytics_fixtures import build_database, fixture_coverage
+from analytics.tests.test_defined_operations import defined_data as defined_data  # noqa: F401
 from openrouter import OpenRouter
 from openrouter.components import ChatResult
 
 from app.chat import routes
 from app.chat.provider import OpenRouterClient, ProviderFailed
-from app.chat.schemas import ChatRequest
-from app.chat.service import answer
+from app.chat.v2 import ChatRequestV2, answer_v2
 from app.core.config import settings
 
 
@@ -54,12 +55,12 @@ async def complete_over_http(handle):
 
 
 @pytest.mark.parametrize("model", ["openai/gpt-4.1", "anthropic/claude-sonnet-5.5"])
-def test_provider_switch_preserves_confirmed_receipts(tmp_path, model):
+def test_provider_switch_preserves_confirmed_receipts(defined_data, model):
     """Model switching preserves tool messages, confirmation, and deterministic receipts."""
     requests = []
     first = sdk_reply(
-        "run_analysis",
-        json.dumps({"analysis": "retention", "cohort": "2022-23"}),
+        "search_catalog",
+        json.dumps({"query": "retention"}),
         content=None,
         reasoning_details=[
             {
@@ -69,7 +70,22 @@ def test_provider_switch_preserves_confirmed_receipts(tmp_path, model):
             }
         ],
     )
-    replies = [first, sdk_reply()]
+    service = AnalyticsService(defined_data, Coverage())
+    catalog = PlanService(service).catalog()
+    plan = {
+        "kind": "proposed",
+        "catalog_version": catalog.catalog_version,
+        "snapshot_ref": catalog.snapshot_ref,
+        "steps": [
+            {
+                "kind": "defined_measure",
+                "operation_id": "retention.rate",
+                "step_id": "retention",
+                "parameters": {"cohort": "2023-24", "retention_type": "school"},
+            }
+        ],
+    }
+    replies = [first, sdk_reply("propose_plan", json.dumps(plan))]
 
     def handle(request):
         """Capture the actual SDK wire request and return a typed response as JSON."""
@@ -78,36 +94,40 @@ def test_provider_switch_preserves_confirmed_receipts(tmp_path, model):
         assert request.extensions["timeout"]["read"] == 45
         return httpx.Response(200, json=replies.pop(0))
 
-    service = AnalyticsService(build_database(tmp_path / "data.sqlite"), fixture_coverage())
-
     async def propose():
         """Use one SDK and transport for every round of this request."""
         async with (
             httpx.AsyncClient(transport=httpx.MockTransport(handle)) as http,
             OpenRouter(api_key="test-secret", async_client=http) as sdk,
         ):
-            return await answer(
-                ChatRequest(prompt="Retention in 2022-23?"), OpenRouterClient(sdk), model, service
+            return await answer_v2(
+                ChatRequestV2(protocol_version=2, prompt="School retention in 2023-24?"),
+                OpenRouterClient(sdk),
+                model,
+                service,
             )
 
     reply = asyncio.run(propose())
     assert reply.status == "confirmation" and not reply.receipts
     confirmed = asyncio.run(
-        answer(ChatRequest(prompt="confirmed", confirmed=reply.proposals), None, model, service)
+        answer_v2(
+            ChatRequestV2(protocol_version=2, prompt="confirmed", confirmed=reply.plan),
+            None,
+            model,
+            service,
+        )
     )
-    assert (
-        confirmed.receipts
-        == service.analyze({"analysis": "retention", "cohort": "2022-23"}).receipts
-    )
+    assert confirmed.receipts[0].result.payload.numerator == 6
+    assert confirmed.receipts[0].result.payload.denominator == 12
     assert "99.9" not in confirmed.message
     assert requests[0]["model"] == model
     assert requests[0]["max_completion_tokens"] == 1500
     assert requests[0]["stream"] is False
     assert requests[0]["messages"][0]["role"] == "system"
     assert {tool["function"]["name"] for tool in requests[0]["tools"]} == {
-        "get_analysis_catalog",
-        "get_analysis_definition",
-        "run_analysis",
+        "search_catalog",
+        "operation_details",
+        "propose_plan",
     }
     assert requests[1]["messages"][-2] == first["choices"][0]["message"]
     assert requests[1]["messages"][-1]["role"] == "tool"

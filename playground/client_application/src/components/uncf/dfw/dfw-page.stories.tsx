@@ -77,15 +77,15 @@ export const RealCourses: Story = {
   },
 };
 
-/** Comparing by race in ENG 101: groups under 10 students are named, not shown. */
+/** Historical saved answers omit some group counts; never infer a zero. */
 export const HiddenGroups: Story = {
-  name: "Groups under 10 are hidden",
+  name: "Historical omitted counts",
   play: async ({ canvas, userEvent }) => {
     await canvas.findByRole("heading", { name: "ENG 101" });
     await userEvent.click(canvas.getByRole("button", { name: "Race" }));
     await expect(
       canvas.getByText(
-        "Hidden to protect privacy (under 10 students): American Indian or Alaska Native, Native Hawaiian or Other Pacific Islander",
+        "Unavailable counts: American Indian or Alaska Native, Native Hawaiian or Other Pacific Islander",
       ),
     ).toBeVisible();
     await userEvent.click(canvas.getByRole("button", { name: "Delivery" }));

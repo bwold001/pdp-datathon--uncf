@@ -149,7 +149,7 @@ A number between steps takes the letter below it: 1.5 is a D+, 2.5 a C+, 3.6 a B
 numbers one file uses: any number under the lowest D is an F. The PDP has no DFW measure of its own, so DFW means
 what it says: a D (any D), an F or a W. A C- is a C and passes. `DFW_BELOW` (1.7) is worked out from the scale and
 `DFW_GRADES` in [calculations/dfw.py](calculations/dfw.py); a school that counts a C- adds it to `DFW_GRADES`. The
-gateway page keeps the PDP's own line, 1.0 or a P (`GATEWAY_PASS_AT` in grades.py).
+gateway course page uses C or better (2.0) or P; cohort requirement completion retains 1.0 or P (`GATEWAY_PASS_AT` in grades.py).
 
 **Pages show groups, not + and - letters.** The letters only decide which group a grade falls in. The groups are cut
 only where a rule draws a line, so each one means the same thing whatever grades a school's data holds

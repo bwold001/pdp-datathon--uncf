@@ -7,9 +7,9 @@ from analytics.tests.test_defined_operations import defined_data, request  # noq
 
 from app.chat.provider import ToolCall
 from scripts.evaluate_release_a import CASES, assess
+from tests.scripted_provider import ScriptedModel
 from tests.test_chat_v2 import proposal, run
 from tests.test_chat_v2 import runtime as runtime  # noqa: F401
-from tests.test_student_success_tools import ScriptedModel
 
 
 def test_fixed_suite_covers_every_adapter_and_unsupported_exploration():
@@ -20,7 +20,11 @@ def test_fixed_suite_covers_every_adapter_and_unsupported_exploration():
     cases = json.loads(CASES.read_text())["cases"]
     assert len(cases) >= 30 and len({case["id"] for case in cases}) == len(cases)
     expected = {operation for case in cases for operation in case["operations"]}
-    assert expected == set(AnalysisService(Coverage()).operations)
+    assert expected == {
+        key
+        for key, spec in AnalysisService(Coverage()).operations.items()
+        if spec.kind != "exploratory_analysis"
+    }
     assert any(
         "online course count" in c["prompt"] and c["expected_status"] == "unsupported"
         for c in cases

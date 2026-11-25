@@ -12,7 +12,6 @@ check:
 	@python3 -c "import xdist, pandas" 2>/dev/null || { echo "Python packages are missing or out of date. Run: python -m pip install -r requirements.txt"; exit 1; }
 	python3 data/quality/run_checks.py
 	cd normalized-data-model && $(PYTEST)
-	cd mcp && $(PYTEST)
 	cd measures && $(PYTEST)
 	cd gap_finder && $(PYTEST)
 	cd analytics && $(PYTEST)

@@ -54,3 +54,19 @@ def group_for(row, grouping):
     if value is None:
         return None, (getattr(row, feature + "_reason"),)
     return ("retained" if value else "not_retained"), ()
+
+
+def metadata():
+    """Publish executable feature/pair/order metadata without private rows or identifiers."""
+    from dataclasses import asdict
+
+    return {
+        "dataset": {"id": "student_year1", "version": DATASET_VERSION, "grain": "student and entry cohort", "coverage": COVERAGE},
+        "missingness_version": MISSINGNESS_VERSION,
+        "features": {key: asdict(value) for key, value in FEATURES.items()},
+        "groupings": {key: list(values) for key, values in GROUPS.items()},
+        "numeric_pairs": sorted(sorted(pair) for pair in PAIRS),
+        "ordered_differences": {key: [[values[j], values[i]] for i in range(len(values)) for j in range(i + 1, len(values))]
+            for key, values in GROUPS.items()},
+        "gateway_variant": {"available": False, "missing_prerequisite": "Reconciled completion/highest-grade evidence and validated non-attempter eligibility for the same baseline cohort denominator."},
+    }

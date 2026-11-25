@@ -71,8 +71,7 @@ by direct API and chat. Document changes to shared files in the review descripti
   [the client agent instructions](playground/client_application/AGENTS.md), including the Storybook
   MCP guidance and source-file fallback.
 - **Python packages go in `requirements.txt`,** pinned to exact versions (`package==1.2.3`) with
-  a comment naming the foundation that needs them. Packages only a notebook needs go in
-  `notebooks/requirements.txt`, which CI doesn't install. Install them in a virtual environment
+  a comment naming the foundation that needs them. Install them in a virtual environment
   (`.venv/`), never into the system Python. Target Python 3.10 or newer. Keep
   `scripts/check.py` standard-library only.
 - **Never rewrite or reformat files in `data/raw/` as a side effect.** Don't re-save, sort,
@@ -92,11 +91,6 @@ by direct API and chat. Document changes to shared files in the review descripti
     - `normalized-data-model/config/column_dictionary.yaml`: what each normalized column means,
       built from `data/dictionaries/arf_*_data_dictionary.md` and `column_lookup.csv`. Edit those
       files, not this one: `tests/dictionary/test_build.py` fails if it differs from a rebuild.
-  - **Exception, agreed for #11:** `mcp/schemas/tools.json`, the MCP server's published tool
-    contract. It's the server's `tools/list`, written by `python -m pdp_mcp.export_schemas` (run
-    from `mcp/`), so squads in any stack can read the schemas without running Python. Don't edit
-    it by hand: `mcp/tests/test_contracts.py` fails if it differs from the running server. This
-    exception covers that one file only.
 - **Data changes must be deliberate.** If you change anything in `data/raw/` on purpose, run
   `python scripts/check.py --update`, update the README data table, and commit both in the same
   pull request.

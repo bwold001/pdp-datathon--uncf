@@ -1,25 +1,25 @@
-/**
- * Words for groups too small to show. The API leaves out the numbers of any group with fewer than `min_students`
- * students (in every answer's meta and in the cohort options). The server sets it with UNCF_MIN_STUDENTS: 1, the
- * default for this synthetic data, shows every group with students; 10 hides small groups to protect privacy.
- */
+/** Aggregate visibility never depends on a minimum group size. */
 
-/** Whether the API hides small groups at all: only when its minimum is above 1. */
-export function hidesSmallGroups(minStudents: number): boolean {
-  return minStudents > 1;
+/** Historical minimum settings cannot restore numerical hiding. */
+export function hidesSmallGroups(_minStudents: number): boolean {
+  void _minStudents;
+  return false;
 }
 
-/** How a count with no number reads: "Under 10" when small groups are hidden, otherwise "None". */
-export function hiddenCount(minStudents: number): string {
-  return hidesSmallGroups(minStudents) ? `Under ${minStudents}` : "None";
+/** An absent count is not a hidden small count. */
+export function hiddenCount(_minStudents: number): string {
+  void _minStudents;
+  return "Unavailable";
 }
 
-/** The start of a "too few" message, e.g. "Fewer than 10 students" or "No students". */
-export function tooFew(minStudents: number, students = "students"): string {
-  return hidesSmallGroups(minStudents) ? `Fewer than ${minStudents} ${students}` : `No ${students}`;
+/** Explain missing population evidence without implying a privacy threshold. */
+export function tooFew(_minStudents: number, students = "students"): string {
+  void _minStudents;
+  return `No reported ${students}`;
 }
 
-/** "Groups under 10 students are hidden to protect privacy.", or "" when nothing is hidden. */
-export function privacyNote(minStudents: number): string {
-  return hidesSmallGroups(minStudents) ? `Groups under ${minStudents} students are hidden to protect privacy.` : "";
+/** No size-based privacy guarantee is made for visible synthetic aggregates. */
+export function privacyNote(_minStudents: number): string {
+  void _minStudents;
+  return "";
 }

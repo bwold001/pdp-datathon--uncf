@@ -160,7 +160,7 @@ def _page(
     """Describe page-specific populations and denominators without inventing one universal rate."""
     return OperationSpec(
         id=id,
-        version="1",
+        version="2" if id == "gateway.course_outcomes" else "1",
         label=label,
         aliases=aliases,
         purpose=purpose,

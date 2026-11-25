@@ -74,7 +74,6 @@ def test_gateway(client):
 
 def test_dfw_and_gateway_carry_each_grade_and_the_scale(tmp_path, monkeypatch):
     """DFW splits D, F and W; gateway courses count grade groups; each answer carries its page's grade table."""
-    monkeypatch.setenv("UNCF_MIN_STUDENTS", "1")  # show every count; hiding is checked in measures/tests
     students = [student(f"s{n}") for n in range(12)]
     grades = ["1.5", "1.0", "0.7", "0.3", "W", "1.7"] * 2
     records = [here(f"s{n}", "2023-24", "FALL", prefix="ENG", number="101", grade=grade, gateway="E") for n, grade in enumerate(grades)]
@@ -91,8 +90,8 @@ def test_dfw_and_gateway_carry_each_grade_and_the_scale(tmp_path, monkeypatch):
     gateway = client.get("/api/v1/uncf/gateway", params={"cohort": "2023-24"}).json()
     (course,) = gateway["courses"]
     # On the gateway page a D- (0.7) doesn't pass, so it sits with the F under 1.0.
-    assert course["grades"] == {"C or higher": 2, "D": 4, "Under 1.0": 4, "P": 0, "W": 2}
-    assert [row["grade"] for row in gateway["meta"]["grade_scale"]["grades"] if row["counted"]] == ["C or higher", "D", "P"]
+    assert course["grades"] == {"C or higher": 0, "Below C": 6, "Under 1.0": 4, "P": 0, "W": 2}
+    assert [row["grade"] for row in gateway["meta"]["grade_scale"]["grades"] if row["counted"]] == ["C or higher", "P"]
 
     # The CSV has one column each for D, F and W, and no + or - letters.
     header = client.get("/api/v1/uncf/dfw", params={"cohort": "2023-24", "format": "csv"}).text.splitlines()[0]

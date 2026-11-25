@@ -279,7 +279,7 @@ export function CourseDetail({ detail, dimension, onDimension }: CourseDetailPro
           )}
           {hidden.length > 0 && (
             <p className="text-[13px] text-(--uncf-ink-3)">
-              {hidesSmallGroups(min) ? `Hidden to protect privacy (under ${min} students)` : "No students with final grades"}:{" "}
+              {hidesSmallGroups(min) ? `Hidden to protect privacy (under ${min} students)` : "Unavailable counts"}:{" "}
               {hidden.map((row) => row.label).join(", ")}
             </p>
           )}

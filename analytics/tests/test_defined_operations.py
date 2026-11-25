@@ -237,6 +237,7 @@ def test_page_limits_refuse_whole_result_and_explicit_hidden_components_are_scru
     assert hidden.payload.rows[0].model_dump() == {
         "status": "suppressed",
         "path": "secret",
+        "explanation": None,
     }
     empty = _page_result({"pairs": []}, "gateway.course_outcomes", False)
     assert empty.payload.rows[0].cells == (

@@ -135,7 +135,7 @@ Every page route and `/measures/{measure}` take the same query values: `cohort`,
 | `GET /api/v1/uncf/student-paths?…&terms=&group_by=` | Each student's status term by term (here, credential, elsewhere, stopped) with shares, moves, transfers, retention, and per group paths |
 | `GET /api/v1/uncf/dfw?…` | Everyone's DFW rate with D, F and W apart, then each course with `min_students` or more students. `meta.grade_scale` says which grades count |
 | `GET /api/v1/uncf/dfw/course?course=ENG%20101&…` | One course by term, delivery and group, each with `rest_rate` and `gap` against everyone else |
-| `GET /api/v1/uncf/gateway?…` | Each flagged gateway course in year 1: students, passed on the first try and in the end (the PDP's 1.0 line), the path after the first try, retention if passed / not, the filtered group's gap against everyone else, and the course pairs with lower retention |
+| `GET /api/v1/uncf/gateway?…` | Each flagged gateway course in year 1: students, passed on the first try and in the end (C or better, >=2.0, or P), the path after the first try, retention if passed / not, the filtered group's gap against everyone else, and the course pairs with lower retention |
 | `GET /api/v1/uncf/credit-momentum?…` | Year 1 credits, completion ratio, 12/24/30 milestones, first two terms, credit tiers with retention; `progress`: meaningful progress toward a degree (the 24-credit minimum, 4-year pace, year 1 groups with retention, why students fell below, year 2), settings in `measures/breakdowns/credit_progress.py` |
 | `GET /api/v1/uncf/analyses/catalog` | The chat's approved analyses, their choices and declared data coverage |
 | `POST /api/v1/uncf/analyses` | One approved analysis with its receipt, or a clarification when a needed choice is missing |
@@ -177,7 +177,6 @@ columns: [pdp-data skill](.agents/skills/pdp-data/SKILL.md#known-data-facts). Ne
 | [Success measures](measures/README.md) | Retention, persistence, gateway completion; we added federal retention, DFW, credit completion, filters and the page breakdowns |
 | [Playground](playground/README.md) | The Explorer web app: Next.js client and FastAPI server |
 | [Data quality log](data/quality/README.md) | Known mock-data issues, such as first-generation status |
-| [PDP MCP server](mcp/README.md) | Definitions only, for development support |
 | [Equity gap finder](gap_finder/README.md) | Optional group comparisons |
 
 ## Checks
@@ -225,7 +224,8 @@ retention and annual enrollment questions with shared calculation receipts from 
    calculated" to see the evidence.
 
 Chat is served by the Playground at `POST /api/v1/chat` (`/api/v1/uncf/chat` is an alias). It
-uses the same `/api/v1/uncf/analyses` routes the standalone API offers.
+requires `protocol_version: 2` and uses the same registered PlanService as the deterministic
+`/api/v1/uncf/analysis-v2` API. Obsolete unversioned chat bodies are rejected with 422.
 
 **Safeguards.** The model can call only the catalog, definitions and approved analysis tools. No
 tool accepts SQL, student IDs or file paths. Chat proposes the full scope and needs explicit
@@ -233,7 +233,8 @@ approval before calculating, and infers no extra filters. A missing choice gets 
 clarification. A new question starts a separate analysis; only a pending typed request carries
 through clarification, and reset discards late replies. Displayed numbers, formulas and
 limitations come from validated receipts, never from the model's prose. Rates must match their
-numerators and denominators, and suppressed values stay out of evidence and display text. All
+numerators and denominators. Every nonempty group remains visible; historical omitted values
+require recomputation rather than reconstruction. All
 three graduation horizons, program perspectives, ethnicity handling and certified coverage rules
 stay in place. Calculation deadlines cancel SQLite work and counting loops; timeouts wait for
 transaction cleanup, and PostgreSQL statements use the remaining request budget. These
@@ -246,8 +247,7 @@ rounded time to credential must never be used to invent a bachelor's award semes
 
 **Checks.** `make check` at the root covers `analytics/`. In the Playground run `mise run api:lint`,
 `mise run api:test`, `mise run web:build`, `mise run web:lint` and
-`mise run web:test-storybook` (CI skips Storybook, so run it locally if you changed a story or
-component). Python tests use small, independently counted SQLite fixtures and a
+`mise run web:test-storybook` (CI also runs the browser stories). Python tests use small, independently counted SQLite fixtures and a
 scripted model, with no live provider calls.
 
 The Vercel chat service needs the OpenRouter key and model configured before deployment; without
@@ -274,7 +274,11 @@ See the [deterministic v2 API guide](docs/analysis-v2-api.md) for `/api/v1/uncf/
 Chat v2 proposes typed plans and executes only after explicit confirmation through the shared plan service.
 
 Chat v2 planning, confirmation and immutable result pagination are documented in
-[the client contract](docs/chat-v2-client.md). All example results are synthetic.
+[the client contract](docs/chat-v2-client.md). Cards explain unavailable results in plain
+language and keep full calculation tables and source details expandable. Scope review
+shows known coverage limits before calculation. Suggested questions come from current
+catalog capabilities and coverage; they do not promise eligible outcomes, and each new
+question still requires scope confirmation. All example results are synthetic.
 
 Release A acceptance rules, fixed model-evaluation instructions, local verification evidence and
 remaining release blockers are in the [acceptance matrix](docs/chat-v2-acceptance.md) and
@@ -295,3 +299,34 @@ Unknown delivery, unresolved terms and absent year-one course records exclude an
 online feature; known F/H records yield a real zero. Exposure describes observed
 records, not certified whole-year completeness. Internal rows/identifiers are not
 public payloads; consumers must return validated aggregates only. All data is synthetic.
+
+The registered exploration owners in `analytics/exploration/operations.py` implement
+`grouped_summary`, `mean_comparison`, and `correlation`. Requests accept no arbitrary
+expressions, SQL, bins, transformations or alternative missing-value policy. The
+catalog's approved numeric pairs are symmetric; online count and share are distinct.
+Group summaries carry separate eligible n and missing counts per credit mean.
+Comparisons preserve registered subtraction order and report unavailable differences
+alongside valid siblings. Pearson needs two varying pairs; means allow n=1.
+
+Bounds are four plan steps, one registered grouping per step, twenty occupied groups,
+500,000 source enrollment rows, and ten seconds per step within the request deadline.
+Empty groups consume no group budget. Limits refuse whole steps without truncation.
+`measure_variant` returns structured unavailable evidence pending validated equivalent
+gateway cohort eligibility; it never substitutes first-attempt course outcomes.
+The highest-grade source and invalid attempt-code caveats are documented in the
+normalized mapping/schema and source dictionaries. No new statistical dependency is used.
+
+Mixed plans execute the registered exploration owners through the same
+`PlanService` validation, transaction, dependency, result projection and replay path
+as defined and legacy operations. The catalog exposes fixed feature/group/pair
+metadata. Chat proposes a complete plan; users clarify individual steps and confirm
+its exact canonical scope before provider-free execution. Receipts retain per-step
+populations, versions and sample sizes. Separate steps may overlap and do not imply
+one shared denominator. Safe independent refusals can return a partial answer;
+database errors and deadlines stop further work. Cleanup failure invalidates the
+current step while preserving earlier completed receipts.
+
+Release B operation inventory, verification limits and rollback steps are in the
+[Release B handoff](docs/release-b-handoff.md). The fixed 41-prompt interpretation suite
+uses `python -m scripts.evaluate_release_b` from the Playground backend, with the
+same `--model`, `--database` and `--output` arguments as the Release A evaluator.

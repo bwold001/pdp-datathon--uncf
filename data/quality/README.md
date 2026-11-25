@@ -8,7 +8,6 @@ real students or institutions.
 | --- | --- |
 | [findings.csv](findings.csv) | The issue log, one row per finding: `id, file, columns, finding, count, impact, proposed_fix, owner`. |
 | [run_checks.py](run_checks.py) | Recomputes every `count` in the log from `data/raw/` and says which ones changed. |
-| [../../notebooks/deep_dive.ipynb](../../notebooks/deep_dive.ipynb) | Every finding with example rows and its recommended fix, applied to a copy of the data. Needs `notebooks/requirements.txt`. |
 
 ## Run the checks
 

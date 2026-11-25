@@ -54,7 +54,7 @@ export const FallStarters: Story = {
 
     await expect(canvas.getByText("Of 60 students who transferred out by Fall 2024")).toBeVisible();
     await expect(canvas.getByRole("img", { name: "To a 4-year institution: 35" })).toBeInTheDocument();
-    await expect(canvas.getByRole("img", { name: "Other, mixed or not recorded: Under 10" })).toBeInTheDocument();
+    await expect(canvas.getByRole("img", { name: "Other, mixed or not recorded: Unavailable" })).toBeInTheDocument();
 
     const table = within(canvas.getByRole("table"));
     await expect(table.getByRole("row", { name: "Fall 2023 1,114 – – –" })).toBeVisible();
@@ -150,10 +150,10 @@ export const ProvisionalClass: Story = {
 
 /** Fewer than 10 students match: no numbers at all, and a way forward. */
 export const TooFewStudents: Story = {
-  name: "Fewer than 10 students",
+  name: "Historical omitted counts",
   args: { data: tooFewStudents },
   play: async ({ canvas }) => {
-    await expect(canvas.getByText("Fewer than 10 students match these filters.")).toBeVisible();
+    await expect(canvas.getByText("No reported students match these filters.")).toBeVisible();
     await expect(canvas.queryByRole("table")).not.toBeInTheDocument();
   },
 };

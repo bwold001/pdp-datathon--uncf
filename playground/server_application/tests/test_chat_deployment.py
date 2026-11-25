@@ -7,13 +7,16 @@ import sys
 from pathlib import Path
 
 import pytest
+from analytics.plan_service import PlanService
 from analytics.tests.analytics_fixtures import build_database, fixture_coverage
+from analytics.tests.test_snapshots import add_identity
 from fastapi.testclient import TestClient
 
 from app.chat.deployment import create_app
+from app.chat.provider import ToolCall
 from app.chat.routes import get_chat_client
 from app.core.config import settings
-from tests.test_student_success_tools import ScriptedModel, call, finish
+from tests.scripted_provider import ScriptedModel
 
 
 @pytest.mark.parametrize("path", ["/api/v1/chat", "/api/v1/uncf/chat"])
@@ -23,25 +26,46 @@ def test_deployed_chat_reads_configured_database(tmp_path, monkeypatch, path):
     from analytics.service import AnalyticsService
 
     database = build_database(tmp_path / "configured.sqlite")
+    add_identity(database)
     coverage = tmp_path / "coverage.yaml"
     coverage.write_text(yaml.safe_dump(fixture_coverage().model_dump(mode="json")))
     monkeypatch.setattr(settings, "DATABASE_URL", f"sqlite:///{database}")
     monkeypatch.setenv("UNCF_ANALYTICS_CONFIG", str(coverage))
     monkeypatch.setattr(settings, "UNCF_CHAT_ENABLED", True)
     app = create_app()
-    model = ScriptedModel([call("retention", cohort="2022-23")], [finish()])
+    service = AnalyticsService(database, fixture_coverage())
+    catalog = PlanService(service).catalog()
+    raw = {
+        "kind": "proposed",
+        "catalog_version": catalog.catalog_version,
+        "snapshot_ref": catalog.snapshot_ref,
+        "steps": [
+            {
+                "kind": "legacy_analysis",
+                "operation_id": "legacy.entry_major_retention",
+                "step_id": "retention",
+                "parameters": {"cohort": "2022-23"},
+            }
+        ],
+    }
+    model = ScriptedModel([ToolCall("1", "propose_plan", raw)])
     app.dependency_overrides[get_chat_client] = lambda: model
     with TestClient(app) as client:
-        proposal = client.post(path, json={"prompt": "Retention in 2022-23?"})
+        proposal = client.post(
+            path, json={"protocol_version": 2, "prompt": "Entry-major retention in 2022-23?"}
+        )
         assert proposal.status_code == 200
         reply = client.post(
-            path, json={"prompt": "confirmed", "confirmed": proposal.json()["proposals"]}
+            path,
+            json={
+                "protocol_version": 2,
+                "prompt": "confirmed",
+                "confirmed": proposal.json()["plan"],
+            },
         )
         assert reply.status_code == 200
-        direct = AnalyticsService(database, fixture_coverage()).analyze(
-            {"analysis": "retention", "cohort": "2022-23"}
-        )
-        assert reply.json()["receipts"] == direct.model_dump(mode="json")["receipts"]
+        assert reply.json()["outcome"] == "complete"
+        assert reply.json()["receipts"][0]["result"]["payload"]["rows"][0]["cells"][7] == 0.5
         for forbidden in ["/docs", "/api/v1/uncf/health"]:
             assert client.get(forbidden).status_code == 404
 
@@ -54,9 +78,9 @@ def test_deployment_switch_and_missing_key(monkeypatch):
     monkeypatch.setattr(settings, "UNCF_CHAT_ENABLED", True)
     monkeypatch.setattr(settings, "OPENROUTER_API_KEY", None)
     with TestClient(create_app()) as client:
-        reply = client.post("/api/v1/chat", json={"prompt": "Retention?"})
-        assert reply.status_code == 503
-        assert "OPENROUTER_API_KEY" in reply.json()["error"]["message"]
+        reply = client.post("/api/v1/chat", json={"protocol_version": 2, "prompt": "Retention?"})
+        assert reply.status_code == 200
+        assert reply.json()["issues"][0]["code"] == "provider_failed"
 
 
 def test_vercel_entrypoint_imports_without_playground_startup():
