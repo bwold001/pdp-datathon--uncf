@@ -132,3 +132,39 @@ export const SharesTheTabAsAPdf: Story = {
     }
   },
 };
+
+/** Answers /uncf/options with a school's own class years, as the API does after its files are loaded. */
+function answerWithSchoolYears() {
+  const spy = spyOn(window, "fetch").mockImplementation(async (input) => {
+    if (String(input).includes("/uncf/options")) {
+      const body = { measures: [], cohorts: ["2020-21", "2019-20"], default_cohort: "2019-20", dimensions: [], max_group_by: 2 };
+      return new Response(JSON.stringify(body), { status: 200, headers: { "Content-Type": "application/json" } });
+    }
+    // The bar's counts are optional, so they can stay unanswered here.
+    return new Response("{}", { status: 503, headers: { "Content-Type": "application/json" } });
+  });
+  return () => spy.mockRestore();
+}
+
+/** In the app, the class year picker offers the loaded data's years, not the sample's, and starts on the API's default. */
+export const OffersTheLoadedDataYears: Story = {
+  name: "Offers the loaded data's class years",
+  args: { cohortsFromApi: true },
+  beforeEach: answerWithSchoolYears,
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByRole("button", { name: "Entering class: 2019-20" })).toBeVisible();
+    await expect(canvas.queryByText("2023-24")).not.toBeInTheDocument();
+  },
+};
+
+/** A class year in the URL that the loaded data has travels with the tab links. */
+export const CarriesALoadedDataYear: Story = {
+  name: "Carries a loaded data year across tabs",
+  args: { cohortsFromApi: true },
+  beforeEach: answerWithSchoolYears,
+  parameters: { nextjs: { appDirectory: true, navigation: { pathname: "/uncf/dfw", query: { cohort: "2020-21" } } } },
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByRole("button", { name: "Entering class: 2020-21" })).toBeVisible();
+    await expect(canvas.getByRole("link", { name: "Gateway courses" })).toHaveAttribute("href", "/uncf/gateway?cohort=2020-21");
+  },
+};

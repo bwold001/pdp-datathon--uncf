@@ -21,9 +21,18 @@ import "./explorer-tokens.css";
  * the API's /uncf/health says. The tabs and cohort bar read the URL, so they sit in Suspense with a
  * same-size fallback for the first paint.
  */
-export function ExplorerShell({ children, dataLabel }: { children: React.ReactNode; dataLabel?: DataLabel }) {
+export function ExplorerShell({
+  children,
+  dataLabel,
+  cohortsFromApi = false,
+}: {
+  children: React.ReactNode;
+  dataLabel?: DataLabel;
+  /** Offer the loaded data's class years from the API (the app); without it, the sample's years (stories). */
+  cohortsFromApi?: boolean;
+}) {
   return (
-    <ExplorerProvider dataLabel={dataLabel}>
+    <ExplorerProvider dataLabel={dataLabel} cohortsFromApi={cohortsFromApi}>
       <div className={cn(explorerFontClass, "flex min-h-svh flex-col bg-(--uncf-bg) text-[15px] [color-scheme:light] leading-normal text-(--uncf-ink)")}>
         <ExplorerHeader />
         <Suspense fallback={<ExplorerTabsFallback />}>

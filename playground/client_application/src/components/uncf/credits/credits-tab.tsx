@@ -1,13 +1,12 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
 import { useMemo } from "react";
 
-import { carriedFilterQuery, filterValueLabel } from "@/components/uncf/layout/cohort-filters";
+import { filterValueLabel } from "@/components/uncf/layout/cohort-filters";
 import { explorerLoader } from "@/components/uncf/layout/explorer-api";
 import { useShowStudentCount } from "@/components/uncf/layout/explorer-context";
 import { LoadingBlock, MessageCard } from "@/components/uncf/layout/explorer-parts";
-import { useCohortFilters } from "@/components/uncf/layout/use-cohort-filters";
+import { useCarriedFilterQuery, useCohortFilters } from "@/components/uncf/layout/use-cohort-filters";
 import { useExplorerResource } from "@/components/uncf/layout/use-explorer-resource";
 
 import type { CreditsResponse } from "./credits-data";
@@ -16,7 +15,7 @@ import { CreditsView, ProgressIntro } from "./credits-view";
 /** The Credit momentum tab: loads the cohort bar's students' progress and draws it. */
 export function CreditsTab() {
   const { apiQuery, definitions, filters, clearMenuFilters } = useCohortFilters();
-  const searchParams = useSearchParams();
+  const linkQuery = useCarriedFilterQuery();
   const load = useMemo(() => explorerLoader<CreditsResponse>("/uncf/credit-momentum", apiQuery), [apiQuery]);
   const { resource, retry, current } = useExplorerResource(load);
   useShowStudentCount(resource.status !== "success" || !current ? null : resource.data.status === "suppressed" ? "too few" : resource.data.students);
@@ -41,7 +40,7 @@ export function CreditsTab() {
     <CreditsView
       data={resource.data}
       filters={picked.length ? { text: filterText, onClear: clearMenuFilters } : undefined}
-      linkQuery={carriedFilterQuery(searchParams).toString()}
+      linkQuery={linkQuery}
     />
   );
 }

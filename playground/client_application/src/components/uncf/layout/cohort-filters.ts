@@ -1,4 +1,4 @@
-import { type CohortFilterDefinition, cohortFilters, tabFilterDefaults } from "./explorer-config";
+import { type CohortChoices, type CohortFilterDefinition, cohortFilters, tabFilterDefaults } from "./explorer-config";
 
 /** The cohort bar's choices: each filter's value by id, or null for "All". */
 export type CohortFilters = Record<string, string | null>;
@@ -15,6 +15,15 @@ export function cohortFiltersFor(pathname: string): CohortFilterDefinition[] {
   return cohortFilters
     .filter((definition) => !definition.tabs || definition.tabs.some((href) => isOnTab(pathname, href)))
     .map((definition) => (definition.id in defaults ? { ...definition, defaultValue: defaults[definition.id] } : definition));
+}
+
+/** The filters with the class year picker offering these years and starting on the default one. */
+export function withCohorts(definitions: CohortFilterDefinition[], choices: CohortChoices): CohortFilterDefinition[] {
+  return definitions.map((definition) =>
+    definition.id === "cohort"
+      ? { ...definition, defaultValue: choices.defaultYear, options: choices.years.map((year) => ({ value: year, label: year, word: year })) }
+      : definition,
+  );
 }
 
 /** Whether a page is the tab at href or one of its sub-pages. */
@@ -58,9 +67,9 @@ export function cohortFiltersToUrl(
  * The filters a tab link carries: only the ones set in the URL, so each tab starts the rest at its own defaults.
  * A filter another tab shows (the retention measure) travels too, so it's still set on the way back.
  */
-export function carriedFilterQuery(params: ReadableParams): URLSearchParams {
+export function carriedFilterQuery(params: ReadableParams, definitions: CohortFilterDefinition[] = cohortFilters): URLSearchParams {
   const carried = new URLSearchParams();
-  for (const definition of cohortFilters) {
+  for (const definition of definitions) {
     const value = params.get(definition.id);
     const valid = (value === ALL && !definition.required) || definition.options.some((option) => option.value === value);
     if (value !== null && valid) carried.set(definition.id, value);

@@ -5,11 +5,15 @@ import { useMemo } from "react";
 
 import {
   type CohortFilters,
+  carriedFilterQuery,
   cohortFiltersFor,
   cohortFiltersToApiQuery,
   cohortFiltersToUrl,
   readCohortFilters,
+  withCohorts,
 } from "./cohort-filters";
+import { cohortFilters } from "./explorer-config";
+import { useCohortChoices } from "./explorer-context";
 
 /**
  * The cohort bar's filters on this tab, read from and written to the URL, so a view can be shared and Back undoes a
@@ -19,8 +23,10 @@ export function useCohortFilters() {
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const router = useRouter();
+  // The loaded data's class years; the component waits (suspends) until the API has said which.
+  const cohorts = useCohortChoices();
 
-  const definitions = useMemo(() => cohortFiltersFor(pathname), [pathname]);
+  const definitions = useMemo(() => withCohorts(cohortFiltersFor(pathname), cohorts), [pathname, cohorts]);
   const filters = useMemo(() => readCohortFilters(searchParams, definitions), [searchParams, definitions]);
   const apiQuery = useMemo(() => cohortFiltersToApiQuery(filters, definitions), [filters, definitions]);
 
@@ -52,4 +58,14 @@ export function useCohortFilters() {
       navigate({ ...filters, ...Object.fromEntries(cleared) }, () => true);
     },
   };
+}
+
+/**
+ * The cohort filters a link to another tab carries (carriedFilterQuery), checked against the loaded data's class
+ * years. It reads the URL, so render the component that calls it inside <Suspense>.
+ */
+export function useCarriedFilterQuery(): string {
+  const searchParams = useSearchParams();
+  const cohorts = useCohortChoices();
+  return useMemo(() => carriedFilterQuery(searchParams, withCohorts(cohortFilters, cohorts)).toString(), [searchParams, cohorts]);
 }

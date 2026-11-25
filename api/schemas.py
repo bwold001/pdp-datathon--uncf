@@ -206,6 +206,7 @@ class OptionsResponse(BaseModel):
 
     measures: list[Option]
     cohorts: list[str]
+    default_cohort: str | None = None  # the class a page shows first: the latest that isn't provisional
     dimensions: list[Option]
     max_group_by: int
 

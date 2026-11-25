@@ -86,11 +86,13 @@ def test_cohorts_come_from_the_loaded_data(older_school, client) -> None:
 
 
 def test_default_cohort_is_the_latest_complete_one(older_school, client, tmp_path, monkeypatch) -> None:
-    """With no cohort named, a page shows the latest class that isn't provisional."""
+    """With no cohort named, a page shows the latest class that isn't provisional, and /options names it for the picker."""
     assert client.get(f"{PREFIX}/gateway").json()["meta"]["cohort"] == "2020-21"
+    assert client.get(f"{PREFIX}/options").json()["default_cohort"] == "2020-21"
     monkeypatch.setenv("UNCF_ANALYTICS_CONFIG", str(write_config(tmp_path / "analytics.yaml", ["2020-21"])))
     route.clear_cache()
     assert client.get(f"{PREFIX}/gateway").json()["meta"]["cohort"] == "2019-20"
+    assert client.get(f"{PREFIX}/options").json()["default_cohort"] == "2019-20"
 
 
 def test_provisional_cohorts_come_from_the_analytics_config(older_school, client, tmp_path, monkeypatch) -> None:
@@ -120,12 +122,15 @@ def test_unreadable_config_is_a_503(older_school, client, tmp_path, monkeypatch)
     assert response.status_code == 503 and response.json()["error"]["code"] == "config_invalid"
     measure = client.get(f"{PREFIX}/measures/retention", params={"cohort": "2019-20"})
     assert measure.status_code == 503 and measure.json()["error"]["code"] == "config_invalid"
+    # The picker still gets its years, so the pages can show the config error instead of failing to start.
+    assert client.get(f"{PREFIX}/options").json()["default_cohort"] == "2020-21"
 
 
 def test_no_data_offers_no_cohorts(tmp_path, client, monkeypatch) -> None:
     """Before a load, /options lists no cohorts and pages answer 503 data_missing."""
     monkeypatch.setattr(data, "data_path", lambda: tmp_path / "missing.sqlite")
-    assert client.get(f"{PREFIX}/options").json()["cohorts"] == []
+    options = client.get(f"{PREFIX}/options").json()
+    assert options["cohorts"] == [] and options["default_cohort"] is None
     response = client.get(f"{PREFIX}/gateway")
     assert response.status_code == 503 and response.json()["error"]["code"] == "data_missing"
     assert client.get(f"{PREFIX}/cohort-options").json()["error"]["code"] == "data_missing"

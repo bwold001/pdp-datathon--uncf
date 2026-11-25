@@ -1,19 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 
 import { cn } from "@/lib/utils";
 
-import { carriedFilterQuery } from "./cohort-filters";
 import { explorerTabs } from "./explorer-config";
 import { explorerWrap } from "./explorer-styles";
+import { useCarriedFilterQuery } from "./use-cohort-filters";
 
 /** The horizontal tab row. Each link keeps the cohort filters, so switching tabs doesn't reset them. */
 export function ExplorerTabs() {
-  const searchParams = useSearchParams();
   // Only the cohort filters someone set travel between tabs; a tab's own query values stay on that tab.
-  const query = carriedFilterQuery(searchParams).toString();
+  const query = useCarriedFilterQuery();
   return <TabLinks query={query} />;
 }
 

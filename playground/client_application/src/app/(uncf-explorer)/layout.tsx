@@ -5,5 +5,5 @@ import { ExplorerShell } from "@/components/uncf/layout/explorer-shell";
  * team design. It sits outside (app) for that reason, like the workbench's (dashboard) group.
  */
 export default function ExplorerLayout({ children }: { children: React.ReactNode }) {
-  return <ExplorerShell>{children}</ExplorerShell>;
+  return <ExplorerShell cohortsFromApi>{children}</ExplorerShell>;
 }
