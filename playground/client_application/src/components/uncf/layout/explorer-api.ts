@@ -1,5 +1,8 @@
 import { apiRequest } from "@/lib/api-client";
 
+/** What kind of data the API has loaded (its UNCF_DATA_LABEL): the synthetic sample or the school's own PDP files. */
+export type DataLabel = "synthetic" | "institution";
+
 /** What every Explorer endpoint says about its answer. */
 export type ExplorerMeta = {
   cohort: string;
@@ -9,6 +12,8 @@ export type ExplorerMeta = {
   provisional: boolean;
   min_students: number;
   source: string;
+  /** Left out by answers saved before the label existed, which are all synthetic sample data. */
+  data_label?: DataLabel;
   loaded_at: string;
 };
 

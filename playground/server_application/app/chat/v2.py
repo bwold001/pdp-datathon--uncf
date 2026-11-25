@@ -15,6 +15,7 @@ from analytics.execution import run_sync
 from analytics.plan_contracts import CatalogResponse
 from analytics.plan_service import PlanService, refusal
 from measures.requests import Cohort, Filters, RetentionType
+from measures.run_measures import configured_data_label
 from pydantic import Field, StrictInt, StrictStr, ValidationError, model_validator
 
 from app.chat.provider import ProviderFailed
@@ -80,8 +81,15 @@ Official retention plus non-retained characteristics needs two steps with explic
 separate populations.
 Keep other steps while clarifying one. Gateway variants are unavailable pending equivalent evidence;
 never substitute first-attempt outcomes or execute a causal request.
-All evidence is synthetic. Use supplied catalog_version and snapshot_ref on the proposal.
+Use supplied catalog_version and snapshot_ref on the proposal.
 """
+
+
+def rules() -> str:
+    """RULES plus what kind of data the evidence comes from (UNCF_DATA_LABEL)."""
+    if configured_data_label() == "synthetic":
+        return RULES + "All evidence is synthetic.\n"
+    return RULES + "Evidence comes from the institution's own PDP files.\n"
 
 
 def tools():
@@ -187,7 +195,7 @@ async def answer_v2(payload, client, model, runtime):
     for _ in range(MAX_TOOL_ROUNDS):
         try:
             response = await client.complete(
-                model=model, system=RULES, tools=tools(), messages=messages
+                model=model, system=rules(), tools=tools(), messages=messages
             )
         except ProviderFailed:
             return refusal("provider_failed")

@@ -230,12 +230,16 @@ def csv_response(rows: list[dict], query: CohortQuery, filename: str) -> Respons
 
 @router.get("/health", response_model=HealthResponse)
 def get_health() -> HealthResponse:
-    """Whether the normalized data is loaded, and when."""
+    """Whether the normalized data is loaded, when, and what kind of data it is (pages show that label)."""
+    try:
+        label = data.data_label()
+    except data.ConfigInvalid:
+        label = None
     try:
         data.data_stamp()
-        return HealthResponse(data_available=True, loaded_at=data.loaded_at())
+        return HealthResponse(data_available=True, loaded_at=data.loaded_at(), data_label=label)
     except data.DataMissing:
-        return HealthResponse(data_available=False, loaded_at=None)
+        return HealthResponse(data_available=False, loaded_at=None, data_label=label)
 
 
 @router.get("/definitions")
@@ -285,6 +289,7 @@ def measure_answer(measure: str, cohort: str, bar: Bar, dimensions: list[str]):
     try:
         rows, loaded_at = measure_by_group(measure, bar.query, dimensions)
         provisional = is_provisional(measure, cohort)
+        label = data.data_label()
     except data.DataMissing as missing:
         return error(503, "data_missing", str(missing))
     except data.ConfigInvalid as invalid:
@@ -302,6 +307,7 @@ def measure_answer(measure: str, cohort: str, bar: Bar, dimensions: list[str]):
         retention_type=bar.query.retention_type,
         definition=MeasureDefinition(**definition_for("federal_retention" if federal else measure)),
         source=data.source(),
+        data_label=label,
         loaded_at=loaded_at,
         provisional=provisional,
         min_students=min_students(),

@@ -53,10 +53,6 @@ These are set for the mock data. They are team choices, not campus-confirmed rul
 
 ## Pages and exports
 
-- **"Synthetic" labels stay on with real data.** The header badge, the disclaimers and the chat's
-  evidence cards and receipts say the data is synthetic whatever you load. `UNCF_SOURCE` changes
-  only the API's source line. Change these before staff use real numbers, so nobody misreads them as
-  a demonstration.
 - **The cohort picker lists only the four sample years** (2021-22 to 2024-25), set in
   `playground/client_application/src/components/uncf/layout/explorer-config.ts`. The API offers the
   years in your data, but until the picker reads them from `/api/v1/uncf/options`, add your years

@@ -74,6 +74,7 @@ def test_retention_by_pell_matches_the_explorer_contract(data_file, client) -> N
         "retention_type": "school",
         "definition": DEFINITIONS["retention"],
         "source": "PDP analysis-ready cohort and course files (synthetic sample)",
+        "data_label": "synthetic",
         "loaded_at": LOADED_AT,
         "provisional": False,
         "min_students": 1,
@@ -232,12 +233,12 @@ def test_missing_data_is_503(tmp_path, monkeypatch, client) -> None:
     response = get(client, measure="retention", cohort="2022-23", group_by="pell")
     assert response.status_code == 503
     assert response.json()["error"]["code"] == "data_missing"
-    assert client.get(f"{PREFIX}/health").json() == {"status": "ok", "data_available": False, "loaded_at": None}
+    assert client.get(f"{PREFIX}/health").json() == {"status": "ok", "data_available": False, "loaded_at": None, "data_label": "synthetic"}
 
 
 def test_health_reports_the_load_time(data_file, client) -> None:
     """Health says the data is loaded, and when."""
-    assert client.get(f"{PREFIX}/health").json() == {"status": "ok", "data_available": True, "loaded_at": LOADED_AT}
+    assert client.get(f"{PREFIX}/health").json() == {"status": "ok", "data_available": True, "loaded_at": LOADED_AT, "data_label": "synthetic"}
 
 
 def test_options_offer_only_defined_measures(client) -> None:

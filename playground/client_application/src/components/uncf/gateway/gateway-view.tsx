@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import type { GradeScale } from "@/components/uncf/layout/explorer-api";
+import { dataWords } from "@/components/uncf/layout/explorer-config";
 import { Card, CardHead, MessageCard, Notice, formatShare, retentionWords } from "@/components/uncf/layout/explorer-parts";
 import { explorerButton } from "@/components/uncf/layout/explorer-styles";
 import { GradeScaleTable } from "@/components/uncf/layout/grade-scale";
@@ -468,7 +469,7 @@ function GatewayCounted({ data }: { data: GatewayResponse }) {
       {retentionWords(data.meta.retention_type, data.meta.retention_term).how}. Everyone else is all other students who took the same course. A gap shows a difference, not its cause.
       {hidesSmallGroups(data.meta.min_students) &&
         ` Courses and groups with fewer than ${data.meta.min_students} students are hidden to protect privacy${data.hidden_courses ? ` (${fmt(data.hidden_courses)} courses)` : ""}.`}{" "}
-      The data is synthetic: it doesn’t describe real students.
+      {dataWords[data.meta.data_label ?? "synthetic"].note}
       <GradeScaleTable scale={data.meta.grade_scale} rule="gateway" />
     </div>
   );

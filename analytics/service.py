@@ -14,6 +14,7 @@ from analytics.data_access import sqlite_snapshot
 from analytics.execution import check_cancelled
 from analytics.provenance import DataUnavailable
 from analytics.definitions import DEFINITIONS
+from measures.run_measures import configured_data_label
 from analytics.schemas import (
     AnalysisReceipt,
     AnalysisRequest,
@@ -101,7 +102,7 @@ class AnalyticsService:
             "cutoff": self.coverage.cutoff,
             "coverage_provenance": self.coverage.provenance,
             "graduation_major_evidence": "Exact award semesters are not present in the starter extract; completion-major results remain unknown.",
-            "source": "synthetic",
+            "source": configured_data_label(),
         }
 
     def clarify(self, request: AnalysisRequest) -> Clarification | None:
@@ -159,6 +160,7 @@ class AnalyticsService:
             parameters=request,
             definition=definition,
             rows=[],
+            source=configured_data_label(),
             cutoff=self.coverage.cutoff,
             coverage_provenance=self.coverage.provenance,
             limitations=list(definition.limitations),

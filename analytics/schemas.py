@@ -125,7 +125,8 @@ class AnalysisReceipt(Contract):
     parameters: AnalysisRequest
     definition: AnalysisDefinition
     rows: list[CalculationRow]
-    source: Literal["synthetic"] = "synthetic"
+    # What kind of data answered (UNCF_DATA_LABEL): the synthetic sample or a school's own PDP files.
+    source: Literal["synthetic", "institution"] = "synthetic"
     loaded_at: str | None = None
     source_stamp: str | None = None
     cutoff: str | None = None

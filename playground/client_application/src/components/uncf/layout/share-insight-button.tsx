@@ -6,7 +6,7 @@ import { createPortal } from "react-dom";
 
 import { cn } from "@/lib/utils";
 
-import { useStudentCount } from "./explorer-context";
+import { useDataLabel, useStudentCount } from "./explorer-context";
 import { explorerButton } from "./explorer-styles";
 import { type ReportFacts, ShareInsightReport, describeView } from "./share-insight-report";
 
@@ -21,6 +21,7 @@ const ptPerPx = 72 / 96;
  */
 export function ShareInsightButton({ name }: { name: string }) {
   const studentCount = useStudentCount();
+  const dataLabel = useDataLabel();
   const [facts, setFacts] = useState<ReportFacts | null>(null);
   const tab = useRef<HTMLElement | null>(null);
   const report = useRef<HTMLDivElement>(null);
@@ -29,7 +30,7 @@ export function ShareInsightButton({ name }: { name: string }) {
   function share(event: React.MouseEvent<HTMLButtonElement>) {
     tab.current = event.currentTarget.closest("main");
     if (!tab.current) return;
-    setFacts(describeView(window.location.pathname, window.location.search, studentCount));
+    setFacts(describeView(window.location.pathname, window.location.search, studentCount, dataLabel));
   }
 
   // Once the report is on the page, copy the tab into it, draw it, then take it away.

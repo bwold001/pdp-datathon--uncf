@@ -16,7 +16,7 @@ from pathlib import Path
 from yaml import YAMLError
 
 from analytics.coverage import DEFAULT_CONFIG, load_coverage
-from measures.run_measures import DEFAULT_DATABASE
+from measures.run_measures import DEFAULT_DATABASE, configured_data_label
 
 # What every answer names as its source, unless UNCF_SOURCE says otherwise (a school's own files, for example).
 SOURCE = "PDP analysis-ready cohort and course files (synthetic sample)"
@@ -38,6 +38,14 @@ def data_path() -> Path:
 def source() -> str:
     """The source every answer names: UNCF_SOURCE, or the synthetic sample's description."""
     return os.environ.get("UNCF_SOURCE", "").strip() or SOURCE
+
+
+def data_label() -> str:
+    """What kind of data is loaded (UNCF_DATA_LABEL): "synthetic" (the sample) or "institution" (a school's files)."""
+    try:
+        return configured_data_label()
+    except ValueError as invalid:
+        raise ConfigInvalid(str(invalid)) from invalid
 
 
 def data_stamp() -> float:

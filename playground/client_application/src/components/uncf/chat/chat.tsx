@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useStudentSuccessChat } from "@/hooks/use-student-success-chat";
 import { useScrollToLatest } from "@/hooks/use-scroll-to-latest";
 import { type Parameter, type Plan, type ScopeGuidance, type SuggestedQuestion, loadSuggestedQuestions, sendStudentSuccessV2 } from "@/services/student-success-v2";
+import { useDataLabel } from "@/components/uncf/layout/explorer-context";
 import { EvidenceCard } from "./evidence-card";
 
 
@@ -15,6 +16,8 @@ export function StudentSuccessChat({ request = sendStudentSuccessV2, loadSuggest
 }) {
   const { messages, pending, clarification, revision, plan, state, guidance, suggestions, ask, select, confirm, reset } = useStudentSuccessChat(request);
   const scrollRef = useScrollToLatest<HTMLDivElement>(`${messages.length}:${pending}`);
+  // Says "synthetic" only once the API confirms the sample is loaded, never on a school's own files.
+  const dataLabel = useDataLabel();
   return (
     <section data-state={state} aria-label="Student success chat" className="flex h-full min-h-0 min-w-0 flex-col">
       <header className="flex items-center justify-between gap-3 border-b p-4">
@@ -42,7 +45,7 @@ export function StudentSuccessChat({ request = sendStudentSuccessV2, loadSuggest
         {messages.length > 0 && !pending && suggestions.length > 0 && <details className="mt-4"><summary>Explore another question</summary><SuggestionList suggestions={suggestions} onChoose={ask} /></details>}
       </div>
       <QuestionComposer key={revision} onSubmit={ask} disabled={false} placeholder="Ask a student success question…" />
-      <p className="px-4 pb-3 text-xs text-muted-foreground">Synthetic demonstration. Each new question starts a separate analysis.</p>
+      <p className="px-4 pb-3 text-xs text-muted-foreground">{dataLabel === "synthetic" && "Synthetic demonstration. "}Each new question starts a separate analysis.</p>
     </section>
   );
 }

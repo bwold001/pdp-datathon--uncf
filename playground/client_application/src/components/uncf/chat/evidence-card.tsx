@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { Payload, Rate, Receipt, Status } from "@/services/student-success-v2";
 import { Button } from "@/components/ui/button";
+import { dataWords } from "@/components/uncf/layout/explorer-config";
 import { chatAnswerItems } from "./answer-items";
 
 const statuses: Record<Status, string> = {
@@ -78,6 +79,6 @@ export function EvidenceCard({ receipt }: { receipt: Receipt }) {
         ["Started", receipt.started_at], ["Completed", receipt.completed_at],
       ].map(([label, value]) => <div key={label}><dt className="font-medium">{label}</dt><dd>{value}</dd></div>)}
     </dl>{[...receipt.assumptions, ...receipt.limitations, ...receipt.baseline_changes].map((note, i) => <p key={i}>{note}</p>)}</details>
-    <p className="text-xs text-muted-foreground">Synthetic demonstration data. These are not findings about real students or institutions.</p>
+    <p className="text-xs text-muted-foreground">{receipt.source.label === "synthetic" ? "Synthetic demonstration data. These are not findings about real students or institutions." : dataWords.institution.disclaimer}</p>
   </article>;
 }
