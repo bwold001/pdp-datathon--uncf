@@ -1,5 +1,3 @@
-import { Suspense } from "react";
-
 import { DownloadCsvButton } from "./download-csv-button";
 import { ShareInsightButton } from "./share-insight-button";
 
@@ -33,12 +31,7 @@ export function ViewIntro({ title, children, whatThisShows, howToRead, keyTerms,
           <p className="max-w-[70ch] text-[17px] text-(--uncf-ink-2)">{children}</p>
         </div>
         <div className="flex shrink-0 flex-wrap items-start gap-2">
-          {csvPath && (
-            // It reads the cohort bar's filters from the URL, which needs a Suspense boundary on a static page.
-            <Suspense fallback={null}>
-              <DownloadCsvButton path={csvPath} />
-            </Suspense>
-          )}
+          {csvPath && <DownloadCsvButton path={csvPath} />}
           <ShareInsightButton name={title} />
         </div>
       </div>
