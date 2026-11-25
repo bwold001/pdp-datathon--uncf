@@ -214,14 +214,18 @@ WantedBy=multi-user.target
 [Service]
 User=explorer
 WorkingDirectory=/opt/student-success/playground/client_application
-ExecStart=/usr/bin/env bun run start
+# Listen on the server itself only: next start alone listens on every address, which would let people
+# reach the pages on port 3000 without going through nginx and sign in.
+ExecStart=/opt/student-success/playground/client_application/node_modules/.bin/next start --hostname 127.0.0.1 --port 3000
 Restart=on-failure
 
 [Install]
 WantedBy=multi-user.target
 ```
 
-`/etc/student-success.env` holds the settings from section 4, one `NAME=value` per line.
+`/etc/student-success.env` holds the settings from section 4, one `NAME=value` per line. If chat runs,
+start it the same way on `127.0.0.1` port 8002. Every part listens on `127.0.0.1` only, so nginx is the one
+way in.
 
 **Route addresses with nginx,** the same way `vercel.json` does:
 
@@ -267,15 +271,58 @@ a single command everywhere. It is a planned follow up, not built yet.
 The app has no sign in of its own. Anyone who can reach its address sees everything, so put sign in in
 front of it. That covers the pages, the API and the chat together, with no code change.
 
+**Make nginx the only way in.** Sign in at nginx protects nothing if people can reach the app another way:
+
+1. Every part listens on `127.0.0.1` only (section 6): the API with `--host 127.0.0.1`, the pages with
+   `next start --hostname 127.0.0.1`, and chat, if it runs, the same way.
+2. The server's firewall allows only HTTPS (port 443) from users, plus whatever your IT staff use to
+   administer it. For example, with ufw: `ufw default deny incoming`, `ufw allow 443/tcp`, then your
+   administration rule, then `ufw enable`.
+3. nginx checks sign in on **every** address it serves, not only the home page (below).
+4. Check from another machine: `https://<your address>/api/v1/uncf/health` and
+   `http://<server>:3000` and `:8001` should all fail or ask you to sign in.
+
 **With Microsoft Entra ID (Benedict, and FMU if it uses Microsoft 365)**
-1. Run [oauth2-proxy](https://oauth2-proxy.github.io/oauth2-proxy/) in front of nginx with its Microsoft
-   Entra ID provider, or use Azure App Service's built in authentication once the container image exists.
-2. In the Microsoft Entra admin center, open the app under Enterprise apps, set **Assignment required?**
+1. Run [oauth2-proxy](https://oauth2-proxy.github.io/oauth2-proxy/) on the same server, set up with its
+   Microsoft Entra ID provider, listening on `127.0.0.1:4180` in reverse proxy mode
+   (`--http-address=127.0.0.1:4180 --reverse-proxy=true --upstream=static://202`).
+2. Have nginx ask it before every request. In the `server` block from section 6:
+
+   ```nginx
+   # oauth2-proxy's own sign in pages.
+   location /oauth2/ {
+       proxy_pass http://127.0.0.1:4180;
+       proxy_set_header Host $host;
+       proxy_set_header X-Real-IP $remote_addr;
+       proxy_set_header X-Auth-Request-Redirect $request_uri;
+   }
+   # The check nginx runs for every request below.
+   location = /oauth2/auth {
+       internal;
+       proxy_pass http://127.0.0.1:4180;
+       proxy_set_header Host $host;
+       proxy_set_header Content-Length "";
+       proxy_pass_request_body off;
+   }
+
+   # The app: each location checks sign in first, and sends anyone not signed in to sign in.
+   location /api/v1/uncf/chat { auth_request /oauth2/auth; error_page 401 = /oauth2/sign_in; proxy_pass http://127.0.0.1:8002; }
+   location /api/v1/chat      { auth_request /oauth2/auth; error_page 401 = /oauth2/sign_in; proxy_pass http://127.0.0.1:8002; }
+   location /api/v1/uncf/     { auth_request /oauth2/auth; error_page 401 = /oauth2/sign_in; proxy_pass http://127.0.0.1:8001; }
+   location /                 { auth_request /oauth2/auth; error_page 401 = /oauth2/sign_in; proxy_pass http://127.0.0.1:3000; }
+   ```
+
+   A location without `auth_request` is open to anyone, so add it to any location you add later.
+3. In the Microsoft Entra admin center, open the app under Enterprise apps, set **Assignment required?**
    to **Yes**, and add the faculty or a group under **Users and groups**. Only they can sign in; adding a
    person to the group gives access later. ([Microsoft's steps](https://learn.microsoft.com/entra/identity-platform/howto-restrict-your-app-to-a-set-of-users))
 
+Azure App Service's built in authentication does the same job without oauth2-proxy, once the container
+image exists (section 6).
+
 **Without Entra ID:** keep the server on the campus network or VPN only, and add a password for each
-person at nginx (`auth_basic`), over HTTPS only. Fine for a small first group.
+person at nginx (`auth_basic` and `auth_basic_user_file` in the `server` block, so every location
+inherits it), over HTTPS only. Fine for a small first group.
 
 **On Vercel** ([plans and prices](https://vercel.com/docs/deployment-protection/usage-and-pricing)):
 - **Vercel Authentication:** only members of your Vercel team get in, so each person needs a seat.
@@ -360,6 +407,10 @@ internal address that only the job's server can reach.
 - [ ] **Gateway courses.** The Gateway page lists the courses your course file flags as gateway math (M)
       or English (E). If your files don't set that flag, the page has no courses to show and the gateway
       measures say "not reported".
+- [ ] **"Synthetic" labels.** The Explorer's header badge and disclaimers, the chat's evidence cards and
+      the chat's own receipts still say the data is synthetic, whatever you load. `UNCF_SOURCE` changes
+      only the API's source line. Until a change makes one setting update them all, people could misread
+      real numbers as a demonstration, so make that change before staff use real data.
 - [ ] **Chat.** Off, or pointed at an approved AI service (section 8).
 - [ ] **Clean up.** Working copies from each load are protected and old ones deleted (section 3).
 - [ ] **Spot check.** Compare a few numbers with what your office already reports, such as one cohort's

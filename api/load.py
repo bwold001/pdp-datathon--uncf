@@ -82,8 +82,25 @@ def local_file(location: str, folder: Path, kind: str) -> Path:
     path = folder / f"{kind}{Path(link.path).suffix or '.csv'}"
     logger.info("downloading the %s file from %s", kind, link.hostname)
     try:
-        with urllib.request.urlopen(location, timeout=DOWNLOAD_SECONDS) as response, path.open("wb") as out:
+        with open_link(location) as response, path.open("wb") as out:
             shutil.copyfileobj(response, out)
     except OSError as error:
         raise LoadError(f"Couldn't download the {kind} file from {link.hostname}: {error.__class__.__name__}.") from error
     return path
+
+
+class HttpsOnlyRedirects(urllib.request.HTTPRedirectHandler):
+    """Follow a redirect only to another https address, so a file of student records never travels unencrypted."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        """Refuse a redirect to http (or any other scheme) before it is requested."""
+        target = urlparse(newurl)
+        if target.scheme != "https":
+            fp.close()
+            raise LoadError(f"The link redirected to a non-https address ({target.hostname}), so the download stopped.")
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
+def open_link(location: str):
+    """Open an https link, following only https redirects (urlopen alone would follow one to http)."""
+    return urllib.request.build_opener(HttpsOnlyRedirects).open(location, timeout=DOWNLOAD_SECONDS)

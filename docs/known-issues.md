@@ -38,10 +38,11 @@ These are set for the mock data. They are team choices, not campus-confirmed rul
 - **Federal retention:** who counts (first-time students only, which credentials) is a setting in
   `measures/calculations/federal_retention.py`, still open with stakeholders.
 - **Grade lines:** a C- passes for DFW (the line is 1.7 grade points). The Gateway courses page
-  counts a course as passed with a C or better (2.0 grade points) or a P, while the cohort gateway
-  completion measures keep the PDP's own completion flags (a D, 1.0, or better). Check which one
-  your office reports. The lines are in `measures/calculations/grades.py` and
-  `measures/calculations/dfw.py`.
+  counts a first attempt of C or better (2.0 grade points), or P, as passing, while the cohort
+  gateway completion measures keep the PDP's own completion flags (a D, 1.0, or better). So the
+  page's pass rates can be lower than the PDP dashboard's for the same course. Check which line
+  your office reports. It is `GATEWAY_PASS_AT` in `measures/calculations/grades.py`; the DFW line
+  is in `measures/calculations/dfw.py`.
 - **Gateway courses** come from the PDP's gateway flag in the course file, not a campus course
   list.
 - **Credit milestones** (12, 24 and 30 credits, the 24-credit minimum for meaningful progress) are
@@ -52,6 +53,10 @@ These are set for the mock data. They are team choices, not campus-confirmed rul
 
 ## Pages and exports
 
+- **"Synthetic" labels stay on with real data.** The header badge, the disclaimers and the chat's
+  evidence cards and receipts say the data is synthetic whatever you load. `UNCF_SOURCE` changes
+  only the API's source line. Change these before staff use real numbers, so nobody misreads them as
+  a demonstration.
 - **The cohort picker lists only the four sample years** (2021-22 to 2024-25), set in
   `playground/client_application/src/components/uncf/layout/explorer-config.ts`. The API offers the
   years in your data, but until the picker reads them from `/api/v1/uncf/options`, add your years
