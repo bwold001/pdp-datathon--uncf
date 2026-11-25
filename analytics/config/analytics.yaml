@@ -1,5 +1,5 @@
 # No complete-year or cohort-follow-up certification is supplied with the mock files.
-# Declare these only after checking the extract with its provider. See docs/analytics-definitions.md.
+# Declare these only after checking the extract with its provider. See docs/chat.md ("Telling the chat what your data covers").
 complete_academic_years: []
 cohort_followup_years: {}
 cutoff: null

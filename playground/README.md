@@ -1,6 +1,6 @@
 # Playground
 
-The web app for the Student Success Explorer: a Next.js client and a FastAPI server. All data is
+The web app for the Student Persistence and Pathway Explorer: a Next.js client and a FastAPI server. All data is
 synthetic: nothing here describes real students or institutions.
 
 - [`client_application/`](client_application/README.md): the Explorer pages (`/uncf/paths`, `/uncf/dfw`,
@@ -14,32 +14,8 @@ in `data/raw/`. No database server or Docker is needed.
 
 ## Run it
 
-You need [mise](https://mise.jdx.dev). It installs the pinned bun, Node, Python and uv versions.
-
-```bash
-cd playground
-mise trust && mise install
-mise run api:install     # backend dependencies
-mise run api:load        # build normalized-data-model/output/pdp.sqlite (once, or after data changes)
-mise run api:dev         # API on http://localhost:8000 (docs at /docs)
-```
-
-In a second terminal:
-
-```bash
-cd playground
-mise run web:install
-mise run web:dev         # Explorer on http://localhost:3000
-```
-
-The chat needs an [OpenRouter](https://openrouter.ai) key. Put it in
-`server_application/.env.development.local` (git-ignored), never in a committed file:
-
-```bash
-OPENROUTER_API_KEY=<your key>
-```
-
-Without a key the Explorer tabs work and the chat answers with a "missing key" message.
+Setup and the two commands that start it are in the root README's
+[quick start](../README.md#quick-start-on-the-mock-data). `mise tasks` lists every command.
 
 ## Checks
 
@@ -55,6 +31,4 @@ Without a key the Explorer tabs work and the chat answers with a "missing key" m
 
 ## Windows
 
-mise runs task commands with `cmd` on Windows. If a task fails there, run it from Git Bash, or run
-the command it wraps directly (for example `uv run fastapi dev app/main.py` in
-`server_application/`).
+See [known issues](../docs/known-issues.md#setup).

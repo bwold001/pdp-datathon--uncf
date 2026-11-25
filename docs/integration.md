@@ -1,4 +1,4 @@
-# Integration guide: running the Student Success Explorer on your own PDP data
+# Integration guide: running the Student Persistence and Pathway Explorer on your own PDP data
 
 For the IT and institutional research staff at Florida Memorial University (FMU) and Benedict College
 who will run the Explorer after handoff. It covers how the app gets its data, how to load your own PDP
@@ -253,7 +253,7 @@ page should open the Student paths page.
 
 **FMU (Linux server, Microsoft SQL Server, Power BI)**
 - Path B on the existing Linux server. No database server is needed: the app keeps its own SQLite file.
-- Mariana provides the PDP files; whoever runs the server loads them (section 3, option A).
+- The institutional research office provides the PDP files; whoever runs the server loads them (section 3, option A).
 - Keep it on the campus network, with sign in in front (section 7).
 - Start with chat off. FMU requires any AI model to run on its own servers (section 8).
 - Power BI reads the API's CSV output (section 9).
@@ -349,9 +349,74 @@ The Explorer pages, PDF export and the API keep working with chat off.
 ### How chat uses an AI model
 
 The model never calculates. It turns a question into a plan, staff confirm it, and every number comes from
-the same calculations the pages use, with a receipt. Today the chat calls models through OpenRouter, a
-cloud service, with `OPENROUTER_API_KEY` and `UNCF_CHAT_MODEL`. Rollback and model checks are in
-[deploy chat](chat-deployment.md).
+the same calculations the pages use, with a receipt ([how the chat works](chat.md)). Today the chat calls
+models through OpenRouter, a cloud service, with `OPENROUTER_API_KEY` and `UNCF_CHAT_MODEL`. You need
+your own OpenRouter account, and you pay for its use. The question text goes to OpenRouter and the model
+you pick, so check their terms (do they store inputs or train on them?) first.
+
+Use a model that supports tool calls, written as OpenRouter's `provider/model` ID (default
+`openai/gpt-4.1`). To check that a model exists and advertises tool support, with no key needed:
+
+```bash
+curl -s https://openrouter.ai/api/v1/models | python -c "import json,sys; m={x['id']:x for x in json.load(sys.stdin)['data']}.get('openai/gpt-4.1'); print('ok' if m and 'tools' in m.get('supported_parameters',[]) else 'missing or no tool support')"
+```
+
+That doesn't prove your account can use it, or that it calls tools well: the
+[model check](chat.md#check-a-model-before-you-rely-on-it) does.
+
+### Run chat on your own server
+
+Chat runs as its own small service, `chat_app.py`, next to the API and the pages (section 6). In a
+separate Python 3.14 environment, from the repo root:
+
+```bash
+python3.14 -m venv .venv-chat && .venv-chat/bin/python -m pip install -r requirements-chat.txt
+.venv-chat/bin/python -m api load            # or point DATABASE_URL at the database the API uses
+OPENROUTER_API_KEY=... UNCF_CHAT_MODEL=openai/gpt-4.1   .venv-chat/bin/python -m uvicorn chat_app:app --host 127.0.0.1 --port 8002
+```
+
+Put the key in the service's environment file, not in the repo. `chat_app.py` doesn't read the
+Playground's `.env.development.local`. nginx sends `/api/v1/chat` and `/api/v1/uncf/chat` to it
+(section 6). For local development, the Playground server (`mise run api:dev`) serves chat itself.
+
+### Chat on Vercel
+
+`vercel.json` deploys chat as a third service and turns it on. In the project's **Settings →
+Environment Variables**, set these separately for Preview and Production (use a test key for Preview):
+
+| Name | Example | Type |
+| --- | --- | --- |
+| `OPENROUTER_API_KEY` | your OpenRouter key | Secret |
+| `UNCF_CHAT_MODEL` | `openai/gpt-4.1` | Plain |
+| `UNCF_CHAT_ENABLED` | `true` | Plain |
+| `NEXT_PUBLIC_STUDENT_SUCCESS_CHAT_ENABLED` | `true` | Plain |
+
+Never put a key in `vercel.json`, code, logs, a `NEXT_PUBLIC_*` variable or a screenshot. If one is
+exposed, revoke it at OpenRouter and set a new one. Rebuild after changing a `NEXT_PUBLIC_*` setting:
+the pages read them when they're built. Allow functions to run for 120 seconds: an answer can take up to
+75. Don't set a project-wide `DATABASE_URL`: chat and the API each build and read their own copy of the
+database during the deploy.
+
+### Check chat before staff use it
+
+1. Run the [model check](chat.md#check-a-model-before-you-rely-on-it) with the model and key you'll use.
+2. Open `/uncf/chat` and ask "What is the retention rate for all majors?" Pick a cohort when asked.
+   The full plan should appear before anything is calculated. Confirm it and open the receipt.
+3. Send the same confirmed plan to `POST /api/v1/uncf/analysis-v2/execute` (see
+   [the analysis API](chat.md#using-the-analysis-api-without-chat)). The numbers, definitions and data
+   references should match the chat's receipt.
+4. Ask "What is the graduation rate for chemistry majors?" and "What is enrollment ethnicity by
+   academic program over the past 2 years?" Unknown or unavailable answers must stay that way until
+   your data's coverage is declared (section 5). Don't declare coverage just to make numbers appear.
+5. Try a question the chat shouldn't answer, such as "Why do students leave?", and check that it says
+   so. Turn the key off and check that chat shows a configuration message, with no error details.
+6. Check that the pages and their PDF and CSV exports still work.
+
+### Roll back
+
+Turning chat off (above) is the fastest way back, and leaves the pages working. To return to an earlier
+version, redeploy the last version you checked, for the pages, the API and chat together, and repeat
+step 2. Don't reload the database while an answer is running.
 
 ### Using your own AI service
 
@@ -370,7 +435,7 @@ calling tools correctly.
 
 ## 9. Getting numbers into Power BI or a data lake
 
-Staff export what they see as a PDF. There is no CSV button in the pages yet (issue #7). For other
+Staff export what they see as a PDF. There is no CSV button in the pages yet. For other
 systems, the API returns every page as CSV: add
 `format=csv` to the page's address, with the same cohort and filters the page uses.
 
@@ -420,35 +485,13 @@ internal address that only the job's server can reach.
 
 ## 11. Known limits and open items
 
-- **Cohort picker.** The API offers the years in your data, but the Explorer's cohort picker lists the four
-  sample years (2021-22 to 2024-25) in
-  `playground/client_application/src/components/uncf/layout/explorer-config.ts`. Until it reads the years
-  from `/api/v1/uncf/options`, add your years to that list and rebuild the pages.
-- **Gateway pass line.** The Gateway page counts a first attempt of C (2.0) or better, or P, as passing.
-  The PDP's own gateway completion flags count a D (1.0) or better, so the page's pass rates can be lower
-  than the PDP dashboard's for the same course. Confirm which line your office uses; it is
-  `GATEWAY_PASS_AT` in `measures/calculations/grades.py`.
-- **Correlations from very few students.** In the chat's exploration answers, a correlation from two
-  students is always +1 or -1. Treat coefficients from very small groups with caution.
-- **One bad row and the exploration dataset.** If one student's rows conflict, the chat's exploration
-  answers for that whole cohort are unavailable. The pages are not affected.
-- **CSV columns.** A page's CSV columns follow what its answer holds, so a few can come and go with the
-  filters (Gateway's group comparison columns, for example). Fixing each page's columns is part of
-  issue #7, with the CSV button.
-- **SQL Server, a container image and other chat providers.** Planned follow ups (sections 3, 6 and 8).
+The full list, including the mock data's bugs, definitions to confirm and what hasn't been tested, is in
+[known issues](known-issues.md).
 
 ## 12. Notes for developers who extend it
 
 - **Where code goes.** Numbers in `measures/`, chat analyses in `analytics/`, HTTP in `api/`. See
   [AGENTS.md](../AGENTS.md).
-- **Adding a chat operation.** The chat catalog allows at most 18 operations
-  (`CatalogResponse.operations` in `analytics/plan_contracts.py`), and there are 18 now. Raise the limit
-  with the new operation; the catalog tests fail until you do.
-- **A database read that fails to close.** All steps in one chat plan share one database read. If closing
-  it fails after the last step, that step's answer is dropped and marked failed, and earlier answers are
-  kept (`analytics/plan_service.py`).
-- **Chemistry in the chat wording.** Chemistry is the only graduation program registered
-  (`analytics/programs.py`), and a suggested question and the graduation guidance name it directly. A
-  school that adds programs should update `analytics/chat_guidance.py` to use the selected program.
+- **Extending the chat.** Adding an analysis or a program: [how the chat works](chat.md#extending-it).
 - **Checks.** `make check` before every change; `api/tests/test_data_settings.py` covers loading a
   school's files and the settings above.

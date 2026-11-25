@@ -1,6 +1,6 @@
 # Mock data quality
 
-Proposal #12. The known data issues in the two mock files in `data/raw/`, and one command that
+The known data issues in the two mock files in `data/raw/`, and one command that
 reproduces every count. The data is synthetic: these are issues in mock data, not findings about
 real students or institutions.
 

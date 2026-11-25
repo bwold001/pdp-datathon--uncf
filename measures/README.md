@@ -1,19 +1,16 @@
 # Success measures
 
-The [v2 catalog and adapter guide](../docs/analysis-v2-defined-operations.md) explains `requests.py`,
-`registry.py` and `service.py`: pure request validation and dispatch to existing calculation owners on
-a caller-owned snapshot, preserving gateway definitions, fractional credit numerators and DFW enrollment counts.
+`requests.py`, `registry.py` and `service.py` let the pages, the API, CSV exports and the chat run the
+same measures: they check a request and send it to the calculation that owns it. The chat's catalog of
+these measures is described in [how the chat works](../docs/chat.md). Every nonempty group is visible,
+including small numerators, complements and exclusions; no size-based privacy protection applies.
 
-[Versioned visibility](../docs/analysis-v2-disclosure.md) keeps every nonempty group visible and
-routes dashboard/Results API and CSV consumers through the same measures service. Small numerators,
-complements, exclusions and related results are visible; no size-based privacy protection applies.
-
-The shared shape for the core student success measures ([#9](https://github.com/devcolor/pdp-datathon-starter/issues/9)).
+The shared shape for the core student success measures.
 This folder holds the contract and the calculations for retention, federal (fall to fall) retention, persistence, gateway completion, DFW rate and credit completion, plus the Explorer pages' breakdowns ([breakdowns/](breakdowns/)).
 
 The measures are retention, federal retention, persistence, gateway completion (math and English, one measure each), DFW rate and credit completion.
 
-A measure reads tables from the [#8 data model](https://github.com/devcolor/pdp-datathon-starter/issues/8)
+A measure reads tables from the [normalized data model](../normalized-data-model/README.md)
 and returns result rows. No files are read or written. Each institution runs this on its own data.
 
 ## A result row: `MeasureResult`
@@ -221,7 +218,7 @@ dashboard pages. It is not PDP's exact calculation:
 ### Known issues in the mock data
 
 The mock data has known bugs that affect some groups and measures. They are listed, with counts and
-proposed fixes, in `data/quality/findings.csv` (added in #74):
+proposed fixes, in `data/quality/findings.csv`:
 
 - **Retention and persistence:** rows `3` and `N15`.
 - **Groups** (first gen, Pell, enrollment values): rows `1`, `7a` and `N6`.
