@@ -55,8 +55,8 @@ No database server, Docker or cloud account is needed for the Explorer. Versions
 [playground/mise.toml](playground/mise.toml), [requirements.txt](requirements.txt),
 `playground/server_application/uv.lock` and `playground/client_application/bun.lock`.
 
-**Tested with:** Windows 11 (Git Bash) and Ubuntu (CI), Python 3.12.4 (root) and 3.14 (Playground),
-Node 24.15.0, bun 1.4.4, mise 2026.10.12, on 2026-11-23.
+**Tested with:** a fresh clone on Windows 11 (Git Bash) and Ubuntu (CI), Python 3.12.4 (root) and
+3.14.10 (Playground), Node 24.22.2, bun 1.4.3, mise 2026.10.12, on 2026-11-25.
 
 ## Quick start on the mock data
 
