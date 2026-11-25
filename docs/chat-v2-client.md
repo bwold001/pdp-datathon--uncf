@@ -78,3 +78,37 @@ in the workspace but macOS denied Mach-port registration (1100/SIGTRAP) before a
 stories ran. PostgreSQL integration is unverified without `PDP_TEST_POSTGRES_URL`;
 no existing developer database was reset. No live-provider evaluation, merge or
 deployment was performed.
+
+## Plain-language answers and question guidance
+
+Receipts now carry an application-authored `presentation` (title, exact scope,
+summary, items and caveats) derived after disclosure from the same result. No
+provider supplies result prose or numbers. Legacy unavailable table rows preserve
+an `explanation` with perspective, horizon, typed reason and original owner note;
+they still contain no numerical cells. Reasons distinguish verified empty
+populations, unusable outcomes, missing award-program evidence, unverified
+follow-up and insufficient declared follow-up. Numerical calculations and dashboard
+response owners are unchanged.
+
+The card leads with the explanation and scope. Scalar values and breakdowns remain
+visible; heterogeneous tables are expandable under calculation details, including
+all immutable pages. Definitions, assumptions and source fingerprints are
+expandable separately. No population-size threshold is introduced.
+
+`PlanResponse.guidance` explains known coverage limitations during scope review,
+before any calculation. It does not change the plan or bypass confirmation.
+`CatalogResponse.suggestions` and plan-response suggestions use registered question
+templates filtered by current schema capabilities, loaded cohort choices and known
+coverage blockers. Suggestions are explicitly `not_checked`: schema support is not
+proof of eligible outcomes. Graduation suggestions require a loaded cohort with
+certified four-year follow-up; annual enrollment requires two certified complete
+years. The client loads this metadata without the model. Failure leaves the question
+composer available. Selecting an alternative starts a new question and requires new
+scope confirmation.
+
+Tests: `analytics/tests/test_answer_presentation.py`,
+`analytics/tests/test_chat_guidance.py`, `api/tests/test_chat_readability.py` and the
+Chemistry/suggestion stories in `chat.stories.tsx`. These cover the exact Chemistry
+selection, independent horizons, empty versus unknown populations, valid zeros
+for sizes 1–9, exact replay and confirmation for alternatives. Browser execution
+must be verified separately on a host that allows Chromium to launch.

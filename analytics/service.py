@@ -208,7 +208,7 @@ class AnalyticsService:
                     ]
                     if not students:
                         return self.unavailable(
-                            receipt, "No students are available for this entry cohort."
+                            receipt, "No students are available for this entry cohort.", "empty_population"
                         )
                     if request.analysis == "retention":
                         provisional = (
@@ -260,7 +260,7 @@ class AnalyticsService:
         ]
 
     @staticmethod
-    def unavailable(receipt: AnalysisReceipt, reason: str) -> AnalysisResponse:
+    def unavailable(receipt: AnalysisReceipt, reason: str, evidence_reason="missing_required_evidence") -> AnalysisResponse:
         """Represent missing evidence without manufacturing a numerical result."""
         receipt.rows = [
             CalculationRow(
@@ -268,6 +268,7 @@ class AnalyticsService:
                 kind="count" if receipt.analysis == "enrollment" else "rate",
                 status="unavailable",
                 note=reason,
+                reason=evidence_reason,
             )
         ]
         return AnalysisResponse(receipts=[receipt])

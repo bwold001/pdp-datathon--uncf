@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { expect, fn, waitFor } from "storybook/test";
-import type { ChatRequestV2, ChatResponseV2, Payload, Receipt } from "@/services/student-success-v2";
+import { loadSuggestedQuestions, type ChatRequestV2, type ChatResponseV2, type Payload, type Receipt, type SuggestedQuestion } from "@/services/student-success-v2";
 import { StudentSuccessChat } from "./chat";
 import { Evidence, EvidenceCard } from "./evidence-card";
 import StudentSuccessChatPage from "@/app/(uncf-explorer)/uncf/chat/page";
@@ -22,7 +22,7 @@ const base: ChatResponseV2 = { protocol_version: 2, status: "confirmation", mess
 const response: ChatResponseV2 = { ...base, status: "answer", message: "Synthetic results below.", outcome: "complete", step_outcomes: [{ step_id: "dfw", outcome: "completed", issue: null }], receipts: [receipt] };
 const meta = {
   component: StudentSuccessChat, title: "UNCF/Student success chat",
-  args: { request: fn<(payload: ChatRequestV2) => Promise<ChatResponseV2>>(async (payload): Promise<ChatResponseV2> => payload.confirmed ? response : base) },
+  args: { loadSuggestions: async (): Promise<SuggestedQuestion[]> => [], request: fn<(payload: ChatRequestV2) => Promise<ChatResponseV2>>(async (payload): Promise<ChatResponseV2> => payload.confirmed ? response : base) },
   decorators: [(Story) => <div className="mx-auto h-[44rem] max-w-3xl border"><Story /></div>],
   parameters: { layout: "padded" },
 } satisfies Meta<typeof StudentSuccessChat>;
@@ -172,5 +172,167 @@ export const ExplorationMissingMeans: Story = {
     await expect(canvas.getByText("one_to_two: Unavailable — no observed credits · n=0 · missing=1")).toBeInTheDocument();
     await expect(canvas.getByText("three_plus − zero: -15 credits · n=1 versus n=2")).toBeInTheDocument();
     await expect(canvas.getByText(/Unavailable — missing group mean/)).toBeInTheDocument();
+  },
+};
+
+const chemistryStep = { step_id: "graduation", kind: "legacy_analysis" as const, operation_id: "legacy.graduation", depends_on: [], parameters: { cohort: "2022-23", credential: "B", program: "chemistry_family" } };
+const chemistryPlan = { ...plan, steps: [chemistryStep] };
+const chemistryReceipt: Receipt = {
+  ...receipt, step_id: "graduation", request: chemistryStep, operation_id: "legacy.graduation",
+  presentation: {
+    title: "Graduation results", scope: "2022-23 entry cohort · Bachelor's degree · Chemistry family (40.05)",
+    summary: "A graduation rate isn't available for this selection.",
+    items: ["Within four years: We haven't verified how long the data follows these students.", "Within six years: We haven't verified how long the data follows these students.", "Completion to date: We haven't verified how long the data follows these students."],
+    caveats: ["An unavailable rate does not mean that nobody graduated or that the rate is 0%.", "Graduation specifically in Chemistry requires award-program information that is missing from this extract."],
+  },
+  result: { status: "ok", payload: { kind: "table", columns: [{ id: "label", type: "text", unit: "perspective" }], rows: [
+    { status: "not_yet_observable", explanation: { label: "Entrants completing in any program", kind: "rate", horizon: "four_year", reason: "followup_not_verified", note: "Whole-cohort follow-up is not certified for this horizon." } },
+    { status: "unavailable", explanation: { label: "Entrants completing in any program", kind: "rate", horizon: "to_date", reason: "followup_not_verified", note: "Extract cutoff and cohort follow-up must be declared." } },
+  ] } },
+};
+const retentionSuggestion = { operation_id: "retention.rate", question: "What is the school retention rate?", availability: "not_checked" as const, explanation: "We'll check whether the selected students have usable information when you calculate." };
+
+export const ChemistryExplanation: Story = {
+  render: () => <EvidenceCard receipt={chemistryReceipt} />,
+  play: async ({ canvas, userEvent }) => {
+    await expect(canvas.getByText("A graduation rate isn't available for this selection.")).toBeVisible();
+    await expect(canvas.getByText(/2022-23 entry cohort/)).toBeVisible();
+    await expect(canvas.getByText(/does not mean that nobody graduated/)).toBeVisible();
+    await expect(canvas.queryByText("Available", { exact: true })).not.toBeInTheDocument();
+    await expect(canvas.getByRole("table", { hidden: true })).not.toBeVisible();
+    await userEvent.click(canvas.getByText("Calculation details — all groups and supporting counts"));
+    await expect(canvas.getByRole("table")).toBeVisible();
+    await expect(canvas.getByText(/Whole-cohort follow-up is not certified/)).toBeVisible();
+  },
+};
+
+export const GroupedCreditsVisibleImmediately: Story = {
+  render: () => <EvidenceCard receipt={{ ...receipt, operation_id: "grouped_summary", presentation: {
+    title: "Grouped first-year credits", scope: "2023-24 entry cohort", summary: "Results are shown below.", items: [], caveats: [],
+  }, result: { status: "ok", payload: {
+    kind: "table", columns: ["group", "count", "earned_mean", "earned_n", "earned_missing", "attempted_mean", "attempted_n", "attempted_missing"].map((id) => ({ id, type: id === "group" ? "text" : "number", unit: "fixture" })),
+    rows: [{ status: "ok", cells: ["zero", 3, 0, 2, 1, 20, 3, 0] }],
+  } } }} />,
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText("0 observed online enrollments — average first-year credits earned: 0 credits (usable n=2; missing=1).")).toBeVisible();
+    await expect(canvas.getByText(/attempted: 20 credits \(usable n=3; missing=0\)/)).toBeVisible();
+    await expect(canvas.getByRole("table", { hidden: true })).not.toBeVisible();
+  },
+};
+
+export const ChatTablesWithoutSummariesOpenImmediately: Story = {
+  render: () => <div>{["student_paths.summary", "dfw.course_list", "gateway.course_outcomes", "credit_momentum.summary"].map((operation) => <EvidenceCard key={operation} receipt={{ ...receipt, operation_id: operation,
+    presentation: { title: operation, scope: "Synthetic cohort", summary: "Results are shown below.", items: [], caveats: [] },
+    result: { status: "ok", payload: { kind: "table", columns: [{ id: "result", type: "text", unit: "fixture" }], rows: [{ status: "ok", cells: [`${operation} evidence`] }] } },
+  }} />)}</div>,
+  play: async ({ canvas, userEvent }) => {
+    await expect(canvas.getAllByRole("table")).toHaveLength(4);
+    for (const operation of ["student_paths.summary", "dfw.course_list", "gateway.course_outcomes", "credit_momentum.summary"]) {
+      await expect(canvas.getByText(`${operation} evidence`)).toBeVisible();
+    }
+    await userEvent.click(canvas.getAllByText("Calculation details — all groups and supporting counts")[0]);
+    await expect(canvas.getByText("student_paths.summary evidence")).not.toBeVisible();
+  },
+};
+
+export const GraduationPerspectivesStayDistinct: Story = {
+  render: () => <EvidenceCard receipt={{ ...chemistryReceipt, presentation: { ...chemistryReceipt.presentation!, summary: "Results are shown below." }, result: { status: "ok", payload: {
+    kind: "table", columns: ["label", "kind", "horizon", "group", "numerator", "denominator", "count", "rate", "note"].map((id) => ({ id, type: "text", unit: "fixture" })),
+    rows: [
+      { status: "ok", cells: ["Entrants completing in any program", "rate", "four_year", "overall", 1, 2, null, .5, null] },
+      { status: "unavailable", explanation: { label: "Entrants completing in the selected program", kind: "rate", horizon: "four_year", reason: "completion_program_missing", note: null } },
+      { status: "unavailable", explanation: { label: "Program graduates who switched in", kind: "composition", horizon: "four_year", reason: "completion_program_missing", note: null } },
+    ],
+  } } }} />,
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText("Within four years — Entrants completing in any program: 50.00% (1 of 2 students).")).toBeVisible();
+    await expect(canvas.getByText(/^Within four years — Entrants completing in the selected program: We cannot tell/)).toBeVisible();
+    await expect(canvas.getByText(/^Within four years — Program graduates who switched in: We cannot tell/)).toBeVisible();
+  },
+};
+
+export const ChemistryClarifyConfirmAndExplore: Story = {
+  args: {
+    loadSuggestions: async () => [{ ...retentionSuggestion, operation_id: "legacy.graduation", question: "What is the graduation rate for chemistry majors?" }],
+    request: fn<(payload: ChatRequestV2) => Promise<ChatResponseV2>>(async (payload) => {
+      if (payload.prompt === retentionSuggestion.question) return base;
+      if (payload.confirmed) return { ...response, plan: chemistryPlan, receipts: [chemistryReceipt], step_outcomes: [{ step_id: "graduation", outcome: "completed", issue: null }], suggestions: [retentionSuggestion] };
+      const parameters = { ...chemistryStep.parameters } as Record<string, string | { unresolved: true; question: string; choices: { value: string; label: string }[] }>;
+      const chosen = payload.plan?.steps[0].parameters ?? {};
+      const fields = [
+        { key: "cohort", question: "Which entry cohort?", value: "2022-23", label: "2022-23" },
+        { key: "credential", question: "Which credential?", value: "B", label: "Bachelor's degree" },
+        { key: "program", question: "Which program definition?", value: "chemistry_family", label: "Chemistry family" },
+      ];
+      let pending: typeof fields[number] | undefined;
+      for (const field of fields) {
+        const value = payload.selection?.parameter === field.key ? payload.selection.value : chosen[field.key];
+        if (typeof value === "string") parameters[field.key] = value;
+        else { parameters[field.key] = { unresolved: true, question: field.question, choices: [{ value: field.value, label: field.label }] }; pending ??= field; }
+      }
+      if (pending) return { ...base, status: "clarification", plan: { ...chemistryPlan, kind: "proposed", steps: [{ ...chemistryStep, parameters }] }, clarification: { step_id: "graduation", parameter: pending.key, question: pending.question, choices: [{ value: pending.value, label: pending.label }] } };
+      return { ...base, plan: chemistryPlan, guidance: [{ step_id: "graduation", state: "known_limitation", message: "Graduation rates are unavailable because we haven't verified how long the data follows this entry cohort." }], suggestions: [retentionSuggestion] };
+    }),
+  },
+  play: async ({ canvas, userEvent, args }) => {
+    await userEvent.click(await canvas.findByRole("button", { name: "What is the graduation rate for chemistry majors?" }));
+    await userEvent.click(canvas.getByRole("button", { name: "2022-23" }));
+    await userEvent.click(canvas.getByRole("button", { name: "Bachelor's degree" }));
+    await userEvent.click(canvas.getByRole("button", { name: "Chemistry family" }));
+    await expect(canvas.getByText(/Graduation rates are unavailable because/)).toBeVisible();
+    await expect(canvas.getByRole("button", { name: "Confirm scope and calculate" })).toBeDisabled();
+    await userEvent.click(canvas.getByRole("checkbox"));
+    await userEvent.click(canvas.getByRole("button", { name: "Confirm scope and calculate" }));
+    await expect(canvas.getByText("A graduation rate isn't available for this selection.")).toBeVisible();
+    await expect(args.request).toHaveBeenLastCalledWith({ protocol_version: 2, prompt: "What is the graduation rate for chemistry majors?", confirmed: chemistryPlan });
+    await userEvent.click(canvas.getByText("Explore another question"));
+    await userEvent.click(canvas.getByRole("button", { name: retentionSuggestion.question }));
+    await expect(args.request).toHaveBeenLastCalledWith({ protocol_version: 2, prompt: retentionSuggestion.question });
+    await expect(canvas.getByRole("checkbox")).not.toBeChecked();
+    await expect(canvas.getByRole("button", { name: "Confirm scope and calculate" })).toBeDisabled();
+  },
+};
+
+export const SuggestionsUnavailable: Story = {
+  args: { loadSuggestions: async () => { throw new Error("Metadata unavailable"); } },
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByText(/Suggested questions couldn't be loaded/)).toBeVisible();
+    await expect(canvas.getByRole("textbox", { name: "Your question" })).toBeEnabled();
+  },
+};
+
+export const CatalogSuggestionsOnly: Story = {
+  args: { loadSuggestions: async () => [retentionSuggestion] },
+  play: async ({ canvas, userEvent, args }) => {
+    await expect(await canvas.findByRole("button", { name: retentionSuggestion.question })).toBeVisible();
+    await expect(canvas.queryByRole("button", { name: /graduation rate for chemistry/ })).not.toBeInTheDocument();
+    await expect(canvas.getByText(retentionSuggestion.explanation)).toBeVisible();
+    await userEvent.click(canvas.getByRole("button", { name: retentionSuggestion.question }));
+    await expect(args.request).toHaveBeenLastCalledWith({ protocol_version: 2, prompt: retentionSuggestion.question });
+    await expect(canvas.getByRole("checkbox")).not.toBeChecked();
+  },
+};
+
+
+export const CatalogSuggestionRequest: Story = {
+  args: { loadSuggestions: loadSuggestedQuestions },
+  beforeEach: () => {
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      if (input === `${env.apiBaseUrl}/uncf/analysis-v2/catalog`) {
+        return new Response(JSON.stringify({ suggestions: [retentionSuggestion] }), {
+          status: 200, headers: { "Content-Type": "application/json" },
+        });
+      }
+      return originalFetch(input, init);
+    });
+    return () => { globalThis.fetch = originalFetch; };
+  },
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByRole("button", { name: retentionSuggestion.question })).toBeVisible();
+    await expect(globalThis.fetch).toHaveBeenCalledWith(
+      `${env.apiBaseUrl}/uncf/analysis-v2/catalog`,
+      expect.objectContaining({ cache: "no-store" }),
+    );
   },
 };

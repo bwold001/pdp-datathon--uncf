@@ -66,5 +66,5 @@ export function useStudentSuccessChat(request = sendStudentSuccessV2) {
     setRevision((value) => value + 1);
   }, []);
   const plan: Plan | null = answer?.plan ?? null;
-  return { messages, pending, clarification: answer?.clarification ?? null, revision, plan, state, ask, select, confirm, reset };
+  return { messages, pending, guidance: answer?.guidance ?? [], suggestions: answer?.suggestions ?? [], clarification: answer?.clarification ?? null, revision, plan, state, ask, select, confirm, reset };
 }

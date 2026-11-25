@@ -13,7 +13,11 @@ export type Exclusion = { reason: string; count: number };
 export type Status = "ok" | "provisional" | "suppressed" | "unknown" | "unavailable" | "not_yet_observable" | "not_reported";
 export type Rate = { numerator: number; denominator: number; value: number; numerator_unit: string; denominator_unit: string; n_students?: number | null; n_excluded?: number | null; n_out_of_scope?: number | null; split?: Record<string, number> | null };
 export type Breakdown = { status: Status; group: Record<string, string | null>; exclusions?: Exclusion[] } & Partial<Rate>;
-export type TableRow = { status: Status; cells?: (string | number | null)[]; path?: string | null };
+export type RowExplanation = { label: string; kind: "rate" | "composition" | "count"; horizon: "four_year" | "six_year" | "to_date" | null; reason: string; note: string | null };
+export type AnswerPresentation = { title: string; scope: string; summary: string; items: string[]; caveats: string[] };
+export type SuggestedQuestion = { operation_id: string; question: string; availability: "not_checked"; explanation: string };
+export type ScopeGuidance = { step_id: string; state: "known_limitation" | "not_checked"; message: string };
+export type TableRow = { status: Status; cells?: (string | number | null)[]; path?: string | null; explanation?: RowExplanation | null };
 export type Payload =
   | ({ kind: "rate"; breakdowns: Breakdown[] } & Rate)
   | { kind: "count"; count: number; unit: string }
@@ -22,6 +26,7 @@ export type Payload =
   | { kind: "mean_comparison"; unit: string; groups: { id: string; mean: number | null; n: number; count?: number | null; missing_count?: number }[]; differences: { minuend: string; subtrahend: string; value: number | null; minuend_n?: number; subtrahend_n?: number; unavailable_reason?: string | null }[] }
   | { kind: "table"; columns: { id: string; type: string; unit: string }[]; rows: TableRow[]; pages?: { rows: TableRow[] }[] };
 export type Receipt = {
+  presentation?: AnswerPresentation | null;
   schema_version: 2; step_id: string; request: Step; operation_id: string; operation_version: string;
   disclosure_profile?: { id: string; version: string };
   population: string; grain: string; time_window: string; definitions: { id: string; version: string }[];
@@ -34,6 +39,7 @@ export type Receipt = {
 export type Clarification = { step_id: string; parameter: string; question: string; choices: Choice[] };
 export type Issue = { code: string; step_id: string | null; message: string };
 export type ChatResponseV2 = {
+  guidance?: ScopeGuidance[]; suggestions?: SuggestedQuestion[];
   protocol_version: 2; status: "clarification" | "confirmation" | "answer" | "unsupported" | "error";
   plan: Plan | null; outcome: "complete" | "partial" | "failed" | null;
   step_outcomes: { step_id: string; outcome: "completed" | "failed" | "not_executed"; issue: Issue | null }[];
@@ -44,4 +50,11 @@ export type ChatRequestV2 = { protocol_version: 2; prompt: string; plan?: Plan; 
 /** Send explicit v2 requests for the migrated chat transport. */
 export function sendStudentSuccessV2(request: ChatRequestV2): Promise<ChatResponseV2> {
   return apiRequest<ChatResponseV2>("/chat", { method: "POST", json: request, timeoutMs: 90_000 });
+}
+
+/** Load server-filtered questions without calling the chat provider or calculating results. */
+export async function loadSuggestedQuestions(): Promise<SuggestedQuestion[]> {
+  const catalog = await apiRequest<{ suggestions?: SuggestedQuestion[]; status?: string }>("/uncf/analysis-v2/catalog", { cache: "no-store" });
+  if (catalog.status === "error") throw new Error("Question suggestions are unavailable.");
+  return catalog.suggestions ?? [];
 }

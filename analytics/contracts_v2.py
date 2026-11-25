@@ -10,6 +10,8 @@ from pydantic import (
     StrictInt, StrictStr, StringConstraints, TypeAdapter, create_model, model_validator,
 )
 
+from analytics.explanations import EvidenceReason
+
 from measures.requests import (
     Contract as Contract,
     Cohort as Cohort,
@@ -470,11 +472,32 @@ class VisibleTableRow(Contract):
     cells: Annotated[tuple[StrictInt | Number | Text | None, ...], Field(max_length=32)]
 
 
+class RowExplanation(Contract):
+    """Preserve the perspective and reason without adding absent numerical evidence."""
+
+    label: Text
+    kind: Literal["rate", "composition", "count"]
+    horizon: Literal["four_year", "six_year", "to_date"] | None = None
+    reason: EvidenceReason
+    note: Text | None = None
+
+
+class AnswerPresentation(Contract):
+    """Contain application-authored wording derived only from disclosed receipt evidence."""
+
+    title: Text
+    scope: Text
+    summary: Text
+    items: Annotated[tuple[Text, ...], Field(max_length=200)] = ()
+    caveats: Annotated[tuple[Text, ...], Field(max_length=20)] = ()
+
+
 class HiddenTableRow(Contract):
     """Represent a hidden row with no cells, numerical inputs or formula text."""
 
     status: HiddenStatus
     path: Text | None = None
+    explanation: RowExplanation | None = None
 
 
 class TablePage(Contract):
@@ -600,6 +623,7 @@ class Receipt(Contract):
     started_at: AwareDatetime
     completed_at: AwareDatetime
     result: Result
+    presentation: AnswerPresentation | None = None
 
     @model_validator(mode="after")
     def bound_evidence(self):
