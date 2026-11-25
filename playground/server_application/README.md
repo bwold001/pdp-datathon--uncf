@@ -41,8 +41,9 @@ secrets and personal overrides in `.env.<APP_ENV>.local`, which git ignores. Eve
 - `app/services/analytics.py` reads `DATABASE_URL` read-only. There is no fallback to another
   extract or a cached result, and errors don't expose credentials.
 - Coverage declarations come from `UNCF_ANALYTICS_CONFIG` or `analytics/config/analytics.yaml`.
-- The [dedicated Vercel chat service](../../docs/chat-deployment.md) uses the same adapter with a
-  build-generated mock extract and mounts only the chat routes.
+- `chat_app.py` at the repo root serves only the chat routes, for hosting chat on its own
+  ([integration guide](../../docs/integration.md#run-chat-on-your-own-server)). How the chat works:
+  [docs/chat.md](../../docs/chat.md).
 
 ## Tests
 

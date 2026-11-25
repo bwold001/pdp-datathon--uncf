@@ -77,37 +77,9 @@ on a running server.
 
 ### 4. Chat, when it's turned on
 
-```mermaid
-sequenceDiagram
-    actor Staff as Staff member
-    participant Page as Chat page
-    participant Server as Playground server
-    participant Model as Language model (OpenRouter)
-    participant Calc as analytics/ and measures/
-
-    Staff->>Page: Asks a question
-    Page->>Server: POST /api/v1/uncf/chat
-    Server->>Model: Question + list of approved analyses
-    Model-->>Server: Proposed analysis and choices (no numbers)
-    Server->>Server: Validates the proposal, fills defaults
-    Server-->>Page: Plan to confirm, or a question about a missing choice
-    Staff->>Page: Confirms the plan
-    Page->>Server: Confirmed plan
-    Server->>Calc: Runs the approved analysis
-    Calc-->>Server: Numbers with a receipt
-    Server-->>Page: Results and "how this was calculated"
-```
-
-- The model can only call the catalog, definitions and approved-analysis tools. No tool accepts
-  SQL, student IDs or file paths.
-- The person confirms the full plan before anything is calculated.
-- Numbers shown come from validated receipts. Any numbers the model writes are thrown away.
-- Chat needs an OpenRouter key. Without one, the Explorer pages still work and chat shows a
-  configuration message.
-
-More detail: [analysis definitions](analytics-definitions.md),
-[v2 contracts](analysis-v2-contracts.md), [chat client contract](chat-v2-client.md) and
-[ADR 0001](adr/0001-chat-v2-analysis-boundary.md).
+The chat page sends a question to the server, an AI model proposes a plan from a fixed catalog, staff
+confirm it, and `measures/` or `analytics/` calculate the answer with a receipt. The model never writes
+the numbers. The flow, what the chat can answer and its limits: [how the chat works](chat.md).
 
 ## Where it runs
 
@@ -136,8 +108,8 @@ Every page route and `/measures/{measure}` take the same query values: `cohort`,
 | `GET /api/v1/uncf/definitions` | Every plain-language definition |
 | `GET /api/v1/uncf/health` | Whether the data is loaded, and when |
 | `GET /api/v1/uncf/analyses/catalog`, `POST /api/v1/uncf/analyses` | The chat's approved analyses, and one analysis with its receipt |
-| `/api/v1/uncf/analysis-v2/catalog`, `/validate`, `/execute` | Typed analysis plans ([v2 API guide](analysis-v2-api.md)) |
-| `POST /api/v1/chat` (alias `/api/v1/uncf/chat`) | Chat, Playground server only, when turned on. Requests need `protocol_version: 2`; older bodies get 422 |
+| `/api/v1/uncf/analysis-v2/catalog`, `/validate`, `/execute` | The chat's calculations without the chat: build, check and run a plan ([the analysis API](chat.md#using-the-analysis-api-without-chat)) |
+| `POST /api/v1/chat` (alias `/api/v1/uncf/chat`) | Chat, Playground server only, when turned on. The body carries `protocol_version: 2` |
 
 - **Errors:** 422 for a value the API doesn't offer (`invalid_filter`, `invalid_group_by`,
   `invalid_analysis`), 404 `unknown_course`, 503 `data_missing` or `analytics_unavailable`.

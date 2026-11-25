@@ -86,16 +86,10 @@ These are set for the mock data. They are team choices, not campus-confirmed rul
   provider and model you pick. Turning chat on and off:
   [integration guide, section 8](integration.md#8-chat).
 - **The safeguards are for demonstrations**, not a privacy guarantee.
-- **Not checked against a live model.** The chat's tests use a scripted model. The fixed question
-  set that checks how a real model reads questions (41 cases) has never run against a live model,
-  because it needs a key. Run it before you rely on chat, and again whenever you change the model.
-  From `playground/server_application/`, with `OPENROUTER_API_KEY` set:
-
-  ```bash
-  uv run python -m scripts.evaluate_release_b --model "$UNCF_CHAT_MODEL" \
-    --database ../../normalized-data-model/output/pdp.sqlite --output model-evaluation.json
-  ```
-
+- **Not checked against a live model.** The chat's tests use a scripted model. The fixed set of 41
+  questions that checks how a real model reads questions has never run against a live model, because it
+  needs a key. Run the [model check](chat.md#check-a-model-before-you-rely-on-it) before you rely on
+  chat, and again whenever you change the model.
 - **Hosted chat not verified.** Matching answers between the pages, the API and chat were checked
   locally, not on a deployed site.
 - **Exploration answers:** `measure_variant` always returns "unavailable" for now. A correlation from

@@ -1,12 +1,9 @@
 # Success measures
 
-The [v2 catalog and adapter guide](../docs/analysis-v2-defined-operations.md) explains `requests.py`,
-`registry.py` and `service.py`: pure request validation and dispatch to existing calculation owners on
-a caller-owned snapshot, preserving gateway definitions, fractional credit numerators and DFW enrollment counts.
-
-[Versioned visibility](../docs/analysis-v2-disclosure.md) keeps every nonempty group visible and
-routes dashboard/Results API and CSV consumers through the same measures service. Small numerators,
-complements, exclusions and related results are visible; no size-based privacy protection applies.
+`requests.py`, `registry.py` and `service.py` let the pages, the API, CSV exports and the chat run the
+same measures: they check a request and send it to the calculation that owns it. The chat's catalog of
+these measures is described in [how the chat works](../docs/chat.md). Every nonempty group is visible,
+including small numerators, complements and exclusions; no size-based privacy protection applies.
 
 The shared shape for the core student success measures.
 This folder holds the contract and the calculations for retention, federal (fall to fall) retention, persistence, gateway completion, DFW rate and credit completion, plus the Explorer pages' breakdowns ([breakdowns/](breakdowns/)).

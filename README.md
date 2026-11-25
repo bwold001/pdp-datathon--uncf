@@ -112,7 +112,8 @@ OPENROUTER_API_KEY=your-openrouter-key
 ```
 
 Try "What is the retention rate for all majors?" Without a key, the Explorer pages work and the
-chat shows a configuration message.
+chat shows a configuration message. What the chat can answer and how it keeps numbers right:
+[docs/chat.md](docs/chat.md).
 
 ## Use your own PDP files
 
