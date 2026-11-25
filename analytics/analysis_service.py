@@ -62,6 +62,8 @@ class OperationEvidence(Contract):
     disclosure_profile: VersionReference
     result: Result
     context: Annotated[tuple[Text, ...], Field(max_length=32)] = ()
+    distinct_units: int | None = None
+    group_units: tuple[int, ...] = ()
 
 
 def _hidden(status):

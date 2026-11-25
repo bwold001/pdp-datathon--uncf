@@ -113,7 +113,7 @@ def test_correlation_requires_feature_and_method_versions_and_canonicalizes_refe
         raw_versions["features"] = [{"id": key, "version": "1"} for key in ("credits_earned_y1", "online_enrollment_share_y1")]
         with pytest.raises(VersionUnavailable, match="method"):
             make_replay_spec(plan, snapshot.identity, Versions.model_validate(raw_versions), operations, coverage)
-        raw_versions["method"] = {"id": "pearson", "version": "1"}
+        raw_versions["methods"] = [{"id": "pearson", "version": "1"}]
         original = make_replay_spec(plan, snapshot.identity, Versions.model_validate(raw_versions), operations, coverage)
         raw_versions["features"].reverse()
         reordered = make_replay_spec(plan, snapshot.identity, Versions.model_validate(raw_versions), operations, coverage)

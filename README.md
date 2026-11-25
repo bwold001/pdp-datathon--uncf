@@ -291,3 +291,19 @@ Unknown delivery, unresolved terms and absent year-one course records exclude an
 online feature; known F/H records yield a real zero. Exposure describes observed
 records, not certified whole-year completeness. Internal rows/identifiers are not
 public payloads; consumers must return validated aggregates only. All data is synthetic.
+
+The registered exploration owners in `analytics/exploration/operations.py` implement
+`grouped_summary`, `mean_comparison`, and `correlation`. Requests accept no arbitrary
+expressions, SQL, bins, transformations or alternative missing-value policy. The
+catalog's approved numeric pairs are symmetric; online count and share are distinct.
+Group summaries carry separate eligible n and missing counts per credit mean.
+Comparisons preserve registered subtraction order and report unavailable differences
+alongside valid siblings. Pearson needs two varying pairs; means allow n=1.
+
+Bounds are four plan steps, one registered grouping per step, twenty occupied groups,
+500,000 source enrollment rows, and ten seconds per step within the request deadline.
+Empty groups consume no group budget. Limits refuse whole steps without truncation.
+`measure_variant` returns structured unavailable evidence pending validated equivalent
+gateway cohort eligibility; it never substitutes first-attempt course outcomes.
+The highest-grade source and invalid attempt-code caveats are documented in the
+normalized mapping/schema and source dictionaries. No new statistical dependency is used.

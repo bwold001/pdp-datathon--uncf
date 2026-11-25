@@ -86,8 +86,12 @@ class CorrelationParameters(Scope):
     @model_validator(mode="after")
     def distinct_features(self):
         """Reject self-correlation; runtime catalog will validate approved feature pairs."""
+        from analytics.exploration.catalog import PAIRS
+
         if self.x == self.y:
             raise ValueError("correlation requires distinct features")
+        if frozenset((self.x, self.y)) not in PAIRS:
+            raise ValueError("correlation requires a registered feature pair")
         return self
 
 
@@ -377,8 +381,19 @@ class GroupMean(Contract):
     """Name one already-visible comparison group and its eligible sample."""
 
     id: Identifier
-    n: SampleSize
-    mean: Number
+    n: Count
+    mean: Number | None
+    count: Count | None = None
+    missing_count: Count = 0
+
+    @model_validator(mode="after")
+    def valid_sample(self):
+        """A missing mean requires zero eligible values; preserve occupied-group counts."""
+        if (self.mean is None) != (self.n == 0):
+            raise ValueError("mean availability must match eligible n")
+        if self.count is not None and self.count != self.n + self.missing_count:
+            raise ValueError("group count must equal eligible plus missing")
+        return self
 
 
 class Difference(Contract):
@@ -386,7 +401,10 @@ class Difference(Contract):
 
     minuend: Identifier
     subtrahend: Identifier
-    value: Number
+    value: Number | None
+    minuend_n: Count | None = None
+    subtrahend_n: Count | None = None
+    unavailable_reason: Literal["missing_group_mean"] | None = None
 
 
 class ComparisonPayload(Contract):
@@ -394,7 +412,7 @@ class ComparisonPayload(Contract):
 
     kind: Literal["mean_comparison"]
     unit: Text
-    groups: Annotated[tuple[GroupMean, ...], Field(min_length=2, max_length=20)]
+    groups: Annotated[tuple[GroupMean, ...], Field(min_length=1, max_length=20)]
     differences: Annotated[tuple[Difference, ...], Field(min_length=1, max_length=190)]
     precision: Precision = 4
 
@@ -410,8 +428,17 @@ class ComparisonPayload(Contract):
             if pair in pairs or pair[0] == pair[1] or not set(pair) <= groups.keys():
                 raise ValueError("difference needs a unique ordered pair of visible groups")
             pairs.add(pair)
-            expected = groups[pair[0]].mean - groups[pair[1]].mean
-            if difference.value != round(expected, self.precision):
+            a, b = groups[pair[0]], groups[pair[1]]
+            if difference.minuend_n is not None and difference.minuend_n != a.n:
+                raise ValueError("difference sample mismatch")
+            if difference.subtrahend_n is not None and difference.subtrahend_n != b.n:
+                raise ValueError("difference sample mismatch")
+            if a.mean is None or b.mean is None:
+                if difference.value is not None or difference.unavailable_reason != "missing_group_mean":
+                    raise ValueError("missing comparison input requires explicit unavailability")
+                continue
+            expected = a.mean - b.mean
+            if difference.unavailable_reason is not None or difference.value != round(expected, self.precision):
                 raise ValueError("difference must agree with the declared subtraction order")
         return self
 
@@ -425,6 +452,7 @@ class CorrelationPayload(Contract):
     coefficient: Annotated[Number, Field(ge=-1, le=1)]
     x_unit: Text
     y_unit: Text
+    missing_pairs: Count = 0
 
 
 class TableColumn(Contract):
@@ -531,7 +559,7 @@ class Versions(Contract):
     implementation: Identifier
     disclosure: Identifier
     features: Annotated[tuple[VersionReference, ...], Field(max_length=16)] = ()
-    method: VersionReference | None = None
+    methods: Annotated[tuple[VersionReference, ...], Field(max_length=4)] = ()
 
 
 def operation_id(request) -> str:
@@ -592,7 +620,7 @@ class Receipt(Contract):
             raise ValueError("feature versions must be unique")
         if self.request.kind == "exploratory_analysis" and isinstance(self.result, VisibleResult):
             method = "pearson" if self.request.operation == "correlation" else self.request.operation
-            if self.versions.method is None or self.versions.method.id != method:
+            if method not in {v.id for v in self.versions.methods}:
                 raise ValueError("visible exploration requires its executed method version")
             if self.request.operation == "correlation" and not {self.request.parameters.x, self.request.parameters.y} <= set(feature_ids):
                 raise ValueError("correlation requires both feature versions")
