@@ -354,14 +354,22 @@ def measure_answer(measure: str, cohort: str, bar: Bar, dimensions: list[str]):
 
 @router.get("/options", response_model=OptionsResponse)
 def get_options() -> OptionsResponse:
-    """The measures, classes, groupings and filters /measures/{measure} takes. No cohorts until data is loaded."""
+    """The measures, classes, groupings and filters /measures/{measure} takes. No cohorts until data is loaded.
+
+    The Explorer's class year picker offers these cohorts and starts on default_cohort, so it follows the loaded data.
+    """
     try:
         cohorts = list(data.cohorts())
     except data.DataMissing:
         cohorts = []
+    try:
+        default = data.default_cohort() if cohorts else None
+    except data.ConfigInvalid:
+        default = cohorts[-1]  # the pages themselves report the broken config
     return OptionsResponse(
         measures=[Option(value=m, label=definition_for(m)["name"]) for m in get_args(Measure)],
         cohorts=cohorts,
+        default_cohort=default,
         dimensions=[Option(value=d, label=FILTER_LABELS[d]) for d in get_args(Dimension)],
         max_group_by=MAX_GROUP_BY,
     )

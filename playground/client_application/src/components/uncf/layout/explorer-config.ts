@@ -82,6 +82,15 @@ export type CohortFilterDefinition = {
 /** "Unknown", with a chip that says which field is unknown, and its words when it's in the sentence. */
 const unknown = (field: string, word?: string): FilterOption => ({ value: "UNKNOWN", label: "Unknown", chip: `${field} unknown`, word });
 
+/** The class years the cohort picker offers, oldest first, and the one it starts on. */
+export type CohortChoices = { years: string[]; defaultYear: string };
+
+/**
+ * The synthetic sample's class years. Stories use them; the app offers the loaded data's own years from the API
+ * (/uncf/options), so a school's years appear without a code change.
+ */
+export const sampleCohorts: CohortChoices = { years: ["2021-22", "2022-23", "2023-24", "2024-25"], defaultYear: "2023-24" };
+
 // The cohort bar's filters. Each id is the URL key and the API's query name, and each value is the measures' own
 // (measures/models.py), so a page passes the filters to its endpoint as they are. The class year and enrollment type
 // are in the sentence that says who's shown; the rest are behind "Add filter", in its groups' order.
@@ -90,9 +99,9 @@ export const cohortFilters: CohortFilterDefinition[] = [
     id: "cohort",
     label: "Entering class",
     place: "sentence",
-    defaultValue: "2023-24",
+    defaultValue: sampleCohorts.defaultYear,
     required: true,
-    options: ["2021-22", "2022-23", "2023-24", "2024-25"].map((year) => ({ value: year, label: year, word: year })),
+    options: sampleCohorts.years.map((year) => ({ value: year, label: year, word: year })),
   },
   {
     id: "enrollment_type",

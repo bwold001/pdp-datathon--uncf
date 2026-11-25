@@ -53,10 +53,6 @@ These are set for the mock data. They are team choices, not campus-confirmed rul
 
 ## Pages and exports
 
-- **The cohort picker lists only the four sample years** (2021-22 to 2024-25), set in
-  `playground/client_application/src/components/uncf/layout/explorer-config.ts`. The API offers the
-  years in your data, but until the picker reads them from `/api/v1/uncf/options`, add your years
-  to that list and rebuild the pages.
 - **The pages and API read SQLite only.** PostgreSQL works for the loader and the chat, not the
   pages. SQL Server and data lakes aren't supported.
 

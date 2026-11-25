@@ -21,8 +21,9 @@ finding about real students or either school.
 8. [Chat](#8-chat)
 9. [Getting numbers into Power BI or a data lake](#9-getting-numbers-into-power-bi-or-a-data-lake)
 10. [Before real data goes in](#10-before-real-data-goes-in)
-11. [Known limits and open items](#11-known-limits-and-open-items)
-12. [Notes for developers who extend it](#12-notes-for-developers-who-extend-it)
+11. [When something goes wrong](#11-when-something-goes-wrong)
+12. [Known limits and open items](#12-known-limits-and-open-items)
+13. [Notes for developers who extend it](#13-notes-for-developers-who-extend-it)
 
 ## 1. How it works
 
@@ -55,6 +56,10 @@ A web server in front sends each address to the right part. On Vercel, `vercel.j
   [section 6](#6-hosting)).
 - **A person who can run a few commands** for the first load and for each new release of PDP files. No
   database administrator is needed.
+- **A server with room for the load.** The sample's load peaks at about 650 MB of memory, so plan on 2 GB
+  or more for a real export, plus disk for the database and each load's working copies (section 3).
+- **Internet access where the pages are built.** The build downloads the IBM Plex and Inter fonts from
+  Google Fonts. If your server can't reach it, build on another machine and copy the build over (section 6).
 - **Your sign in system**, such as Microsoft Entra ID, if access should follow your staff accounts.
 
 ## 3. Load your data
@@ -140,7 +145,8 @@ Set these as environment variables (on Vercel, in the project's settings).
 | `UNCF_CHAT_MODEL` | `openai/gpt-4.1` | Which model the chat uses |
 | `DATABASE_URL` | the SQLite file above | What the chat reads, if not the SQLite file |
 
-Cohort years are not a setting: the API offers the years in your loaded data.
+Class years are not a setting: the pages offer the years in your loaded data and start on the latest one
+that isn't provisional (section 5).
 
 ## 5. Tell the app about your data
 
@@ -228,8 +234,9 @@ WantedBy=multi-user.target
 ```
 
 `/etc/student-success.env` holds the settings from section 4, one `NAME=value` per line. If chat runs,
-start it the same way on `127.0.0.1` port 8002. Every part listens on `127.0.0.1` only, so nginx is the one
-way in.
+start it the same way on `127.0.0.1` port 8002, **with the same `EnvironmentFile`**, so it reads the same
+database and says the same thing about your data (`UNCF_DATA_LABEL`, `UNCF_SOURCE`) as the pages. Every part
+listens on `127.0.0.1` only, so nginx is the one way in.
 
 **Route addresses with nginx,** the same way `vercel.json` does:
 
@@ -249,6 +256,22 @@ server {
 
 Check it: `https://<your address>/api/v1/uncf/health` should say `"data_available": true`, and the home
 page should open the Student paths page.
+
+### Updating the app
+
+New PDP files only need a new load (section 3). When the code changes (your own fix, or a newer copy of the
+repo), from the repo folder:
+
+```bash
+git pull
+.venv/bin/python -m pip install -r requirements.txt
+cd playground/client_application && bun install --frozen-lockfile
+NEXT_PUBLIC_API_BASE_URL=/api/v1 bun run build
+sudo systemctl restart explorer-api explorer-pages    # and the chat service, if it runs
+```
+
+Run `make check` first on a copy if you changed code. On Vercel, a push to the branch the project deploys
+redeploys everything.
 
 ### Two example setups
 
@@ -381,8 +404,9 @@ python3.14 -m venv .venv-chat && .venv-chat/bin/python -m pip install -r require
 UNCF_CHAT_ENABLED=true OPENROUTER_API_KEY=... UNCF_CHAT_MODEL=openai/gpt-4.1   .venv-chat/bin/python -m uvicorn chat_app:app --host 127.0.0.1 --port 8002
 ```
 
-Put the key in the service's environment file, not in the repo. `chat_app.py` doesn't read the
-Playground's `.env.development.local`. nginx sends `/api/v1/chat` and `/api/v1/uncf/chat` to it
+Put the key in the service's environment file, not in the repo, and use the same file as the API
+(section 6) so chat reads the same database and data label. `chat_app.py` doesn't read the Playground's
+`.env.development.local`. nginx sends `/api/v1/chat` and `/api/v1/uncf/chat` to it
 (section 6). For local development, the Playground server (`mise run api:dev`) serves chat itself.
 
 ### Chat on Vercel
@@ -495,12 +519,23 @@ internal address that only the job's server can reach.
 - [ ] **Spot check.** Compare a few numbers with what your office already reports, such as one cohort's
       retention rate.
 
-## 11. Known limits and open items
+## 11. When something goes wrong
+
+| What you see | Likely cause | What to do |
+| --- | --- | --- |
+| `/api/v1/uncf/health` says `"data_available": false`, or pages say no data is loaded | No load has run, or `UNCF_DATABASE` points somewhere else | Run the load (section 3) and check the setting |
+| Pages answer 503 `config_invalid` | `UNCF_ANALYTICS_CONFIG` can't be read, or `UNCF_DATA_LABEL` isn't `synthetic` or `institution` (health then shows `"data_label": null`) | Fix the setting and restart the API |
+| A page says "Could not reach the API" | The API isn't running, nginx doesn't send `/api/v1/uncf/` to it, or a hosted function took too long on its first request | Check the API service and the nginx locations (section 6), then **Try again** |
+| The load holds back many rows | Your files' columns or codes differ from what the loader expects | Read `normalized-data-model/logs/failed_records/` and the column check in section 10 |
+| Chat says it is turned off or not configured | A switch or the key is missing | Section 8, Turn chat on or off |
+| The badge still says "Synthetic sample data" on your files | `UNCF_DATA_LABEL` isn't set for that part | Set `institution` for the API and chat, then restart them |
+
+## 12. Known limits and open items
 
 The full list, including the mock data's bugs, definitions to confirm and what hasn't been tested, is in
 [known issues](known-issues.md).
 
-## 12. Notes for developers who extend it
+## 13. Notes for developers who extend it
 
 - **Where code goes.** Numbers in `measures/`, chat analyses in `analytics/`, HTTP in `api/`. See
   [AGENTS.md](../AGENTS.md).

@@ -46,6 +46,9 @@ Copy the Student paths tab (`components/uncf/paths/`): a page with a `ViewIntro`
   values for your endpoint. Load with `explorerLoader<YourResponse>("/uncf/your-page", apiQuery)` inside `useMemo`,
   then `useExplorerResource(load)`. The filters live in the URL (`?cohort=2022-23&pell=Y`), so a view can be shared, Back
   works, and the ones someone set carry across tabs. A tab's own query values (a sort order) stay on that tab.
+- **Class years.** In the app, the class year picker offers the loaded data's years and starts on the API's default
+  class (`/uncf/options`). `useCohortFilters()` waits for that answer, so the tab shows its `<Suspense>` fallback
+  until then. Stories get the sample's years (`sampleCohorts`) unless they render `ExplorerShell` with `cohortsFromApi`.
 - **Retention.** Gateway and Credit momentum show a Retention setting beside "Add filter": `school` (the PDP flag,
   "Returned here", the API's default) or `federal` ("Back next fall"). Name the measure from the answer's
   `meta.retention_type` with `retentionWords()` in `explorer-parts.tsx`, never a fixed "next fall".
