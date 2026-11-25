@@ -14,7 +14,7 @@ export default function GatewayCoursesPage() {
         title="Gateway Courses"
         whatThisShows="Every student who took a course the school marks as a gateway course in their first year, counted once per course, from their first try onward."
         howToRead="Pick a course to follow its students. Pick a group in the filters above to compare it with everyone else in each course."
-        keyTerms="Passed: a D (1.0) or higher, or a Pass, the PDP’s line for gateway courses. A D- or F doesn’t pass. Retention: the measure picked in the Retention filter."
+        keyTerms="Passed: a C (2.0) or higher, or a Pass. A C-, D or F doesn’t pass, though the PDP’s own gateway completion counts a D. Retention: the measure picked in the Retention filter."
       >
         How students get through the courses the school marks as gateway courses: on the first try, after retaking, or
         not at all.
