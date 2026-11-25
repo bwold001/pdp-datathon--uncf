@@ -1,137 +1,77 @@
 # AGENTS.md
 
-Instructions for AI coding agents working in this repo. People can read it too.
+Instructions for AI coding agents (and the people using them) who change their own copy of the
+Student Persistence and Pathway Explorer. [README.md](README.md) says what it is and how to run it,
+[docs/architecture.md](docs/architecture.md) how the parts fit, and
+[docs/integration.md](docs/integration.md) how to run it on a school's own data.
 
-This is the UNCF squad's repo for the 2026 /dev/color datathon: a Student Success Explorer for FMU
-and Benedict College, built on the starter's shared data and foundations. See
-[README.md](README.md) for the goal and data and [CONTRIBUTING.md](CONTRIBUTING.md) for how
-changes get in. Priorities: Core (Explorer, with CSV export of every page), Stretch (chat agent).
-Never push to `main`, and never commit, push, or open a pull request without the user's explicit
-yes. Keep per-school differences in config, not forks.
+**The data in this repository is synthetic.** Nothing built on it is a finding about real students
+or institutions. Say so whenever you report a result, and never commit real student data.
 
-**Put code with its owner.** Don't edit the starter's shared foundations to build our features;
-copy their pattern into our own folders:
-- Every Explorer number (measures, filters on them, page breakdowns) and their
-  staff facing definitions: `measures/`.
-- The chat's deterministic analyses (graduation, retention by major, enrollment), program
-  attribution, coverage and receipts: `analytics/`.
-- HTTP only (request checks, response models, one router under `/api/v1/uncf`): `api/`. No
-  calculations here. The Playground server mounts its router with one line.
-- Chat provider calls and validated tools: `playground/server_application/app/chat/`; its database
-  access: `app/services/analytics.py`.
-- Client pages: `playground/client_application/src/app/(uncf-explorer)/uncf/`; client components:
-  `playground/client_application/src/components/uncf/` (chat in `uncf/chat/`, page `/uncf/chat`).
+## Where code goes
 
-Preserve the deployed API's URLs (the old `/results` URL included) and Vercel routing when moving
-files. All numerical product answers must use validated deterministic receipts, not arbitrary SQL
-or generated numerical prose. Keep coverage, inference, missing-value and suppression rules shared
-by direct API and chat. Document changes to shared files in the review description.
+Each number has one owner. Put a change with its owner:
 
-## Before prompting
+- **Every Explorer number** (measures, the filters on them, page breakdowns) and its plain-language
+  definition: `measures/`.
+- **The chat's analyses** (graduation, retention by major, enrollment, exploration), program
+  attribution, data coverage and receipts: `analytics/`.
+- **HTTP only** (request checks, response models, one router under `/api/v1/uncf`): `api/`. No
+  calculations here. The Playground server mounts this router with one line.
+- **Chat provider calls and validated tools:** `playground/server_application/app/chat/`; its
+  database access: `playground/server_application/app/services/analytics.py`.
+- **Pages:** `playground/client_application/src/app/(uncf-explorer)/uncf/`; their components:
+  `playground/client_application/src/components/uncf/`. Pages fetch and draw; they don't calculate.
+- **Per-school differences** (names, coverage, data fixes) go in config, not in a copy of the code.
 
-- **Plan first.** For anything bigger than a small fix, outline the approach before writing code.
-- **Run steps in parallel when you can.** For each step, ask whether it really needs the previous
-  step's result. If it doesn't, run it in parallel.
-- **Start simple.** Build the plain version first. Split work up only after you see where it's
-  slow.
+## Rules that keep the numbers right
 
-## While building
+- **Every number shown comes from a validated, deterministic receipt.** Never let a model write
+  numbers, and never answer with arbitrary SQL. The chat proposes a plan; the code calculates.
+- **The API and chat share one set of rules** for coverage, missing values and small groups. Change
+  them in one place.
+- **Keep the API's URLs stable**, including the old `/results` URL, and the routing in
+  `vercel.json`, so existing reports and links keep working.
+- **Look up PDP columns; don't guess.** The CSV column names are shortened. Use
+  `data/dictionaries/column_lookup.csv`, the dictionaries in `data/dictionaries/`, or the
+  [`pdp-data` skill](.agents/skills/pdp-data/SKILL.md).
+- **For group gaps, use the gap finder** (`find_gaps` or the `equity_gaps` table,
+  [gap_finder/README.md](gap_finder/README.md)). Don't recompute gaps from `data/raw/`.
 
-- **Define the check first.** Before building, write down how you'll know it works: a command, a
-  test, or an expected number.
-- **Every feature gets tests.** Add a pytest test with each feature, in a `tests/` folder next to
-  the code (for `api/`, `measures/` and `analytics/`, each has its own `tests/`). A pull request
-  without tests for its new behavior isn't done.
-- **Cap every retry loop.** Give each fix-and-retry loop a maximum number of tries (3 is a good
-  default). At the cap, stop and ask a person. Don't keep trying.
-- **Run the checks.** Use `make check-fast` while you work and `make check` before opening a pull
-  request. If you changed `playground/`, also run the Playground's commands, because `make check`
-  doesn't cover them. The README's [Checks](README.md#checks) section says what to run when, what
-  each error means, and how to add a project's tests. On Windows, run the commands listed there.
-  CI runs all of it on every pull request, and it must pass to merge. Install `requirements.txt`
-  into `.venv/` first, and again whenever it changes: `python -m pip install -r requirements.txt`.
+## Data files
 
-## Code and comments
+- **Never change files in `data/raw/` as a side effect.** Don't re-save, sort, re-encode or change
+  their line endings (they use CRLF): any byte change breaks the checksums in `data/manifest.json`.
+  Read them and write results somewhere else. To load a school's files, use
+  `python -m api load --cohort … --course …`, not a replacement in `data/raw/`.
+- **Don't commit generated outputs** such as SQLite or DuckDB databases, Parquet files or exported
+  CSVs. Commit the code that makes them and add the path to `.gitignore`. The exceptions are test
+  inputs the data model commits on purpose: `normalized-data-model/data/input/` (the synthetic
+  enrichment files and 10 sample students), `normalized-data-model/data/output/sample/` and
+  `normalized-data-model/config/column_dictionary.yaml`. Regenerate them with the commands in
+  [normalized-data-model/README.md](normalized-data-model/README.md); don't edit them by hand.
+- **A deliberate change to `data/raw/`** needs `python scripts/check.py --update` and the README's
+  data table updated in the same change.
 
-- Every method and class gets a short one-line comment saying what it does.
-- Other comments are short, plain and only where needed. No walls of text.
-- Don't comment what the code already says. Comment the why, or a rule that isn't obvious.
-- Write code a teammate can read at a glance. No clever tricks or dense one-liners.
+## Building and checking
 
-## Repo rules
+- **Plan first** for anything bigger than a small fix, and write down how you'll know it works (a
+  command, a test or an expected number) before you build.
+- **Every new behavior gets a pytest test** in the `tests/` folder next to the code (`api/`,
+  `measures/` and `analytics/` each have one).
+- **Run the checks.** From the repository root, with `requirements.txt` installed in `.venv/`:
+  `make check-fast` while you work and `make check` before you finish. Without `make` (Windows):
+  `python scripts/check.py`, `python data/quality/run_checks.py` and
+  `cd normalized-data-model && python -m pytest -q`. If you changed `playground/`, also run its
+  commands in [playground/README.md](playground/README.md#checks).
+- **Cap retry loops** at about three tries, then stop and ask a person.
 
-- **The data is synthetic.** Nothing built on it is a finding about real students or
-  institutions. Say so whenever you report a result.
-- **Use the `pdp-data` skill for raw ARF data questions** ([.agents/skills/pdp-data/SKILL.md](.agents/skills/pdp-data/SKILL.md)).
-  CSV column names are shortened; look them up in `data/dictionaries/column_lookup.csv` instead
-  of guessing.
-- **For comparing groups or finding gaps, use the gap finder:** `find_gaps` or the `equity_gaps`
-  table ([gap_finder/README.md](gap_finder/README.md)). Don't recompute gaps from `data/raw/`.
-- **For Playground UI and stories,** follow
-  [the client agent instructions](playground/client_application/AGENTS.md), including the Storybook
-  MCP guidance and source-file fallback.
-- **Python packages go in `requirements.txt`,** pinned to exact versions (`package==1.2.3`) with
-  a comment naming the foundation that needs them. Install them in a virtual environment
-  (`.venv/`), never into the system Python. Target Python 3.10 or newer. Keep
-  `scripts/check.py` standard-library only.
-- **Never rewrite or reformat files in `data/raw/` as a side effect.** Don't re-save, sort,
-  re-encode, or change the line endings of the CSVs. They use Windows (CRLF) line endings, and any byte change breaks the
-  checksum in `data/manifest.json`. Read them; write results somewhere else.
-- **Never commit generated outputs,** such as DuckDB or SQLite databases, Parquet files, or
-  exported CSVs. Commit the code that makes them, and add the output path to `.gitignore`.
-  - **Exception, proposed until squads agree on #8:** the data model in `normalized-data-model/`
-    commits the generated files listed below. Each is an input or a test fixture, not the result
-    of a run: committing it means every squad loads and tests against the same file. Regenerate
-    them with the commands in `normalized-data-model/README.md`; don't edit them by hand.
-    - `normalized-data-model/data/input/enrichment/on_campus_housing.csv`: the synthetic
-      on-campus housing input, made with a fixed seed.
-    - `normalized-data-model/data/input/sample/` and `normalized-data-model/data/output/sample/`:
-      the raw rows and the tables for 10 sample students (about 70 KB). The tests compare a
-      rebuild against them, and squads can open them without running anything.
-    - `normalized-data-model/config/column_dictionary.yaml`: what each normalized column means,
-      built from `data/dictionaries/arf_*_data_dictionary.md` and `column_lookup.csv`. Edit those
-      files, not this one: `tests/dictionary/test_build.py` fails if it differs from a rebuild.
-- **Data changes must be deliberate.** If you change anything in `data/raw/` on purpose, run
-  `python scripts/check.py --update`, update the README data table, and commit both in the same
-  pull request.
-- **Follow [CONTRIBUTING.md](CONTRIBUTING.md) and the pull request template.** Before you open a
-  pull request:
-  - Link the task with `Closes #N`, or `Refs #N` if more pull requests are coming for it.
-  - Make sure `make check` passes.
-  - If you add something other squads will use, explain it in the README.
+## Code style
 
-## Agent skills
-
-Never use Compound Engineering (CE) skills unless the user explicitly requests a specific CE skill.
-
-### Issue tracker
-
-Tasks live in GitHub Issues (`bwold001/pdp-datathon--uncf`), managed with the `gh` CLI. See
-[docs/agents/issue-tracker.md](docs/agents/issue-tracker.md).
-
-- Always pass `--repo bwold001/pdp-datathon--uncf` to `gh issue` and `gh pr` commands. Without it,
-  `gh` can pick the upstream starter (`devcolor/pdp-datathon-starter`) and post there.
-- Every new issue goes on the squad's project board (`https://github.com/users/bwold001/projects/5`)
-  in the **To Do** column of the kanban view. Add it with `gh project item-add 5 --owner bwold001
-  --url <issue url>`, then set its Status to To Do.
-
-### Triage labels
-
-`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. All five exist.
-See [docs/agents/triage-labels.md](docs/agents/triage-labels.md).
-
-### Domain docs
-
-Single-context: one `GLOSSARY.md` and `docs/adr/` at the repo root. See
-[docs/agents/domain.md](docs/agents/domain.md).
-
-### Knowledge store
-
-Documented solutions to past problems live in `docs/solutions/`, one file per entry with YAML
-frontmatter (`module`, `tags`, `problem_type`). Check it before planning or debugging in an area
-that already has one. After solving something another squad might hit, add an entry using
-[docs/solutions-template.md](docs/solutions-template.md); see
-[docs/solutions/README.md](docs/solutions/README.md) for where to save it.
-
-The project glossary is `GLOSSARY.md` at the repo root; read it for domain terms. Don't create
-`CONCEPTS.md`. If a skill wants to add a term there, add it to `GLOSSARY.md` instead.
+- Every function and class gets a short one-line comment saying what it does.
+- Other comments only where needed: the why, or a rule that isn't obvious. Not what the code says.
+- Code a reader can follow at a glance. No clever tricks or dense one-liners.
+- Python packages go in `requirements.txt`, pinned to exact versions (`package==1.2.3`), installed
+  in `.venv/`. Target Python 3.10 or newer. Keep `scripts/check.py` standard-library only.
+- For the web app and its Storybook stories, follow
+  [the client agent instructions](playground/client_application/AGENTS.md).

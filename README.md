@@ -1,332 +1,206 @@
-# UNCF Squad: Student Success Explorer
+# Student Persistence and Pathway Explorer
 
-The UNCF squad's build for the /dev/color × Gates PDP Datathon (Seattle, starts Nov 9, 2026).
-One shared tool that helps Florida Memorial University (FMU) and Benedict College staff explore
-student-success outcomes, read the definitions behind each number, and export results.
+> **Status: not maintained.** Built during the 2026 Higher Endeavor Datathon and released as-is
+> under the MIT License. We don't accept issues or pull requests. To build on it, fork it.
 
-**All data here is synthetic.** Nothing built on it is a finding about real students or either
-university.
+The Student Persistence and Pathway Explorer is a web app that helps advising, student success and
+institutional research staff at a college explore how a cohort of students is doing. It reads a
+college's Postsecondary Data Partnership (PDP) analysis-ready files and shows retention, student
+paths term by term, DFW rates by course, gateway math and English completion, and credit momentum.
+Every number comes with its plain-language definition, numerator and denominator. Each page
+downloads as a PDF report, and the API returns any page's numbers as CSV. An optional chat answers
+graduation, retention, enrollment and exploration questions with the same calculations, and shows
+how each answer was worked out. It was built for two UNCF member institutions, Florida Memorial
+University and Benedict College, and works with any institution's PDP files.
 
-Made from [devcolor/pdp-datathon-starter](https://github.com/devcolor/pdp-datathon-starter) at
-commit `cef57aa` (the starter's latest commit when this repo was created, 2026-11-05).
+**This repository runs on synthetic (mock) data only.** Nothing it shows is a finding about real
+students or institutions.
 
-## What we're building
+![The Student paths page with the Explorer's tabs, a cohort filtered to first-time, full-time Pell recipients who started in fall 2023, year-2 summary tiles, and a flow diagram of where those students are term by term. Synthetic data.](docs/images/explorer-student-paths.png)
 
-| Priority | What | Done when |
+## How it works
+
+```mermaid
+flowchart LR
+    ARF["PDP files<br/>data/raw/*.csv"] --> LOAD["Data model loader<br/>normalized-data-model/"]
+    LOAD --> DB[("pdp.sqlite")]
+    DB --> MEAS["measures/<br/>Explorer numbers"]
+    DB --> ANA["analytics/<br/>chat analyses"]
+    MEAS --> API["api/<br/>/api/v1/uncf"]
+    ANA --> API
+    API --> UI["Web app<br/>Explorer pages"]
+    API --> CHAT["Chat routes<br/>(optional)"]
+    CHAT <--> LLM["OpenRouter<br/>(your key)"]
+    CHAT --> CUI["Chat page"]
+```
+
+The loader turns the PDP files into one SQLite database. Python in `measures/` and `analytics/`
+calculates every number from it on each request. The API only checks requests and returns JSON or
+CSV, and the web app only draws. The chat's language model picks an approved analysis; it never
+produces the numbers. Components, data flow and the API reference: [docs/architecture.md](docs/architecture.md).
+
+## Prerequisites
+
+| Tool | Version | Used for |
 | --- | --- | --- |
-| **Core** | Student Success Explorer: pick a cohort and filters, see each page's measures with definitions, denominators and limitations. Each page exports everything it shows as CSV. | Answers the agreed demo questions; charts and CSV match |
-| **Stretch** | Bounded chat agent over the same aggregate results | Agreed questions get verified answers; unsupported ones are declined |
+| [Git](https://git-scm.com/) | any recent | Cloning |
+| [mise](https://mise.jdx.dev) | 2026.10 or newer | Installs the pinned tools below |
+| bun | 1.4.3 (pinned by mise) | Web app packages and scripts |
+| Node.js | 24 (pinned by mise) | Web app runtime |
+| Python | 3.14 (pinned by mise) | Playground server |
+| uv | 0.13 (pinned by mise) | Playground server packages |
+| Python | 3.10 or newer, separately | Only for the root tools and tests (`measures/`, `analytics/`, the data model) |
 
-Every page, export and chat answer uses one result contract: measure, filters, numerator,
-denominator, rate, suppression status, limitations, definition, source and load time. "Unavailable"
-is never shown as zero. Every nonempty group is shown; small result sets are not suppressed.
+No database server, Docker or cloud account is needed for the Explorer. Versions are pinned in
+[playground/mise.toml](playground/mise.toml), [requirements.txt](requirements.txt),
+`playground/server_application/uv.lock` and `playground/client_application/bun.lock`.
 
-## Set up
+**Tested with:** Windows 11 (Git Bash) and Ubuntu (CI), Python 3.12.4 (root) and 3.14 (Playground),
+Node 24.15.0, bun 1.4.4, mise 2026.10.12, on 2026-11-23.
 
-You need Python 3.10 or newer. The Playground also needs [mise](https://mise.jdx.dev) and
-[bun](https://bun.sh) (see [playground/README.md](playground/README.md)).
+## Quick start on the mock data
+
+Two terminals, about 10 minutes the first time.
+
+**Terminal 1: the server**
+
+```bash
+git clone https://github.com/devcolor/pdp-persistence-pathway-explorer.git
+cd pdp-persistence-pathway-explorer/playground
+mise trust && mise install
+mise run api:install     # server packages
+mise run api:load        # builds normalized-data-model/output/pdp.sqlite from data/raw/ (about a minute)
+mise run api:dev         # API on http://localhost:8000, docs at http://localhost:8000/docs
+```
+
+**Terminal 2: the web app**
+
+```bash
+cd pdp-persistence-pathway-explorer/playground
+mise run web:install
+mise run web:dev         # Explorer on http://localhost:3000
+```
+
+Open http://localhost:3000/uncf/paths. The tabs are Student paths, DFW courses, Gateway courses and
+Credit momentum. Pick a cohort, add filters, and use **Share Insight** to download the page as a
+PDF. For a page's numbers as CSV, add `format=csv` to its API call, for example
+http://localhost:8000/api/v1/uncf/gateway?cohort=2022-23&format=csv.
+
+On Windows, if a `mise run` task fails, run it from Git Bash (mise uses `cmd` there).
+
+**Run the tests** (from `playground/`):
+
+```bash
+mise run api:test
+```
+
+The root Python tools have their own tests. From the repository root, with Python 3.10 or newer:
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate        # Windows: .venv\Scripts\activate
 python -m pip install -r requirements.txt
-make check-fast                  # no make on Windows? see Checks below
+make check-fast                  # no make (Windows)? python scripts/check.py && python data/quality/run_checks.py
 ```
 
-Reinstall whenever `requirements.txt` changes.
-
-### Run the project
-
-Four folders hold our code. Each number has one owner:
-
-| Folder | What it holds |
-| --- | --- |
-| `measures/` | Every Explorer number: `run_measure`, one file per measure, the page breakdowns, and the staff facing definitions (`measures/definitions.py`) |
-| `analytics/` | The chat's deterministic analyses: graduation, retention by major, annual enrollment, program attribution, coverage rules and receipts. No model provider or Playground needed |
-| `api/` | HTTP only: request checks, response shapes and one router under `/api/v1/uncf`. No calculations |
-| `playground/server_application/app/chat/` | The bounded chat: provider calls and validated tools. Database access is in `app/services/analytics.py` |
-
-From the repo root, with `.venv` active:
+**Optional: turn on the chat.** Create `playground/server_application/.env.development.local`
+(git ignores it) with your own [OpenRouter](https://openrouter.ai) key, restart `mise run api:dev`,
+and open http://localhost:3000/uncf/chat:
 
 ```bash
-python -m api              # load the data if it's missing, then serve the API on http://localhost:8001
-python -m api load         # only load the data (about 75 seconds the first time)
-python -m api load --cohort FILE --course FILE   # load a school's own PDP files instead (see docs/integration.md)
-python -m api serve        # only serve the API; --port to change it
+OPENROUTER_API_KEY=your-openrouter-key
 ```
 
-`python -m api` doesn't need the Playground. Test it with `python -m pytest api`. Interactive API
-docs: http://localhost:8001/docs. For the pages and chat, run the [Playground](playground/README.md)
-backend and frontend: it mounts the same router (`playground/server_application/app/uncf.py`).
-Chat setup is in [Student success chat](#student-success-chat).
+Try "What is the retention rate for all majors?" Without a key, the Explorer pages work and the
+chat shows a configuration message. What the chat can answer and how it keeps numbers right:
+[docs/chat.md](docs/chat.md).
 
-#### Hosting on Vercel
+## Use your own PDP files
 
-[`vercel.json`](vercel.json) deploys only the Explorer, as one Vercel project with three
-[services](https://vercel.com/docs/services):
-
-- **frontend:** the Next.js app in `playground/client_application`. `/` redirects to `/uncf/paths`.
-  Chat is enabled by default; `NEXT_PUBLIC_STUDENT_SUCCESS_CHAT_ENABLED=false` disables it after
-  a rebuild.
-- **backend:** the UNCF API (`api.route:app`) as a Python function. Its build runs
-  `python -m api load`, so every deploy builds `pdp.sqlite` from the mock CSVs in `data/raw/`.
-  The bundle includes `analytics/`, so `/analyses` works there too. This service is provider-free.
-- **chat:** the dedicated `chat_app:app` service uses the official OpenRouter Python SDK. It builds
-  the same synthetic extract, reads it in read-only snapshots and exposes only the chat
-  routes. Build-only PyArrow is removed after loading the extract to keep the function bundle
-  within Vercel’s limit. See [deploy chat](docs/chat-deployment.md) for credentials, model selection,
-  Preview verification and rollback.
-
-All three sit on one site: `/api/v1/chat` and `/api/v1/uncf/chat` go to chat before the
-`/api/v1/uncf/*` API catch-all; everything else goes to the pages. The client is built with
-`NEXT_PUBLIC_API_BASE_URL=/api/v1`, so a preview calls its own API and needs no CORS. Call it from client components: a relative URL doesn't work in a server side `fetch`.
-`api/tests/test_vercel_config.py` checks the wiring.
-
-The data is mock data and the site is public. Before real student data goes here, it needs a
-login, data that doesn't live in git, and the data owner's sign off.
-
-To run the Explorer on a school's own PDP files, on Vercel or the school's own server, see the
-[integration guide](docs/integration.md).
-
-#### How the numbers are calculated
-
-Every Explorer number comes from `measures/`. The API only checks the request and shapes the answer:
-
-```
-measures/run_measures.py   run_measure: every rate (retention, federal retention, persistence,
-                           gateway math and English, DFW with D/F/W, credit completion), with
-                           group_by and filters; read_answers: each student's answer
-measures/calculations/     one file per measure, including federal_retention.py
-measures/breakdowns/       the Explorer pages: Student paths, DFW courses, gateway courses,
-                           credit momentum. Rates from run_measure, split by term, course, flow or tier
-measures/definitions.py    every plain language definition
-api/filters.py             the cohort bar: checks cohort, 8 filters and retention type
-api/measure_by_group.py    one measure split by group, for /measures/{measure}, from run_measure
-api/analyses.py            the chat's analyses over HTTP, from analytics/
-api/route.py               one app under /api/v1/uncf (Vercel entrypoint api.route:app)
-api/data.py                where the data lives, load time, provisional cohorts
-api/load.py                builds pdp.sqlite when it's missing
-```
-
-- **Calculated per request** from `normalized-data-model/output/pdp.sqlite`. Nothing is saved.
-  Answers are cached in memory and recalculated when `pdp.sqlite` changes.
-- **Pages don't calculate.** The UI fetches and draws. Shares, gaps, totals and hiding all come
-  from the API, which gets them from `measures/`.
-- **Retention type** on every route: `school` (default, the `retention` measure, the PDP
-  retention flag) or `federal` (the `federal_retention` measure: took a course here the fall
-  after year 1). The rules still open with stakeholders (first time students only, credentials)
-  are settings in `measures/calculations/federal_retention.py`.
-- **DFW** rows carry `split`: D (any D: 0.7 to under 1.7), F (the code F or under 0.7) and W, adding up to
-  the numerator. A C- passes. DFW can also be grouped or filtered by `course`, `term` and `delivery`.
-- **Definitions** come from `measures/definitions.py`. A school's own metric names go in
-  `LOCAL_NAMES`, picked with `UNCF_SCHOOL=fmu` or `benedict`.
-
-Every page route and `/measures/{measure}` take the same query values: `cohort`, the 8 filters
-(`cohort_term`, `enrollment_intensity`, `enrollment_type`, `pell`, `gender`, `race`, `ethnicity`,
-`age_band`, with the measures' values), `retention_type=school|federal` and `format=json|csv`.
-
-| Endpoint | What it returns |
-| --- | --- |
-| `GET /api/v1/uncf/measures/{measure}?cohort=&group_by=` | One measure split by group: the everyone row, then one row per group. `group_by` up to twice. `dfw_rate` rows carry the D, F, W split. No page calls it; it's for chat questions a page doesn't answer, such as a rate by race. The old `GET /results?measure=` URL still answers, hidden from the docs |
-| `GET /api/v1/uncf/options` | The measures, classes and groupings `/measures/{measure}` takes |
-| `GET /api/v1/uncf/health` | Whether the data is loaded, and `loaded_at` |
-| `GET /api/v1/uncf/cohort-options?cohort=` | Students per cohort year, and per filter value in the chosen cohort |
-| `GET /api/v1/uncf/definitions` | Every plain language definition |
-| `GET /api/v1/uncf/student-paths?…&terms=&group_by=` | Each student's status term by term (here, credential, elsewhere, stopped) with shares, moves, transfers, retention, and per group paths |
-| `GET /api/v1/uncf/dfw?…` | Everyone's DFW rate with D, F and W apart, then each course with `min_students` or more students. `meta.grade_scale` says which grades count |
-| `GET /api/v1/uncf/dfw/course?course=ENG%20101&…` | One course by term, delivery and group, each with `rest_rate` and `gap` against everyone else |
-| `GET /api/v1/uncf/gateway?…` | Each flagged gateway course in year 1: students, passed on the first try and in the end (C or better, >=2.0, or P), the path after the first try, retention if passed / not, the filtered group's gap against everyone else, and the course pairs with lower retention |
-| `GET /api/v1/uncf/credit-momentum?…` | Year 1 credits, completion ratio, 12/24/30 milestones, first two terms, credit tiers with retention; `progress`: meaningful progress toward a degree (the 24-credit minimum, 4-year pace, year 1 groups with retention, why students fell below, year 2), settings in `measures/breakdowns/credit_progress.py` |
-| `GET /api/v1/uncf/analyses/catalog` | The chat's approved analyses, their choices and declared data coverage |
-| `POST /api/v1/uncf/analyses` | One approved analysis with its receipt, or a clarification when a needed choice is missing |
-
-- **Small groups:** every nonempty cohort, course, course pair and comparison is eligible for display,
-  including groups of one. `UNCF_MIN_STUDENTS` and the legacy analytics `suppression_threshold`
-  no longer hide results. API `min_students` metadata remains 1 for compatibility.
-- **Missing numbers** remain `null` with a status when evidence is unknown, unavailable or not yet
-  observable. Empty populations have no rate. The legacy `suppressed` status remains in response
-  contracts for empty groups and previously stored evidence.
-- **`provisional`** is true for the 2024-25 class, whose second year is only partly in the data.
-- **Errors:** 422 for a value the API doesn't offer (`invalid_filter`, `invalid_group_by`,
-  `invalid_analysis`), 404 `unknown_course`, 503 `data_missing` or `analytics_unavailable`. Bodies
-  are `{"error": {"code", "message"}}`.
-- **CORS** allows http://localhost:3000 (change with `UNCF_CORS_ORIGINS`).
-
-How to build a tab: `playground/client_application/src/components/uncf/layout/README.md`.
-
-## Data
-
-Mock data from [Achieving the Dream](https://achievingthedream.org/), in the shape of PDP's
-analysis-ready files. One institution's extract, with no institution column.
+The bundled mock files, from [Achieving the Dream](https://achievingthedream.org/):
 
 | File | Rows | Columns | What it is |
 | --- | ---: | ---: | --- |
-| [pdp_cohort_data.csv](data/raw/pdp_cohort_data.csv) | 10,313 | 85 | One row per student. Dictionary: [cohort](data/dictionaries/arf_cohort_data_dictionary.md) |
-| [pdp_course_data.csv](data/raw/pdp_course_data.csv) | 100,951 | 35 | One row per student per course per term. Dictionary: [course](data/dictionaries/arf_course_data_dictionary.md) |
+| [pdp_cohort_data.csv](data/raw/pdp_cohort_data.csv) | 10,313 | 85 | One row per student per cohort |
+| [pdp_course_data.csv](data/raw/pdp_course_data.csv) | 100,951 | 35 | One row per student per course per term |
 
-CSV column names are shortened. Look them up in
-[column_lookup.csv](data/dictionaries/column_lookup.csv). Known quirks and the skill that explains
-columns: [pdp-data skill](.agents/skills/pdp-data/SKILL.md#known-data-facts). Never edit files in
-`data/raw/`; the checksums in [data/manifest.json](data/manifest.json) will fail.
+Don't replace them. Keep your own export outside the repository and load it from the repository
+root, with the root `.venv` active:
 
-## Starter pieces we reuse
+```bash
+python -m api load --cohort /secure/pdp/cohort.csv --course /secure/pdp/course.csv
+```
 
-| Piece | Use |
-| --- | --- |
-| [Normalized data model](normalized-data-model/README.md) | Tables, keys, loader into SQLite or PostgreSQL |
-| [Success measures](measures/README.md) | Retention, persistence, gateway completion; we added federal retention, DFW, credit completion, filters and the page breakdowns |
-| [Playground](playground/README.md) | The Explorer web app: Next.js client and FastAPI server |
-| [Data quality log](data/quality/README.md) | Known mock-data issues, such as first-generation status |
-| [Equity gap finder](gap_finder/README.md) | Optional group comparisons |
+That rebuilds `normalized-data-model/output/pdp.sqlite`, which every page and the chat read.
+**Never commit real student data:** PDP exports are protected by FERPA. Column names, data fixes,
+data coverage and the checklist before real data goes in are in the
+[integration guide](docs/integration.md).
 
-## Checks
+## Environment variables, accounts and keys
 
-Run from the repository root. CI runs all of this on every pull request, and the `data`, `links`
-and `playground` checks must pass to merge.
+Nothing is required to run the Explorer on the mock data.
 
-| You changed | While you work | Before a pull request |
+| Account or key | Needed for | Where it goes |
 | --- | --- | --- |
-| Data or a foundation | `make check-fast` | `make check` |
-| [`playground/`](playground/README.md) | `cd playground && mise run api:test` | `make check`, then the Playground commands in its README |
+| [OpenRouter](https://openrouter.ai) key, `OPENROUTER_API_KEY` | Chat only | `playground/server_application/.env.development.local` (git-ignored) or your host's secret store |
 
-Without `make` (Windows), run `python scripts/check.py`, `python data/quality/run_checks.py`, and
-`cd normalized-data-model && python -m pytest -q`. If you change `data/raw/` on purpose, run
-`python scripts/check.py --update` and update the table above in the same pull request.
+Adopters need their own OpenRouter account and pay their own costs. Chat sends the question text to
+OpenRouter and the model you pick, so check that provider's terms before real use.
 
-## How we work
+Every setting, with its default, is in the [integration guide](docs/integration.md#4-settings) and
+in the `.env.example` files: [root tools](.env.example),
+[Playground server](playground/server_application/.env.example) and
+[web app](playground/client_application/.env.example). Never put a real value in a committed file.
 
-Short branch, pull request, a teammate reviews, then merge. See
-[CONTRIBUTING.md](CONTRIBUTING.md) and [AGENTS.md](AGENTS.md).
+## Deploy options
 
-## Student success chat
+Bring your own hosting. There is no hosted demo. The [integration guide](docs/integration.md#6-hosting)
+has the steps for both:
 
-The demonstration at `/uncf/chat` (the Explorer's Chat tab) answers the agreed graduation,
-retention and annual enrollment questions with shared calculation receipts from `analytics/`. See
-[calculation definitions and coverage requirements](docs/analytics-definitions.md).
+- **Your own server** (recommended for real data): the API and the built web app as two services
+  behind nginx.
+- **Vercel:** [vercel.json](vercel.json) deploys the web app, API and chat as one project. It turns
+  chat on unless you turn it off.
 
-1. Install the Playground's dependencies with `mise run api:install`, then build the SQLite
-   extract with `mise run api:load` (both in `playground/`). Chat and `/analyses` read the
-   Playground's `DATABASE_URL`, which defaults to that extract (SQLite or PostgreSQL, read only
-   snapshots, no results cache), so reloaded data shows up.
-2. Follow [Playground setup](playground/README.md) for its Python 3.14/uv and Node 24/Bun runtimes.
-   The root Python and the Playground's provider runtime are separate environments.
-3. Set `OPENROUTER_API_KEY` and `UNCF_CHAT_MODEL=openai/gpt-4.1` in the server's ignored
-   `.env.development.local` or environment. Use a canonical, tool-capable OpenRouter model ID
-   available to your account. The same key supports model changes. Replace legacy OpenAI/Anthropic
-   keys and bare `claude-*` settings; no names are rewritten. Keep the key server-side.
-4. Run the Playground API and client (`mise run api:dev`, `mise run web:dev`) and open `/uncf/chat`.
-   `UNCF_CHAT_ENABLED` controls chat. It is enabled in local
-   development and the dedicated Vercel chat service unless explicitly disabled. Full Playground
-   production remains opt-in. The client uses its existing `NEXT_PUBLIC_API_BASE_URL`.
-5. Try "What is the graduation rate for chemistry majors?", "What is the retention rate for all
-   majors?" and "What is enrollment ethnicity by academic program over the past 2 years?" Choose
-   the cohort, credential and chemistry definition it asks for, then open "How these results were
-   calculated" to see the evidence.
+Before real student data goes on any host, it needs sign in, a privacy (FERPA) and IT review, and
+the data owner's sign-off.
 
-Chat is served by the Playground at `POST /api/v1/chat` (`/api/v1/uncf/chat` is an alias). It
-requires `protocol_version: 2` and uses the same registered PlanService as the deterministic
-`/api/v1/uncf/analysis-v2` API. Obsolete unversioned chat bodies are rejected with 422.
+## Known issues and limitations
 
-**Safeguards.** The model can call only the catalog, definitions and approved analysis tools. No
-tool accepts SQL, student IDs or file paths. Chat proposes the full scope and needs explicit
-approval before calculating, and infers no extra filters. A missing choice gets a typed
-clarification. A new question starts a separate analysis; only a pending typed request carries
-through clarification, and reset discards late replies. Displayed numbers, formulas and
-limitations come from validated receipts, never from the model's prose. Rates must match their
-numerators and denominators. Every nonempty group remains visible; historical omitted values
-require recomputation rather than reconstruction. All
-three graduation horizons, program perspectives, ethnicity handling and certified coverage rules
-stay in place. Calculation deadlines cancel SQLite work and counting loops; timeouts wait for
-transaction cleanup, and PostgreSQL statements use the remaining request budget. These
-safeguards are for synthetic demonstrations, not a production privacy guarantee.
+- Runs only on synthetic data so far. A real PDP export has not been tried.
+- The mock data has known bugs, and some definitions (federal retention, grade lines, credit
+  milestones) are team choices an institution must confirm.
+- No sign in, and small groups are shown, including groups of one.
 
-**Data limits.** The unmodified mock extract does **not** certify complete academic years, full
-cohort follow up or exact award semesters, so some answers show unavailable or unknown. Configure
-only verified coverage in `analytics/config/analytics.yaml`. An earlier associate award or a
-rounded time to credential must never be used to invent a bachelor's award semester.
+The full list: [docs/known-issues.md](docs/known-issues.md). What each folder holds:
+[docs/architecture.md](docs/architecture.md#components).
 
-**Checks.** `make check` at the root covers `analytics/`. In the Playground run `mise run api:lint`,
-`mise run api:test`, `mise run web:build`, `mise run web:lint` and
-`mise run web:test-storybook` (CI also runs the browser stories). Python tests use small, independently counted SQLite fixtures and a
-scripted model, with no live provider calls.
+## Credits
 
-The Vercel chat service needs the OpenRouter key and model configured before deployment; without
-its key, chat returns a readable 503 configuration error.
-`NEXT_PUBLIC_STUDENT_SUCCESS_CHAT_ENABLED=false` disables the UI after a rebuild, and `UNCF_CHAT_ENABLED=false` disables backend chat routes.
-See the [deployment guide](docs/chat-deployment.md).
+Built by the UNCF squad of /dev/color fellows:
 
-The provider-free v2 analysis API adds catalog, validation and explicit plan execution alongside the routes above.
-See [v2 contracts and client fixtures](docs/analysis-v2-contracts.md) for typed plans, clarification,
-evidence and partial-result rules, and the focused test command for work on that boundary.
+- Beza Woldegebriel ([@bwold001](https://github.com/bwold001))
+- Daryl Sistrunk ([@sistrund](https://github.com/sistrund))
+- Fuad Mohamoud ([@ProgrammingFuad](https://github.com/ProgrammingFuad))
+- Stella Berhe ([@stillgit](https://github.com/stillgit))
 
-The [shared snapshot and replay guide](docs/analysis-v2-snapshots.md) describes transaction ownership,
-configured database access, loader build identity, cancellation and reproducible computation inputs.
+With thanks to:
 
-The [defined operation catalog](docs/analysis-v2-defined-operations.md) registers the existing dashboard
-and legacy analyses with executable request schemas and typed result adapters. The v2 API and chat use these adapters.
+- Florida Memorial University and Benedict College, the UNCF member institutions it was built for.
+- [Achieving the Dream](https://achievingthedream.org/), for the mock data.
+- /dev/color, for the datathon's shared starter repository: its normalized data model, success
+  measures, Playground and gap finder.
 
-The [disclosure and parity guide](docs/analysis-v2-disclosure.md) documents versioned dashboard/legacy
-profiles at version 2, shared API/CSV execution, and validation for mixed v2 plans.
-Small, linked and overlapping results remain visible; no size-based privacy protection applies.
+## License
 
-See the [deterministic v2 API guide](docs/analysis-v2-api.md) for `/api/v1/uncf/analysis-v2/catalog`,
-`/validate` and `/execute`, including configured sources, replay, deadlines and partial outcomes.
-Chat v2 proposes typed plans and executes only after explicit confirmation through the shared plan service.
+Code: [MIT](LICENSE). Data: see [data/README.md](data/README.md#where-it-came-from).
 
-Chat v2 planning, confirmation and immutable result pagination are documented in
-[the client contract](docs/chat-v2-client.md). Cards explain unavailable results in plain
-language and keep full calculation tables and source details expandable. Scope review
-shows known coverage limits before calculation. Suggested questions come from current
-catalog capabilities and coverage; they do not promise eligible outcomes, and each new
-question still requires scope confirmation. All example results are synthetic.
+---
 
-Release A acceptance rules, fixed model-evaluation instructions, local verification evidence and
-remaining release blockers are in the [acceptance matrix](docs/chat-v2-acceptance.md) and
-[release handoff and rollback runbook](docs/release-a-handoff.md).
+### About the 2026 Higher Endeavor Datathon
 
-### Internal exploration dataset
-
-`analytics/exploration/datasets.py` builds `student_year1` at one private row per
-student and entry cohort. Course attempts are aggregated on both keys before being
-combined with cohort facts. It reuses dashboard categorical filters and per-student
-school/federal retention answers. Cohort year-one credits remain independent of
-course credit sums; earned and attempted credit missingness is separate.
-
-`analytics/exploration/catalog.py` owns versioned feature units, missing rules,
-permitted numeric pairs, and ordered group definitions. Online features count
-actual enrollments, including repeated attempts, rather than distinct courses.
-Unknown delivery, unresolved terms and absent year-one course records exclude an
-online feature; known F/H records yield a real zero. Exposure describes observed
-records, not certified whole-year completeness. Internal rows/identifiers are not
-public payloads; consumers must return validated aggregates only. All data is synthetic.
-
-The registered exploration owners in `analytics/exploration/operations.py` implement
-`grouped_summary`, `mean_comparison`, and `correlation`. Requests accept no arbitrary
-expressions, SQL, bins, transformations or alternative missing-value policy. The
-catalog's approved numeric pairs are symmetric; online count and share are distinct.
-Group summaries carry separate eligible n and missing counts per credit mean.
-Comparisons preserve registered subtraction order and report unavailable differences
-alongside valid siblings. Pearson needs two varying pairs; means allow n=1.
-
-Bounds are four plan steps, one registered grouping per step, twenty occupied groups,
-500,000 source enrollment rows, and ten seconds per step within the request deadline.
-Empty groups consume no group budget. Limits refuse whole steps without truncation.
-`measure_variant` returns structured unavailable evidence pending validated equivalent
-gateway cohort eligibility; it never substitutes first-attempt course outcomes.
-The highest-grade source and invalid attempt-code caveats are documented in the
-normalized mapping/schema and source dictionaries. No new statistical dependency is used.
-
-Mixed plans execute the registered exploration owners through the same
-`PlanService` validation, transaction, dependency, result projection and replay path
-as defined and legacy operations. The catalog exposes fixed feature/group/pair
-metadata. Chat proposes a complete plan; users clarify individual steps and confirm
-its exact canonical scope before provider-free execution. Receipts retain per-step
-populations, versions and sample sizes. Separate steps may overlap and do not imply
-one shared denominator. Safe independent refusals can return a partial answer;
-database errors and deadlines stop further work. Cleanup failure invalidates the
-current step while preserving earlier completed receipts.
-
-Release B operation inventory, verification limits and rollback steps are in the
-[Release B handoff](docs/release-b-handoff.md). The fixed 41-prompt interpretation suite
-uses `python -m scripts.evaluate_release_b` from the Playground backend, with the
-same `--model`, `--database` and `--output` arguments as the Release A evaluator.
+The Higher Endeavor Datathon, run by [/dev/color](https://www.devcolor.org/) with support from the
+Gates Foundation, brought fellows together with colleges and intermediary networks to build open
+prototypes on Postsecondary Data Partnership data. Each squad released its prototype as a public,
+unmaintained repository. Find them all under the
+[higher-endeavor-datathon-2026](https://github.com/topics/higher-endeavor-datathon-2026) topic.

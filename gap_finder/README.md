@@ -1,9 +1,9 @@
 # Equity gap finder
 
-Proposal [#26](https://github.com/devcolor/pdp-datathon-starter/issues/26). For each measure and cohort,
+For each measure and cohort,
 it compares every student group with everyone else, ranks the gaps, and flags the ones that are likely
-noise. One table holds every group, so a squad doesn't have to pick in advance which groups to look at.
-The counts come from the [shared measures](../measures/README.md) (#9), so every squad's gaps use the same
+noise. One table holds every group, so a team doesn't have to pick in advance which groups to look at.
+The counts come from the [shared measures](../measures/README.md), so every gap uses the same
 definitions.
 
 **The data is synthetic.** Nothing in this table is a finding about real students or institutions. A gap
@@ -30,7 +30,7 @@ for row in rows[:5]:
 
 With nothing given, it compares all four measures, the 2021-22 to 2023-24 cohorts pooled, and five
 groups (race, gender, Pell, age band, enrollment intensity), each on its own. First gen is left out until
-finding 1 in `data/quality/findings.csv` (#74) is settled (see Known limits), but it can still be asked for
+finding 1 in `data/quality/findings.csv` is settled (see Known limits), but it can still be asked for
 with `[["first_gen"]]`. Ask for pairs by name, e.g. `[["race", "gender"]]`: in the default they would
 repeat one finding sliced several ways, and push the one-way groups down the ranks. A breakdown asked for
 twice is counted once, and a cohort year the loaded data doesn't have is an error.
@@ -180,7 +180,7 @@ These come from the shared measures and the mock data, and change here when they
   looks only partly observed. A cohort is `not_yet_observable` only when the shared measures say so.
 - **First gen:** the mock data stores `Y`/`N`, but the shared measures' allowed values don't include `Y`, so
   `Y` reads as `UNKNOWN`. So `first_gen = N` is compared with an everyone else that's mostly `UNKNOWN`, which
-  is why it's not in the default. It's finding 1 in `data/quality/findings.csv` (#74).
+  is why it's not in the default. It's finding 1 in `data/quality/findings.csv`.
 - **Pell** is almost all `Y` or `N` (unknowns are `unknown_group`), so `pell = Y` and `pell = N` are close to the
   same gap seen from each side.
 
@@ -193,7 +193,7 @@ make check          # includes it: it loads the full mock data into a temporary 
 
 or only these, from the repo root: `python -m pytest gap_finder/tests`.
 
-They cover #26's completion test: the table and CSV with a note on every row (1), the planted 15-point and
+They cover the gap finder's completion test: the table and CSV with a note on every row (1), the planted 15-point and
 2-point gaps (2, 3), small groups remaining visible and ranked (4, 5), and the Black or
 African American retention gap reproduced by hand from the raw cohort file (6).
 
