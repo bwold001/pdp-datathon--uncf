@@ -1,6 +1,6 @@
 # Analysis v2 snapshots and replay
 
-This implements the data-access foundation for [issue #48](https://github.com/bwold001/pdp-datathon--uncf/issues/48). All test data is synthetic. V2 HTTP routes and provider integration remain later work; the existing v1 endpoints keep their contracts.
+This is the data-access foundation for the v2 analyses. All test data is synthetic. V2 HTTP routes and provider integration remain later work; the existing v1 endpoints keep their contracts.
 
 ## Transaction ownership
 

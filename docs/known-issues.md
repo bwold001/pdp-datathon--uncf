@@ -37,9 +37,10 @@ These are set for the mock data. They are team choices, not campus-confirmed rul
 
 - **Federal retention:** who counts (first-time students only, which credentials) is a setting in
   `measures/calculations/federal_retention.py`, still open with stakeholders.
-- **Grade lines:** a C- passes for DFW (the line is 1.7 grade points). A gateway course counts as
-  passed with a C or better (2.0 grade points) or a P. The PDP itself uses a D (1.0), so check
-  which one your office reports. Both lines are in `measures/calculations/grades.py` and
+- **Grade lines:** a C- passes for DFW (the line is 1.7 grade points). The Gateway courses page
+  counts a course as passed with a C or better (2.0 grade points) or a P, while the cohort gateway
+  completion measures keep the PDP's own completion flags (a D, 1.0, or better). Check which one
+  your office reports. The lines are in `measures/calculations/grades.py` and
   `measures/calculations/dfw.py`.
 - **Gateway courses** come from the PDP's gateway flag in the course file, not a campus course
   list.
@@ -80,8 +81,18 @@ These are set for the mock data. They are team choices, not campus-confirmed rul
   provider and model you pick. Turning chat on and off:
   [integration guide, section 8](integration.md#8-chat).
 - **The safeguards are for demonstrations**, not a privacy guarantee.
-- **Open release blockers** are listed in the [acceptance matrix](chat-v2-acceptance.md) and the
-  [Release A](release-a-handoff.md) and [Release B](release-b-handoff.md) handoffs.
+- **Not checked against a live model.** The chat's tests use a scripted model. The fixed question
+  set that checks how a real model reads questions (41 cases) has never run against a live model,
+  because it needs a key. Run it before you rely on chat, and again whenever you change the model.
+  From `playground/server_application/`, with `OPENROUTER_API_KEY` set:
+
+  ```bash
+  uv run python -m scripts.evaluate_release_b --model "$UNCF_CHAT_MODEL" \
+    --database ../../normalized-data-model/output/pdp.sqlite --output model-evaluation.json
+  ```
+
+- **Hosted chat not verified.** Matching answers between the pages, the API and chat were checked
+  locally, not on a deployed site.
 - **Exploration answers:** `measure_variant` always returns "unavailable" for now. A correlation from
   two students is always +1 or -1, so treat coefficients from very small groups with caution. If one
   student's rows conflict, exploration answers for that whole cohort are unavailable (the pages are

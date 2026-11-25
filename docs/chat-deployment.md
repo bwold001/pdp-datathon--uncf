@@ -145,8 +145,6 @@ Record its environment/data compatibility and verify the previous artifact's sup
 reset a database or change protocols during an in-flight response; allow bounded cleanup to finish.
 Existing enablement settings are not the Release A rollback mechanism.
 
-The [Release A handoff](release-a-handoff.md) records the locally checked revision, exit gates,
-operator steps and limits of the evidence. No production deployment or rollback was rehearsed.
-
-Current Release B verification and unresolved gates: [release-b-handoff.md](release-b-handoff.md).
+No production deployment or rollback was rehearsed. What is still unverified is in
+[known issues](known-issues.md#chat).
 The historical Release A report remains evidence about that revision, not the current chat protocol.

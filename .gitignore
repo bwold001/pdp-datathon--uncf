@@ -8,14 +8,7 @@ venv/
 node_modules/
 .ipynb_checkpoints/
 
-# Compound Engineering local scratch and per-person config
-.context/compound-engineering/
-.compound-engineering/*
-!.compound-engineering/config.yaml
-!.compound-engineering/config.example.yaml
-.compound-engineering/*.local.yaml
-
-# Agent skills' local scratch
+# Coding agents' local scratch
 .scratch/
 
 # Foundation tests

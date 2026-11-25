@@ -1,6 +1,6 @@
 # Deterministic analysis v2 API
 
-[Issue #51](https://github.com/bwold001/pdp-datathon--uncf/issues/51) exposes the existing defined dashboard and legacy analyses without a model provider. All data/results are synthetic. Existing `/analyses`, dashboard and CSV contracts remain supported. Exploratory request shapes exist in the protocol, but exploratory operations are not registered for execution in this increment.
+The v2 analysis API exposes the existing defined dashboard and legacy analyses without a model provider. All data/results are synthetic. Existing `/analyses`, dashboard and CSV contracts remain supported. Exploratory request shapes exist in the protocol, but exploratory operations are not registered for execution in this increment.
 
 ## Routes and source selection
 
@@ -64,4 +64,4 @@ All three profiles retain their stable IDs (`dashboard_v1`, `legacy_analytics_v1
 
 HTTP tests use independently specified synthetic counts and real SQLite transactions. They cover metadata-only validation, clarification, full-plan refusal, JSON/OpenAPI restrictions, provider-free execution, replay/version refusal, hidden dependencies, partial/failed results, real query deadlines, database poisoning, cleanup order/failure, reload consistency, policy consistency and invalid input without secret echoing. Playground tests prove its configured source is used with chat disabled. PostgreSQL metadata/full-plan integration runs only when the existing PostgreSQL test environment is configured; a skipped environment does not establish parity.
 
-Run focused endpoint/contracts/provenance/disclosure/setting tests, root `make check-fast` and full `make check`, plus Playground API lint/format and SQLite tests. This branch's client code comes from the already-merged `main` updates; client lint/build/Storybook are regression checks, not new v2 UI implementation. No production deployment or live-provider evaluation is part of this task. Next work is [issue #52](https://github.com/bwold001/pdp-datathon--uncf/issues/52).
+Run focused endpoint/contracts/provenance/disclosure/setting tests, root `make check-fast` and full `make check`, plus Playground API lint/format and SQLite tests. This branch's client code comes from the already-merged `main` updates; client lint/build/Storybook are regression checks, not new v2 UI implementation. No production deployment or live-provider evaluation is part of this task.

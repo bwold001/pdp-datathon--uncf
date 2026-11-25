@@ -1,9 +1,5 @@
 # Chat v2 planning and immutable receipt pages
 
-Issue #52 starts from reconciled #51 commit `67215e7bbb692c71d8aa48fb9513fadc877a2393`;
-The branch was updated to dependency head `c6d4987d4b8dce6949cf2bc7537652105f648012`
-after the grade-scale, CI and Share Insight merges. Main was initially inspected at `563d9fb48b500fcf69af665f28922c01eed836d3`.
-
 The Playground client sends `protocol_version: 2` to `/api/v1/uncf/chat`.
 Omitting the version is rejected; the obsolete v1 chat transport has been removed. The server exposes
 catalog search, registered operation details and whole typed plan proposals to the
@@ -12,7 +8,7 @@ PlanService replaces provider choices with server choices, materializes defaults
 validates the entire plan and executes confirmed requests. No new flags are used.
 The catalog also exposes grouped_summary, mean_comparison and correlation; measure_variant
 returns structured unavailable evidence until equivalent gateway eligibility is established.
-See [Release B](release-b-handoff.md) for current contracts, versions and verification.
+What is still unverified is in [known issues](known-issues.md#chat).
 
 Clarification carries the complete ProposedPlan and selects one step ID and allowed
 parameter key. Revalidation rebuilds current choices before selection. Confirmation

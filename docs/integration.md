@@ -320,7 +320,7 @@ calling tools correctly.
 
 ## 9. Getting numbers into Power BI or a data lake
 
-Staff export what they see as a PDF. There is no CSV button in the pages yet (issue #7). For other
+Staff export what they see as a PDF. There is no CSV button in the pages yet. For other
 systems, the API returns every page as CSV: add
 `format=csv` to the page's address, with the same cohort and filters the page uses.
 

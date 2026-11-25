@@ -1,6 +1,6 @@
 # Normalized data model
 
-This folder holds the contract for the normalized data model (proposal [#8](https://github.com/devcolor/pdp-datathon-starter/issues/8)). It says:
+This folder holds the contract for the normalized data model. It says:
 - which tables exist, and each column's type and keys
 - where every column of the two mock Analysis-Ready Files goes
 - what a valid stored value looks like
@@ -16,7 +16,7 @@ The validator checks a run's files against all of it and keeps an audit trail. T
 | File | What it is |
 |---|---|
 | `config/destination_schema.yaml` | The tables, and what a valid stored value looks like. One map per table; each column has its Python type (`str`, `int`, `float`, `bool`, `date`, `datetime`), whether it can be blank, its keys, and its validation rules. A foreign key over several columns is a table-level `foreignKeys` entry. The only place types and rules are defined. |
-| `config/value_sets.yaml` | Named value lists that rules check against (`value_set:`): the dictionaries' codes that several columns share, such as `yes_no`, and open lists squads add to, such as `event_type`. See "Shared value lists". |
+| `config/value_sets.yaml` | Named value lists that rules check against (`value_set:`): the dictionaries' codes that several columns share, such as `yes_no`, and open lists teams add to, such as `event_type`. See "Shared value lists". |
 | `config/cohort_mapping.yaml` | Where each of the 85 cohort-file columns goes. |
 | `config/course_mapping.yaml` | Where each of the 35 course-file columns goes. |
 | `config/on_campus_housing_mapping.yaml` | Where the on-campus housing enrichment goes (`student_attribute`). |
@@ -30,7 +30,7 @@ The validator checks a run's files against all of it and keeps an audit trail. T
 | `config/column_dictionary.yaml`, `src/dictionary/build.py` | What each normalized column means: one record per table and column the cohort or course file writes, with the ARF dictionary's description, codes and notes, and every source column with its [column_lookup.csv](../data/dictionaries/column_lookup.csv) text (the mock-data specifics). **Generated** from those files: edit them, then rebuild (see [Rebuild and test](#rebuild-and-test)). A test fails if it's stale. |
 | `config/pipeline_example.yaml`, `config/example_*_mapping.yaml`, `data/input/enrichment/example_*.csv` | The worked example in [Load your own enrichment files](#load-your-own-enrichment-files). Made-up values, not data. |
 | `config/data_fixes.yaml`, `src/fixer/fix.py` | The fixes for known mock-data bugs, and the Fixer that applies them to a run's mapped tables. |
-| `sources/registration_holds/` | A draft source spec and synthetic sample for proposal [#19](https://github.com/devcolor/pdp-datathon-starter/issues/19) (on-demand ETL joins). Made-up values, not data. Not wired into the loader yet; #19's load command (match rate, duplicate keys, quarantine) is still open. |
+| `sources/registration_holds/` | A draft source spec and synthetic sample for on-demand joins of an outside source (registration holds). Made-up values, not data. Not wired into the loader yet; its load command (match rate, duplicate keys, quarantine) isn't built. |
 | `src/mapper/map.py`, `src/pipeline/run.py` | The Mapper, which writes each run's mapped tables to `data/staging/<run id>/`, and the command that runs every step. See [The steps, and the staging area](#the-steps-and-the-staging-area). |
 | `src/tables/files.py` | Writes and reads table files, one per table, as CSV or Parquet, so a table read back is exactly what was written. Parquet needs `pyarrow`, which is in [requirements.txt](../requirements.txt). |
 | `src/generator/enrichment/on_campus_housing.py` | Generates the synthetic on-campus housing file. |
@@ -68,7 +68,7 @@ The validator checks a run's files against all of it and keeps an audit trail. T
 | Each mapping config (`config/*_mapping.yaml`) | **How one source file writes its values**, and where each column goes. | `format`, `missing_values`, `unknown_values`, `value_map`, `true_values`, `on_conflict` |
 | `config/data_fixes.yaml` | **What we change in the mock data, and why**: each fix for a known mock-data bug, with a link to the bug and to the decision behind it, and a switch to turn it off. | `replace` or `number_format`, on a table and column |
 
-So a squad adding an enrichment file writes only a mapping config, and touches `destination_schema.yaml` only to add a column. A fix acts on a stored table and column, whichever file wrote it, so the `Race` fix is written once for both Analysis-Ready Files. A team that needs different fixes copies `data_fixes.yaml` and names its copy in its pipeline settings (`fixes:`). Two files that write the same column can't disagree about what's valid, because the rule is written once.
+So a team adding an enrichment file writes only a mapping config, and touches `destination_schema.yaml` only to add a column. A fix acts on a stored table and column, whichever file wrote it, so the `Race` fix is written once for both Analysis-Ready Files. A team that needs different fixes copies `data_fixes.yaml` and names its copy in its pipeline settings (`fixes:`). Two files that write the same column can't disagree about what's valid, because the rule is written once.
 
 ## How a column moves from a file to a table
 
@@ -131,20 +131,20 @@ Options:
 
 Whether a column can be blank, its type and its keys are never rules: they're already in the schema.
 
-The rules the mock data breaks are `warning`, with a comment giving the number of rows, so squads get data while the questions to /dev/color are open.
+The rules the mock data breaks are `warning`, with a comment giving the number of rows, so teams get data while the questions to /dev/color are open.
 
 ### Shared value lists
 
-`config/value_sets.yaml` holds named lists. A rule checks a stored value against one with `value_set:`, for example `{value_set: yes_no, severity: error}`. Put a list there, instead of an `enum` in the rule, when several columns share it or when squads should be able to add values without editing the schema.
+`config/value_sets.yaml` holds named lists. A rule checks a stored value against one with `value_set:`, for example `{value_set: yes_no, severity: error}`. Put a list there, instead of an `enum` in the rule, when several columns share it or when teams should be able to add values without editing the schema.
 
 There are two kinds, and the rule's severity is what makes the difference:
 
 | Kind | Lists | Severity | A value that isn't in the list |
 |---|---|---|---|
 | **Closed** | The codes a data dictionary defines: `yes_no`, `yes_no_na`, `placement`, `gateway_status`, `completed_c_d_na`, `count_0_to_7`, `locale`, `academic_term` | `error`, or `warning` for now where the mock data breaks it (see above) | The row is held back, or loads with a warning. Change the list only if a dictionary changes. |
-| **Open** | `event_type` | `warning` | The row loads, and the run's report lists the value. Add it to the list once squads agree on it. |
+| **Open** | `event_type` | `warning` | The row loads, and the run's report lists the value. Add it to the list once teams agree on it. |
 
-For example, a squad bringing orientation events doesn't wait for anyone: `orientation` loads, with a warning. Once it's agreed, it's added in one line:
+For example, a team bringing orientation events doesn't wait for anyone: `orientation` loads, with a warning. Once it's agreed, it's added in one line:
 
 ```yaml
 event_type: [closure, ceremony, powwow, orientation]
@@ -185,7 +185,7 @@ The database enforces it like every other key. One-column keys stay on their col
 - **Each file's `Cohort_Term` is kept, in its own column.** `cohort_membership.cohort_term` is the cohort file's, which the dictionary defines as the term the student first enrolled. `course_enrollment.course_file_cohort_term` is the course file's, as it wrote it on each row. They differ on 4,307 of the 100,951 course rows; compare the two columns to find them.
 - **Credit years after 2025-26 are blank, and `cohort_membership.credit_years_observed` says how many the data can see.** The mock data's course credits run to 2025-26, so a 2024-25 student's year 3 (2026-27) and year 4 (2027-28) hadn't happened; the files wrote 0 for them, which would read as no credits. Those zeros are stored blank: 2,520 in year 3 and 5,039 in year 4, in each of the attempted and earned columns. `credit_years_observed` is 4 for the 2021-22 and 2022-23 cohorts, 3 for 2023-24 and 2 for 2024-25. A blank credit year at or below it is missing; above it, the year hadn't happened. The cutoff is a working assumption, set in `config/data_fixes.yaml`; a value other than 0 after it is kept, and loads with a `warning` on its column in the validation report.
 - **The mock data has no institution column.** Everything belongs to one placeholder institution, and the two example events come from two real colleges: Leech Lake Tribal College and United Tribes Technical College.
-- **Some generated CSVs are committed, on purpose.** The repository's rule is not to commit generated outputs. The on-campus housing file is an input, and committing it means every squad loads the same one. The two sample folders are small (about 70 KB), and the tests compare a rebuild against them. The repository's `AGENTS.md` names these files as the exception.
+- **Some generated CSVs are committed, on purpose.** The repository's rule is not to commit generated outputs. The on-campus housing file is an input, and committing it means every team loads the same one. The two sample folders are small (about 70 KB), and the tests compare a rebuild against them. The repository's `AGENTS.md` names these files as the exception.
 - **On-campus housing is synthetic.** 30% of students, a 60% chance of staying each term, generated with a fixed seed.
 
 ## The steps, and the staging area
@@ -270,7 +270,7 @@ Nothing to set up. From `normalized-data-model/`:
 python -m src.loader.load
 ```
 
-This runs [every step](#the-steps-and-the-staging-area) and writes `output/pdp.sqlite` (about 25 MB) in about 30 seconds and prints the rows in each table. **Every load also writes each table as one file to `output/tables/`**, for squads that don't use a database: CSV, with the same headers and formats as `data/output/sample/`, or Parquet with `--format parquet`. Open it with any SQLite tool, for example `sqlite3 output/pdp.sqlite`. `--sqlite_path` writes it somewhere else.
+This runs [every step](#the-steps-and-the-staging-area) and writes `output/pdp.sqlite` (about 25 MB) in about 30 seconds and prints the rows in each table. **Every load also writes each table as one file to `output/tables/`**, for teams that don't use a database: CSV, with the same headers and formats as `data/output/sample/`, or Parquet with `--format parquet`. Open it with any SQLite tool, for example `sqlite3 output/pdp.sqlite`. `--sqlite_path` writes it somewhere else.
 
 ### PostgreSQL
 
@@ -362,9 +362,9 @@ SELECT COUNT(*) FROM course_enrollment e LEFT JOIN course c ON c.course_id = e.c
 
 In SQLite, `PRAGMA foreign_key_check;` lists any row whose foreign key doesn't resolve, for every table at once.
 
-### #8's gateway question, in one join
+### A gateway question, in one join
 
-Proposal [#8](https://github.com/devcolor/pdp-datathon-starter/issues/8) asks for the gateway course pass rate by gender for the 2022-23 cohort, with one join. The cohort file already says, for each student, whether they completed gateway math and English in year 1: `completed_gateway_math_year1` and `completed_gateway_english_year1`, which the [cohort data dictionary](../data/dictionaries/arf_cohort_data_dictionary.md) defines "for students who are required to take gateway math" (and English). `C` is completed, `D` didn't complete, and `NA` or blank is not required. So the rate here is `C` out of `C` and `D`: the dictionary's own scope, not a new definition. How the shared measures are calculated belongs to proposal [#9](https://github.com/devcolor/pdp-datathon-starter/issues/9).
+A common question is the gateway course pass rate by gender for the 2022-23 cohort, with one join. The cohort file already says, for each student, whether they completed gateway math and English in year 1: `completed_gateway_math_year1` and `completed_gateway_english_year1`, which the [cohort data dictionary](../data/dictionaries/arf_cohort_data_dictionary.md) defines "for students who are required to take gateway math" (and English). `C` is completed, `D` didn't complete, and `NA` or blank is not required. So the rate here is `C` out of `C` and `D`: the dictionary's own scope, not a new definition. How the shared measures are calculated is in [measures/README.md](../measures/README.md).
 
 <!-- gateway-query: a test runs this SQL on a full load and checks it against the raw cohort file -->
 ```sql
@@ -386,7 +386,7 @@ ORDER BY s.gender;
 
 It's the same SQL in SQLite and PostgreSQL. On the full mock data it gives, for math, `F` 162 of 620 (26.1%), `M` 116 of 456 (25.4%), `UNKNOWN` 25 of 72 (34.7%) and `X` 1 of 1; for English, `F` 311 of 682 (45.6%), `M` 208 of 510 (40.8%), `UNKNOWN` 21 of 68 (30.9%) and `X` 0 of 1. The data is synthetic, so these aren't findings.
 
-**A course-level example: it counts attempts, not students.** The course file's grades give another view, one row per gateway course a student took. What counts as a pass there is an assumption, not an agreed definition: `P`, or a grade of 2.0 or higher on the 4-point scale. Proposal [#9](https://github.com/devcolor/pdp-datathon-starter/issues/9) owns the shared definition. A course row reaches its cohort on `student_id` and `cohort`, so a student who's in two cohorts is counted in the right one.
+**A course-level example: it counts attempts, not students.** The course file's grades give another view, one row per gateway course a student took. What counts as a pass there is an assumption, not an agreed definition: `P`, or a grade of 2.0 or higher on the 4-point scale. The shared definition lives in [measures/](../measures/README.md). A course row reaches its cohort on `student_id` and `cohort`, so a student who's in two cohorts is counted in the right one.
 
 ```sql
 SELECT s.gender,
@@ -433,7 +433,7 @@ run_id = pdp_model.new_run_id()
 summary = pdp_model.run_load("sqlite:///my.db", run_id, cohort="my_cohort.csv", tables_dir="out/tables")
 ```
 
-`run_load` takes a SQLAlchemy-style URL (`sqlite:///...` or `postgresql://...`, async drivers allowed), runs every step, and returns the load summary. It raises `pdp_model.ConfigError` for a bad setting or URL and `RuntimeError` for a failed load; `pdp_model.load_report(run_id)` reads the run's `summary.yaml` either way. Pass `tables_dir` so your loads don't overwrite `output/tables/`, which other squads read. Import from `pdp_model` only: `src/` is the pipeline's inside and can change.
+`run_load` takes a SQLAlchemy-style URL (`sqlite:///...` or `postgresql://...`, async drivers allowed), runs every step, and returns the load summary. It raises `pdp_model.ConfigError` for a bad setting or URL and `RuntimeError` for a failed load; `pdp_model.load_report(run_id)` reads the run's `summary.yaml` either way. Pass `tables_dir` so your loads don't overwrite `output/tables/`, which other teams read. Import from `pdp_model` only: `src/` is the pipeline's inside and can change.
 
 ## Load your own enrichment files
 

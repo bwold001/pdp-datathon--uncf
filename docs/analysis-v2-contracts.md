@@ -1,6 +1,6 @@
 # Analysis v2 contracts
 
-`analytics/contracts_v2.py` defines the version 2 wire boundary for [issue #47](https://github.com/bwold001/pdp-datathon--uncf/issues/47). Existing `analytics/schemas.py`, v1 endpoints, provider tools and client transports remain unchanged. These types do not enable an operation, authorize database access, compute a statistic or claim a disclosure policy was applied. All example evidence is synthetic.
+`analytics/contracts_v2.py` defines the version 2 wire boundary. Existing `analytics/schemas.py`, v1 endpoints, provider tools and client transports remain unchanged. These types do not enable an operation, authorize database access, compute a statistic or claim a disclosure policy was applied. All example evidence is synthetic.
 
 ## Requests and confirmation
 
@@ -58,7 +58,7 @@ The aggregate outcome is `complete` when all steps have receipts, `partial` when
 
 `analytics/tests/fixtures/contracts_v2.json` contains hand-written protocol examples for confirmation, multi-step clarification, fractional credit completion, negative correlation, hidden evidence, partial and failed execution, a table with a hidden row, and pre-execution errors. No provider or database is involved. The tests deserialize/serialize the fixtures and inspect JSON Schema restrictions; a future TypeScript client can consume the same file.
 
-Run `python -m pytest analytics/tests/test_contracts_v2.py -q`, then the root measures/analytics/API suite and `make check-fast`. Run `make check` before PR submission. Existing v1 tests also run to establish that introducing these types does not alter the old integer receipt contract. Next work is [issue #48](https://github.com/bwold001/pdp-datathon--uncf/issues/48): shared snapshots and reproducible identity, followed by registry/executor adapters; no provider integration is required yet.
+Run `python -m pytest analytics/tests/test_contracts_v2.py -q`, then the root measures/analytics/API suite and `make check-fast`. Run `make check` before PR submission. Existing v1 tests also run to establish that introducing these types does not alter the old integer receipt contract.
 
 Defined dashboard parameter models now live in `measures/requests.py` and are re-exported here. The [defined operation guide](analysis-v2-defined-operations.md) documents the shared catalog/adapters and optional typed rate breakdowns, distinct-student counts and immutable DFW split added for lossless owner conversion. Hidden breakdowns have no numerical fields; receipt validation binds group dimensions to the request.
 

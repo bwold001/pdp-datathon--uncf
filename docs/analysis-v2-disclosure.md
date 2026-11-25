@@ -1,6 +1,6 @@
 # Versioned visibility and API parity
 
-[Issue #50](https://github.com/bwold001/pdp-datathon--uncf/issues/50) centralizes result visibility and shared execution. All fixtures/results are synthetic. Every nonempty group is eligible for display, including groups of one. There is no minimum-size, numerator, complement, exclusion, linked-family or overlap suppression rule.
+This guide covers result visibility and shared execution. All fixtures/results are synthetic. Every nonempty group is eligible for display, including groups of one. There is no minimum-size, numerator, complement, exclusion, linked-family or overlap suppression rule.
 
 ## Owners and profiles
 
@@ -40,4 +40,3 @@ Small groups can now appear in rankings and comparisons. Their rates can change 
 
 Tests cover groups of one through nine, small complements/exclusions, linked totals, recognized/unknown overlap, disjoint results, malformed metadata, policy-version binding, missing evidence, and JSON/CSV/final-receipt parity. Route spies verify shared service execution and cache reuse for export. Run `make check-fast` and full `make check`; PostgreSQL and live-provider checks remain environment-dependent.
 
-Next planned work is [issue #52](https://github.com/bwold001/pdp-datathon--uncf/issues/52).
