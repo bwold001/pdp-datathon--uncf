@@ -15,8 +15,8 @@ Infer the repo from `git remote -v` — `gh` does this automatically when run in
 
 ## Repo-specific conventions
 
-- Tasks use the `.github/ISSUE_TEMPLATE/task.md` template: one owner, one reviewer, acceptance criteria, validation, and a priority (Core / Stretch 1 / Stretch 2).
-- Pull requests link their task with `Closes #N`, or `Refs #N` if more pull requests are coming. See [CONTRIBUTING.md](../../CONTRIBUTING.md).
+- Tasks have one owner, one reviewer, acceptance criteria, validation, and a priority (Core / Stretch 1 / Stretch 2).
+- Pull requests link their task with `Closes #N`, or `Refs #N` if more pull requests are coming.
 
 ## When a skill says "publish to the issue tracker"
 

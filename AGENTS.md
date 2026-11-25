@@ -2,10 +2,10 @@
 
 Instructions for AI coding agents working in this repo. People can read it too.
 
-This is the UNCF squad's repo for the 2026 /dev/color datathon: a Student Success Explorer for FMU
+This is the UNCF squad's repo for the 2026 /dev/color datathon: the Student Persistence and Pathway Explorer for FMU
 and Benedict College, built on the starter's shared data and foundations. See
-[README.md](README.md) for the goal and data and [CONTRIBUTING.md](CONTRIBUTING.md) for how
-changes get in. Priorities: Core (Explorer, with CSV export of every page), Stretch (chat agent).
+[README.md](README.md) for the goal and data and [docs/architecture.md](docs/architecture.md) for
+how the parts fit. Priorities: Core (Explorer, with CSV export of every page), Stretch (chat agent).
 Never push to `main`, and never commit, push, or open a pull request without the user's explicit
 yes. Keep per-school differences in config, not forks.
 
@@ -46,8 +46,9 @@ by direct API and chat. Document changes to shared files in the review descripti
   default). At the cap, stop and ask a person. Don't keep trying.
 - **Run the checks.** Use `make check-fast` while you work and `make check` before opening a pull
   request. If you changed `playground/`, also run the Playground's commands, because `make check`
-  doesn't cover them. The README's [Checks](README.md#checks) section says what to run when, what
-  each error means, and how to add a project's tests. On Windows, run the commands listed there.
+  doesn't cover them: they're in [playground/README.md](playground/README.md#checks). Without
+  `make` (Windows), run `python scripts/check.py`, `python data/quality/run_checks.py`, and
+  `cd normalized-data-model && python -m pytest -q`.
   CI runs all of it on every pull request, and it must pass to merge. Install `requirements.txt`
   into `.venv/` first, and again whenever it changes: `python -m pip install -r requirements.txt`.
 
@@ -94,8 +95,7 @@ by direct API and chat. Document changes to shared files in the review descripti
 - **Data changes must be deliberate.** If you change anything in `data/raw/` on purpose, run
   `python scripts/check.py --update`, update the README data table, and commit both in the same
   pull request.
-- **Follow [CONTRIBUTING.md](CONTRIBUTING.md) and the pull request template.** Before you open a
-  pull request:
+- **Before you open a pull request:**
   - Link the task with `Closes #N`, or `Refs #N` if more pull requests are coming for it.
   - Make sure `make check` passes.
   - If you add something other squads will use, explain it in the README.

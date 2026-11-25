@@ -1,4 +1,4 @@
-# Integration guide: running the Student Success Explorer on your own PDP data
+# Integration guide: running the Student Persistence and Pathway Explorer on your own PDP data
 
 For the IT and institutional research staff at Florida Memorial University (FMU) and Benedict College
 who will run the Explorer after handoff. It covers how the app gets its data, how to load your own PDP
@@ -246,7 +246,7 @@ page should open the Student paths page.
 
 **FMU (Linux server, Microsoft SQL Server, Power BI)**
 - Path B on the existing Linux server. No database server is needed: the app keeps its own SQLite file.
-- Mariana provides the PDP files; whoever runs the server loads them (section 3, option A).
+- The institutional research office provides the PDP files; whoever runs the server loads them (section 3, option A).
 - Keep it on the campus network, with sign in in front (section 7).
 - Start with chat off. FMU requires any AI model to run on its own servers (section 8).
 - Power BI reads the API's CSV output (section 9).
@@ -367,23 +367,8 @@ internal address that only the job's server can reach.
 
 ## 11. Known limits and open items
 
-Some items below describe the chat's exploration answers and catalog, which arrive with the chat pull
-requests #74 to #77.
-
-- **Cohort picker.** The API offers the years in your data, but the Explorer's cohort picker lists the four
-  sample years (2021-22 to 2024-25) in
-  `playground/client_application/src/components/uncf/layout/explorer-config.ts`. Until it reads the years
-  from `/api/v1/uncf/options`, add your years to that list and rebuild the pages.
-- **Gateway pass line.** Whether passing a gateway course means a D (1.0) or better, as the PDP defines it,
-  or a C (2.0) or better, is still being settled (pull request #76). Confirm which one your office uses.
-- **Correlations from very few students.** In the chat's exploration answers, a correlation from two
-  students is always +1 or -1. Treat coefficients from very small groups with caution.
-- **One bad row and the exploration dataset.** If one student's rows conflict, the chat's exploration
-  answers for that whole cohort are unavailable. The pages are not affected.
-- **CSV columns.** A page's CSV columns follow what its answer holds, so a few can come and go with the
-  filters (Gateway's group comparison columns, for example). Fixing each page's columns is part of
-  issue #7, with the CSV button.
-- **SQL Server, a container image and other chat providers.** Planned follow ups (sections 3, 6 and 8).
+The full list, including the mock data's bugs, definitions to confirm and what hasn't been tested, is in
+[known issues](known-issues.md).
 
 ## 12. Notes for developers who extend it
 

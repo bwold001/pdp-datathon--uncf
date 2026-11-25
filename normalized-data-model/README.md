@@ -131,7 +131,7 @@ Options:
 
 Whether a column can be blank, its type and its keys are never rules: they're already in the schema.
 
-The rules the mock data breaks are `warning`, with a comment giving the number of rows, so squads get data while the questions to Dena (/dev/color) are open.
+The rules the mock data breaks are `warning`, with a comment giving the number of rows, so squads get data while the questions to /dev/color are open.
 
 ### Shared value lists
 

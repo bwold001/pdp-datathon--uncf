@@ -4,6 +4,7 @@ __pycache__/
 .venv/
 venv/
 .env
+.env*.local
 node_modules/
 .ipynb_checkpoints/
 
@@ -14,7 +15,7 @@ node_modules/
 !.compound-engineering/config.example.yaml
 .compound-engineering/*.local.yaml
 
-# Matt Pocock's skills local scratch
+# Agent skills' local scratch
 .scratch/
 
 # Foundation tests

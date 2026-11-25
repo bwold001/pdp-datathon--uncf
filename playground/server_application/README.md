@@ -1,6 +1,6 @@
 # Server Application
 
-The FastAPI back end for the Student Success Explorer. It serves the
+The FastAPI back end for the Student Persistence and Pathway Explorer. It serves the
 [Client Application](../client_application/README.md). The data is synthetic.
 
 ## Layout
@@ -21,26 +21,15 @@ chat's from `analytics/`, at the repo root.
 
 ## Run it
 
-```bash
-mise run api:install
-mise run api:load     # build normalized-data-model/output/pdp.sqlite (once)
-mise run api:dev      # http://localhost:8000, docs at http://localhost:8000/docs
-```
-
-Health check: http://localhost:8000/api/v1/uncf/health
+`mise run api:dev` from `playground/`, after the root README's
+[quick start](../../README.md#quick-start-on-the-mock-data) steps. Health check:
+http://localhost:8000/api/v1/uncf/health
 
 ## Settings
 
 `APP_ENV` (development, staging or production) picks the committed `.env.<APP_ENV>` file. Put
-secrets and personal overrides in `.env.<APP_ENV>.local`, which git ignores.
-
-| Variable | Default | What it does |
-|---|---|---|
-| `DATABASE_URL` | `sqlite:///<repo>/normalized-data-model/output/pdp.sqlite` | Where the chat reads data. A `postgresql://` URL also works |
-| `CORS_ORIGINS` | `["http://localhost:3000"]` in development | Which browser origins may call the API |
-| `UNCF_CHAT_ENABLED` | `true` in development | Mounts `/api/v1/chat` |
-| `OPENROUTER_API_KEY` | none | Required for chat. Never commit it |
-| `UNCF_CHAT_MODEL` | `openai/gpt-4.1` | A canonical OpenRouter model ID with tool support |
+secrets and personal overrides in `.env.<APP_ENV>.local`, which git ignores. Every variable is in
+[.env.example](.env.example) and the [integration guide](../../docs/integration.md#4-settings).
 
 ## Chat
 

@@ -1,6 +1,6 @@
 # Client Application
 
-The Next.js front end for the Student Success Explorer. It gets all of its data from the
+The Next.js front end for the Student Persistence and Pathway Explorer. It gets all of its data from the
 [Server Application](../server_application/README.md). The data is synthetic.
 
 ## Layout
@@ -29,7 +29,7 @@ mapping data live in `.ts` files in `lib/`, `services/`, `hooks/` and `content/`
 
 ## Run it
 
-Start the Server Application first ([Playground README](../README.md#run-it)), then:
+Start the Server Application first ([quick start](../../README.md#quick-start-on-the-mock-data)), then:
 
 ```bash
 mise run web:install && mise run web:dev     # http://localhost:3000
