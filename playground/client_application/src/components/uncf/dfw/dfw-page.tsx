@@ -87,7 +87,7 @@ export function DfwPage() {
           <CourseDetailLoading />
         )}
       </div>
-      <DfwCounted scale={list.data.meta.grade_scale} minStudents={list.data.meta.min_students} />
+      <DfwCounted scale={list.data.meta.grade_scale} minStudents={list.data.meta.min_students} dataLabel={list.data.meta.data_label} />
     </>
   );
 }

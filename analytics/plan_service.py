@@ -51,6 +51,7 @@ from analytics.provenance import (
     validate_replay,
 )
 from measures.disclosure import profile
+from measures.run_measures import configured_data_label
 from measures.registry import CATALOG_VERSION
 
 logger = logging.getLogger(__name__)
@@ -365,13 +366,14 @@ class PlanService:
                 for row in rows
                 if isinstance(row["code"], str) and 0 < len(row["code"].strip()) <= 500
             ]
+        label = configured_data_label()
         source = Source(
-            label="synthetic",
+            label=label,
             snapshot_ref=snapshot.identity.snapshot_ref,
             fingerprint=snapshot.identity.source_fingerprint,
             loaded_at=snapshot.identity.loaded_at,
             coverage=self.runtime.coverage.provenance
-            or "Synthetic extract; completeness is not certified.",
+            or f"{'Synthetic' if label == 'synthetic' else 'PDP'} extract; completeness is not certified.",
         )
         from analytics.exploration.catalog import metadata
 
@@ -792,7 +794,7 @@ class PlanService:
                         for key in spec.definitions
                     ),
                     assumptions=(
-                        "All results are synthetic.",
+                        *data_assumptions(catalog.source.label),
                         *evidence[step.step_id].context,
                     ),
                     limitations=spec.limitations,
@@ -829,11 +831,27 @@ class PlanService:
                 started_at=started,
                 completed_at=datetime.now(timezone.utc),
             ),
-            message="Synthetic execution finished; snapshot cleanup reported an error."
-            if cleanup_failure
-            else "Synthetic execution completed."
-            if outcome == "complete"
-            else "Synthetic execution returned partial evidence."
-            if receipts
-            else "The execution did not complete any result.",
+            message=execution_message(
+                catalog.source.label if catalog else configured_data_label(),
+                outcome,
+                receipts,
+                cleanup_failure,
+            ),
         )
+
+
+def data_assumptions(label: str) -> tuple[str, ...]:
+    """The receipt line that says what kind of data answered: none is needed for a school's own files."""
+    return ("All results are synthetic.",) if label == "synthetic" else ()
+
+
+def execution_message(label, outcome, receipts, cleanup_failure) -> str:
+    """The response's one-line summary, naming synthetic data only when that is what was loaded."""
+    run = "Synthetic execution" if label == "synthetic" else "Execution"
+    if cleanup_failure:
+        return f"{run} finished; snapshot cleanup reported an error."
+    if outcome == "complete":
+        return f"{run} completed."
+    if receipts:
+        return f"{run} returned partial evidence."
+    return "The execution did not complete any result."

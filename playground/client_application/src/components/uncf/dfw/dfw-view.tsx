@@ -1,4 +1,5 @@
-import type { GradeScale } from "@/components/uncf/layout/explorer-api";
+import type { DataLabel, GradeScale } from "@/components/uncf/layout/explorer-api";
+import { dataWords } from "@/components/uncf/layout/explorer-config";
 import { Card, CardHead, Kpi, KpiGrid, Legend, LoadingBlock, MessageCard } from "@/components/uncf/layout/explorer-parts";
 import { explorerButton } from "@/components/uncf/layout/explorer-styles";
 import { GradeScaleTable } from "@/components/uncf/layout/grade-scale";
@@ -335,9 +336,9 @@ export function CourseDetailError({ message, onRetry }: { message: string; onRet
 
 /**
  * The note under the page: what the numbers mean, in the design's words, and the grade scale they used.
- * minStudents is the answer's meta.min_students.
+ * minStudents and dataLabel are the answer's meta.min_students and meta.data_label (left out on saved sample answers).
  */
-export function DfwCounted({ scale, minStudents }: { scale: GradeScale; minStudents: number }) {
+export function DfwCounted({ scale, minStudents, dataLabel = "synthetic" }: { scale: GradeScale; minStudents: number; dataLabel?: DataLabel }) {
   return (
     <div className="border-t border-(--uncf-line) pt-4.5 text-sm text-(--uncf-ink-2)">
       <b className="font-semibold text-(--uncf-ink)">What the numbers mean:</b> a final grade is one student finishing one
@@ -347,8 +348,7 @@ export function DfwCounted({ scale, minStudents }: { scale: GradeScale; minStude
       difference between groups, not its cause.
       {hidesSmallGroups(minStudents) && ` Courses and groups with fewer than ${minStudents} students are hidden to protect privacy.`} One course code can appear
       under several names in the catalog. Some classes are listed twice in this data, so a few grades count twice.
-      First-generation status isn’t shown because this data doesn’t record it consistently yet. The data is synthetic: it
-      doesn’t describe real students.
+      First-generation status isn’t shown because this data doesn’t record it consistently yet. {dataWords[dataLabel].note}
       <GradeScaleTable scale={scale} rule="dfw" />
     </div>
   );

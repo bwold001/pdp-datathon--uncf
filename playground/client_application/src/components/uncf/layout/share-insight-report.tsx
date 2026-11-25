@@ -1,17 +1,25 @@
 import { cn } from "@/lib/utils";
 
 import { cohortFiltersFor, filterValueLabel, readCohortFilters } from "./cohort-filters";
-import { explorerHeader } from "./explorer-config";
+import type { DataLabel } from "./explorer-api";
+import { dataWords, explorerHeader } from "./explorer-config";
 import type { StudentCount } from "./explorer-context";
 import { explorerFontClass } from "./explorer-fonts";
-import { ExplorerMark } from "./explorer-header";
+import { DataBadge, ExplorerMark } from "./explorer-header";
 import { explorerWrap } from "./explorer-styles";
 
 /** Who a shared tab counts, in words: the cohort, how many students, and each filter that isn't "All" (Retention too). */
-export type ReportFacts = { cohort: string; students: string | null; filters: { label: string; value: string }[]; date: string };
+export type ReportFacts = {
+  cohort: string;
+  students: string | null;
+  filters: { label: string; value: string }[];
+  date: string;
+  /** What kind of data the numbers come from, or null if the API hasn't said; the report then says nothing about it. */
+  dataLabel: DataLabel | null;
+};
 
 /** The facts for the tab at this address, read the same way the cohort bar reads them. */
-export function describeView(pathname: string, search: string, studentCount: StudentCount): ReportFacts {
+export function describeView(pathname: string, search: string, studentCount: StudentCount, dataLabel: DataLabel | null): ReportFacts {
   const definitions = cohortFiltersFor(pathname);
   const filters = readCohortFilters(new URLSearchParams(search), definitions);
   // The cohort leads the report on its own line; the retention measure changes the numbers, so it's listed.
@@ -22,6 +30,7 @@ export function describeView(pathname: string, search: string, studentCount: Stu
       studentCount === "too few" ? "Too few students to show" : studentCount === null ? null : `${studentCount.toLocaleString("en-US")} students`,
     filters: picked.map((definition) => ({ label: definition.label, value: filterValueLabel(definition, filters[definition.id] ?? null) })),
     date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+    dataLabel,
   };
 }
 
@@ -51,9 +60,7 @@ export function ShareInsightReport({ facts, width, ref, slotRef }: ShareInsightR
             <p className="text-sm text-(--uncf-ink-3)">{explorerHeader.source}</p>
           </div>
           <span className="flex-1" />
-          <span className="rounded-full bg-(--uncf-warn-bg) px-3 py-0.75 text-[13px] font-semibold text-(--uncf-orange-ink)">
-            {explorerHeader.sampleBadge}
-          </span>
+          {facts.dataLabel && <DataBadge label={facts.dataLabel} />}
         </div>
       </header>
       <section className="border-b border-(--uncf-line) bg-(--uncf-band)">
@@ -78,7 +85,9 @@ export function ShareInsightReport({ facts, width, ref, slotRef }: ShareInsightR
         </div>
       </section>
       <div ref={slotRef} />
-      <p className={cn(explorerWrap, "pb-6 text-center text-[13px] text-(--uncf-ink-3)")}>{explorerHeader.disclaimer}</p>
+      {facts.dataLabel && (
+        <p className={cn(explorerWrap, "pb-6 text-center text-[13px] text-(--uncf-ink-3)")}>{dataWords[facts.dataLabel].disclaimer}</p>
+      )}
     </div>
   );
 }

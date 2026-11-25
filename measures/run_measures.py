@@ -55,6 +55,18 @@ def configured_database() -> Path:
 
 DEFAULT_DATABASE = configured_database()
 
+# What the loaded data is, for every label the API, analytics and chat show: the synthetic sample, or a school's own
+# PDP files. Set with UNCF_DATA_LABEL; nothing else decides it, because the database can't tell.
+DATA_LABELS = ("synthetic", "institution")
+
+
+def configured_data_label() -> str:
+    """UNCF_DATA_LABEL: "synthetic" (the sample, the default) or "institution" (a school's own PDP files)."""
+    label = os.environ.get("UNCF_DATA_LABEL", "").strip().lower() or "synthetic"
+    if label not in DATA_LABELS:
+        raise ValueError(f"UNCF_DATA_LABEL must be one of {', '.join(DATA_LABELS)}, not {label!r}.")
+    return label
+
 # Add a measure by writing its file in calculations/ and listing it here.
 MEASURES = {
     Measure.RETENTION: retention,

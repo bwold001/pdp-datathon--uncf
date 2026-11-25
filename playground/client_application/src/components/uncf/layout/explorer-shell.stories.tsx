@@ -7,7 +7,7 @@ import { ViewIntro } from "./view-intro";
 const meta = {
   component: ExplorerShell,
   title: "UNCF/Explorer shell",
-  args: { children: <h2 className="text-[34px] font-bold">DFW</h2> },
+  args: { children: <h2 className="text-[34px] font-bold">DFW</h2>, dataLabel: "synthetic" },
   parameters: {
     layout: "fullscreen",
     nextjs: { appDirectory: true, navigation: { pathname: "/uncf/dfw" } },
@@ -42,6 +42,17 @@ export const OnTheDfwTab: Story = {
     const boxes = tabs.map((tab) => tab.getBoundingClientRect());
     await expect(new Set(boxes.map((box) => Math.round(box.top))).size).toBe(1);
     await expect(boxes.every((box, i) => i === 0 || box.left > boxes[i - 1].left)).toBe(true);
+  },
+};
+
+/** On a school's own PDP files, the badge and the bottom line say so, and nothing calls the data synthetic. */
+export const OnInstitutionData: Story = {
+  name: "On the institution's data",
+  args: { dataLabel: "institution" },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText("Institution PDP data")).toBeVisible();
+    await expect(canvas.getByText(/From the institution’s own PDP files/)).toBeVisible();
+    await expect(canvas.queryByText(/synthetic/i)).not.toBeInTheDocument();
   },
 };
 

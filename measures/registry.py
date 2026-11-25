@@ -180,7 +180,7 @@ def _page(
         limitations=limitations
         + (
             "Components have different counting units and denominators; do not combine them into one rate.",
-            "All evidence is synthetic. Small nonempty groups are visible; no minimum-size privacy protection is applied.",
+            "Small nonempty groups are visible; no minimum-size privacy protection is applied.",
         ),
         units=(
             "students",

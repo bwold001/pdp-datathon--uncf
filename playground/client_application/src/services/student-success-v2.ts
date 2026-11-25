@@ -31,7 +31,8 @@ export type Receipt = {
   disclosure_profile?: { id: string; version: string };
   population: string; grain: string; time_window: string; definitions: { id: string; version: string }[];
   assumptions: string[]; limitations: string[]; baseline_changes: string[];
-  source: { label: "synthetic"; snapshot_ref: string; fingerprint: string; loaded_at: string; coverage: string };
+  /** "synthetic" for the sample data, "institution" for a school's own PDP files (the server's UNCF_DATA_LABEL). */
+  source: { label: "synthetic" | "institution"; snapshot_ref: string; fingerprint: string; loaded_at: string; coverage: string };
   versions: { catalog: string; pipeline: string; configuration: string; coverage: string; implementation: string; disclosure: string; features: { id: string; version: string }[]; methods?: { id: string; version: string }[] };
   computation_fingerprint: string; execution_id: string; started_at: string; completed_at: string;
   result: { status: Status; payload?: Payload; reason?: string; exclusions?: Exclusion[] };

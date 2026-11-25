@@ -67,6 +67,8 @@ python -m api load --cohort /secure/pdp/cohort_2026.csv --course /secure/pdp/cou
 ```
 
 - It always rebuilds the database from the files you name.
+- Set `UNCF_DATA_LABEL=institution` and `UNCF_SOURCE` for the API and chat (section 4), so every page,
+  answer and receipt says the numbers come from your files, not the synthetic sample.
 - It uses `api/config/school_pipeline.yaml`: your cohort and course files only. The sample's two extra
   files (synthetic housing and another school's calendar) are left out.
 - At the end it prints how many rows were read, passed and held back. Held back rows are listed in
@@ -120,6 +122,7 @@ Set these as environment variables (on Vercel, in the project's settings).
 | --- | --- | --- |
 | `UNCF_DATABASE` | `normalized-data-model/output/pdp.sqlite` | The SQLite file the load writes and the API and chat read |
 | `UNCF_COHORT_URL`, `UNCF_COURSE_URL` | none | `https` links to your two files, for a build that can't pass `--cohort` and `--course` |
+| `UNCF_DATA_LABEL` | `synthetic` | What kind of data is loaded: `synthetic` (the sample) or `institution` (your own PDP files). The Explorer's badge, page notes and shared PDFs, the chat's cards and instructions, and every answer and receipt follow it. Set `institution` whenever you load your own files |
 | `UNCF_SOURCE` | "PDP analysis-ready cohort and course files (synthetic sample)" | The source every answer names, for example "FMU PDP files, fall 2026 release" |
 | `UNCF_ANALYTICS_CONFIG` | `analytics/config/analytics.yaml` | What you know about your data's coverage (see [section 5](#5-tell-the-app-about-your-data)) |
 | `UNCF_SCHOOL` | none | `fmu` or `benedict`: show metrics under the school's own names (see section 5) |
@@ -407,10 +410,9 @@ internal address that only the job's server can reach.
 - [ ] **Gateway courses.** The Gateway page lists the courses your course file flags as gateway math (M)
       or English (E). If your files don't set that flag, the page has no courses to show and the gateway
       measures say "not reported".
-- [ ] **"Synthetic" labels.** The Explorer's header badge and disclaimers, the chat's evidence cards and
-      the chat's own receipts still say the data is synthetic, whatever you load. `UNCF_SOURCE` changes
-      only the API's source line. Until a change makes one setting update them all, people could misread
-      real numbers as a demonstration, so make that change before staff use real data.
+- [ ] **Labels.** `UNCF_DATA_LABEL=institution` and `UNCF_SOURCE` are set (section 4), and the Explorer's
+      header badge reads "Institution PDP data", so nobody reads real numbers as a demonstration, or the
+      sample as real.
 - [ ] **Chat.** Off, or pointed at an approved AI service (section 8).
 - [ ] **Clean up.** Working copies from each load are protected and old ones deleted (section 3).
 - [ ] **Spot check.** Compare a few numbers with what your office already reports, such as one cohort's

@@ -563,9 +563,10 @@ class VersionReference(Contract):
 
 
 class Source(Contract):
-    """Declare synthetic snapshot identity and the coverage represented by its source."""
+    """Declare the snapshot's identity, what kind of data it is, and the coverage its source represents."""
 
-    label: Literal["synthetic"]
+    # "synthetic" for the sample data, "institution" for a school's own PDP files (UNCF_DATA_LABEL).
+    label: Literal["synthetic", "institution"]
     snapshot_ref: Identifier
     fingerprint: Fingerprint
     loaded_at: AwareDatetime

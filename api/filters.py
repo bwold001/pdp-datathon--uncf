@@ -86,6 +86,7 @@ class CohortQuery:
             "provisional": data.is_provisional(self.cohort),
             "min_students": min_students(),
             "source": data.source(),
+            "data_label": data.data_label(),
         }
 
 
@@ -100,5 +101,6 @@ def cohort_options(cohort: str | None = None) -> dict:
         "retention_types": list(RETENTION_TYPES),
         "min_students": min_students(),
         "source": data.source(),
+        "data_label": data.data_label(),
         "loaded_at": data.loaded_at(),
     }

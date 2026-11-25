@@ -2,20 +2,60 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 
+import { apiRequest } from "@/lib/api-client";
+
+import type { DataLabel } from "./explorer-api";
+
 /** The tab's student count: a number, "too few" when its numbers are hidden, or null while it loads. */
 export type StudentCount = number | "too few" | null;
 
 type ExplorerContextValue = {
   studentCount: StudentCount;
   setStudentCount: (count: StudentCount) => void;
+  /** What kind of data the API has loaded, or null until it says. */
+  dataLabel: DataLabel | null;
 };
 
 const ExplorerContext = createContext<ExplorerContextValue | null>(null);
 
-/** Lets the current tab fill in the cohort bar's "Showing N students". */
-export function ExplorerProvider({ children }: { children: React.ReactNode }) {
+/**
+ * Lets the current tab fill in the cohort bar's "Showing N students", and tells every part of the layout what kind
+ * of data is loaded. dataLabel fixes the label (stories); left out, it comes from the API's /uncf/health.
+ */
+export function ExplorerProvider({ children, dataLabel }: { children: React.ReactNode; dataLabel?: DataLabel }) {
   const [studentCount, setStudentCount] = useState<StudentCount>(null);
-  return <ExplorerContext value={{ studentCount, setStudentCount }}>{children}</ExplorerContext>;
+  const fetched = useHealthDataLabel(dataLabel === undefined);
+  return (
+    <ExplorerContext value={{ studentCount, setStudentCount, dataLabel: dataLabel ?? fetched }}>{children}</ExplorerContext>
+  );
+}
+
+/** The API's data_label from /uncf/health, once; null until it answers, or if it can't. */
+function useHealthDataLabel(enabled: boolean): DataLabel | null {
+  const [label, setLabel] = useState<DataLabel | null>(null);
+  useEffect(() => {
+    if (!enabled) return;
+    let current = true;
+    apiRequest<{ data_label?: DataLabel | null }>("/uncf/health", { cache: "no-store" })
+      .then((health) => {
+        if (current) setLabel(health.data_label ?? null);
+      })
+      .catch(() => {
+        if (current) setLabel(null);
+      });
+    return () => {
+      current = false;
+    };
+  }, [enabled]);
+  return label;
+}
+
+/**
+ * What kind of data is loaded, so the pages can say so: null while unknown, when nothing about the data is shown
+ * rather than a label that could be wrong. Outside the Explorer layout (a story), null.
+ */
+export function useDataLabel(): DataLabel | null {
+  return useContext(ExplorerContext)?.dataLabel ?? null;
 }
 
 /** The layout's shared state. Only works inside the Explorer layout. */

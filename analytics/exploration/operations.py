@@ -219,7 +219,7 @@ def _spec(operation, parameters):
         time_semantics="First academic year; school/PDP or observed next-fall federal outcomes as named by grouping.",
         exclusions="Complete cases for requested features only; unknown retention is not not-retained; safe reasons may overlap.",
         required_coverage=("Normalized cohort facts and observed course terms",), executor="analytics.exploration.operations.execute",
-        disclosure_profile="exploration_v1", limitations=("Synthetic descriptive evidence; no causal claims.", "Exposure completeness is uncertified.",
+        disclosure_profile="exploration_v1", limitations=("Descriptive evidence; no causal claims.", "Exposure completeness is uncertified.",
             "Gateway variant is unavailable pending validated equivalent cohort eligibility; first-attempt outcomes are a different population."),
         units=("credits", "student/cohort units", "observed enrollments"), component_denominators=(
             "Earned and attempted means each use their own observed n; Pearson uses paired complete cases.",

@@ -1,12 +1,29 @@
 import { routes } from "@/lib/routes";
 
+import type { DataLabel } from "./explorer-api";
+
 /** The header's words. */
 export const explorerHeader = {
   title: "Student Persistence and Pathway Explorer",
   source: "Source: PDP Analysis-Ready files",
-  // The design's mockup said "illustrative values"; the numbers now come from the synthetic sample data.
-  sampleBadge: "Synthetic sample data",
-  disclaimer: "Synthetic sample data. Nothing here describes real students or institutions.",
+};
+
+/**
+ * What the pages say about the data, for each kind the API can have loaded (its data_label, set on the server with
+ * UNCF_DATA_LABEL): the header badge, the line at the bottom of every page, and the sentence that ends a page's notes.
+ */
+export const dataWords: Record<DataLabel, { badge: string; disclaimer: string; note: string }> = {
+  // The design's mockup said "illustrative values"; the numbers come from the synthetic sample data.
+  synthetic: {
+    badge: "Synthetic sample data",
+    disclaimer: "Synthetic sample data. Nothing here describes real students or institutions.",
+    note: "The data is synthetic: it doesn’t describe real students.",
+  },
+  institution: {
+    badge: "Institution PDP data",
+    disclaimer: "From the institution’s own PDP files. Check key numbers against your office’s reports before acting on them.",
+    note: "",
+  },
 };
 
 /** One tab: a page under the Explorer shell. */

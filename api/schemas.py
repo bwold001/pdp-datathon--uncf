@@ -12,6 +12,8 @@ from pydantic import BaseModel, ConfigDict
 Measure = Literal["retention", "persistence", "gateway_math", "gateway_english", "dfw_rate", "credit_completion"]
 # school: the PDP retention flag. federal: fall to fall, enrolled here the fall after year 1.
 RetentionType = Literal["school", "federal"]
+# What kind of data is loaded (UNCF_DATA_LABEL): the synthetic sample or a school's own PDP files. Pages show it.
+DataLabel = Literal["synthetic", "institution"]
 # A cohort year such as "2023-24". The years allowed are the ones in the loaded data (api/data.py), not a fixed list.
 Cohort = str
 # Every grouping the measures support except first_gen (unreliable in the mock data) and course (DFW only).
@@ -80,6 +82,7 @@ class MeasureByGroupMeta(BaseModel):
     retention_type: RetentionType
     definition: MeasureDefinition
     source: str
+    data_label: DataLabel = "synthetic"
     loaded_at: str  # when the source data was loaded, not when the numbers were calculated
     provisional: bool  # the class's second year is only partly in the data, so a year-2 rate can still change
     min_students: int  # always 1; retained for response compatibility
@@ -103,6 +106,7 @@ class ExplorerMeta(BaseModel):
     provisional: bool
     min_students: int
     source: str
+    data_label: DataLabel = "synthetic"
     loaded_at: str
 
 
@@ -212,6 +216,7 @@ class HealthResponse(BaseModel):
     status: Literal["ok"] = "ok"
     data_available: bool
     loaded_at: str | None
+    data_label: DataLabel | None = None  # None when UNCF_DATA_LABEL has a value the API doesn't know
 
 
 class ErrorDetail(BaseModel):
