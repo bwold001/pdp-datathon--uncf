@@ -12,6 +12,7 @@ export default function StudentPathsPage() {
   return (
     <>
       <ViewIntro
+        csvPath="/uncf/student-paths"
         title="Student Paths"
         whatThisShows="The selected entering cohort’s students (first-time unless you pick another enrollment type), followed through their next two fall or spring terms."
         howToRead="Band width = number of students. Bands split where students leave or transfer, and rejoin when they return."

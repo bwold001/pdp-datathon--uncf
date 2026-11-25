@@ -24,7 +24,8 @@ const meta = {
     ),
   ],
   args: { data: creditsFall2022 },
-  parameters: { layout: "fullscreen" },
+  // Download CSV reads the cohort bar from the URL, so the stories run with the app router.
+  parameters: { layout: "fullscreen", nextjs: { appDirectory: true, navigation: { pathname: "/uncf/credit-momentum" } } },
 } satisfies Meta<typeof CreditsView>;
 export default meta;
 type Story = StoryObj<typeof meta>;

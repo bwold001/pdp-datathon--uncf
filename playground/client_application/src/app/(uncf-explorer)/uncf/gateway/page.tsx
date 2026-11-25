@@ -11,6 +11,7 @@ export default function GatewayCoursesPage() {
   return (
     <>
       <ViewIntro
+        csvPath="/uncf/gateway"
         title="Gateway Courses"
         whatThisShows="Every student who took a course the school marks as a gateway course in their first year, counted once per course, from their first try onward."
         howToRead="Pick a course to follow its students. Pick a group in the filters above to compare it with everyone else in each course."

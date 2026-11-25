@@ -11,6 +11,7 @@ export default function DfwPage() {
   return (
     <>
       <ViewIntro
+        csvPath="/uncf/dfw"
         title="DFW"
         whatThisShows="Every time a student finishes a course with a final grade, it counts once. This page shows how often that grade was a D, F or W, and in which courses."
         howToRead="Pick a course on the left. On the right, each student group in that course is compared with everyone else in the same course."

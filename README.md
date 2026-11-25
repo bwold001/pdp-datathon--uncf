@@ -8,7 +8,7 @@ institutional research staff at a college explore how a cohort of students is do
 college's Postsecondary Data Partnership (PDP) analysis-ready files and shows retention, student
 paths term by term, DFW rates by course, gateway math and English completion, and credit momentum.
 Every number comes with its plain-language definition, numerator and denominator. Each page
-downloads as a PDF report, and the API returns any page's numbers as CSV. An optional chat answers
+downloads as a PDF report or its numbers as a CSV file. An optional chat answers
 graduation, retention, enrollment and exploration questions with the same calculations, and shows
 how each answer was worked out. It was built for two UNCF member institutions, Florida Memorial
 University and Benedict College, and works with any institution's PDP files.
@@ -83,8 +83,8 @@ mise run web:dev         # Explorer on http://localhost:3000
 
 Open http://localhost:3000/uncf/paths. The tabs are Student paths, DFW courses, Gateway courses and
 Credit momentum. Pick a cohort, add filters, and use **Share Insight** to download the page as a
-PDF. For a page's numbers as CSV, add `format=csv` to its API call, for example
-http://localhost:8000/api/v1/uncf/gateway?cohort=2022-23&format=csv.
+PDF, or **Download CSV** for its numbers. The same CSV comes straight from the API with `format=csv`, for
+example http://localhost:8000/api/v1/uncf/gateway?cohort=2022-23&format=csv.
 
 On Windows, if a `mise run` task fails, run it from Git Bash (mise uses `cmd` there).
 

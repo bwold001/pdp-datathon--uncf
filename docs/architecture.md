@@ -72,7 +72,8 @@ Results are cached in memory and recalculated when `pdp.sqlite` changes. Nothing
 
 Every page route takes the same cohort and filter values and `format=json|csv`, so the numbers
 behind any page can be downloaded as CSV from the API. In the web app, **Share Insight** downloads
-the page as a PDF. The full endpoint list is in [API reference](#api-reference) below and at `/docs`
+the page as a PDF and **Download CSV** links to the page's CSV address. Each page's CSV has fixed
+columns (`CSV_COLUMNS` in `api/route.py`). The full endpoint list is in [API reference](#api-reference) below and at `/docs`
 on a running server.
 
 ### 4. Chat, when it's turned on
