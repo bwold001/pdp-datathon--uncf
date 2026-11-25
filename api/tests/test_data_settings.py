@@ -8,6 +8,7 @@ from __future__ import annotations
 import io
 import os
 import sqlite3
+import urllib.request
 from pathlib import Path
 
 import pytest
@@ -194,7 +195,7 @@ def test_links_from_settings_are_downloaded(loader_calls, tmp_path, monkeypatch)
     monkeypatch.setenv("UNCF_COURSE_URL", "https://storage.example.edu/pdp/course.csv?sig=secret")
     seen: dict[str, bytes] = {}
 
-    def fetch(location, timeout):
+    def fetch(location):
         """Answer with the link's own name as the file's bytes."""
         return io.BytesIO(location.split("/")[-1].encode())
 
@@ -203,7 +204,7 @@ def test_links_from_settings_are_downloaded(loader_calls, tmp_path, monkeypatch)
         seen["cohort"] = Path(option(command, "--cohort")).read_bytes()
         seen["suffix"] = Path(option(command, "--course")).suffix.encode()
 
-    monkeypatch.setattr(load.urllib.request, "urlopen", fetch)
+    monkeypatch.setattr(load, "open_link", fetch)
     monkeypatch.setattr(load.subprocess, "run", record)
     assert load.ensure_data_loaded() is True
     assert seen == {"cohort": b"cohort.csv?sig=secret", "suffix": b".csv"}
@@ -213,6 +214,45 @@ def test_only_https_links_load(loader_calls, tmp_path) -> None:
     """A plain http link is refused, so a file with student records never travels unencrypted."""
     with pytest.raises(load.LoadError, match="https"):
         load.ensure_data_loaded(cohort="http://example.edu/c.csv", course="http://example.edu/d.csv")
+
+
+class Response(io.BytesIO):
+    """A redirect response's body, which the redirect handler closes."""
+
+
+@pytest.mark.parametrize("target", ["http://storage.example.edu/pdp/cohort.csv", "ftp://storage.example.edu/c.csv"])
+def test_a_redirect_away_from_https_stops_the_download(target) -> None:
+    """An https link that redirects to http (or anything but https) is refused before that request is made."""
+    request = urllib.request.Request("https://storage.example.edu/pdp/cohort.csv?sig=secret")
+    body = Response(b"")
+    with pytest.raises(load.LoadError, match="non-https") as refused:
+        load.HttpsOnlyRedirects().redirect_request(request, body, 302, "Found", {}, target)
+    assert body.closed and "secret" not in str(refused.value)
+
+
+def test_a_redirect_to_another_https_address_is_followed() -> None:
+    """Storage that redirects to another https address (a signed download URL, say) still works."""
+    request = urllib.request.Request("https://storage.example.edu/pdp/cohort.csv")
+    target = "https://download.example.edu/signed/cohort.csv"
+    followed = load.HttpsOnlyRedirects().redirect_request(request, Response(b""), 302, "Found", {}, target)
+    assert followed.full_url == target
+
+
+def test_downloads_use_the_https_only_redirects(monkeypatch) -> None:
+    """open_link builds its opener with the https only rule, which replaces urllib's default redirects."""
+    built = []
+    real = urllib.request.build_opener
+
+    def record(*handlers):
+        """Build the real opener, keep it, and stop before any network request."""
+        built.append(real(*handlers))
+        raise OSError("no network in tests")
+
+    monkeypatch.setattr(load.urllib.request, "build_opener", record)
+    with pytest.raises(OSError):
+        load.open_link("https://storage.example.edu/pdp/cohort.csv")
+    redirects = [h for h in built[0].handlers if isinstance(h, urllib.request.HTTPRedirectHandler)]
+    assert [type(h) for h in redirects] == [load.HttpsOnlyRedirects]
 
 
 def test_entry_point_passes_the_school_files(monkeypatch) -> None:
