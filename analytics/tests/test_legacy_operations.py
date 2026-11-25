@@ -103,7 +103,7 @@ def test_catalog_search_returns_distinct_gateway_candidates_and_defined_legacy_e
         "gateway.course_outcomes",
     }
     assert all(row["distinctions"] for row in candidates)
-    assert len(service.catalog()["operations"]) == 14
+    assert len(service.catalog()["operations"]) == 18
     for id in (
         "legacy.graduation",
         "legacy.entry_major_retention",

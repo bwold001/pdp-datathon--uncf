@@ -1,5 +1,7 @@
 """Validate complete plans and coordinate existing owners on one read snapshot, without metric formulas."""
 
+import logging
+
 from datetime import datetime, timezone
 from functools import lru_cache
 from hashlib import sha256
@@ -24,6 +26,7 @@ from analytics.contracts_v2 import (
     Versions,
     VisibleResult,
     to_executable,
+    operation_id,
 )
 from analytics.disclosure import disclose_plan, stage_defined
 from analytics.execution import CURRENT, CalculationCancelled, check_cancelled
@@ -48,6 +51,8 @@ from analytics.provenance import (
 from measures.disclosure import profile
 from measures.registry import CATALOG_VERSION
 
+logger = logging.getLogger(__name__)
+
 _TABLES = (
     "student",
     "cohort_membership",
@@ -63,6 +68,10 @@ _QUESTIONS = {
     "credential": "Which credential?",
     "program": "Which program definition?",
     "terms": "How many terms?",
+    "grouping": "Which registered grouping and retention definition?",
+    "x": "Which first registered numeric feature?",
+    "y": "Which second registered numeric feature?",
+    "variant_id": "Which registered definition variant?",
 }
 
 
@@ -144,6 +153,17 @@ def _requirements(spec, parameters=None):
         "data_provider": {"loaded_at", "source_file", "file_sha256", "provider_id"},
         "cohort_membership": {"student_id", "cohort"},
     }
+    if spec.kind == "exploratory_analysis":
+        if spec.id == "measure_variant":
+            return needs
+        needs.update(
+            student={"student_id", "gender", "race", "ethnicity", "student_age", "first_gen"},
+            course_enrollment={"student_id", "cohort", "course_id", "term_id", "delivery_method"},
+            term={"term_id", "academic_year", "academic_term"},
+        )
+        needs["cohort_membership"] |= {"number_of_credits_attempted_yr_1", "number_of_credits_earned_yr_1", "retention",
+            "cohort_term", "enrollment_type", "enrollment_intensity_first_term", "pell_status_first_year"}
+        return needs
     if spec.kind == "defined_measure":
         needs["student"] = {"student_id", "gender", "race", "ethnicity", "student_age"}
         needs["cohort_membership"] |= {
@@ -262,6 +282,8 @@ def _usable(result):
     """A dependency requires actual visible evidence rather than a hidden-only table or status."""
     if not isinstance(result, VisibleResult):
         return False
+    if result.payload.kind == "mean_comparison":
+        return any(group.mean is not None for group in result.payload.groups)
     if result.payload.kind == "table":
         return any(
             row.status in ("ok", "provisional")
@@ -348,10 +370,12 @@ class PlanService:
             coverage=self.runtime.coverage.provenance
             or "Synthetic extract; completeness is not certified.",
         )
+        from analytics.exploration.catalog import metadata
+
         operations = []
         for spec in self.owner.operations.values():
             policy = profile(spec.disclosure_profile)
-            available = _available(spec, schema)
+            available = _available(spec, schema) and spec.id != "measure_variant"
             operations.append(
                 CatalogOperation(
                     id=spec.id,
@@ -360,7 +384,7 @@ class PlanService:
                     label=spec.label,
                     aliases=spec.aliases,
                     executor=spec.executor,
-                    missing_prerequisites=_missing_prerequisites(spec, schema),
+                    missing_prerequisites=(metadata()["gateway_variant"]["missing_prerequisite"],) if spec.id == "measure_variant" else _missing_prerequisites(spec, schema),
                     purpose=spec.purpose,
                     available=available,
                     unavailable_reason=None if available else "data_unavailable",
@@ -403,6 +427,7 @@ class PlanService:
                 ),
             ),
             operations=operations,
+            exploration=metadata(),
             choices=CatalogChoices(
                 cohorts=cohorts, courses=courses[:100], more_courses=len(courses) > 100
             ),
@@ -431,7 +456,7 @@ class PlanService:
             return (issue("stale_plan"),)
         issues = []
         for step in plan.steps:
-            operation = getattr(step, "operation_id", None)
+            operation = operation_id(step)
             spec = self.owner.operations.get(operation)
             if spec is None or spec.kind != step.kind:
                 issues.append(issue("unsupported_operation", step.step_id))
@@ -461,6 +486,10 @@ class PlanService:
             "program": catalog.choices.programs,
             "course": tuple(Choice(value=c, label=c) for c in catalog.choices.courses),
             "terms": tuple(Choice(value=n, label=f"{n} terms") for n in range(2, 7)),
+            "grouping": tuple(Choice(value=key, label=key.replace("_", " ")) for key in catalog.exploration["groupings"]),
+            "x": tuple(Choice(value=key, label=key.replace("_", " ")) for key in catalog.exploration["features"] if not key.startswith("retained_")),
+            "y": tuple(Choice(value=key, label=key.replace("_", " ")) for key in catalog.exploration["features"] if not key.startswith("retained_")),
+            "variant_id": (Choice(value="gateway.cohort_completion_c_or_better", label="Gateway cohort completion C or better (unavailable)"),),
         }
         for typed, copied in zip(plan.steps, raw["steps"]):
             for key in type(typed.parameters).model_fields:
@@ -469,8 +498,15 @@ class PlanService:
                         raise OperationError(
                             "data_unavailable", "No current choices are available."
                         )
+                    offered = choices[key]
+                    if key in ("x", "y"):
+                        from analytics.exploration.catalog import PAIRS
+
+                        other = getattr(typed.parameters, "y" if key == "x" else "x", None)
+                        if isinstance(other, str):
+                            offered = tuple(choice for choice in offered if frozenset((choice.value, other)) in PAIRS)
                     copied["parameters"][key] = UnresolvedChoice(
-                        unresolved=True, question=_QUESTIONS[key], choices=choices[key]
+                        unresolved=True, question=_QUESTIONS[key], choices=offered
                     ).model_dump()
         return ProposedPlan.model_validate(raw)
 
@@ -523,15 +559,23 @@ class PlanService:
     def _versions(self, plan, catalog, identity):
         """Resolve current operation/policy/implementation/configuration versions, without substitution."""
         policies = {
-            self.owner.operations[step.operation_id].disclosure_profile
+            self.owner.operations[operation_id(step)].disclosure_profile
             for step in plan.steps
         }
         references = tuple(
             VersionReference(id=key, version=profile(key).version)
             for key in sorted(policies)
         )
+        from analytics.exploration.catalog import DATASET_VERSION, FEATURES, MISSINGNESS_VERSION
+
+        exploratory = [step for step in plan.steps if step.kind == "exploratory_analysis"]
+        methods = {"pearson" if step.operation == "correlation" else step.operation for step in exploratory}
+        features = ([VersionReference(id=key, version=value.version) for key, value in FEATURES.items()]
+            + [VersionReference(id="student_year1", version=DATASET_VERSION), VersionReference(id="complete_cases", version=MISSINGNESS_VERSION)]) if exploratory else []
         versions = Versions(
             catalog=catalog.catalog_version,
+            features=features,
+            methods=tuple(VersionReference(id=key, version="1") for key in sorted(methods)),
             pipeline=identity.pipeline_version,
             configuration=catalog.configuration_version,
             coverage=coverage_digest(self.runtime.coverage),
@@ -540,7 +584,7 @@ class PlanService:
         )
         operations = tuple(
             VersionReference(id=key, version=self.owner.operations[key].version)
-            for key in sorted({step.operation_id for step in plan.steps})
+            for key in sorted({operation_id(step) for step in plan.steps})
         )
         return versions, operations, references
 
@@ -615,6 +659,8 @@ class PlanService:
                             issue=issue(error.code, current),
                         )
                         continue
+                    logger.info("analysis step operation=%s status=completed units=%s groups=%s",
+                        operation_id(step), evidence[current].distinct_units, len(evidence[current].group_units))
                     times[current] = before, datetime.now(timezone.utc)
                     outcomes[current] = StepOutcome(
                         step_id=current, outcome="completed"
@@ -632,6 +678,10 @@ class PlanService:
         if not begun:
             return refusal(halt or "data_unavailable", plan)
         cleanup_failure = halt if current in outcomes else None
+        if cleanup_failure and current:
+            evidence.pop(current, None)
+            times.pop(current, None)
+            outcomes[current] = StepOutcome(step_id=current, outcome="failed", issue=issue(cleanup_failure, current))
         if halt and current and current not in outcomes:
             evidence.pop(current, None)
             times.pop(current, None)
@@ -705,7 +755,7 @@ class PlanService:
                 tuple(
                     stage_defined(
                         s.step_id,
-                        self.owner.operations[s.operation_id],
+                        self.owner.operations[operation_id(s)],
                         evidence[s.step_id],
                     )
                     for s in completed
@@ -716,7 +766,7 @@ class PlanService:
         )
         receipts = []
         for step, disclosed in zip(completed, projected):
-            spec = self.owner.operations[step.operation_id]
+            spec = self.owner.operations[operation_id(step)]
             before, after = times[step.step_id]
             receipts.append(
                 Receipt(

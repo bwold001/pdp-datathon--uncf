@@ -307,3 +307,13 @@ Empty groups consume no group budget. Limits refuse whole steps without truncati
 gateway cohort eligibility; it never substitutes first-attempt course outcomes.
 The highest-grade source and invalid attempt-code caveats are documented in the
 normalized mapping/schema and source dictionaries. No new statistical dependency is used.
+
+Mixed plans execute the registered exploration owners through the same
+`PlanService` validation, transaction, dependency, result projection and replay path
+as defined and legacy operations. The catalog exposes fixed feature/group/pair
+metadata. Chat proposes a complete plan; users clarify individual steps and confirm
+its exact canonical scope before provider-free execution. Receipts retain per-step
+populations, versions and sample sizes. Separate steps may overlap and do not imply
+one shared denominator. Safe independent refusals can return a partial answer;
+database errors and deadlines stop further work. Cleanup failure invalidates the
+current step while preserving earlier completed receipts.

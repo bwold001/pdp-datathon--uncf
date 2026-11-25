@@ -26,7 +26,7 @@ export function StudentSuccessChat({ request = sendStudentSuccessV2 }: { request
       </header>
       <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto p-4">
         {messages.length === 0 ? (
-          <div className="space-y-4 py-6"><p>Ask about defined student success measures, graduation or enrollment. I’ll ask for any details that change the answer.</p><SuggestedQuestions questions={questions} onQuestionChosen={ask} /></div>
+          <div className="space-y-4 py-6"><p>Ask about student success measures, graduation, enrollment or registered year-one comparisons. I’ll ask for any details that change the answer.</p><SuggestedQuestions questions={questions} onQuestionChosen={ask} /></div>
         ) : (
           <ol className="space-y-5" aria-label="Conversation">
             {messages.map((message) => (
@@ -56,7 +56,7 @@ function ScopeConfirmation({ plan, disabled, onConfirm }: {
   const [accepted, setAccepted] = useState(false);
   return <fieldset disabled={disabled} className="mt-4 space-y-3 rounded-lg border p-4">
     <legend className="font-semibold">Confirm calculation scope</legend>
-    <ul className="list-disc space-y-2 pl-5">{plan.steps.map((step) => <li key={step.step_id}><strong>{step.step_id}: {step.operation_id}</strong><dl className="mt-2 space-y-1">{Object.entries(step.parameters).map(([key, value]) => <div key={key}><dt className="font-medium">{key.replaceAll("_", " ")}</dt><dd>{describeParameter(value)}</dd></div>)}</dl>{step.depends_on.length > 0 && <p>Depends on: {step.depends_on.join(", ")}</p>}</li>)}</ul>
+    <ul className="list-disc space-y-2 pl-5">{plan.steps.map((step) => <li key={step.step_id}><strong>{step.step_id}: {step.kind === "exploratory_analysis" ? step.operation : step.operation_id}</strong><dl className="mt-2 space-y-1">{Object.entries(step.parameters).map(([key, value]) => <div key={key}><dt className="font-medium">{key.replaceAll("_", " ")}</dt><dd>{describeParameter(value)}</dd></div>)}</dl>{step.depends_on.length > 0 && <p>Depends on: {step.depends_on.join(", ")}</p>}</li>)}</ul>
     <p>Only the displayed cohort, filters and definitions will be used. Check that every requested constraint is present.</p>
     {disabled && <p>Resolve the remaining clarification before confirming.</p>}
     <label className="flex items-start gap-2"><input type="checkbox" checked={accepted}

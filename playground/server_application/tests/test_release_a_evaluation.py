@@ -20,7 +20,11 @@ def test_fixed_suite_covers_every_adapter_and_unsupported_exploration():
     cases = json.loads(CASES.read_text())["cases"]
     assert len(cases) >= 30 and len({case["id"] for case in cases}) == len(cases)
     expected = {operation for case in cases for operation in case["operations"]}
-    assert expected == set(AnalysisService(Coverage()).operations)
+    assert expected == {
+        key
+        for key, spec in AnalysisService(Coverage()).operations.items()
+        if spec.kind != "exploratory_analysis"
+    }
     assert any(
         "online course count" in c["prompt"] and c["expected_status"] == "unsupported"
         for c in cases

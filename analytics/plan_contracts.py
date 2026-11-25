@@ -44,7 +44,7 @@ class CatalogOperation(Contract):
 
     id: Identifier
     version: Identifier
-    kind: Literal["defined_measure", "legacy_analysis"]
+    kind: Literal["defined_measure", "legacy_analysis", "exploratory_analysis"]
     label: Text
     aliases: Annotated[tuple[Text, ...], Field(max_length=100)]
     executor: Text
@@ -93,7 +93,8 @@ class CatalogResponse(Contract):
     snapshot: SnapshotIdentity
     source: Source
     coverage: CoverageDeclaration
-    operations: Annotated[tuple[CatalogOperation, ...], Field(max_length=14)]
+    operations: Annotated[tuple[CatalogOperation, ...], Field(max_length=18)]
+    exploration: dict[str, JsonValue] = Field(default_factory=dict)
     choices: CatalogChoices
     configuration_version: Fingerprint
     implementation_version: Fingerprint
